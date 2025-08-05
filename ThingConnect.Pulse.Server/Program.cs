@@ -42,6 +42,18 @@ namespace ThingConnect.Pulse.Server
                     };
                 });
 
+            // CORS - Restrict to specific origins for security
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowReactApp", policy =>
+                {
+                    policy.WithOrigins("https://localhost:5173", "http://localhost:5173", "https://localhost:49813", "http://localhost:49813")
+                          .AllowAnyMethod()
+                          .AllowAnyHeader()
+                          .AllowCredentials();
+                });
+            });
+
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
@@ -60,6 +72,8 @@ namespace ThingConnect.Pulse.Server
             }
 
             app.UseHttpsRedirection();
+
+            app.UseCors("AllowReactApp");
 
             app.UseAuthentication();
             app.UseAuthorization();

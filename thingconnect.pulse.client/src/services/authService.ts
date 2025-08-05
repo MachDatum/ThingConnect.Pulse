@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://localhost:7286/api';
+const API_BASE_URL = '/api';
 
 export interface AuthResponse {
   token: string;
@@ -48,9 +48,7 @@ class AuthService {
         if ((error as { response?: { status?: number } })?.response?.status === 401) {
           this.logout();
         }
-        return Promise.reject(new Error(
-          (error as { message?: string })?.message || 'An error occurred'
-        ));
+        return Promise.reject(error);
       }
     );
   }
