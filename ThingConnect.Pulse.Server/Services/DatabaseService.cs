@@ -65,5 +65,12 @@ namespace ThingConnect.Pulse.Server.Services
                 "SELECT * FROM Users WHERE Id = @Id", 
                 new { Id = id });
         }
+
+        public async Task<bool> HasAnyUsersAsync()
+        {
+            using var connection = new SqliteConnection(_connectionString);
+            var count = await connection.QuerySingleAsync<int>("SELECT COUNT(*) FROM Users");
+            return count > 0;
+        }
     }
 }
