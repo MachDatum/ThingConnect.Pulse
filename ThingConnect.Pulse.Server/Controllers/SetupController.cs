@@ -21,19 +21,24 @@ namespace ThingConnect.Pulse.Server.Controllers
         {
             try
             {
-                _logger.LogInformation("Checking setup status");
+                _logger.LogInformation("Checking setup status - determining if initial setup is required");
                 var hasUsers = await _databaseService.HasAnyUsersAsync();
                 
-                _logger.LogInformation("Setup status check completed. HasUsers: {HasUsers}", hasUsers);
-                return Ok(new SetupStatusResponse
+                var response = new SetupStatusResponse
                 {
                     IsSetupRequired = !hasUsers,
                     HasAdminUser = hasUsers
-                });
+                };
+                
+                _logger.LogInformation("Setup status check completed. IsSetupRequired: {IsSetupRequired}, HasAdminUser: {HasAdminUser}", 
+                    response.IsSetupRequired, response.HasAdminUser);
+                
+                return Ok(response);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while checking setup status");
+                _logger.LogError(ex, "Error occurred while checking setup status. Falling back to requiring setup for safety. Error: {ErrorMessage}", 
+                    ex.Message);
                 
                 // Return safe fallback requiring setup
                 return Ok(new SetupStatusResponse

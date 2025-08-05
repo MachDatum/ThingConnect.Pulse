@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Box, Spinner, Center, Flex, Text, HStack, Button, Avatar } from '@chakra-ui/react';
 import { AdminSetupLanding } from './components/setup/AdminSetupLanding';
 import { AuthScreen } from './components/auth/AuthScreen';
@@ -11,6 +11,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [profileError, setProfileError] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   useEffect(() => {
     void checkAppStatus();
@@ -27,16 +28,7 @@ function App() {
         setIsAuthenticated(isAuth);
         
         if (isAuth) {
-          try {
-            const profile = await authService.getUserProfile();
-            setUserProfile(profile);
-            setProfileError(false);
-          } catch {
-            console.error('Failed to load user profile, logging out');
-            setProfileError(true);
-            authService.logout();
-            setIsAuthenticated(false);
-          }
+          await loadUserProfile();
         }
       }
     } catch {
@@ -56,27 +48,40 @@ function App() {
     }
   };
 
-  const handleAuthSuccess = () => {
+  const handleAuthSuccess = useCallback(() => {
     setIsAuthenticated(true);
-    setProfileError(false);
-    void (async () => {
-      try {
-        const profile = await authService.getUserProfile();
-        setUserProfile(profile);
-        setProfileError(false);
-      } catch {
-        console.error('Failed to load user profile after authentication');
-        setProfileError(true);
-      }
-    })();
-  };
+    void loadUserProfile();
+  }, [loadUserProfile]);
 
-  const handleLogout = () => {
+  const loadUserProfile = useCallback(async () => {
+    if (!authService.isAuthenticated()) return;
+    
+    setProfileLoading(true);
+    setProfileError(false);
+    
+    try {
+      const profile = await authService.getUserProfile();
+      setUserProfile(profile);
+      setProfileError(false);
+    } catch (error) {
+      console.error('Failed to load user profile:', error);
+      setProfileError(true);
+    } finally {
+      setProfileLoading(false);
+    }
+  }, []);
+
+  const handleLogout = useCallback(() => {
     authService.logout();
     setIsAuthenticated(false);
     setUserProfile(null);
     setProfileError(false);
-  };
+    setProfileLoading(false);
+  }, []);
+
+  const handleRetryProfile = useCallback(() => {
+    void loadUserProfile();
+  }, [loadUserProfile]);
 
   if (isLoading) {
     return (
@@ -103,7 +108,11 @@ function App() {
             <Avatar.Fallback name={userProfile?.username || 'User'} />
           </Avatar.Root>
           <Text fontSize="sm" fontWeight="medium">
-            {profileError ? 'Profile Error' : userProfile?.username || 'Loading...'}
+            {profileError ? (
+              <Text as="span" color="red.500" cursor="pointer" onClick={handleRetryProfile}>
+                Profile Error (click to retry)
+              </Text>
+            ) : profileLoading ? 'Loading...' : userProfile?.username || 'Loading...'}
           </Text>
           <Button 
             size="sm" 

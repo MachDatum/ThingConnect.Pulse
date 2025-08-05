@@ -28,9 +28,18 @@ namespace ThingConnect.Pulse.Server.Controllers
                 return BadRequest("Username, email, and password are required.");
             }
 
-            if (request.Password.Length < 6)
+            // Align with frontend password requirements
+            const int MIN_PASSWORD_LENGTH = 8;
+            var passwordRegex = new System.Text.RegularExpressions.Regex(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]");
+            
+            if (request.Password.Length < MIN_PASSWORD_LENGTH)
             {
-                return BadRequest("Password must be at least 6 characters long.");
+                return BadRequest($"Password must be at least {MIN_PASSWORD_LENGTH} characters long.");
+            }
+
+            if (!passwordRegex.IsMatch(request.Password))
+            {
+                return BadRequest("Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.");
             }
 
             var existingUserByUsername = await _databaseService.GetUserByUsernameAsync(request.Username);
