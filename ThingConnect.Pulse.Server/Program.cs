@@ -42,14 +42,15 @@ namespace ThingConnect.Pulse.Server
                     };
                 });
 
-            // CORS
+            // CORS - Restrict to specific origins for security
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowReactApp", policy =>
                 {
-                    policy.AllowAnyOrigin()
+                    policy.WithOrigins("https://localhost:5173", "http://localhost:5173", "https://localhost:49813", "http://localhost:49813")
                           .AllowAnyMethod()
-                          .AllowAnyHeader();
+                          .AllowAnyHeader()
+                          .AllowCredentials();
                 });
             });
 

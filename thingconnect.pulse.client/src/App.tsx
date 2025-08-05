@@ -10,6 +10,7 @@ function App() {
   const [needsSetup, setNeedsSetup] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [profileError, setProfileError] = useState(false);
 
   useEffect(() => {
     void checkAppStatus();
@@ -29,7 +30,10 @@ function App() {
           try {
             const profile = await authService.getUserProfile();
             setUserProfile(profile);
+            setProfileError(false);
           } catch {
+            console.error('Failed to load user profile, logging out');
+            setProfileError(true);
             authService.logout();
             setIsAuthenticated(false);
           }
@@ -54,12 +58,15 @@ function App() {
 
   const handleAuthSuccess = () => {
     setIsAuthenticated(true);
+    setProfileError(false);
     void (async () => {
       try {
         const profile = await authService.getUserProfile();
         setUserProfile(profile);
+        setProfileError(false);
       } catch {
-        console.error('Failed to load user profile');
+        console.error('Failed to load user profile after authentication');
+        setProfileError(true);
       }
     })();
   };
@@ -68,6 +75,7 @@ function App() {
     authService.logout();
     setIsAuthenticated(false);
     setUserProfile(null);
+    setProfileError(false);
   };
 
   if (isLoading) {
@@ -95,7 +103,7 @@ function App() {
             <Avatar.Fallback name={userProfile?.username || 'User'} />
           </Avatar.Root>
           <Text fontSize="sm" fontWeight="medium">
-            {userProfile?.username || 'Loading...'}
+            {profileError ? 'Profile Error' : userProfile?.username || 'Loading...'}
           </Text>
           <Button 
             size="sm" 

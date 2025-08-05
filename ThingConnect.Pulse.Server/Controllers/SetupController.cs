@@ -8,10 +8,12 @@ namespace ThingConnect.Pulse.Server.Controllers
     public class SetupController : ControllerBase
     {
         private readonly DatabaseService _databaseService;
+        private readonly ILogger<SetupController> _logger;
 
-        public SetupController(DatabaseService databaseService)
+        public SetupController(DatabaseService databaseService, ILogger<SetupController> logger)
         {
             _databaseService = databaseService;
+            _logger = logger;
         }
 
         [HttpGet("status")]
@@ -19,16 +21,21 @@ namespace ThingConnect.Pulse.Server.Controllers
         {
             try
             {
+                _logger.LogInformation("Checking setup status");
                 var hasUsers = await _databaseService.HasAnyUsersAsync();
                 
+                _logger.LogInformation("Setup status check completed. HasUsers: {HasUsers}", hasUsers);
                 return Ok(new SetupStatusResponse
                 {
                     IsSetupRequired = !hasUsers,
                     HasAdminUser = hasUsers
                 });
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error occurred while checking setup status");
+                
+                // Return safe fallback requiring setup
                 return Ok(new SetupStatusResponse
                 {
                     IsSetupRequired = true,
@@ -42,17 +49,21 @@ namespace ThingConnect.Pulse.Server.Controllers
         {
             try
             {
+                _logger.LogInformation("Attempting to complete setup");
                 var hasUsers = await _databaseService.HasAnyUsersAsync();
                 
                 if (hasUsers)
                 {
+                    _logger.LogInformation("Setup completion requested but setup already completed");
                     return Ok(new { message = "Setup already completed" });
                 }
                 
+                _logger.LogWarning("Setup completion requested but no users exist");
                 return BadRequest("Cannot complete setup without at least one user account");
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error occurred during setup completion");
                 return StatusCode(500, "An error occurred during setup completion");
             }
         }
