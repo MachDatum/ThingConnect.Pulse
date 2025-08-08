@@ -3,7 +3,18 @@
     "allow": [
       "Bash(npm run build:*)",
       "WebFetch(domain:chakra-ui.com)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(git branch:*)",
+      "Bash(git checkout:*)",
+      "mcp__chakra-ui__get_theme",
+      "mcp__chakra-ui__customize_theme",
+      "Bash(npx @chakra-ui/cli typegen:*)",
+      "Bash(npm run dev:*)",
+      "Bash(dotnet run:*)",
+      "Bash(cp:*)",
+      "WebFetch(domain:atlassian.design)",
+      "WebFetch(domain:atlaskit.atlassian.com)",
+      "mcp__chakra-ui__get_component_props"
     ],
     "deny": []
   }

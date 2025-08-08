@@ -21,24 +21,37 @@ ThingConnect.Pulse is a full-stack web application with:
 
 ## Development Commands
 
-### Frontend (run from `thingconnect.pulse.client/`)
+**IMPORTANT**: For development, run backend and frontend servers separately for optimal development experience.
+
+### Frontend Development (run from `thingconnect.pulse.client/`)
 ```bash
-npm run dev        # Start development server (Vite)
+npm run dev        # Start Vite development server (https://localhost:49812 or similar)
 npm run build      # Build for production (TypeScript compile + Vite build)
 npm run lint       # Run ESLint
 npm run format     # Format code with Prettier
 npm run preview    # Preview production build
 ```
 
-### Backend (run from `ThingConnect.Pulse.Server/`)
+### Backend Development (run from `ThingConnect.Pulse.Server/`)
 ```bash
-dotnet run         # Start development server
-dotnet build       # Build the project
+dotnet run         # Start ASP.NET Core API server (https://localhost:7286)
+dotnet build       # Build the backend project
+dotnet watch       # Start with hot reload for development
 ```
 
-### Full Stack (run from solution root)
+### Development Workflow
+1. **Terminal 1**: Start backend server from `ThingConnect.Pulse.Server/`
+   ```bash
+   dotnet run
+   ```
+2. **Terminal 2**: Start frontend server from `thingconnect.pulse.client/`
+   ```bash
+   npm run dev
+   ```
+
+### Production Build (run from solution root)
 ```bash
-dotnet run --project ThingConnect.Pulse.Server  # Starts both backend and frontend via SPA proxy
+dotnet run --project ThingConnect.Pulse.Server  # Serves built frontend via SPA proxy
 ```
 
 ## Development Setup

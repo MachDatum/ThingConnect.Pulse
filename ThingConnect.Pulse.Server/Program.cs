@@ -42,6 +42,18 @@ namespace ThingConnect.Pulse.Server
                     };
                 });
 
+            // Add CORS for development
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("DevelopmentCors", policy =>
+                {
+                    policy.WithOrigins("https://localhost:49812", "http://localhost:49812", "https://localhost:5173", "http://localhost:5173")
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+                });
+            });
+
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
@@ -49,25 +61,37 @@ namespace ThingConnect.Pulse.Server
 
             var app = builder.Build();
 
-            app.UseDefaultFiles();
-            app.UseStaticFiles();
-
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+            else
+            {
+                // Only serve static files in production
+                app.UseDefaultFiles();
+                app.UseStaticFiles();
+            }
 
             app.UseHttpsRedirection();
+
+            // Use CORS in development
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseCors("DevelopmentCors");
+            }
 
             app.UseAuthentication();
             app.UseAuthorization();
 
-
             app.MapControllers();
 
-            app.MapFallbackToFile("/index.html");
+            // Only serve SPA fallback in production
+            if (!app.Environment.IsDevelopment())
+            {
+                app.MapFallbackToFile("/index.html");
+            }
 
             app.Run();
         }
