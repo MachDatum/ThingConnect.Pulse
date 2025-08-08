@@ -627,4 +627,44 @@ const config = defineConfig({
   },
 })
 
+config.theme.components = {
+  ...config.theme.components,
+  Button: {
+    baseStyle: {
+      fontWeight: 'semibold',
+      borderRadius: 'base',
+    },
+    variants: {
+      primary: {
+        bg: 'brand.500',
+        color: 'white',
+        _hover: { bg: 'brand.600' }
+      },
+      secondary: {
+        bg: 'transparent',
+        color: 'brand.500',
+        border: '1px solid',
+        borderColor: 'brand.500',
+        _hover: { bg: 'brand.50' }
+      },
+      danger: {
+        bg: 'danger.500',
+        color: 'white',
+        _hover: { bg: 'danger.600' }
+      }
+    }
+  },
+  Input: {
+    baseStyle: {
+      field: {
+        borderColor: 'border.default',
+        _focus: {
+          borderColor: 'brand.500',
+          boxShadow: '0 0 0 1px brand.500'
+        }
+      }
+    }
+  }
+}
+
 export const system = createSystem(defaultConfig, config)
