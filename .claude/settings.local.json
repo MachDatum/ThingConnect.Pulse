@@ -14,7 +14,14 @@
       "Bash(cp:*)",
       "WebFetch(domain:atlassian.design)",
       "WebFetch(domain:atlaskit.atlassian.com)",
-      "mcp__chakra-ui__get_component_props"
+      "mcp__chakra-ui__get_component_props",
+      "mcp__puppeteer__puppeteer_screenshot",
+      "Bash(npm install:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(mkdir:*)",
+      "mcp__chakra-ui__list_components",
+      "mcp__chakra-ui__get_component_example"
     ],
     "deny": []
   }
