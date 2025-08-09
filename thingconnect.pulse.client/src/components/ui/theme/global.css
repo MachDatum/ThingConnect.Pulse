@@ -14,9 +14,10 @@ body {
 
 /* Smooth transitions for theme switching */
 * {
-  transition: background-color 0.2s ease-in-out, 
-              border-color 0.2s ease-in-out, 
-              color 0.2s ease-in-out;
+  transition:
+    background-color 0.2s ease-in-out,
+    border-color 0.2s ease-in-out,
+    color 0.2s ease-in-out;
 }
 
 /* Improve scrollbar styling in webkit browsers */

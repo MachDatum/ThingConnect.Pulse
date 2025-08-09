@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:atlassian.design)",
+      "Bash(npm run build:*)",
+      "mcp__chakra-ui__get_theme",
+      "mcp__chakra-ui__v2_to_v3_code_review",
+      "mcp__chakra-ui__get_component_example",
+      "mcp__chakra-ui__get_component_props",
+      "Bash(npm run dev:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run format:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": []
+  }
+}

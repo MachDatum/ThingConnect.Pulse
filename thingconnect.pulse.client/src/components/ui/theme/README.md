@@ -5,6 +5,7 @@ This directory contains the enterprise-focused theme configuration for ThingConn
 ## Design System Foundation
 
 ### 🏗️ Atlassian Design System Integration
+
 - **Design Tokens**: Follows Atlassian's token naming conventions and structure
 - **4px Grid System**: Consistent spacing based on Atlassian's rhythm
 - **Surface System**: Semantic background colors (default, sunken, raised, overlay)
@@ -12,6 +13,7 @@ This directory contains the enterprise-focused theme configuration for ThingConn
 - **Typography**: 2025 typography refresh with bolder fonts and improved readability
 
 ### 🎨 ThingConnect Brand Colors
+
 - **Primary Brand**: `#076bb3` - The signature ThingConnect blue extracted from logo
 - **Secondary Accent**: `#16a5a4` - The distinctive ThingConnect teal from logo
 - **Supporting Colors**: Dark variants `#124771` and `#097a7d` for depth and contrast
@@ -20,19 +22,23 @@ This directory contains the enterprise-focused theme configuration for ThingConn
 - **Accessibility**: WCAG compliant color contrasts
 
 ### 🌙 Dark/Light Mode Support
+
 - Seamless theme switching with `next-themes`
 - Automatic system preference detection
 - Smooth transitions between modes
 - Enterprise-optimized color schemes for both modes
 
 ### 📐 Typography System
+
 - Inter font family for modern, readable text
 - Comprehensive text styles (display, heading, body, caption, overline)
 - Consistent spacing and line heights
 - Professional letter spacing
 
 ### 🧱 Layout Styles
+
 Pre-built layer styles for common enterprise UI patterns:
+
 - `enterprise.card` - Card containers with proper shadows and borders
 - `enterprise.section` - Content sections with subtle backgrounds
 - `enterprise.header` - Navigation and header areas
@@ -41,8 +47,9 @@ Pre-built layer styles for common enterprise UI patterns:
 ## Usage
 
 ### Atlassian-Style Usage
+
 ```tsx
-import { Box, Text, Heading } from "@chakra-ui/react"
+import { Box, Text, Heading } from '@chakra-ui/react'
 
 function MyComponent() {
   return (
@@ -57,6 +64,7 @@ function MyComponent() {
 ```
 
 ### Legacy Enterprise Usage (Still Supported)
+
 ```tsx
 function LegacyComponent() {
   return (
@@ -71,6 +79,7 @@ function LegacyComponent() {
 ```
 
 ### Color Palette Usage
+
 ```tsx
 // Use semantic tokens that automatically adapt to light/dark mode
 <Button colorPalette="brand" variant="solid">
@@ -83,6 +92,7 @@ function LegacyComponent() {
 ```
 
 ### Theme Toggle
+
 ```tsx
 import { ColorModeButton } from "@/components/ui/color-mode"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
@@ -117,6 +127,7 @@ To modify the theme:
 ## Color Tokens
 
 ### ThingConnect Brand Colors
+
 - `brand.50` through `brand.950` - Full ThingConnect blue palette based on `#076bb3`
 - `brand.solid` - Primary ThingConnect blue (`#076bb3`)
 - `brand.fg` - Text color that adapts to light/dark mode
@@ -124,6 +135,7 @@ To modify the theme:
 - `brand.emphasized` - Highlighted background color
 
 ### ThingConnect Accent Colors
+
 - `accent.50` through `accent.950` - Full ThingConnect teal palette based on `#16a5a4`
 - `accent.solid` - Secondary ThingConnect teal (`#16a5a4`)
 - `accent.fg` - Accent text color that adapts to light/dark mode
@@ -131,6 +143,7 @@ To modify the theme:
 - `accent.emphasized` - Highlighted accent background color
 
 ### Semantic Colors
+
 - `bg` - Main background color
 - `bg.panel` - Panel/card background
 - `bg.muted` - Muted background
@@ -142,21 +155,25 @@ To modify the theme:
 ## Typography Styles
 
 ### Display Text
+
 - `display.large` - 7xl, bold, tight spacing
-- `display.medium` - 6xl, bold, tight spacing  
+- `display.medium` - 6xl, bold, tight spacing
 - `display.small` - 5xl, bold, comfortable spacing
 
 ### Headings
+
 - `heading.large` - 4xl, semibold
 - `heading.medium` - 3xl, semibold
 - `heading.small` - 2xl, semibold
 
 ### Body Text
+
 - `body.large` - lg, normal weight
 - `body.medium` - md, normal weight
 - `body.small` - sm, normal weight
 
 ### Utility Text
+
 - `caption` - xs, medium weight, tracked
 - `overline` - 2xs, bold, uppercase, widely tracked
 

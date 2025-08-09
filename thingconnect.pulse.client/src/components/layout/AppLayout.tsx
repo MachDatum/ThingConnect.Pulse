@@ -1,7 +1,7 @@
-import { Box, Flex, HStack } from "@chakra-ui/react"
-import { ColorModeButton } from "../ui/color-mode"
-import { Logo } from "../ui/logo"
-import type { ReactNode } from "react"
+import { Box, Flex, HStack } from '@chakra-ui/react'
+import { ColorModeButton } from '../ui/color-mode'
+import { Logo } from '../ui/logo'
+import type { ReactNode } from 'react'
 
 interface AppLayoutProps {
   children: ReactNode
@@ -16,10 +16,10 @@ export function AppLayout({ children, showHeader = true }: AppLayoutProps) {
           <Flex justify="space-between" align="center" maxW="7xl" mx="auto">
             <HStack gap="200" align="center">
               {/* Show full logo on larger screens, icon on mobile */}
-              <Box display={{ base: "none", md: "block" }}>
+              <Box display={{ base: 'none', md: 'block' }}>
                 <Logo variant="full" size="md" />
               </Box>
-              <Box display={{ base: "block", md: "none" }}>
+              <Box display={{ base: 'block', md: 'none' }}>
                 <Logo variant="icon" size="sm" />
               </Box>
               <Box color="fg.muted" fontWeight="400" textStyle="ui.heading.xsmall">
@@ -32,7 +32,7 @@ export function AppLayout({ children, showHeader = true }: AppLayoutProps) {
           </Flex>
         </Box>
       )}
-      
+
       <Box as="main" flex={1}>
         {children}
       </Box>

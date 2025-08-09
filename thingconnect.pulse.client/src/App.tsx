@@ -5,6 +5,7 @@ import { AppLayout } from './components/layout/AppLayout'
 import { authService } from './services/authService'
 import { Box, Text } from '@chakra-ui/react'
 import DashboardPage from './pages/DashboardPage'
+import ThemeShowcasePage from './pages/ThemeShowcasePage'
 import ProtectedRoute from './components/routing/ProtectedRoute'
 
 function App() {
@@ -43,8 +44,8 @@ function App() {
 
   return (
     <Routes>
-      <Route 
-        path="/login" 
+      <Route
+        path="/login"
         element={
           !isAuthenticated ? (
             <AppLayout>
@@ -53,21 +54,29 @@ function App() {
           ) : (
             <Navigate to="/dashboard" replace />
           )
-        } 
+        }
       />
-      <Route 
-        path="/dashboard" 
+      <Route
+        path="/dashboard"
         element={
           <ProtectedRoute isAuthenticated={isAuthenticated}>
             <DashboardPage />
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/" 
+      <Route
+        path="/theme-showcase"
+        element={
+          <ProtectedRoute isAuthenticated={isAuthenticated}>
+            <ThemeShowcasePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/"
         element={
           isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
-        } 
+        }
       />
     </Routes>
   )

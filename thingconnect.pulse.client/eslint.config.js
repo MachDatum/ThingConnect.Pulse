@@ -9,26 +9,26 @@ import prettier from 'eslint-config-prettier'
 import { globalIgnores } from 'eslint/config'
 
 export default tseslint.config([
-    globalIgnores(['dist']),
-    {
-        files: ['**/*.{ts,tsx}'],
-        extends: [
-            js.configs.recommended,
-            ...tseslint.configs.recommendedTypeChecked,
-            // ...tseslint.configs.strictTypeChecked, // optional strict rules
-            reactX.configs['recommended-typescript'],
-            reactDom.configs.recommended,
-            reactRefresh.configs.vite,
-            prettier,
-            ...pluginQuery.configs['flat/recommended'],
-        ],
-        languageOptions: {
-            ecmaVersion: 2020,
-            globals: globals.browser,
-            parserOptions: {
-                project: ['./tsconfig.node.json', './tsconfig.app.json'],
-                tsconfigRootDir: import.meta.dirname,
-            },
-        },
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      js.configs.recommended,
+      ...tseslint.configs.recommendedTypeChecked,
+      // ...tseslint.configs.strictTypeChecked, // optional strict rules
+      reactX.configs['recommended-typescript'],
+      reactDom.configs.recommended,
+      reactRefresh.configs.vite,
+      prettier,
+      ...pluginQuery.configs['flat/recommended'],
+    ],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
+  },
 ])

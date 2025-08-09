@@ -12,11 +12,7 @@ function ProtectedRoute({ isAuthenticated, children }: ProtectedRouteProps) {
     return <Navigate to="/login" replace />
   }
 
-  return (
-    <AppLayout>
-      {children}
-    </AppLayout>
-  )
+  return <AppLayout>{children}</AppLayout>
 }
 
 export default ProtectedRoute
