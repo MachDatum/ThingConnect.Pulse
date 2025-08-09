@@ -42,18 +42,6 @@ namespace ThingConnect.Pulse.Server
                     };
                 });
 
-            // Add CORS for development
-            builder.Services.AddCors(options =>
-            {
-                options.AddPolicy("DevelopmentCors", policy =>
-                {
-                    policy.WithOrigins("https://localhost:49812", "http://localhost:49812", "https://localhost:5173", "http://localhost:5173")
-                          .AllowAnyHeader()
-                          .AllowAnyMethod()
-                          .AllowCredentials();
-                });
-            });
-
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
@@ -75,12 +63,6 @@ namespace ThingConnect.Pulse.Server
             }
 
             app.UseHttpsRedirection();
-
-            // Use CORS in development
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseCors("DevelopmentCors");
-            }
 
             app.UseAuthentication();
             app.UseAuthorization();

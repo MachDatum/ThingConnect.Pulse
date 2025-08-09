@@ -11,12 +11,14 @@ namespace ThingConnect.Pulse.Server.Services
         private readonly string _secretKey;
         private readonly string _issuer;
         private readonly string _audience;
+        private readonly int _tokenExpiryDays;
 
         public JwtService(IConfiguration configuration)
         {
             _secretKey = configuration["Jwt:SecretKey"] ?? "ThisIsAVeryLongSecretKeyForJWTTokensWithAtLeast256BitsLength!";
             _issuer = configuration["Jwt:Issuer"] ?? "ThingConnect.Pulse";
             _audience = configuration["Jwt:Audience"] ?? "ThingConnect.Pulse.Client";
+            _tokenExpiryDays = configuration.GetValue<int>("Jwt:TokenExpiryDays", 7);
         }
 
         public string GenerateToken(User user)
@@ -32,7 +34,7 @@ namespace ThingConnect.Pulse.Server.Services
                     new Claim(ClaimTypes.Name, user.Username),
                     new Claim(ClaimTypes.Email, user.Email)
                 }),
-                Expires = DateTime.UtcNow.AddDays(7),
+                Expires = DateTime.UtcNow.AddDays(_tokenExpiryDays),
                 Issuer = _issuer,
                 Audience = _audience,
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
