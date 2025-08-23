@@ -1,0 +1,12 @@
+version: 1
+defaults:
+  interval_seconds: 30
+  timeout_ms: 2000
+  retries: 2
+groups:
+  - id: infrastructure
+    name: Infrastructure
+targets:
+  - name: Google DNS
+    host: 8.8.8.8
+    group: infrastructure

@@ -16,9 +16,13 @@ public class Program
         builder.Services.AddDbContext<PulseDbContext>(options =>
             options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+        // Add memory cache for settings service
+        builder.Services.AddMemoryCache();
+
         // Add configuration services
         builder.Services.AddSingleton<ConfigParser>();
         builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
+        builder.Services.AddScoped<ISettingsService, SettingsService>();
 
         builder.Services.AddControllers(options =>
         {

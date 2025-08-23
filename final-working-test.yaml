@@ -1,0 +1,20 @@
+version: 1
+defaults:
+  interval_seconds: 60
+  timeout_ms: 5000
+  retries: 2
+groups:
+  - id: dns-servers
+    name: DNS Servers
+    color: "#0066cc"
+  - id: websites
+    name: Websites
+targets:
+  - name: Cloudflare DNS
+    host: 1.1.1.1
+    group: dns-servers
+  - name: Google Search
+    host: google.com
+    group: websites
+    probe_type: http
+    port: 443

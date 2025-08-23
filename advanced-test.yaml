@@ -1,0 +1,35 @@
+version: 1
+defaults:
+  interval_seconds: 60
+  timeout_ms: 3000
+  retries: 3
+  http:
+    user_agent: "ThingConnectPulse/1.0"
+    expect_text: ""
+
+groups:
+  - id: infrastructure
+    name: Infrastructure
+    color: "#0066CC"
+    sort_order: 1
+  - id: applications
+    name: Applications
+    color: "#00AA00"
+    sort_order: 2
+
+targets:
+  - name: Google DNS
+    host: 8.8.8.8
+    group: infrastructure
+    type: icmp
+  - name: Cloudflare DNS
+    host: 1.1.1.1
+    group: infrastructure
+    type: icmp
+  - name: Example HTTP
+    host: example.com
+    group: applications
+    type: http
+    port: 80
+    path: "/"
+    expect_text: "Example Domain"

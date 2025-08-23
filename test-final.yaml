@@ -1,0 +1,15 @@
+version: 1
+defaults:
+  interval_seconds: 45
+  timeout_ms: 3000
+  retries: 3
+groups:
+  - id: final-test
+    name: Final Test Group
+    color: "#00ff00"
+targets:
+  - name: Final Test Host
+    host: google.com
+    group: final-test
+    probe_type: tcp
+    port: 80
