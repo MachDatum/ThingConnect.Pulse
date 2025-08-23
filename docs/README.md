@@ -32,8 +32,15 @@ The system uses YAML configuration files with JSON Schema validation:
 Entity Framework Core entities define the database structure:
 - Groups, Endpoints, CheckResults (raw and aggregated)
 - Configuration versioning with SHA-256 hash-based duplicate detection
+- Settings store with watermark tracking for rollup jobs
 - Rollup tables for performance optimization
 
 ## Implementation Status
 
+### Completed ✅
+- **Data Layer**: EF Core entities, migrations, SQLite configuration
+- **Configuration Management**: Apply, versions, download endpoints with full testing
+- **Settings Service**: Key-value store with memory caching and watermark methods
+
+### Specifications
 All specifications are **frozen** for v1 development. Changes require architectural review.

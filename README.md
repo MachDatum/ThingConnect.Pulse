@@ -59,12 +59,18 @@ POST /api/config/apply
 Content-Type: text/plain
 [YAML configuration content]
 
-# List all configuration versions
+# List all configuration versions  
 GET /api/config/versions
 
 # Download specific configuration version
 GET /api/config/versions/{id}
+
+# Settings management (internal)
+GET /api/settings/{key}
+POST /api/settings/{key}
 ```
+
+**Status**: Configuration management endpoints are fully implemented and tested. Settings service provides watermark tracking for rollup jobs.
 
 ## Development
 
@@ -95,10 +101,11 @@ GET /api/config/versions/{id}
 
 ### v1.0 Scope
 - **Network Monitoring**: ICMP ping, TCP connect, HTTP status checks
-- **Configuration**: YAML-based with JSON Schema validation and version tracking
-- **Data Storage**: SQLite with automatic rollups and retention
+- **Configuration**: ✅ YAML-based with JSON Schema validation and version tracking
+- **Data Storage**: ✅ SQLite with automatic rollups and retention foundation
 - **Web Interface**: Real-time status dashboard and historical views
-- **Configuration Management**: Apply, list, and download configuration versions
+- **Configuration Management**: ✅ Apply, list, and download configuration versions
+- **Settings Management**: ✅ Key-value store with watermark tracking for rollup jobs
 - **Alerting**: Status change detection with flap damping
 - **Deployment**: Single Windows service installer
 

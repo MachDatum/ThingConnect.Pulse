@@ -76,7 +76,7 @@ You can effectively work on **up to 6 parallel worktrees** without conflicts:
 | SEC-05 | P1 | 1d | Monitoring model & probe specs | 3 |
 | SEC-11 | P1 | 1d | Rollup algorithms specification | 6 |
 
-### PHASE 2: Data Layer (Week 1, Days 3-5)
+### PHASE 2: Data Layer (Week 1, Days 3-5) ✅ **COMPLETE**
 **Database foundation - EPIC #5**
 
 | Issue | Priority | Time | Description | Worktree | Status |
@@ -84,6 +84,12 @@ You can effectively work on **up to 6 parallel worktrees** without conflicts:
 | #10 | P1 | 1-2d | EF Core entities, PulseDbContext, migrations | 2 | ✅ **COMPLETE** - PR #56 |
 | #11 | P1 | 4-6h | Config version snapshot storage | 2 | ✅ **COMPLETE** - Commit 88e2dc0 |
 | #12 | P2 | 3-4h | Settings table, watermarks | 2 | ✅ **COMPLETE** - Commit 61626cb |
+
+**Phase 2 Summary**: All data layer components are complete and operational:
+- EF Core with SQLite properly configured and tested
+- ConfigVersion storage with SHA-256 hash-based duplicate detection
+- Settings service with memory caching and watermark tracking
+- Database migrations and entities match documented data model exactly
 
 ### PHASE 3: Monitoring Engine (Week 2, Days 1-3)
 **Core monitoring functionality**
@@ -210,7 +216,7 @@ git worktree remove ../pulse-env-setup
 
 - **Phase 0**: ✅ **COMPLETE** - Dev can run `dotnet build` successfully
 - **Phase 1**: All specs frozen, no more contract changes
-- **Phase 2**: ✅ **COMPLETE** - Database created, migrations run, config storage implemented
+- **Phase 2**: ✅ **COMPLETE** - Database created, migrations run, config storage & settings implemented with full testing
 - **Phase 3**: Can detect UP/DOWN state changes
 - **Phase 4**: All API endpoints return data (mock or real)
 - **Phase 5**: Rollups computed automatically

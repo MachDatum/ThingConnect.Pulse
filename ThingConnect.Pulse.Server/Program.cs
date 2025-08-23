@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ThingConnect.Pulse.Server.Data;
 using ThingConnect.Pulse.Server.Infrastructure;
 using ThingConnect.Pulse.Server.Services;
+using ThingConnect.Pulse.Server.Services.Monitoring;
 
 namespace ThingConnect.Pulse.Server;
 
@@ -19,10 +20,19 @@ public class Program
         // Add memory cache for settings service
         builder.Services.AddMemoryCache();
 
+        // Add HTTP client for probes
+        builder.Services.AddHttpClient();
+
         // Add configuration services
         builder.Services.AddSingleton<ConfigParser>();
         builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
         builder.Services.AddScoped<ISettingsService, SettingsService>();
+
+        // Add monitoring services
+        builder.Services.AddScoped<IProbeService, ProbeService>();
+        builder.Services.AddScoped<IOutageDetectionService, OutageDetectionService>();
+        builder.Services.AddScoped<IDiscoveryService, DiscoveryService>();
+        builder.Services.AddHostedService<MonitoringBackgroundService>();
 
         builder.Services.AddControllers(options =>
         {

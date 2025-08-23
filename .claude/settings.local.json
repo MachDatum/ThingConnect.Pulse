@@ -5,7 +5,8 @@
       "Bash(dotnet build)",
       "Bash(dotnet add package:*)",
       "Bash(curl:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(dotnet clean:*)"
     ],
     "deny": [],
     "ask": []
