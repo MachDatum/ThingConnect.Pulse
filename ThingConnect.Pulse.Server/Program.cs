@@ -1,6 +1,8 @@
 
 using Microsoft.EntityFrameworkCore;
 using ThingConnect.Pulse.Server.Data;
+using ThingConnect.Pulse.Server.Infrastructure;
+using ThingConnect.Pulse.Server.Services;
 
 namespace ThingConnect.Pulse.Server;
 
@@ -14,7 +16,14 @@ public class Program
         builder.Services.AddDbContext<PulseDbContext>(options =>
             options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-        builder.Services.AddControllers();
+        // Add configuration services
+        builder.Services.AddSingleton<ConfigParser>();
+        builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
+
+        builder.Services.AddControllers(options =>
+        {
+            options.InputFormatters.Insert(0, new PlainTextInputFormatter());
+        });
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
