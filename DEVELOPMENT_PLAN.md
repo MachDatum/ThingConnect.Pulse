@@ -83,7 +83,7 @@ You can effectively work on **up to 6 parallel worktrees** without conflicts:
 |-------|----------|------|-------------|----------|---------|
 | #10 | P1 | 1-2d | EF Core entities, PulseDbContext, migrations | 2 | ✅ **COMPLETE** - PR #56 |
 | #11 | P1 | 4-6h | Config version snapshot storage | 2 | ✅ **COMPLETE** - Commit 88e2dc0 |
-| #12 | P2 | 3-4h | Settings table, watermarks | 2 | 🔓 **UNLOCKED** |
+| #12 | P2 | 3-4h | Settings table, watermarks | 2 | ✅ **COMPLETE** - Commit 61626cb |
 
 ### PHASE 3: Monitoring Engine (Week 2, Days 1-3)
 **Core monitoring functionality**
