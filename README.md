@@ -68,9 +68,16 @@ GET /api/config/versions/{id}
 # Settings management (internal)
 GET /api/settings/{key}
 POST /api/settings/{key}
+
+# Monitoring test endpoints (development)
+POST /api/test/monitoring/test-probes
+POST /api/test/monitoring/test-outage-detection
+POST /api/test/monitoring/test-discovery
+GET /api/test/monitoring/check-results
+GET /api/test/monitoring/outages
 ```
 
-**Status**: Configuration management endpoints are fully implemented and tested. Settings service provides watermark tracking for rollup jobs.
+**Status**: Configuration management endpoints are fully implemented and tested. Settings service provides watermark tracking for rollup jobs. Monitoring engine is operational with continuous background probing and outage detection.
 
 ## Development
 
@@ -100,21 +107,25 @@ POST /api/settings/{key}
 ## Features
 
 ### v1.0 Scope
-- **Network Monitoring**: ICMP ping, TCP connect, HTTP status checks
+- **Network Monitoring**: ✅ ICMP ping, TCP connect, HTTP status checks with concurrent execution
 - **Configuration**: ✅ YAML-based with JSON Schema validation and version tracking
 - **Data Storage**: ✅ SQLite with automatic rollups and retention foundation
 - **Web Interface**: Real-time status dashboard and historical views
 - **Configuration Management**: ✅ Apply, list, and download configuration versions
 - **Settings Management**: ✅ Key-value store with watermark tracking for rollup jobs
-- **Alerting**: Status change detection with flap damping
+- **Alerting**: ✅ Status change detection with flap damping (2/2 thresholds)
+- **Outage Tracking**: ✅ Automatic outage detection with start/end timestamps
+- **Target Discovery**: ✅ CIDR range and wildcard expansion from configuration
 - **Deployment**: Single Windows service installer
 
 ### Monitoring Capabilities
-- **Device Discovery**: CIDR range and wildcard expansion
-- **Probe Types**: ICMP, TCP port checks, HTTP/HTTPS requests
-- **Status Logic**: 2 failures → DOWN, 2 successes → UP
-- **Data Retention**: Raw data (60 days), rollups (indefinite)
-- **Performance**: 100 concurrent probes, 5s timeout, 2 retries
+- **Device Discovery**: ✅ CIDR range and wildcard expansion (e.g., "10.0.0.0/24", "192.168.1.*")
+- **Probe Types**: ✅ ICMP ping, TCP port checks, HTTP/HTTPS requests with content matching
+- **Status Logic**: ✅ 2 failures → DOWN, 2 successes → UP (flap damping)
+- **Background Processing**: ✅ Continuous monitoring with configurable intervals per endpoint
+- **Data Retention**: Raw data (60 days), rollups (indefinite) 
+- **Performance**: ✅ 100 concurrent probes, configurable timeouts, retry logic
+- **State Management**: ✅ Per-endpoint success/fail streak tracking with outage detection
 
 ## Getting Help
 

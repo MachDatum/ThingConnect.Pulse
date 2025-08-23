@@ -333,7 +333,52 @@ targets:
 
 ---
 
-## 20) Adoption & Success Metrics
+## 20) Implementation Status (Current Progress) ✅
+
+### **Phase 0-3 Complete** (Foundation through Monitoring Engine)
+
+#### **✅ Data Layer (Phase 2)**
+- EF Core entities with SQLite provider configured
+- Database migrations for all tables (endpoints, check_result_raw, outages, rollups, etc.)
+- ConfigVersion storage with SHA-256 hash-based duplicate detection
+- Settings service with memory caching and watermark tracking for rollups
+
+#### **✅ Configuration Management**  
+- YAML parsing with YamlDotNet and JSON Schema validation
+- POST /api/config/apply endpoint with diff preview and version snapshots
+- GET /api/config/versions and GET /api/config/versions/{id} endpoints
+- Configuration versioning and restore capabilities tested and operational
+
+#### **✅ Monitoring Engine (Phase 3)**
+- **OutageDetectionService**: 2/2 flap damping thresholds with per-endpoint state tracking
+- **ProbeService**: ICMP ping, TCP connect, HTTP/HTTPS checks with timeout/retry logic
+- **DiscoveryService**: CIDR range expansion ("10.0.0.0/24"), wildcard expansion ("10.0.0.*"), hostname resolution
+- **MonitoringBackgroundService**: Continuous monitoring with semaphore-controlled concurrency (100 max)
+- Real-time probe execution, outage detection, and database persistence operational
+
+#### **📊 Current Capabilities**
+- ✅ All probe types (ICMP, TCP, HTTP) functional with proper error handling
+- ✅ Background service monitors endpoints with configurable intervals
+- ✅ State transitions and outage records automatically created/closed
+- ✅ Raw check results persisted to database with proper EF Core integration
+- ✅ Tested with live endpoints (Cloudflare DNS, Google Search) - monitoring operational
+
+#### **🚧 Next Phase Ready**
+- Phase 4: API Implementation (GET /api/status/live, history endpoints)
+- Phase 5: Background Jobs (15-minute and daily rollups)
+- Phase 6: Frontend (React UI for live board, endpoint detail, history views)
+
+### **Deployment Status**
+- ASP.NET Core server operational on localhost:8080
+- Database created and seeded with sample data  
+- Windows service hosting ready for implementation
+- Test endpoints available for monitoring engine validation
+
+**Implementation Confidence:** 0.9
+
+---
+
+## 21) Adoption & Success Metrics
 
 * **Install completion rate** (service up within 5 minutes).
 * **Active monitored endpoints** count distribution.
@@ -344,7 +389,7 @@ targets:
 
 ---
 
-## 21) Key Decisions — Rationale & Confidence (Quick Table)
+## 22) Key Decisions — Rationale & Confidence (Quick Table)
 
 | Area             | Decision                      | Rationale                                   | Confidence |
 | ---------------- | ----------------------------- | ------------------------------------------- | ---------- |
@@ -360,7 +405,7 @@ targets:
 
 ---
 
-## 22) Near‑Term Work Products (for the next steps)
+## 23) Near‑Term Work Products (for the next steps)
 
 * YAML **JSON Schema** + sample configs (hosts, wildcard, CIDR).
 * **ERD** and EF Core entity set (+ provider switch notes).

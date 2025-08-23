@@ -15,9 +15,11 @@ The OpenAPI specification defines all REST endpoints:
 - `GET /api/status/live` - Current status of all monitored endpoints
 - `GET /api/endpoints/{id}` - Detailed endpoint information
 - `GET /api/history/endpoint/{id}` - Historical status data
-- `POST /api/config/apply` - Apply new monitoring configuration
-- `GET /api/config/versions` - List all configuration versions
-- `GET /api/config/versions/{id}` - Download specific configuration version
+- `POST /api/config/apply` - ✅ Apply new monitoring configuration
+- `GET /api/config/versions` - ✅ List all configuration versions
+- `GET /api/config/versions/{id}` - ✅ Download specific configuration version
+
+**Monitoring Engine**: Operational with real-time probe execution, outage detection, and database persistence.
 
 ## Configuration Format
 
@@ -41,6 +43,9 @@ Entity Framework Core entities define the database structure:
 - **Data Layer**: EF Core entities, migrations, SQLite configuration
 - **Configuration Management**: Apply, versions, download endpoints with full testing
 - **Settings Service**: Key-value store with memory caching and watermark methods
+- **Monitoring Engine**: Complete probe services (ICMP, TCP, HTTP) with outage detection
+- **Background Processing**: Continuous endpoint monitoring with concurrency control
+- **State Management**: Flap damping and per-endpoint state tracking with database persistence
 
 ### Specifications
 All specifications are **frozen** for v1 development. Changes require architectural review.
