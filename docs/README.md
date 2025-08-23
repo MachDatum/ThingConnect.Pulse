@@ -1,0 +1,39 @@
+# Documentation
+
+Technical specifications and API documentation for ThingConnect Pulse.
+
+## Contents
+
+- **[openapi.yaml](./openapi.yaml)** - Complete REST API specification (frozen)
+- **[config.schema.json](./config.schema.json)** - YAML configuration JSON Schema
+- **[data-model.cs](./data-model.cs)** - Entity Framework Core entity definitions
+- **[rollup-spec.md](./rollup-spec.md)** - Data aggregation algorithm specifications
+
+## API Documentation
+
+The OpenAPI specification defines all REST endpoints:
+- `GET /api/status/live` - Current status of all monitored endpoints
+- `GET /api/endpoints/{id}` - Detailed endpoint information
+- `GET /api/history/endpoint/{id}` - Historical status data
+- `POST /api/config/apply` - Apply new monitoring configuration
+- `GET /api/config/versions` - List all configuration versions
+- `GET /api/config/versions/{id}` - Download specific configuration version
+
+## Configuration Format
+
+The system uses YAML configuration files with JSON Schema validation:
+- Target endpoint definitions (host, CIDR, wildcard)
+- Monitoring group organization
+- Probe type defaults (ICMP, TCP, HTTP)
+- Timing and retry settings
+
+## Data Model
+
+Entity Framework Core entities define the database structure:
+- Groups, Endpoints, CheckResults (raw and aggregated)
+- Configuration versioning with SHA-256 hash-based duplicate detection
+- Rollup tables for performance optimization
+
+## Implementation Status
+
+All specifications are **frozen** for v1 development. Changes require architectural review.

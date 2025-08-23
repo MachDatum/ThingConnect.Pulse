@@ -82,7 +82,7 @@ You can effectively work on **up to 6 parallel worktrees** without conflicts:
 | Issue | Priority | Time | Description | Worktree | Status |
 |-------|----------|------|-------------|----------|---------|
 | #10 | P1 | 1-2d | EF Core entities, PulseDbContext, migrations | 2 | ✅ **COMPLETE** - PR #56 |
-| #11 | P1 | 4-6h | Config version snapshot storage | 2 | 🔓 **UNLOCKED** |
+| #11 | P1 | 4-6h | Config version snapshot storage | 2 | ✅ **COMPLETE** - Commit 88e2dc0 |
 | #12 | P2 | 3-4h | Settings table, watermarks | 2 | 🔓 **UNLOCKED** |
 
 ### PHASE 3: Monitoring Engine (Week 2, Days 1-3)
@@ -210,7 +210,7 @@ git worktree remove ../pulse-env-setup
 
 - **Phase 0**: ✅ **COMPLETE** - Dev can run `dotnet build` successfully
 - **Phase 1**: All specs frozen, no more contract changes
-- **Phase 2**: ✅ **COMPLETE** - Database created, migrations run, can insert test data
+- **Phase 2**: ✅ **COMPLETE** - Database created, migrations run, config storage implemented
 - **Phase 3**: Can detect UP/DOWN state changes
 - **Phase 4**: All API endpoints return data (mock or real)
 - **Phase 5**: Rollups computed automatically
