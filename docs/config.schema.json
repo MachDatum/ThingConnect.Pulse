@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thingconnect.io/pulse/config.schema.json",
+  "title": "ThingConnect Pulse Config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "defaults", "groups", "targets"],
+  "properties": {
+    "version": { "type": "integer", "const": 1 },
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "interval_seconds": { "type": "integer", "minimum": 1, "default": 10 },
+        "timeout_ms": { "type": "integer", "minimum": 100, "default": 1500 },
+        "retries": { "type": "integer", "minimum": 0, "default": 1 },
+        "http": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "user_agent": { "type": "string", "default": "ThingConnectPulse/1.0" },
+            "expect_text": { "type": "string", "default": "" }
+          },
+          "default": {}
+        }
+      },
+      "required": ["interval_seconds", "timeout_ms", "retries"]
+    },
+    "groups": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$"
+          },
+          "name": { "type": "string", "minLength": 1 },
+          "parent_id": { "type": "string" },
+          "color": { "type": "string", "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" },
+          "sort_order": { "type": "integer" }
+        }
+      }
+    },
+    "targets": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/target" }
+    }
+  },
+  "$defs": {
+    "hostname": {
+      "type": "string",
+      "pattern": "^(?=.{1,253}$)(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\\.(?!-)[A-Za-z0-9-]{1,63}(?<!-))*\\.?$"
+    },
+    "ipv4": {
+      "type": "string",
+      "pattern": "^(?:(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)$"
+    },
+    "ipv6": {
+      "type": "string",
+      "pattern": "^[0-9A-Fa-f:]+$"
+    },
+    "cidr": {
+      "type": "string",
+      "pattern": "^(?:((?:(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1?\\d?\\d))\\/(?:[0-9]|[12][0-9]|3[0-2]))|((?:[0-9A-Fa-f:]+)\\/(?:[0-9]|[1-9]\\d|1[01]\\d|12[0-8])))$"
+    },
+    "wildcard": {
+      "type": "string",
+      "description": "IPv4 wildcard like 10.10.1.* (expands 1..254 by default)",
+      "pattern": "^(?:(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)\\.){3}\\*$"
+    },
+    "probeType": { "enum": ["icmp", "tcp", "http"] },
+    "baseTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "group"],
+      "properties": {
+        "type": { "$ref": "#/$defs/probeType" },
+        "group": { "type": "string" },
+        "name": { "type": "string" },
+        "interval_seconds": { "type": "integer", "minimum": 1 },
+        "timeout_ms": { "type": "integer", "minimum": 100 },
+        "retries": { "type": "integer", "minimum": 0 },
+        "expected_rtt_ms": { "type": "integer", "minimum": 1 },
+        "enabled": { "type": "boolean", "default": true },
+        "notes": { "type": "string" }
+      }
+    },
+    "locationHost": {
+      "oneOf": [
+        { "properties": { "host": { "oneOf": [ { "$ref": "#/$defs/hostname" }, { "$ref": "#/$defs/ipv4" }, { "$ref": "#/$defs/ipv6" } ] } }, "required": ["host"], "additionalProperties": true },
+        { "properties": { "cidr": { "$ref": "#/$defs/cidr" } }, "required": ["cidr"], "additionalProperties": true },
+        { "properties": { "wildcard": { "$ref": "#/$defs/wildcard" } }, "required": ["wildcard"], "additionalProperties": true }
+      ]
+    },
+    "target": {
+      "allOf": [
+        { "$ref": "#/$defs/baseTarget" },
+        { "$ref": "#/$defs/locationHost" },
+        {
+          "type": "object",
+          "properties": {
+            "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+            "http_path": { "type": "string", "default": "/" },
+            "http_match": { "type": "string" }
+          },
+          "allOf": [
+            {
+              "if": { "properties": { "type": { "const": "tcp" } } },
+              "then": { "required": ["port"] }
+            },
+            {
+              "if": { "properties": { "type": { "const": "http" } } },
+              "then": { "properties": { "port": { "default": 80 }, "http_path": { "minLength": 1 } } }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "version": 1,
+      "defaults": { "interval_seconds": 10, "timeout_ms": 1500, "retries": 1, "http": { "user_agent": "ThingConnectPulse/1.0", "expect_text": "" } },
+      "groups": [ { "id": "press", "name": "Press Shop" }, { "id": "lab", "name": "Quality Lab" } ],
+      "targets": [
+        { "type": "icmp", "host": "10.10.1.21", "name": "PLC-Press-01", "group": "press", "interval_seconds": 5 },
+        { "type": "tcp", "wildcard": "10.10.1.*", "port": 5900, "name": "HMI-VNC", "group": "press" },
+        { "type": "http", "cidr": "10.10.2.0/28", "http_path": "/health", "http_match": "OK", "name": "QMS-HTTP", "group": "lab" }
+      ]
+    }
+  ]
+}

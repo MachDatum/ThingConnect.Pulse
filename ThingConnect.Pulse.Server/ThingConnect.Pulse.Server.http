@@ -1,0 +1,6 @@
+@ThingConnect.Pulse.Server_HostAddress = http://localhost:5111
+
+GET {{ThingConnect.Pulse.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

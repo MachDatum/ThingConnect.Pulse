@@ -1,0 +1,317 @@
+openapi: 3.1.0
+info:
+  title: ThingConnect Pulse API
+  version: 1.0.0
+  description: >
+    Internal-only HTTP API for Pulse v1 (availability monitoring).
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/status/live:
+    get:
+      summary: Paged live status feed
+      parameters:
+        - in: query
+          name: group
+          schema: { type: string }
+        - in: query
+          name: search
+          schema: { type: string, description: "matches name/host" }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: pageSize
+          schema: { type: integer, minimum: 1, maximum: 500, default: 50 }
+      responses:
+        "200":
+          description: Live status page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PagedLive"
+  /api/endpoints/{id}:
+    get:
+      summary: Endpoint detail (with recent window)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: windowMinutes
+          schema: { type: integer, minimum: 5, maximum: 1440, default: 60 }
+      responses:
+        "200":
+          description: Endpoint detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EndpointDetail"
+        "404": { description: Not found }
+  /api/history/endpoint/{id}:
+    get:
+      summary: History for one endpoint
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: from
+          required: true
+          description: ISO8601 timestamp
+          schema: { type: string, format: date-time }
+        - in: query
+          name: to
+          required: true
+          description: ISO8601 timestamp
+          schema: { type: string, format: date-time }
+        - in: query
+          name: bucket
+          schema:
+            type: string
+            enum: [raw, 15m, daily]
+            default: 15m
+      responses:
+        "200":
+          description: History slice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HistoryResponse"
+        "400": { description: Invalid range }
+        "404": { description: Not found }
+  /api/export/csv:
+    get:
+      summary: Export CSV for endpoint or group
+      parameters:
+        - in: query
+          name: scope
+          required: true
+          schema: { type: string, enum: [endpoint, group] }
+        - in: query
+          name: id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: from
+          required: true
+          schema: { type: string, format: date-time }
+        - in: query
+          name: to
+          required: true
+          schema: { type: string, format: date-time }
+        - in: query
+          name: bucket
+          schema: { type: string, enum: [raw, 15m, daily, outages], default: 15m }
+      responses:
+        "200":
+          description: CSV stream
+          headers:
+            Content-Disposition:
+              schema: { type: string }
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+  /api/config/apply:
+    post:
+      summary: Validate and apply YAML
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema: { type: string, description: "Full YAML contents" }
+      responses:
+        "200":
+          description: Apply result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplyResult"
+        "400":
+          description: Validation errors
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrors"
+  /api/config/versions:
+    get:
+      summary: List config versions
+      responses:
+        "200":
+          description: Versions
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ConfigVersion" }
+  /api/config/versions/{id}:
+    get:
+      summary: Download a prior config version
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Plain YAML
+          content:
+            text/plain:
+              schema: { type: string }
+        "404": { description: Not found }
+  /api/updates/latest:
+    get:
+      summary: Check for updates (manual)
+      responses:
+        "200":
+          description: Version info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateInfo"
+
+components:
+  schemas:
+    Group:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        parent_id: { type: string, nullable: true }
+        color: { type: string, nullable: true }
+    Endpoint:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        group: { $ref: "#/components/schemas/Group" }
+        type: { type: string, enum: [icmp, tcp, http] }
+        host: { type: string }
+        port: { type: integer, nullable: true }
+        http_path: { type: string, nullable: true }
+        http_match: { type: string, nullable: true }
+        interval_seconds: { type: integer }
+        timeout_ms: { type: integer }
+        retries: { type: integer }
+        enabled: { type: boolean }
+    LiveStatusItem:
+      type: object
+      properties:
+        endpoint: { $ref: "#/components/schemas/Endpoint" }
+        status: { type: string, enum: [up, down, flapping] }
+        rtt_ms: { type: number, nullable: true }
+        last_change_ts: { type: string, format: date-time }
+        sparkline: 
+          type: array
+          items:
+            type: object
+            properties:
+              ts: { type: string, format: date-time }
+              s: { type: string, enum: [u, d] }
+    PageMeta:
+      type: object
+      properties:
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer }
+    PagedLive:
+      type: object
+      properties:
+        meta: { $ref: "#/components/schemas/PageMeta" }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/LiveStatusItem" }
+    RawCheck:
+      type: object
+      properties:
+        ts: { type: string, format: date-time }
+        status: { type: string, enum: [up, down] }
+        rtt_ms: { type: number, nullable: true }
+        error: { type: string, nullable: true }
+    RollupBucket:
+      type: object
+      properties:
+        bucket_ts: { type: string, format: date-time }
+        up_pct: { type: number, minimum: 0, maximum: 100 }
+        avg_rtt_ms: { type: number, nullable: true }
+        down_events: { type: integer }
+    DailyBucket:
+      type: object
+      properties:
+        bucket_date: { type: string, format: date }
+        up_pct: { type: number, minimum: 0, maximum: 100 }
+        avg_rtt_ms: { type: number, nullable: true }
+        down_events: { type: integer }
+    Outage:
+      type: object
+      properties:
+        started_ts: { type: string, format: date-time }
+        ended_ts: { type: string, format: date-time, nullable: true }
+        duration_s: { type: integer, nullable: true }
+        last_error: { type: string, nullable: true }
+    HistoryResponse:
+      type: object
+      properties:
+        endpoint: { $ref: "#/components/schemas/Endpoint" }
+        raw:
+          type: array
+          items: { $ref: "#/components/schemas/RawCheck" }
+        rollup_15m:
+          type: array
+          items: { $ref: "#/components/schemas/RollupBucket" }
+        rollup_daily:
+          type: array
+          items: { $ref: "#/components/schemas/DailyBucket" }
+        outages:
+          type: array
+          items: { $ref: "#/components/schemas/Outage" }
+    EndpointDetail:
+      type: object
+      properties:
+        endpoint: { $ref: "#/components/schemas/Endpoint" }
+        recent:
+          type: array
+          items: { $ref: "#/components/schemas/RawCheck" }
+        outages:
+          type: array
+          items: { $ref: "#/components/schemas/Outage" }
+    ConfigVersion:
+      type: object
+      properties:
+        id: { type: string }
+        applied_ts: { type: string, format: date-time }
+        file_hash: { type: string }
+        file_path: { type: string }
+        actor: { type: string, nullable: true }
+        note: { type: string, nullable: true }
+    ApplyResult:
+      type: object
+      properties:
+        config_version_id: { type: string }
+        added: { type: integer }
+        updated: { type: integer }
+        removed: { type: integer }
+        warnings:
+          type: array
+          items: { type: string }
+    ValidationErrors:
+      type: object
+      properties:
+        message: { type: string }
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              path: { type: string }
+              error: { type: string }
+    UpdateInfo:
+      type: object
+      properties:
+        current_version: { type: string }
+        latest_version: { type: string }
+        release_notes_url: { type: string }
