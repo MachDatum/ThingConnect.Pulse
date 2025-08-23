@@ -59,12 +59,12 @@ You can effectively work on **up to 6 parallel worktrees** without conflicts:
 ### PHASE 0: Foundation (Week 1, Days 1-2)
 **Must complete first - blocks everything else**
 
-| Issue | Priority | Time | Description | Worktree |
-|-------|----------|------|-------------|----------|
-| ENV-01 | P1 | 3-4h | Repository structure, folders, .gitignore | 1 |
-| ENV-03 | P1 | 3-4h | .editorconfig, Directory.Build.props, nullable refs | 1 |
-| ENV-09 | P1 | 1d | Backend setup, SQLite config, appsettings | 1 |
-| SEC-10 | P1 | 1d | Finalize data model, migration approach | 2 |
+| Issue | Priority | Time | Description | Worktree | Status |
+|-------|----------|------|-------------|----------|---------|
+| ENV-01 | P1 | 3-4h | Repository structure, folders, .gitignore | 1 | ✅ **COMPLETE** |
+| ENV-03 | P1 | 3-4h | .editorconfig, Directory.Build.props, nullable refs | 1 | ✅ **COMPLETE** |
+| ENV-09 | P1 | 1d | Backend setup, SQLite config, appsettings | 1 | ✅ **COMPLETE** |
+| SEC-10 | P1 | 1d | Finalize data model, migration approach | 2 | ✅ **COMPLETE** (via #10) |
 
 ### PHASE 1: Core Contracts (Week 1, Days 2-3)
 **Lock specifications for parallel work**
@@ -79,30 +79,30 @@ You can effectively work on **up to 6 parallel worktrees** without conflicts:
 ### PHASE 2: Data Layer (Week 1, Days 3-5)
 **Database foundation - EPIC #5**
 
-| Issue | Priority | Time | Description | Worktree |
-|-------|----------|------|-------------|----------|
-| #10 | P1 | 1-2d | EF Core entities, PulseDbContext, migrations | 2 |
-| #11 | P1 | 4-6h | Config version snapshot storage | 2 |
-| #12 | P2 | 3-4h | Settings table, watermarks | 2 |
+| Issue | Priority | Time | Description | Worktree | Status |
+|-------|----------|------|-------------|----------|---------|
+| #10 | P1 | 1-2d | EF Core entities, PulseDbContext, migrations | 2 | ✅ **COMPLETE** - PR #56 |
+| #11 | P1 | 4-6h | Config version snapshot storage | 2 | 🔓 **UNLOCKED** |
+| #12 | P2 | 3-4h | Settings table, watermarks | 2 | 🔓 **UNLOCKED** |
 
 ### PHASE 3: Monitoring Engine (Week 2, Days 1-3)
 **Core monitoring functionality**
 
-| Issue | Priority | Time | Description | Worktree |
-|-------|----------|------|-------------|----------|
-| #26 | P1 | 1d | Outage detection service | 3 |
-| SEC-06 | P1 | 4-6h | Discovery & expansion logic | 3 |
-| ENV-14 | P1 | 3-4h | Concurrency caps implementation | 3 |
+| Issue | Priority | Time | Description | Worktree | Status |
+|-------|----------|------|-------------|----------|---------|
+| #26 | P1 | 1d | Outage detection service | 3 | 🔓 **UNLOCKED** |
+| SEC-06 | P1 | 4-6h | Discovery & expansion logic | 3 | 🔓 **UNLOCKED** |
+| ENV-14 | P1 | 3-4h | Concurrency caps implementation | 3 | 🔓 **UNLOCKED** |
 
 ### PHASE 4: API Implementation (Week 2, Days 3-5)
 **REST endpoints - EPIC #6**
 
-| Issue | Priority | Time | Description | Worktree |
-|-------|----------|------|-------------|----------|
-| #13 | P1 | 4-6h | GET /api/status/live | 4 |
-| #14 | P1 | 4-6h | GET /api/history/endpoint/{id} | 4 |
-| #15 | P1 | 1d | POST /api/config/apply | 4 |
-| #16 | P2 | 3-4h | Config versions endpoints | 4 |
+| Issue | Priority | Time | Description | Worktree | Status |
+|-------|----------|------|-------------|----------|---------|
+| #13 | P1 | 4-6h | GET /api/status/live | 4 | 🔓 **UNLOCKED** |
+| #14 | P1 | 4-6h | GET /api/history/endpoint/{id} | 4 | 🔓 **UNLOCKED** |
+| #15 | P1 | 1d | POST /api/config/apply | 4 | 🔓 **UNLOCKED** |
+| #16 | P2 | 3-4h | Config versions endpoints | 4 | 🔓 **UNLOCKED** |
 
 ### PHASE 5: Background Jobs (Week 3, Days 1-2)
 **Data processing - EPIC #9**
@@ -162,15 +162,15 @@ You can effectively work on **up to 6 parallel worktrees** without conflicts:
 
 ```mermaid
 graph TD
-    ENV03[ENV-03: Code Style] --> EF10[#10: EF Core]
-    ENV09[ENV-09: Backend Setup] --> EF10
-    EF10 --> API13[#13: Live API]
-    EF10 --> OUT26[#26: Outage Detection]
-    API13 --> ROLL27[#27: Rollups]
+    ENV03[ENV-03: Code Style ✅] --> EF10[#10: EF Core ✅]
+    ENV09[ENV-09: Backend Setup ✅] --> EF10
+    EF10 --> API13[#13: Live API 🔓]
+    EF10 --> OUT26[#26: Outage Detection 🔓]
+    API13 --> ROLL27[#27: Rollups 🔓]
     OUT26 --> ROLL27
     
     SEC09[SEC-09: OpenAPI] --> API13
-    SEC07[SEC-07: Config Schema] --> CFG15[#15: Config Apply]
+    SEC07[SEC-07: Config Schema] --> CFG15[#15: Config Apply 🔓]
     
     ENV10[ENV-10: Frontend Setup] --> UI17[#17: App Shell]
     UI17 --> UI18[#18: Live Board]
@@ -208,9 +208,9 @@ git worktree remove ../pulse-env-setup
 
 ## Success Metrics Per Phase
 
-- **Phase 0**: Dev can run `dotnet build` successfully
+- **Phase 0**: ✅ **COMPLETE** - Dev can run `dotnet build` successfully
 - **Phase 1**: All specs frozen, no more contract changes
-- **Phase 2**: Database created, migrations run, can insert test data
+- **Phase 2**: ✅ **COMPLETE** - Database created, migrations run, can insert test data
 - **Phase 3**: Can detect UP/DOWN state changes
 - **Phase 4**: All API endpoints return data (mock or real)
 - **Phase 5**: Rollups computed automatically

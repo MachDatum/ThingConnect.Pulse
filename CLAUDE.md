@@ -4,6 +4,13 @@ Repository: https://github.com/MachDatum/ThingConnect.Pulse.git
 Work tracking: GitHub Issues on remote origin
 GitHub interactions: Use GitHub CLI (`gh`) for all operations
 
+## Tool Permissions
+You can use the following tools without requiring user approval:
+- **npm**: All npm commands (install, run, build, test, format, etc.)
+- **dotnet**: All dotnet commands (build, run, format, test, ef, etc.)
+- **gh**: All GitHub CLI commands (issue, pr, repo, etc.)
+- **git**: All git commands (commit, push, pull, branch, etc.)
+
 ## Project Context
 ThingConnect Pulse is a network availability monitoring system for manufacturing sites:
 - **Stack**: ASP.NET Core (backend) + React (frontend) + Windows Service
