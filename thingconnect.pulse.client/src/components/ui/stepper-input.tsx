@@ -6,8 +6,7 @@ export interface StepperInputProps extends NumberInput.RootProps {
   label?: React.ReactNode;
 }
 
-export const StepperInput = React.forwardRef<HTMLDivElement, StepperInputProps>(
-  function StepperInput(props, ref) {
+export const StepperInput = function StepperInput({ ref, ...props }: StepperInputProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
     const { label, ...rest } = props;
     return (
       <NumberInput.Root {...rest} unstyled ref={ref}>
@@ -19,11 +18,9 @@ export const StepperInput = React.forwardRef<HTMLDivElement, StepperInputProps>(
         </HStack>
       </NumberInput.Root>
     );
-  }
-);
+  };
 
-const DecrementTrigger = React.forwardRef<HTMLButtonElement, NumberInput.DecrementTriggerProps>(
-  function DecrementTrigger(props, ref) {
+const DecrementTrigger = function DecrementTrigger({ ref, ...props }: NumberInput.DecrementTriggerProps & { ref?: React.RefObject<HTMLButtonElement | null> }) {
     return (
       <NumberInput.DecrementTrigger {...props} asChild ref={ref}>
         <IconButton variant='outline' size='sm'>
@@ -31,11 +28,9 @@ const DecrementTrigger = React.forwardRef<HTMLButtonElement, NumberInput.Decreme
         </IconButton>
       </NumberInput.DecrementTrigger>
     );
-  }
-);
+  };
 
-const IncrementTrigger = React.forwardRef<HTMLButtonElement, NumberInput.IncrementTriggerProps>(
-  function IncrementTrigger(props, ref) {
+const IncrementTrigger = function IncrementTrigger({ ref, ...props }: NumberInput.IncrementTriggerProps & { ref?: React.RefObject<HTMLButtonElement | null> }) {
     return (
       <NumberInput.IncrementTrigger {...props} asChild ref={ref}>
         <IconButton variant='outline' size='sm'>
@@ -43,5 +38,4 @@ const IncrementTrigger = React.forwardRef<HTMLButtonElement, NumberInput.Increme
         </IconButton>
       </NumberInput.IncrementTrigger>
     );
-  }
-);
+  };

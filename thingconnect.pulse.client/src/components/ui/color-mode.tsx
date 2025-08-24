@@ -46,8 +46,7 @@ export function ColorModeIcon() {
 
 interface ColorModeButtonProps extends Omit<IconButtonProps, 'aria-label'> {}
 
-export const ColorModeButton = React.forwardRef<HTMLButtonElement, ColorModeButtonProps>(
-  function ColorModeButton(props, ref) {
+export const ColorModeButton = function ColorModeButton({ ref, ...props }: ColorModeButtonProps & { ref?: React.RefObject<HTMLButtonElement | null> }) {
     const { toggleColorMode } = useColorMode();
     return (
       <ClientOnly fallback={<Skeleton boxSize='8' />}>
@@ -69,11 +68,9 @@ export const ColorModeButton = React.forwardRef<HTMLButtonElement, ColorModeButt
         </IconButton>
       </ClientOnly>
     );
-  }
-);
+  };
 
-export const LightMode = React.forwardRef<HTMLSpanElement, SpanProps>(
-  function LightMode(props, ref) {
+export const LightMode = function LightMode({ ref, ...props }: SpanProps & { ref?: React.RefObject<HTMLSpanElement | null> }) {
     return (
       <Span
         color='fg'
@@ -85,10 +82,9 @@ export const LightMode = React.forwardRef<HTMLSpanElement, SpanProps>(
         {...props}
       />
     );
-  }
-);
+  };
 
-export const DarkMode = React.forwardRef<HTMLSpanElement, SpanProps>(function DarkMode(props, ref) {
+export const DarkMode = function DarkMode({ ref, ...props }: SpanProps & { ref?: React.RefObject<HTMLSpanElement | null> }) {
   return (
     <Span
       color='fg'
@@ -100,4 +96,4 @@ export const DarkMode = React.forwardRef<HTMLSpanElement, SpanProps>(function Da
       {...props}
     />
   );
-});
+};

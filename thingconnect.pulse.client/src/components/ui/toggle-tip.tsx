@@ -14,8 +14,7 @@ export interface ToggleTipProps extends ChakraPopover.RootProps {
   content?: React.ReactNode;
 }
 
-export const ToggleTip = React.forwardRef<HTMLDivElement, ToggleTipProps>(
-  function ToggleTip(props, ref) {
+export const ToggleTip = function ToggleTip({ ref, ...props }: ToggleTipProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
     const { showArrow, children, portalled = true, content, portalRef, ...rest } = props;
 
     return (
@@ -35,14 +34,13 @@ export const ToggleTip = React.forwardRef<HTMLDivElement, ToggleTipProps>(
         </Portal>
       </ChakraPopover.Root>
     );
-  }
-);
+  };
 
 export interface InfoTipProps extends Partial<ToggleTipProps> {
   buttonProps?: IconButtonProps | undefined;
 }
 
-export const InfoTip = React.forwardRef<HTMLDivElement, InfoTipProps>(function InfoTip(props, ref) {
+export const InfoTip = function InfoTip({ ref, ...props }: InfoTipProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
   const { children, buttonProps, ...rest } = props;
   return (
     <ToggleTip content={children} {...rest} ref={ref}>
@@ -51,4 +49,4 @@ export const InfoTip = React.forwardRef<HTMLDivElement, InfoTipProps>(function I
       </IconButton>
     </ToggleTip>
   );
-});
+};

@@ -7,8 +7,7 @@ interface NativeSelectRootProps extends Select.RootProps {
   icon?: React.ReactNode;
 }
 
-export const NativeSelectRoot = React.forwardRef<HTMLDivElement, NativeSelectRootProps>(
-  function NativeSelect(props, ref) {
+export const NativeSelectRoot = function NativeSelect({ ref, ...props }: NativeSelectRootProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
     const { icon, children, ...rest } = props;
     return (
       <Select.Root ref={ref} {...rest}>
@@ -16,8 +15,7 @@ export const NativeSelectRoot = React.forwardRef<HTMLDivElement, NativeSelectRoo
         <Select.Indicator>{icon}</Select.Indicator>
       </Select.Root>
     );
-  }
-);
+  };
 
 interface NativeSelectItem {
   value: string;
@@ -29,8 +27,7 @@ interface NativeSelectFieldProps extends Select.FieldProps {
   items?: Array<string | NativeSelectItem>;
 }
 
-export const NativeSelectField = React.forwardRef<HTMLSelectElement, NativeSelectFieldProps>(
-  function NativeSelectField(props, ref) {
+export const NativeSelectField = function NativeSelectField({ ref, ...props }: NativeSelectFieldProps & { ref?: React.RefObject<HTMLSelectElement | null> }) {
     const { items: itemsProp, children, ...rest } = props;
 
     const items = React.useMemo(
@@ -49,5 +46,4 @@ export const NativeSelectField = React.forwardRef<HTMLSelectElement, NativeSelec
         ))}
       </Select.Field>
     );
-  }
-);
+  };

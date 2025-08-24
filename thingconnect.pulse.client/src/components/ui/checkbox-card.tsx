@@ -11,8 +11,7 @@ export interface CheckboxCardProps extends ChakraCheckboxCard.RootProps {
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 }
 
-export const CheckboxCard = React.forwardRef<HTMLInputElement, CheckboxCardProps>(
-  function CheckboxCard(props, ref) {
+export const CheckboxCard = function CheckboxCard({ ref, ...props }: CheckboxCardProps & { ref?: React.RefObject<HTMLInputElement | null> }) {
     const {
       inputProps,
       label,
@@ -47,7 +46,6 @@ export const CheckboxCard = React.forwardRef<HTMLInputElement, CheckboxCardProps
         {addon && <ChakraCheckboxCard.Addon>{addon}</ChakraCheckboxCard.Addon>}
       </ChakraCheckboxCard.Root>
     );
-  }
-);
+  };
 
 export const CheckboxCardIndicator = ChakraCheckboxCard.Indicator;

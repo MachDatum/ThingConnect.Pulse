@@ -7,8 +7,7 @@ export interface EmptyStateProps extends ChakraEmptyState.RootProps {
   icon?: React.ReactNode;
 }
 
-export const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
-  function EmptyState(props, ref) {
+export const EmptyState = function EmptyState({ ref, ...props }: EmptyStateProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
     const { title, description, icon, children, ...rest } = props;
     return (
       <ChakraEmptyState.Root ref={ref} {...rest}>
@@ -26,5 +25,4 @@ export const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
         </ChakraEmptyState.Content>
       </ChakraEmptyState.Root>
     );
-  }
-);
+  };

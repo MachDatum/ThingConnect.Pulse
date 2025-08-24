@@ -6,8 +6,7 @@ interface AccordionItemTriggerProps extends Accordion.ItemTriggerProps {
   indicatorPlacement?: 'start' | 'end';
 }
 
-export const AccordionItemTrigger = React.forwardRef<HTMLButtonElement, AccordionItemTriggerProps>(
-  function AccordionItemTrigger(props, ref) {
+export const AccordionItemTrigger = function AccordionItemTrigger({ ref, ...props }: AccordionItemTriggerProps & { ref?: React.RefObject<HTMLButtonElement | null> }) {
     const { children, indicatorPlacement = 'end', ...rest } = props;
     return (
       <Accordion.ItemTrigger {...rest} ref={ref}>
@@ -26,20 +25,17 @@ export const AccordionItemTrigger = React.forwardRef<HTMLButtonElement, Accordio
         )}
       </Accordion.ItemTrigger>
     );
-  }
-);
+  };
 
 interface AccordionItemContentProps extends Accordion.ItemContentProps {}
 
-export const AccordionItemContent = React.forwardRef<HTMLDivElement, AccordionItemContentProps>(
-  function AccordionItemContent(props, ref) {
+export const AccordionItemContent = function AccordionItemContent({ ref, ...props }: AccordionItemContentProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
     return (
       <Accordion.ItemContent>
         <Accordion.ItemBody {...props} ref={ref} />
       </Accordion.ItemContent>
     );
-  }
-);
+  };
 
 export const AccordionRoot = Accordion.Root;
 export const AccordionItem = Accordion.Item;

@@ -5,12 +5,10 @@ import { LuX } from 'react-icons/lu';
 
 export type CloseButtonProps = ButtonProps;
 
-export const CloseButton = React.forwardRef<HTMLButtonElement, CloseButtonProps>(
-  function CloseButton(props, ref) {
+export const CloseButton = function CloseButton({ ref, ...props }: CloseButtonProps & { ref?: React.RefObject<HTMLButtonElement | null> }) {
     return (
       <ChakraIconButton variant='ghost' aria-label='Close' ref={ref} {...props}>
         {props.children ?? <LuX />}
       </ChakraIconButton>
     );
-  }
-);
+  };

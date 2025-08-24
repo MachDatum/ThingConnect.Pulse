@@ -11,8 +11,7 @@ interface RadioCardItemProps extends RadioCard.ItemProps {
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 }
 
-export const RadioCardItem = React.forwardRef<HTMLInputElement, RadioCardItemProps>(
-  function RadioCardItem(props, ref) {
+export const RadioCardItem = function RadioCardItem({ ref, ...props }: RadioCardItemProps & { ref?: React.RefObject<HTMLInputElement | null> }) {
     const {
       inputProps,
       label,
@@ -45,8 +44,7 @@ export const RadioCardItem = React.forwardRef<HTMLInputElement, RadioCardItemPro
         {addon && <RadioCard.ItemAddon>{addon}</RadioCard.ItemAddon>}
       </RadioCard.Item>
     );
-  }
-);
+  };
 
 export const RadioCardRoot = RadioCard.Root;
 export const RadioCardLabel = RadioCard.Label;

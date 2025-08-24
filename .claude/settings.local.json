@@ -6,7 +6,10 @@
       "Bash(dotnet add package:*)",
       "Bash(curl:*)",
       "Bash(taskkill:*)",
-      "Bash(dotnet clean:*)"
+      "Bash(dotnet clean:*)",
+      "mcp__chakra-ui__get_component_example",
+      "Bash(npm run build:*)",
+      "Bash(npm run lint)"
     ],
     "deny": [],
     "ask": []

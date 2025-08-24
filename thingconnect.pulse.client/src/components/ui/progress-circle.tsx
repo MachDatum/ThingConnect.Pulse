@@ -7,8 +7,7 @@ interface ProgressCircleRingProps extends ChakraProgressCircle.CircleProps {
   cap?: SystemStyleObject['strokeLinecap'];
 }
 
-export const ProgressCircleRing = React.forwardRef<SVGSVGElement, ProgressCircleRingProps>(
-  function ProgressCircleRing(props, ref) {
+export const ProgressCircleRing = function ProgressCircleRing({ ref, ...props }: ProgressCircleRingProps & { ref?: React.RefObject<SVGSVGElement | null> }) {
     const { trackColor, cap, color, ...rest } = props;
     return (
       <ChakraProgressCircle.Circle {...rest} ref={ref}>
@@ -16,18 +15,14 @@ export const ProgressCircleRing = React.forwardRef<SVGSVGElement, ProgressCircle
         <ChakraProgressCircle.Range stroke={color} strokeLinecap={cap} />
       </ChakraProgressCircle.Circle>
     );
-  }
-);
+  };
 
-export const ProgressCircleValueText = React.forwardRef<
-  HTMLDivElement,
-  ChakraProgressCircle.ValueTextProps
->(function ProgressCircleValueText(props, ref) {
+export const ProgressCircleValueText = function ProgressCircleValueText({ ref, ...props }: ChakraProgressCircle.ValueTextProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
   return (
     <AbsoluteCenter>
       <ChakraProgressCircle.ValueText {...props} ref={ref} />
     </AbsoluteCenter>
   );
-});
+};
 
 export const ProgressCircleRoot = ChakraProgressCircle.Root;

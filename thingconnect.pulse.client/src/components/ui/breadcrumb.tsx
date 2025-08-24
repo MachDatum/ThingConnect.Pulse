@@ -6,8 +6,7 @@ export interface BreadcrumbRootProps extends Breadcrumb.RootProps {
   separatorGap?: SystemStyleObject['gap'];
 }
 
-export const BreadcrumbRoot = React.forwardRef<HTMLDivElement, BreadcrumbRootProps>(
-  function BreadcrumbRoot(props, ref) {
+export const BreadcrumbRoot = function BreadcrumbRoot({ ref, ...props }: BreadcrumbRootProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
     const { separator, separatorGap, children, ...rest } = props;
 
     const validChildren = React.Children.toArray(children).filter(React.isValidElement);
@@ -27,8 +26,7 @@ export const BreadcrumbRoot = React.forwardRef<HTMLDivElement, BreadcrumbRootPro
         </Breadcrumb.List>
       </Breadcrumb.Root>
     );
-  }
-);
+  };
 
 export const BreadcrumbLink = Breadcrumb.Link;
 export const BreadcrumbCurrentLink = Breadcrumb.CurrentLink;

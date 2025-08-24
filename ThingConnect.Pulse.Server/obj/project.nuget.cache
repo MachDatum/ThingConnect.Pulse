@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "LnGCF8PTyGs=",
+  "dgSpecHash": "V1wPWdkTL7g=",
   "success": true,
-  "projectFilePath": "C:\\Users\\HemanandRamasamy\\source\\repos\\ThingConnect.Pulse\\ThingConnect.Pulse.Server\\ThingConnect.Pulse.Server.csproj",
+  "projectFilePath": "C:\\Users\\HemanandRamasamy\\source\\repos\\pulse-frontend\\ThingConnect.Pulse.Server\\ThingConnect.Pulse.Server.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\HemanandRamasamy\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\HemanandRamasamy\\.nuget\\packages\\microsoft.aspnetcore.spaproxy\\8.0.19\\microsoft.aspnetcore.spaproxy.8.0.19.nupkg.sha512",

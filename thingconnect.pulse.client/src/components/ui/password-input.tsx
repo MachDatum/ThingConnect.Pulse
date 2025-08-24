@@ -37,8 +37,7 @@ export interface PasswordInputProps extends InputProps, PasswordVisibilityProps 
   rootProps?: GroupProps;
 }
 
-export const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
-  function PasswordInput(props, ref) {
+export const PasswordInput = function PasswordInput({ ref, ...props }: PasswordInputProps & { ref?: React.RefObject<HTMLInputElement | null> }) {
     const {
       rootProps,
       defaultVisible,
@@ -76,11 +75,9 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputPro
         <Input {...rest} ref={mergeRefs(ref, inputRef)} type={visible ? 'text' : 'password'} />
       </InputGroup>
     );
-  }
-);
+  };
 
-const VisibilityTrigger = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  function VisibilityTrigger(props, ref) {
+const VisibilityTrigger = function VisibilityTrigger({ ref, ...props }: ButtonProps & { ref?: React.RefObject<HTMLButtonElement | null> }) {
     return (
       <IconButton
         tabIndex={-1}
@@ -94,16 +91,14 @@ const VisibilityTrigger = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       />
     );
-  }
-);
+  };
 
 interface PasswordStrengthMeterProps extends StackProps {
   max?: number;
   value: number;
 }
 
-export const PasswordStrengthMeter = React.forwardRef<HTMLDivElement, PasswordStrengthMeterProps>(
-  function PasswordStrengthMeter(props, ref) {
+export const PasswordStrengthMeter = function PasswordStrengthMeter({ ref, ...props }: PasswordStrengthMeterProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
     const { max = 4, value, ...rest } = props;
 
     const percent = (value / max) * 100;
@@ -131,8 +126,7 @@ export const PasswordStrengthMeter = React.forwardRef<HTMLDivElement, PasswordSt
         {label && <HStack textStyle='xs'>{label}</HStack>}
       </Stack>
     );
-  }
-);
+  };
 
 function getColorPalette(percent: number) {
   switch (true) {

@@ -20,8 +20,7 @@ function normalize(items: Array<string | Item>): Item[] {
   });
 }
 
-export const SegmentedControl = React.forwardRef<HTMLDivElement, SegmentedControlProps>(
-  function SegmentedControl(props, ref) {
+export const SegmentedControl = function SegmentedControl({ ref, ...props }: SegmentedControlProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
     const { items, ...rest } = props;
     const data = React.useMemo(() => normalize(items), [items]);
 
@@ -38,5 +37,4 @@ export const SegmentedControl = React.forwardRef<HTMLDivElement, SegmentedContro
         </For>
       </SegmentGroup.Root>
     );
-  }
-);
+  };

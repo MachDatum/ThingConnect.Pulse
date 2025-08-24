@@ -16,7 +16,7 @@ const variantMap = {
   ghost: { on: 'subtle', off: 'ghost' },
 } as const;
 
-export const Toggle = React.forwardRef<HTMLButtonElement, ToggleProps>(function Toggle(props, ref) {
+export const Toggle = function Toggle({ ref, ...props }: ToggleProps & { ref?: React.RefObject<HTMLButtonElement | null> }) {
   const { variant = 'subtle', size, children, ...rest } = props;
   const variantConfig = variantMap[variant];
 
@@ -27,18 +27,16 @@ export const Toggle = React.forwardRef<HTMLButtonElement, ToggleProps>(function 
       </ToggleBaseButton>
     </ChakraToggle.Root>
   );
-});
+};
 
 interface ToggleBaseButtonProps extends Omit<ButtonProps, 'variant'> {
   variant: Record<'on' | 'off', ButtonProps['variant']>;
 }
 
-const ToggleBaseButton = React.forwardRef<HTMLButtonElement, ToggleBaseButtonProps>(
-  function ToggleBaseButton(props, ref) {
+const ToggleBaseButton = function ToggleBaseButton({ ref, ...props }: ToggleBaseButtonProps & { ref?: React.RefObject<HTMLButtonElement | null> }) {
     const toggle = useToggleContext();
     const { variant, ...rest } = props;
     return <Button variant={toggle.pressed ? variant.on : variant.off} ref={ref} {...rest} />;
-  }
-);
+  };
 
 export const ToggleIndicator = ChakraToggle.Indicator;
