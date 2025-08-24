@@ -118,13 +118,13 @@ You can effectively work on **up to 6 parallel worktrees** without conflicts:
 | #15 | P1 | 1d | POST /api/config/apply | 4 | ✅ **COMPLETE** |
 | #16 | P2 | 3-4h | Config versions endpoints | 4 | ✅ **COMPLETE** |
 
-### PHASE 5: Background Jobs (Week 3, Days 1-2) 🚧 **IN PROGRESS**
+### PHASE 5: Background Jobs (Week 3, Days 1-2) ✅ **COMPLETE**
 **Data processing - EPIC #9**
 
 | Issue | Priority | Time | Description | Worktree | Status |
 |-------|----------|------|-------------|----------|---------|
 | #27 | P1 | 1d | 15-minute rollup job | 3 | ✅ **COMPLETE** |
-| #28 | P2 | 4-6h | Daily rollup job | 3 | 🔓 **UNLOCKED** |
+| #28 | P2 | 4-6h | Daily rollup job | 3 | ✅ **COMPLETE** |
 | #29 | P2 | 4-6h | Prune tool for raw data | 3 | 🔓 **UNLOCKED** |
 
 ### PHASE 6: Frontend Core (Week 2-3, Parallel)
@@ -227,7 +227,7 @@ git worktree remove ../pulse-env-setup
 - **Phase 2**: ✅ **COMPLETE** - Database created, migrations run, config storage & settings implemented with full testing
 - **Phase 3**: ✅ **COMPLETE** - Can detect UP/DOWN state changes with continuous monitoring, outage tracking, and concurrent probe execution
 - **Phase 4**: ✅ **COMPLETE** - All 4 API endpoints implemented and tested: live status, history, config apply, and config versions.
-- **Phase 5**: 🚧 **IN PROGRESS** - Issue #27 complete: 15-minute rollups computed automatically every 5 minutes with watermark tracking
+- **Phase 5**: ✅ **COMPLETE** - Issues #27 and #28 complete: 15-minute and daily rollups computed automatically every 5 minutes with watermark tracking
 - **Phase 6**: UI loads, shows live status
 - **Phase 7**: Service installs and runs
 - **Phase 8**: All tests pass, code quality gates met
