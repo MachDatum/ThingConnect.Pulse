@@ -46,6 +46,7 @@ Entity Framework Core entities define the database structure:
 - **Monitoring Engine**: Complete probe services (ICMP, TCP, HTTP) with outage detection
 - **Background Processing**: Continuous endpoint monitoring with concurrency control
 - **State Management**: Flap damping and per-endpoint state tracking with database persistence
+- **Rollup Processing**: 15-minute and daily rollup background service with automatic aggregation every 5 minutes
 
 ### Specifications
 All specifications are **frozen** for v1 development. Changes require architectural review.
