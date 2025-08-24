@@ -8,6 +8,8 @@
       "Bash(taskkill:*)",
       "Bash(dotnet clean:*)",
       "Bash(dotnet run:*)",
+      "Bash(powershell:*)",
+      "Bash(dotnet build:*)",
       "Bash(powershell:*)"
     ],
     "deny": [],
