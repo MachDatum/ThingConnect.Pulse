@@ -50,8 +50,8 @@ public sealed class StatusController : ControllerBase
             _logger.LogInformation("Getting live status - group: {Group}, search: {Search}, page: {Page}, pageSize: {PageSize}",
                 group, search, page, pageSize);
 
-            var result = await _statusService.GetLiveStatusAsync(group, search, page, pageSize);
-            
+            PagedLiveDto result = await _statusService.GetLiveStatusAsync(group, search, page, pageSize);
+
             return Ok(result);
         }
         catch (Exception ex)
@@ -104,18 +104,18 @@ public sealed class HistoryController : ControllerBase
             }
 
             // Parse and validate date parameters
-            if (!DateTimeOffset.TryParse(from, out var fromDate))
+            if (!DateTimeOffset.TryParse(from, out DateTimeOffset fromDate))
             {
                 return BadRequest(new { message = "Invalid 'from' date format. Use ISO 8601 format." });
             }
 
-            if (!DateTimeOffset.TryParse(to, out var toDate))
+            if (!DateTimeOffset.TryParse(to, out DateTimeOffset toDate))
             {
                 return BadRequest(new { message = "Invalid 'to' date format. Use ISO 8601 format." });
             }
 
             // Validate bucket parameter
-            var validBuckets = new[] { "raw", "15m", "daily" };
+            string[] validBuckets = new[] { "raw", "15m", "daily" };
             if (!validBuckets.Contains(bucket.ToLower()))
             {
                 return BadRequest(new { message = $"Invalid bucket type '{bucket}'. Valid values: {string.Join(", ", validBuckets)}" });
@@ -124,8 +124,8 @@ public sealed class HistoryController : ControllerBase
             _logger.LogInformation("Getting endpoint history - id: {Id}, from: {From}, to: {To}, bucket: {Bucket}",
                 id, fromDate, toDate, bucket);
 
-            var result = await _historyService.GetEndpointHistoryAsync(id, fromDate, toDate, bucket);
-            
+            HistoryResponseDto? result = await _historyService.GetEndpointHistoryAsync(id, fromDate, toDate, bucket);
+
             if (result == null)
             {
                 return NotFound(new { message = $"Endpoint with ID {id} not found" });

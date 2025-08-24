@@ -1,5 +1,3 @@
-using ThingConnect.Pulse.Server.Data;
-
 namespace ThingConnect.Pulse.Server.Models;
 
 public sealed class LiveStatusItemDto

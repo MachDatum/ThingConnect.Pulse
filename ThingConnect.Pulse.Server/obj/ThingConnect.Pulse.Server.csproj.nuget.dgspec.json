@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\HemanandRamasamy\\source\\repos\\ThingConnect.Pulse\\ThingConnect.Pulse.Server\\ThingConnect.Pulse.Server.csproj": {}
+    "C:\\Users\\HemanandRamasamy\\source\\repos\\pulse-api\\ThingConnect.Pulse.Server\\ThingConnect.Pulse.Server.csproj": {}
   },
   "projects": {
-    "C:\\Users\\HemanandRamasamy\\source\\repos\\ThingConnect.Pulse\\ThingConnect.Pulse.Server\\ThingConnect.Pulse.Server.csproj": {
+    "C:\\Users\\HemanandRamasamy\\source\\repos\\pulse-api\\ThingConnect.Pulse.Server\\ThingConnect.Pulse.Server.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\HemanandRamasamy\\source\\repos\\ThingConnect.Pulse\\ThingConnect.Pulse.Server\\ThingConnect.Pulse.Server.csproj",
+        "projectUniqueName": "C:\\Users\\HemanandRamasamy\\source\\repos\\pulse-api\\ThingConnect.Pulse.Server\\ThingConnect.Pulse.Server.csproj",
         "projectName": "ThingConnect.Pulse.Server",
-        "projectPath": "C:\\Users\\HemanandRamasamy\\source\\repos\\ThingConnect.Pulse\\ThingConnect.Pulse.Server\\ThingConnect.Pulse.Server.csproj",
+        "projectPath": "C:\\Users\\HemanandRamasamy\\source\\repos\\pulse-api\\ThingConnect.Pulse.Server\\ThingConnect.Pulse.Server.csproj",
         "packagesPath": "C:\\Users\\HemanandRamasamy\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\HemanandRamasamy\\source\\repos\\ThingConnect.Pulse\\ThingConnect.Pulse.Server\\obj\\",
+        "outputPath": "C:\\Users\\HemanandRamasamy\\source\\repos\\pulse-api\\ThingConnect.Pulse.Server\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

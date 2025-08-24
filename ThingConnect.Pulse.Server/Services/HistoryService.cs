@@ -32,14 +32,14 @@ public sealed class HistoryService : IHistoryService
         }
 
         // Validate date range isn't too large (max 90 days for raw data, 2 years for rollups)
-        var maxRange = bucket == "raw" ? TimeSpan.FromDays(90) : TimeSpan.FromDays(730);
+        TimeSpan maxRange = bucket == "raw" ? TimeSpan.FromDays(90) : TimeSpan.FromDays(730);
         if (to - from > maxRange)
         {
             throw new ArgumentException($"Date range too large for bucket type '{bucket}'. Maximum: {maxRange.TotalDays} days");
         }
 
         // Get the endpoint
-        var endpoint = await _context.Endpoints
+        Data.Endpoint? endpoint = await _context.Endpoints
             .Include(e => e.Group)
             .FirstOrDefaultAsync(e => e.Id == endpointId);
 

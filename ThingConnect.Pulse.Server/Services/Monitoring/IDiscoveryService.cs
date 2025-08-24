@@ -1,5 +1,3 @@
-using ThingConnect.Pulse.Server.Data;
-
 namespace ThingConnect.Pulse.Server.Services.Monitoring;
 
 /// <summary>
@@ -27,6 +25,6 @@ public interface IDiscoveryService
     /// Expands configuration targets into concrete endpoints based on their host specification.
     /// Handles single hosts, CIDR ranges, and wildcards.
     /// </summary>
-    Task<IEnumerable<Data.Endpoint>> ExpandTargetsAsync(IEnumerable<dynamic> configTargets, 
+    Task<IEnumerable<Data.Endpoint>> ExpandTargetsAsync(IEnumerable<dynamic> configTargets,
         CancellationToken cancellationToken = default);
 }

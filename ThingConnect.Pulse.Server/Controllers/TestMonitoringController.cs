@@ -39,15 +39,15 @@ public class TestMonitoringController : ControllerBase
         var results = new List<object>();
 
         // Test ICMP probe
-        var pingResult = await _probeService.PingAsync(Guid.NewGuid(), "8.8.8.8", 2000);
+        CheckResult pingResult = await _probeService.PingAsync(Guid.NewGuid(), "8.8.8.8", 2000);
         results.Add(new { Type = "ICMP", Target = "8.8.8.8", Status = pingResult.Status, RTT = pingResult.RttMs, Error = pingResult.Error });
 
         // Test TCP probe
-        var tcpResult = await _probeService.TcpConnectAsync(Guid.NewGuid(), "google.com", 80, 2000);
+        CheckResult tcpResult = await _probeService.TcpConnectAsync(Guid.NewGuid(), "google.com", 80, 2000);
         results.Add(new { Type = "TCP", Target = "google.com:80", Status = tcpResult.Status, RTT = tcpResult.RttMs, Error = tcpResult.Error });
 
         // Test HTTP probe
-        var httpResult = await _probeService.HttpCheckAsync(Guid.NewGuid(), "httpbin.org", 80, "/get", null, 3000);
+        CheckResult httpResult = await _probeService.HttpCheckAsync(Guid.NewGuid(), "httpbin.org", 80, "/get", null, 3000);
         results.Add(new { Type = "HTTP", Target = "httpbin.org/get", Status = httpResult.Status, RTT = httpResult.RttMs, Error = httpResult.Error });
 
         return Ok(new { Results = results, Timestamp = DateTimeOffset.UtcNow });
@@ -63,7 +63,7 @@ public class TestMonitoringController : ControllerBase
         var results = new List<object>();
 
         // Simulate probe sequence: SUCCESS, SUCCESS, FAIL, FAIL (should trigger DOWN)
-        var sequence = new[]
+        CheckResult[] sequence = new[]
         {
             CheckResult.Success(testEndpointId, DateTimeOffset.UtcNow.AddMinutes(-4), 25.5),
             CheckResult.Success(testEndpointId, DateTimeOffset.UtcNow.AddMinutes(-3), 28.1),
@@ -73,11 +73,11 @@ public class TestMonitoringController : ControllerBase
             CheckResult.Success(testEndpointId, DateTimeOffset.UtcNow, 19.7)
         };
 
-        foreach (var result in sequence)
+        foreach (CheckResult? result in sequence)
         {
-            var stateChanged = await _outageService.ProcessCheckResultAsync(result);
-            var state = _outageService.GetMonitorState(testEndpointId);
-            
+            bool stateChanged = await _outageService.ProcessCheckResultAsync(result);
+            MonitorState? state = _outageService.GetMonitorState(testEndpointId);
+
             results.Add(new
             {
                 Timestamp = result.Timestamp,
@@ -110,7 +110,7 @@ public class TestMonitoringController : ControllerBase
         results.Add(new { Type = "Wildcard", Input = "10.0.0.*", Range = "1-5", Expanded = wildcardHosts });
 
         // Test hostname resolution
-        var resolvedHosts = await _discoveryService.ResolveHostnameAsync("google.com");
+        IEnumerable<string> resolvedHosts = await _discoveryService.ResolveHostnameAsync("google.com");
         results.Add(new { Type = "Hostname", Input = "google.com", Resolved = resolvedHosts });
 
         return Ok(new { Results = results, Timestamp = DateTimeOffset.UtcNow });

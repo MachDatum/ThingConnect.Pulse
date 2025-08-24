@@ -1,6 +1,4 @@
 // ThingConnect Pulse - Database Seed Data for Testing (v1)
-using Microsoft.EntityFrameworkCore;
-
 namespace ThingConnect.Pulse.Server.Data;
 
 public static class SeedData
@@ -17,7 +15,7 @@ public static class SeedData
         }
 
         // Seed Groups
-        var groups = new[]
+        Group[] groups = new[]
         {
             new Group { Id = "servers", Name = "Servers", Color = "#2563eb" },
             new Group { Id = "network", Name = "Network Equipment", Color = "#059669" },
@@ -27,7 +25,7 @@ public static class SeedData
         context.Groups.AddRange(groups);
 
         // Seed Endpoints
-        var endpoints = new[]
+        Endpoint[] endpoints = new[]
         {
             new Endpoint
             {
@@ -73,10 +71,10 @@ public static class SeedData
         context.Endpoints.AddRange(endpoints);
 
         // Seed some test check results
-        var now = DateTimeOffset.UtcNow;
+        DateTimeOffset now = DateTimeOffset.UtcNow;
         var checkResults = new List<CheckResultRaw>();
 
-        foreach (var endpoint in endpoints)
+        foreach (Endpoint? endpoint in endpoints)
         {
             for (int i = 0; i < 5; i++)
             {
@@ -93,7 +91,7 @@ public static class SeedData
         context.CheckResultsRaw.AddRange(checkResults);
 
         // Seed Settings
-        var settings = new[]
+        Setting[] settings = new[]
         {
             new Setting { K = "version", V = "1.0.0" },
             new Setting { K = "last_rollup_15m", V = now.ToString("O") },

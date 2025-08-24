@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ThingConnect.Pulse.Server.Data;
 using ThingConnect.Pulse.Server.Models;
-using ThingConnect.Pulse.Server.Services.Monitoring;
 
 namespace ThingConnect.Pulse.Server.Services;
 
@@ -23,11 +22,11 @@ public sealed class StatusService : IStatusService
 
     public async Task<PagedLiveDto> GetLiveStatusAsync(string? group, string? search, int page, int pageSize)
     {
-        _logger.LogDebug("Getting live status with filters: group={Group}, search={Search}, page={Page}, pageSize={PageSize}", 
+        _logger.LogDebug("Getting live status with filters: group={Group}, search={Search}, page={Page}, pageSize={PageSize}",
             group, search, page, pageSize);
 
         // Build base query for enabled endpoints
-        var query = _context.Endpoints
+        IQueryable<Data.Endpoint> query = _context.Endpoints
             .Include(e => e.Group)
             .Where(e => e.Enabled)
             .AsQueryable();
@@ -41,17 +40,17 @@ public sealed class StatusService : IStatusService
         // Apply search filter (matches name or host)
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var searchLower = search.ToLower();
-            query = query.Where(e => 
-                e.Name.ToLower().Contains(searchLower) || 
+            string searchLower = search.ToLower();
+            query = query.Where(e =>
+                e.Name.ToLower().Contains(searchLower) ||
                 e.Host.ToLower().Contains(searchLower));
         }
 
         // Get total count for pagination
-        var totalCount = await query.CountAsync();
+        int totalCount = await query.CountAsync();
 
         // Apply pagination
-        var endpoints = await query
+        List<Data.Endpoint> endpoints = await query
             .OrderBy(e => e.GroupId)
             .ThenBy(e => e.Name)
             .Skip((page - 1) * pageSize)
@@ -61,13 +60,13 @@ public sealed class StatusService : IStatusService
         // Get live status for each endpoint
         var items = new List<LiveStatusItemDto>();
         var endpointIds = endpoints.Select(e => e.Id).ToList();
-        
+
         // Get latest checks for all endpoints
         // SQLite doesn't support DateTimeOffset in OrderBy, so we need to fetch and order in memory
-        var allChecks = await _context.CheckResultsRaw
+        List<CheckResultRaw> allChecks = await _context.CheckResultsRaw
             .Where(c => endpointIds.Contains(c.EndpointId))
             .ToListAsync();
-        
+
         var latestChecks = allChecks
             .GroupBy(c => c.EndpointId)
             .Select(g => new
@@ -80,13 +79,13 @@ public sealed class StatusService : IStatusService
         var latestCheckDict = latestChecks.ToDictionary(x => x.EndpointId, x => x.LatestCheck);
 
         // Get sparkline data (last 20 checks per endpoint for mini chart)
-        var sparklineData = await GetSparklineDataAsync(endpointIds);
+        Dictionary<Guid, List<SparklinePoint>> sparklineData = await GetSparklineDataAsync(endpointIds);
 
-        foreach (var endpoint in endpoints)
+        foreach (Data.Endpoint? endpoint in endpoints)
         {
-            var status = DetermineStatus(endpoint, latestCheckDict);
-            var sparkline = sparklineData.ContainsKey(endpoint.Id) 
-                ? sparklineData[endpoint.Id] 
+            StatusType status = DetermineStatus(endpoint, latestCheckDict);
+            List<SparklinePoint> sparkline = sparklineData.ContainsKey(endpoint.Id)
+                ? sparklineData[endpoint.Id]
                 : new List<SparklinePoint>();
 
             items.Add(new LiveStatusItemDto
@@ -114,32 +113,32 @@ public sealed class StatusService : IStatusService
     private async Task<Dictionary<Guid, List<SparklinePoint>>> GetSparklineDataAsync(List<Guid> endpointIds)
     {
         var sparklineData = new Dictionary<Guid, List<SparklinePoint>>();
-        
+
         if (!endpointIds.Any())
         {
             return sparklineData;
         }
-        
+
         // Get last 20 checks for each endpoint
         // SQLite limitation: fetch all recent data and filter in memory
         var recentChecks = await _context.CheckResultsRaw
             .Where(c => endpointIds.Contains(c.EndpointId))
             .Select(c => new { c.EndpointId, c.Ts, c.Status })
             .ToListAsync();
-        
+
         // Filter to last 2 hours in memory
-        var cutoffTime = DateTimeOffset.Now.AddHours(-2);
+        DateTimeOffset cutoffTime = DateTimeOffset.Now.AddHours(-2);
         recentChecks = recentChecks
             .Where(c => c.Ts >= cutoffTime)
             .ToList();
-        
+
         recentChecks = recentChecks
             .OrderBy(c => c.EndpointId)
             .ThenByDescending(c => c.Ts)
             .ToList();
 
         var groupedChecks = recentChecks.GroupBy(c => c.EndpointId);
-        
+
         foreach (var group in groupedChecks)
         {
             var points = group
@@ -151,7 +150,7 @@ public sealed class StatusService : IStatusService
                     S = c.Status == UpDown.up ? "u" : "d"
                 })
                 .ToList();
-                
+
             sparklineData[group.Key] = points;
         }
 
@@ -161,7 +160,7 @@ public sealed class StatusService : IStatusService
     private StatusType DetermineStatus(Data.Endpoint endpoint, Dictionary<Guid, CheckResultRaw?> latestChecks)
     {
         // Check if we have recent check data
-        if (!latestChecks.TryGetValue(endpoint.Id, out var latestCheck) || latestCheck == null)
+        if (!latestChecks.TryGetValue(endpoint.Id, out CheckResultRaw? latestCheck) || latestCheck == null)
         {
             return StatusType.Down; // No data means down
         }
@@ -190,13 +189,13 @@ public sealed class StatusService : IStatusService
             .Where(c => c.EndpointId == endpointId)
             .Select(c => new { c.Ts, c.Status })
             .ToListAsync();
-        
+
         // Filter to last 5 minutes in memory
-        var cutoffTime = DateTimeOffset.Now.AddMinutes(-5);
+        DateTimeOffset cutoffTime = DateTimeOffset.Now.AddMinutes(-5);
         checks = checks
             .Where(c => c.Ts >= cutoffTime)
             .ToList();
-        
+
         var recentChecks = checks
             .OrderBy(c => c.Ts)
             .Select(c => c.Status)

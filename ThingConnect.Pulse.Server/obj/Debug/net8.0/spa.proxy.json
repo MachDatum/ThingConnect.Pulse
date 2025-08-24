@@ -3,7 +3,7 @@
 "ServerUrl": "https://localhost:55605",
 "RedirectUrl": "",
 "LaunchCommand": "npm run dev",
-"WorkingDirectory": "C:\\Users\\HemanandRamasamy\\source\\repos\\ThingConnect.Pulse\\ThingConnect.Pulse.Server\\..\\thingconnect.pulse.client",
+"WorkingDirectory": "C:\\Users\\HemanandRamasamy\\source\\repos\\pulse-api\\ThingConnect.Pulse.Server\\..\\thingconnect.pulse.client",
 "MaxTimeoutInSeconds": "120",
 "KeepRunning": "false"
 }

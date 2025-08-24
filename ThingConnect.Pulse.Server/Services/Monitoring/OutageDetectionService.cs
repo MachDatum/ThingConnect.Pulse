@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using Microsoft.EntityFrameworkCore;
 using ThingConnect.Pulse.Server.Data;
 using ThingConnect.Pulse.Server.Models;
 
@@ -23,8 +22,8 @@ public sealed class OutageDetectionService : IOutageDetectionService
 
     public async Task<bool> ProcessCheckResultAsync(CheckResult result, CancellationToken cancellationToken = default)
     {
-        var state = GetOrCreateMonitorState(result.EndpointId);
-        var stateChanged = false;
+        MonitorState state = GetOrCreateMonitorState(result.EndpointId);
+        bool stateChanged = false;
 
         // Update streak counters based on result
         if (result.Status == UpDown.up)
@@ -66,7 +65,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
 
     public MonitorState? GetMonitorState(Guid endpointId)
     {
-        _states.TryGetValue(endpointId, out var state);
+        _states.TryGetValue(endpointId, out MonitorState? state);
         return state;
     }
 
@@ -76,7 +75,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
         _logger.LogInformation("Cleared all monitor states");
     }
 
-    private async Task TransitionToDownAsync(Guid endpointId, MonitorState state, DateTimeOffset timestamp, 
+    private async Task TransitionToDownAsync(Guid endpointId, MonitorState state, DateTimeOffset timestamp,
         string? error, CancellationToken cancellationToken)
     {
         // Create new outage record
@@ -99,13 +98,13 @@ public sealed class OutageDetectionService : IOutageDetectionService
         _logger.LogWarning("Created outage {OutageId} for endpoint {EndpointId}", outage.Id, endpointId);
     }
 
-    private async Task TransitionToUpAsync(Guid endpointId, MonitorState state, DateTimeOffset timestamp, 
+    private async Task TransitionToUpAsync(Guid endpointId, MonitorState state, DateTimeOffset timestamp,
         CancellationToken cancellationToken)
     {
         // Close existing outage if any
         if (state.OpenOutageId.HasValue)
         {
-            var outage = await _context.Outages.FindAsync([state.OpenOutageId.Value], cancellationToken);
+            Outage? outage = await _context.Outages.FindAsync([state.OpenOutageId.Value], cancellationToken);
             if (outage != null)
             {
                 outage.EndedTs = timestamp;
@@ -124,10 +123,10 @@ public sealed class OutageDetectionService : IOutageDetectionService
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    private async Task UpdateEndpointStatusAsync(Guid endpointId, UpDown status, DateTimeOffset timestamp, 
+    private async Task UpdateEndpointStatusAsync(Guid endpointId, UpDown status, DateTimeOffset timestamp,
         CancellationToken cancellationToken)
     {
-        var endpoint = await _context.Endpoints.FindAsync([endpointId], cancellationToken);
+        Data.Endpoint? endpoint = await _context.Endpoints.FindAsync([endpointId], cancellationToken);
         if (endpoint != null)
         {
             endpoint.LastStatus = status;
