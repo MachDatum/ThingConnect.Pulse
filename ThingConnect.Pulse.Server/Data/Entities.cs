@@ -1,7 +1,4 @@
 // ThingConnect Pulse - EF Core Entities (v1)
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-
 namespace ThingConnect.Pulse.Server.Data;
 
 public enum ProbeType { icmp, tcp, http }

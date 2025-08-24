@@ -1,6 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.EntityFrameworkCore;
 using ThingConnect.Pulse.Server.Data;
 using ThingConnect.Pulse.Server.Models;
 
@@ -23,20 +23,20 @@ public sealed class ConfigurationService : IConfigurationService
     {
         _context = context;
         _parser = parser;
-        _versionsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), 
+        _versionsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
             "ThingConnect.Pulse", "versions");
     }
 
     public async Task<ApplyResultDto> ApplyConfigurationAsync(string yamlContent, string? actor = null, string? note = null)
     {
-        var (config, validationErrors) = _parser.ParseAndValidate(yamlContent);
+        (ConfigYaml config, ValidationErrorsDto validationErrors) = _parser.ParseAndValidate(yamlContent);
         if (validationErrors != null)
         {
             throw new InvalidOperationException($"Validation failed: {validationErrors.Message}");
         }
 
-        var fileHash = ComputeHash(yamlContent);
-        var existingVersion = await _context.ConfigVersions
+        string fileHash = ComputeHash(yamlContent);
+        ConfigVersion? existingVersion = await _context.ConfigVersions
             .FirstOrDefaultAsync(cv => cv.FileHash == fileHash);
 
         if (existingVersion != null)
@@ -51,17 +51,17 @@ public sealed class ConfigurationService : IConfigurationService
             };
         }
 
-        var (groups, endpoints) = _parser.ConvertToEntities(config!);
+        (List<Group> groups, List<Data.Endpoint> endpoints) = _parser.ConvertToEntities(config!);
 
-        using var transaction = await _context.Database.BeginTransactionAsync();
+        using Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            var changes = await ApplyChangesToDatabaseAsync(groups, endpoints);
+            (int Added, int Updated, int Removed) changes = await ApplyChangesToDatabaseAsync(groups, endpoints);
 
-            var versionId = GenerateVersionId();
-            var timestamp = DateTimeOffset.UtcNow;
-            var fileName = $"{timestamp:yyyyMMdd_HHmmss}_{fileHash[..8]}.yaml";
-            var filePath = Path.Combine(_versionsPath, fileName);
+            string versionId = GenerateVersionId();
+            DateTimeOffset timestamp = DateTimeOffset.UtcNow;
+            string fileName = $"{timestamp:yyyyMMdd_HHmmss}_{fileHash[..8]}.yaml";
+            string filePath = Path.Combine(_versionsPath, fileName);
 
             Directory.CreateDirectory(_versionsPath);
             await File.WriteAllTextAsync(filePath, yamlContent);
@@ -98,7 +98,7 @@ public sealed class ConfigurationService : IConfigurationService
 
     public async Task<List<ConfigVersionDto>> GetVersionsAsync()
     {
-        var versions = await _context.ConfigVersions
+        List<ConfigVersionDto> versions = await _context.ConfigVersions
             .Select(cv => new ConfigVersionDto
             {
                 Id = cv.Id,
@@ -109,13 +109,13 @@ public sealed class ConfigurationService : IConfigurationService
                 Note = cv.Note
             })
             .ToListAsync();
-            
+
         return versions.OrderByDescending(cv => cv.AppliedTs).ToList();
     }
 
     public async Task<string?> GetVersionContentAsync(string versionId)
     {
-        var version = await _context.ConfigVersions
+        ConfigVersion? version = await _context.ConfigVersions
             .FirstOrDefaultAsync(cv => cv.Id == versionId);
 
         if (version == null || !File.Exists(version.FilePath))
@@ -129,11 +129,11 @@ public sealed class ConfigurationService : IConfigurationService
     private async Task<(int Added, int Updated, int Removed)> ApplyChangesToDatabaseAsync(
         List<Group> newGroups, List<Data.Endpoint> newEndpoints)
     {
-        var existingGroups = await _context.Groups.ToListAsync();
-        var existingEndpoints = await _context.Endpoints.ToListAsync();
+        List<Group> existingGroups = await _context.Groups.ToListAsync();
+        List<Data.Endpoint> existingEndpoints = await _context.Endpoints.ToListAsync();
 
-        var groupChanges = UpdateGroups(existingGroups, newGroups);
-        var endpointChanges = UpdateEndpoints(existingEndpoints, newEndpoints);
+        (int Added, int Updated, int Removed) groupChanges = UpdateGroups(existingGroups, newGroups);
+        (int Added, int Updated, int Removed) endpointChanges = UpdateEndpoints(existingEndpoints, newEndpoints);
 
         return (
             Added: groupChanges.Added + endpointChanges.Added,
@@ -145,16 +145,16 @@ public sealed class ConfigurationService : IConfigurationService
     private (int Added, int Updated, int Removed) UpdateGroups(
         List<Group> existing, List<Group> updated)
     {
-        var added = 0;
-        var updatedCount = 0;
-        var removed = 0;
+        int added = 0;
+        int updatedCount = 0;
+        int removed = 0;
 
         var existingDict = existing.ToDictionary(g => g.Id);
         var updatedDict = updated.ToDictionary(g => g.Id);
 
-        foreach (var group in updated)
+        foreach (Group group in updated)
         {
-            if (existingDict.TryGetValue(group.Id, out var existingGroup))
+            if (existingDict.TryGetValue(group.Id, out Group? existingGroup))
             {
                 existingGroup.Name = group.Name;
                 existingGroup.ParentId = group.ParentId;
@@ -169,7 +169,7 @@ public sealed class ConfigurationService : IConfigurationService
             }
         }
 
-        foreach (var existingId in existingDict.Keys)
+        foreach (string existingId in existingDict.Keys)
         {
             if (!updatedDict.ContainsKey(existingId))
             {
@@ -184,17 +184,17 @@ public sealed class ConfigurationService : IConfigurationService
     private (int Added, int Updated, int Removed) UpdateEndpoints(
         List<Data.Endpoint> existing, List<Data.Endpoint> updated)
     {
-        var added = 0;
-        var updatedCount = 0;
-        var removed = 0;
+        int added = 0;
+        int updatedCount = 0;
+        int removed = 0;
 
         var existingByKey = existing.ToDictionary(e => $"{e.Name}|{e.Host}|{e.Port}");
         var updatedByKey = updated.ToDictionary(e => $"{e.Name}|{e.Host}|{e.Port}");
 
-        foreach (var endpoint in updated)
+        foreach (Data.Endpoint endpoint in updated)
         {
-            var key = $"{endpoint.Name}|{endpoint.Host}|{endpoint.Port}";
-            if (existingByKey.TryGetValue(key, out var existingEndpoint))
+            string key = $"{endpoint.Name}|{endpoint.Host}|{endpoint.Port}";
+            if (existingByKey.TryGetValue(key, out Data.Endpoint? existingEndpoint))
             {
                 existingEndpoint.GroupId = endpoint.GroupId;
                 existingEndpoint.Type = endpoint.Type;
@@ -212,7 +212,7 @@ public sealed class ConfigurationService : IConfigurationService
             }
         }
 
-        foreach (var existingKey in existingByKey.Keys)
+        foreach (string existingKey in existingByKey.Keys)
         {
             if (!updatedByKey.ContainsKey(existingKey))
             {
@@ -226,14 +226,14 @@ public sealed class ConfigurationService : IConfigurationService
 
     private static string ComputeHash(string content)
     {
-        var bytes = Encoding.UTF8.GetBytes(content);
-        var hash = SHA256.HashData(bytes);
+        byte[] bytes = Encoding.UTF8.GetBytes(content);
+        byte[] hash = SHA256.HashData(bytes);
         return Convert.ToHexString(hash).ToLowerInvariant();
     }
 
     private static string GenerateVersionId()
     {
-        return DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss") + "-" + 
+        return DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss") + "-" +
                Guid.NewGuid().ToString("N")[..8];
     }
 }

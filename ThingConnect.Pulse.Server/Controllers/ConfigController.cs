@@ -26,8 +26,8 @@ public sealed class ConfigController : ControllerBase
         try
         {
             using var reader = new StreamReader(Request.Body);
-            var yamlContent = await reader.ReadToEndAsync();
-            
+            string yamlContent = await reader.ReadToEndAsync();
+
             if (string.IsNullOrWhiteSpace(yamlContent))
             {
                 return BadRequest(new ValidationErrorsDto
@@ -40,8 +40,8 @@ public sealed class ConfigController : ControllerBase
                 });
             }
 
-            var result = await _configService.ApplyConfigurationAsync(
-                yamlContent, 
+            ApplyResultDto result = await _configService.ApplyConfigurationAsync(
+                yamlContent,
                 Request.Headers["X-Actor"].FirstOrDefault(),
                 Request.Headers["X-Note"].FirstOrDefault());
 
@@ -80,7 +80,7 @@ public sealed class ConfigController : ControllerBase
     {
         try
         {
-            var versions = await _configService.GetVersionsAsync();
+            List<ConfigVersionDto> versions = await _configService.GetVersionsAsync();
             return Ok(versions);
         }
         catch (Exception ex)
@@ -99,7 +99,7 @@ public sealed class ConfigController : ControllerBase
     {
         try
         {
-            var content = await _configService.GetVersionContentAsync(id);
+            string? content = await _configService.GetVersionContentAsync(id);
             if (content == null)
             {
                 return NotFound(new { message = "Configuration version not found" });

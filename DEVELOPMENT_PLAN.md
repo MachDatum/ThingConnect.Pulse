@@ -113,10 +113,10 @@ You can effectively work on **up to 6 parallel worktrees** without conflicts:
 
 | Issue | Priority | Time | Description | Worktree | Status |
 |-------|----------|------|-------------|----------|---------|
-| #13 | P1 | 4-6h | GET /api/status/live | 4 | 🔓 **UNLOCKED** |
-| #14 | P1 | 4-6h | GET /api/history/endpoint/{id} | 4 | 🔓 **UNLOCKED** |
-| #15 | P1 | 1d | POST /api/config/apply | 4 | 🔓 **UNLOCKED** |
-| #16 | P2 | 3-4h | Config versions endpoints | 4 | 🔓 **UNLOCKED** |
+| #13 | P1 | 4-6h | GET /api/status/live | 4 | ✅ **COMPLETE** |
+| #14 | P1 | 4-6h | GET /api/history/endpoint/{id} | 4 | ✅ **COMPLETE** |
+| #15 | P1 | 1d | POST /api/config/apply | 4 | ✅ **COMPLETE** |
+| #16 | P2 | 3-4h | Config versions endpoints | 4 | ✅ **COMPLETE** |
 
 ### PHASE 5: Background Jobs (Week 3, Days 1-2)
 **Data processing - EPIC #9**
@@ -226,7 +226,7 @@ git worktree remove ../pulse-env-setup
 - **Phase 1**: All specs frozen, no more contract changes
 - **Phase 2**: ✅ **COMPLETE** - Database created, migrations run, config storage & settings implemented with full testing
 - **Phase 3**: ✅ **COMPLETE** - Can detect UP/DOWN state changes with continuous monitoring, outage tracking, and concurrent probe execution
-- **Phase 4**: All API endpoints return data (mock or real)
+- **Phase 4**: ✅ **COMPLETE** - All 4 API endpoints implemented and tested: live status, history, config apply, and config versions.
 - **Phase 5**: Rollups computed automatically
 - **Phase 6**: UI loads, shows live status
 - **Phase 7**: Service installs and runs

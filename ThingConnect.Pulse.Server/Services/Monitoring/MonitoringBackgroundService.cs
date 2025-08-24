@@ -1,5 +1,5 @@
-using System.Collections.Concurrent;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Concurrent;
 using ThingConnect.Pulse.Server.Data;
 
 namespace ThingConnect.Pulse.Server.Services.Monitoring;
@@ -15,18 +15,18 @@ public sealed class MonitoringBackgroundService : BackgroundService
     private readonly ConcurrentDictionary<Guid, Timer> _endpointTimers = new();
     private readonly int _maxConcurrentProbes;
 
-    public MonitoringBackgroundService(IServiceProvider serviceProvider, 
+    public MonitoringBackgroundService(IServiceProvider serviceProvider,
         IConfiguration configuration,
         ILogger<MonitoringBackgroundService> logger)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
-        
+
         // Read concurrency limit from configuration
         _maxConcurrentProbes = configuration.GetValue<int>("Monitoring:MaxConcurrentProbes", 100);
         _concurrencySemaphore = new SemaphoreSlim(_maxConcurrentProbes, _maxConcurrentProbes);
-        
-        _logger.LogInformation("Monitoring service initialized with max concurrent probes: {MaxConcurrentProbes}", 
+
+        _logger.LogInformation("Monitoring service initialized with max concurrent probes: {MaxConcurrentProbes}",
             _maxConcurrentProbes);
     }
 
@@ -49,7 +49,7 @@ public sealed class MonitoringBackgroundService : BackgroundService
         }
 
         // Clean up timers
-        foreach (var timer in _endpointTimers.Values)
+        foreach (Timer timer in _endpointTimers.Values)
         {
             timer.Dispose();
         }
@@ -60,11 +60,11 @@ public sealed class MonitoringBackgroundService : BackgroundService
 
     private async Task RefreshEndpointsAsync(CancellationToken cancellationToken)
     {
-        using var scope = _serviceProvider.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<PulseDbContext>();
+        using IServiceScope scope = _serviceProvider.CreateScope();
+        PulseDbContext context = scope.ServiceProvider.GetRequiredService<PulseDbContext>();
 
         // Get all enabled endpoints
-        var endpoints = await context.Endpoints
+        List<Data.Endpoint> endpoints = await context.Endpoints
             .Where(e => e.Enabled)
             .ToListAsync(cancellationToken);
 
@@ -72,10 +72,10 @@ public sealed class MonitoringBackgroundService : BackgroundService
         var existingEndpointIds = _endpointTimers.Keys.ToHashSet();
 
         // Remove timers for endpoints that no longer exist or are disabled
-        var endpointsToRemove = existingEndpointIds.Except(currentEndpointIds);
-        foreach (var endpointId in endpointsToRemove)
+        IEnumerable<Guid> endpointsToRemove = existingEndpointIds.Except(currentEndpointIds);
+        foreach (Guid endpointId in endpointsToRemove)
         {
-            if (_endpointTimers.TryRemove(endpointId, out var timer))
+            if (_endpointTimers.TryRemove(endpointId, out Timer? timer))
             {
                 timer.Dispose();
                 _logger.LogInformation("Stopped monitoring endpoint: {EndpointId}", endpointId);
@@ -83,11 +83,11 @@ public sealed class MonitoringBackgroundService : BackgroundService
         }
 
         // Add or update timers for current endpoints
-        foreach (var endpoint in endpoints)
+        foreach (Data.Endpoint? endpoint in endpoints)
         {
-            var intervalMs = endpoint.IntervalSeconds * 1000;
-            
-            if (_endpointTimers.TryGetValue(endpoint.Id, out var existingTimer))
+            int intervalMs = endpoint.IntervalSeconds * 1000;
+
+            if (_endpointTimers.TryGetValue(endpoint.Id, out Timer? existingTimer))
             {
                 // Update existing timer if interval changed
                 existingTimer.Change(TimeSpan.Zero, TimeSpan.FromMilliseconds(intervalMs));
@@ -101,9 +101,9 @@ public sealed class MonitoringBackgroundService : BackgroundService
                     dueTime: TimeSpan.Zero, // Start immediately
                     period: TimeSpan.FromMilliseconds(intervalMs)
                 );
-                
+
                 _endpointTimers.TryAdd(endpoint.Id, timer);
-                _logger.LogInformation("Started monitoring endpoint: {EndpointId} ({Name}) every {IntervalSeconds}s", 
+                _logger.LogInformation("Started monitoring endpoint: {EndpointId} ({Name}) every {IntervalSeconds}s",
                     endpoint.Id, endpoint.Name, endpoint.IntervalSeconds);
             }
         }
@@ -122,32 +122,32 @@ public sealed class MonitoringBackgroundService : BackgroundService
 
         try
         {
-            using var scope = _serviceProvider.CreateScope();
-            var context = scope.ServiceProvider.GetRequiredService<PulseDbContext>();
-            var probeService = scope.ServiceProvider.GetRequiredService<IProbeService>();
-            var outageService = scope.ServiceProvider.GetRequiredService<IOutageDetectionService>();
+            using IServiceScope scope = _serviceProvider.CreateScope();
+            PulseDbContext context = scope.ServiceProvider.GetRequiredService<PulseDbContext>();
+            IProbeService probeService = scope.ServiceProvider.GetRequiredService<IProbeService>();
+            IOutageDetectionService outageService = scope.ServiceProvider.GetRequiredService<IOutageDetectionService>();
 
             // Get endpoint details
-            var endpoint = await context.Endpoints.FindAsync(endpointId);
+            Data.Endpoint? endpoint = await context.Endpoints.FindAsync(endpointId);
             if (endpoint == null || !endpoint.Enabled)
             {
                 return; // Endpoint was deleted or disabled
             }
 
             // Perform the probe
-            var result = await probeService.ProbeAsync(endpoint);
-            
+            Models.CheckResult result = await probeService.ProbeAsync(endpoint);
+
             // Process result for outage detection
-            var stateChanged = await outageService.ProcessCheckResultAsync(result);
-            
+            bool stateChanged = await outageService.ProcessCheckResultAsync(result);
+
             if (stateChanged)
             {
-                _logger.LogInformation("State change detected for endpoint {EndpointId} ({Name}): {Status}", 
+                _logger.LogInformation("State change detected for endpoint {EndpointId} ({Name}): {Status}",
                     endpointId, endpoint.Name, result.Status);
             }
             else
             {
-                _logger.LogTrace("Probed endpoint {EndpointId} ({Name}): {Status} in {RttMs}ms", 
+                _logger.LogTrace("Probed endpoint {EndpointId} ({Name}): {Status} in {RttMs}ms",
                     endpointId, endpoint.Name, result.Status, result.RttMs?.ToString("F1") ?? "N/A");
             }
         }
@@ -164,12 +164,12 @@ public sealed class MonitoringBackgroundService : BackgroundService
     public override void Dispose()
     {
         _concurrencySemaphore?.Dispose();
-        
-        foreach (var timer in _endpointTimers.Values)
+
+        foreach (Timer timer in _endpointTimers.Values)
         {
             timer.Dispose();
         }
-        
+
         base.Dispose();
     }
 }

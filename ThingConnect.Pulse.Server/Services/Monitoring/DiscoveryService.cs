@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
-using Microsoft.Extensions.Logging;
 using ThingConnect.Pulse.Server.Data;
 
 namespace ThingConnect.Pulse.Server.Services.Monitoring;
@@ -13,9 +12,9 @@ public sealed class DiscoveryService : IDiscoveryService
 {
     private readonly ILogger<DiscoveryService> _logger;
 
-    private static readonly Regex CidrRegex = new(@"^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/(\d{1,2})$", 
+    private static readonly Regex CidrRegex = new(@"^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/(\d{1,2})$",
         RegexOptions.Compiled);
-    private static readonly Regex WildcardRegex = new(@"^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.\*$", 
+    private static readonly Regex WildcardRegex = new(@"^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.\*$",
         RegexOptions.Compiled);
 
     public DiscoveryService(ILogger<DiscoveryService> logger)
@@ -25,15 +24,15 @@ public sealed class DiscoveryService : IDiscoveryService
 
     public IEnumerable<string> ExpandCidr(string cidr)
     {
-        var match = CidrRegex.Match(cidr);
+        Match match = CidrRegex.Match(cidr);
         if (!match.Success)
         {
             _logger.LogWarning("Invalid CIDR format: {Cidr}", cidr);
             yield break;
         }
 
-        var baseIp = match.Groups[1].Value;
-        var prefixLength = int.Parse(match.Groups[2].Value);
+        string baseIp = match.Groups[1].Value;
+        int prefixLength = int.Parse(match.Groups[2].Value);
 
         if (prefixLength < 0 || prefixLength > 32)
         {
@@ -41,26 +40,26 @@ public sealed class DiscoveryService : IDiscoveryService
             yield break;
         }
 
-        if (!IPAddress.TryParse(baseIp, out var ipAddress))
+        if (!IPAddress.TryParse(baseIp, out IPAddress? ipAddress))
         {
             _logger.LogWarning("Invalid IP address in CIDR: {BaseIp}", baseIp);
             yield break;
         }
 
-        var addressBytes = ipAddress.GetAddressBytes();
-        var addressInt = BitConverter.ToUInt32(addressBytes.Reverse().ToArray(), 0);
-        
-        var hostBits = 32 - prefixLength;
-        var hostCount = (uint)(1 << hostBits);
-        var networkAddress = addressInt & (0xFFFFFFFF << hostBits);
+        byte[] addressBytes = ipAddress.GetAddressBytes();
+        uint addressInt = BitConverter.ToUInt32(addressBytes.Reverse().ToArray(), 0);
+
+        int hostBits = 32 - prefixLength;
+        uint hostCount = (uint)(1 << hostBits);
+        uint networkAddress = addressInt & (0xFFFFFFFF << hostBits);
 
         // Skip network and broadcast addresses for practical use
-        var startAddress = networkAddress + 1;
-        var endAddress = networkAddress + hostCount - 1;
+        uint startAddress = networkAddress + 1;
+        uint endAddress = networkAddress + hostCount - 1;
 
-        for (var address = startAddress; address < endAddress && address > networkAddress; address++)
+        for (uint address = startAddress; address < endAddress && address > networkAddress; address++)
         {
-            var bytes = BitConverter.GetBytes(address).Reverse().ToArray();
+            byte[] bytes = BitConverter.GetBytes(address).Reverse().ToArray();
             var ip = new IPAddress(bytes);
             yield return ip.ToString();
         }
@@ -68,16 +67,16 @@ public sealed class DiscoveryService : IDiscoveryService
 
     public IEnumerable<string> ExpandWildcard(string wildcard, int startRange = 1, int endRange = 254)
     {
-        var match = WildcardRegex.Match(wildcard);
+        Match match = WildcardRegex.Match(wildcard);
         if (!match.Success)
         {
             _logger.LogWarning("Invalid wildcard format: {Wildcard}", wildcard);
             yield break;
         }
 
-        var octet1 = int.Parse(match.Groups[1].Value);
-        var octet2 = int.Parse(match.Groups[2].Value);
-        var octet3 = int.Parse(match.Groups[3].Value);
+        int octet1 = int.Parse(match.Groups[1].Value);
+        int octet2 = int.Parse(match.Groups[2].Value);
+        int octet3 = int.Parse(match.Groups[3].Value);
 
         if (octet1 > 255 || octet2 > 255 || octet3 > 255)
         {
@@ -85,7 +84,7 @@ public sealed class DiscoveryService : IDiscoveryService
             yield break;
         }
 
-        for (var octet4 = startRange; octet4 <= endRange; octet4++)
+        for (int octet4 = startRange; octet4 <= endRange; octet4++)
         {
             yield return $"{octet1}.{octet2}.{octet3}.{octet4}";
         }
@@ -95,7 +94,7 @@ public sealed class DiscoveryService : IDiscoveryService
     {
         try
         {
-            var addresses = await Dns.GetHostAddressesAsync(hostname);
+            IPAddress[] addresses = await Dns.GetHostAddressesAsync(hostname);
             return addresses
                 .Where(addr => addr.AddressFamily == AddressFamily.InterNetwork) // IPv4 only for now
                 .Select(addr => addr.ToString())
@@ -108,32 +107,32 @@ public sealed class DiscoveryService : IDiscoveryService
         }
     }
 
-    public async Task<IEnumerable<Data.Endpoint>> ExpandTargetsAsync(IEnumerable<dynamic> configTargets, 
+    public async Task<IEnumerable<Data.Endpoint>> ExpandTargetsAsync(IEnumerable<dynamic> configTargets,
         CancellationToken cancellationToken = default)
     {
         var endpoints = new List<Data.Endpoint>();
 
-        foreach (var target in configTargets)
+        foreach (dynamic target in configTargets)
         {
             try
             {
-                var expandedEndpoints = await ExpandSingleTargetAsync(target, cancellationToken);
+                dynamic expandedEndpoints = await ExpandSingleTargetAsync(target, cancellationToken);
                 endpoints.AddRange(expandedEndpoints);
             }
             catch (Exception ex)
             {
-                var targetStr = target?.ToString() ?? "null";
+                dynamic targetStr = target?.ToString() ?? "null";
                 Microsoft.Extensions.Logging.LoggerExtensions.LogError(_logger, ex, "Failed to expand target: " + targetStr);
             }
         }
 
-        _logger.LogInformation("Expanded {TargetCount} targets into {EndpointCount} endpoints", 
+        _logger.LogInformation("Expanded {TargetCount} targets into {EndpointCount} endpoints",
             configTargets.Count(), endpoints.Count);
 
         return endpoints;
     }
 
-    private async Task<IEnumerable<Data.Endpoint>> ExpandSingleTargetAsync(dynamic target, 
+    private async Task<IEnumerable<Data.Endpoint>> ExpandSingleTargetAsync(dynamic target,
         CancellationToken cancellationToken)
     {
         var endpoints = new List<Data.Endpoint>();
@@ -142,8 +141,8 @@ public sealed class DiscoveryService : IDiscoveryService
         // Extract host specification
         if (target.host != null)
         {
-            var host = (string)target.host;
-            
+            string host = (string)target.host;
+
             // Check if it's an IP address or hostname
             if (IPAddress.TryParse(host, out _))
             {
@@ -151,25 +150,25 @@ public sealed class DiscoveryService : IDiscoveryService
             }
             else
             {
-                var resolvedHosts = await ResolveHostnameAsync(host, cancellationToken);
+                IEnumerable<string> resolvedHosts = await ResolveHostnameAsync(host, cancellationToken);
                 hosts.AddRange(resolvedHosts);
             }
         }
         else if (target.cidr != null)
         {
-            var cidr = (string)target.cidr;
+            string cidr = (string)target.cidr;
             hosts.AddRange(ExpandCidr(cidr));
         }
         else if (target.wildcard != null)
         {
-            var wildcard = (string)target.wildcard;
+            string wildcard = (string)target.wildcard;
             hosts.AddRange(ExpandWildcard(wildcard));
         }
 
         // Create endpoint for each expanded host
-        foreach (var host in hosts)
+        foreach (string host in hosts)
         {
-            var endpoint = CreateEndpointFromTarget(target, host);
+            dynamic endpoint = CreateEndpointFromTarget(target, host);
             endpoints.Add(endpoint);
         }
 
@@ -179,7 +178,7 @@ public sealed class DiscoveryService : IDiscoveryService
     private static Data.Endpoint CreateEndpointFromTarget(dynamic target, string host)
     {
         // Parse probe type
-        var probeType = ProbeType.icmp; // default
+        ProbeType probeType = ProbeType.icmp; // default
         if (target.type != null)
         {
             Enum.TryParse<ProbeType>((string)target.type, ignoreCase: true, out probeType);

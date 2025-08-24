@@ -19,7 +19,7 @@ public sealed class PlainTextInputFormatter : TextInputFormatter
         InputFormatterContext context, System.Text.Encoding encoding)
     {
         using var reader = new StreamReader(context.HttpContext.Request.Body, encoding);
-        var content = await reader.ReadToEndAsync();
+        string content = await reader.ReadToEndAsync();
         return await InputFormatterResult.SuccessAsync(content);
     }
 }

@@ -1,4 +1,3 @@
-using ThingConnect.Pulse.Server.Data;
 using ThingConnect.Pulse.Server.Models;
 
 namespace ThingConnect.Pulse.Server.Services.Monitoring;
@@ -26,6 +25,6 @@ public interface IProbeService
     /// <summary>
     /// Performs an HTTP/HTTPS probe.
     /// </summary>
-    Task<CheckResult> HttpCheckAsync(Guid endpointId, string host, int port, string? path, string? expectedText, 
+    Task<CheckResult> HttpCheckAsync(Guid endpointId, string host, int port, string? path, string? expectedText,
         int timeoutMs, CancellationToken cancellationToken = default);
 }

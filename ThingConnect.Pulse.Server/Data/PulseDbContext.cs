@@ -19,7 +19,7 @@ public sealed class PulseDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder b)
     {
-        var isSqlite = Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true;
+        bool isSqlite = Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true;
         var dateOnlyToString = new ValueConverter<DateOnly, string>(d => d.ToString("yyyy-MM-dd"), s => DateOnly.Parse(s));
 
         b.Entity<Group>(e =>
