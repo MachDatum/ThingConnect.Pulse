@@ -145,7 +145,7 @@ You can effectively work on **up to 6 parallel worktrees** without conflicts:
 |-------|----------|------|-------------|----------|
 | #23 | P1 | 1d | ✅ **COMPLETE** - Windows service host wrapper | 1 |
 | ENV-15 | P1 | 1d | ✅ **COMPLETE** - Installer conventions, paths | 1 |
-| #24 | P1 | 4-6h | Inno Setup installer script | 1 |
+| #24 | P1 | 4-6h | Inno Setup installer script | ✅ Complete |
 
 ### PHASE 8: Quality & Polish (Week 4)
 **Non-critical enhancements**
