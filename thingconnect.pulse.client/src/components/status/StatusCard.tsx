@@ -20,14 +20,14 @@ export function StatusCard({ item }: StatusCardProps) {
     }
   }
 
-  const formatRTT = (rtt?: number | null) => {
-    if (rtt == null) return '-'
-    return `${rtt}ms`
+  const formatRTT = (rttMs?: number | null) => {
+    if (rttMs == null) return '-'
+    return `${rttMs}ms`
   }
 
-  const formatLastChange = (timestamp: string) => {
+  const formatLastChange = (lastChangeTs: string) => {
     try {
-      return formatDistanceToNow(new Date(timestamp), { addSuffix: true })
+      return formatDistanceToNow(new Date(lastChangeTs), { addSuffix: true })
     } catch {
       return 'Unknown'
     }
@@ -91,10 +91,10 @@ export function StatusCard({ item }: StatusCardProps) {
             <Text 
               fontFamily="mono" 
               fontSize="xs"
-              color={item.rtt_ms ? 'inherit' : 'gray.400'}
+              color={item.rttMs ? 'inherit' : 'gray.400'}
               data-testid="card-endpoint-rtt"
             >
-              {formatRTT(item.rtt_ms)}
+              {formatRTT(item.rttMs)}
             </Text>
           </HStack>
 
@@ -102,7 +102,7 @@ export function StatusCard({ item }: StatusCardProps) {
           <HStack justify="space-between" align="center">
             <MiniSparkline data={item.sparkline} width={60} height={16} />
             <Text fontSize="xs" color="gray.500">
-              {formatLastChange(item.last_change_ts)}
+              {formatLastChange(item.lastChangeTs)}
             </Text>
           </HStack>
         </VStack>

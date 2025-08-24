@@ -41,6 +41,18 @@ public class Program
         builder.Services.AddScoped<IRollupService, RollupService>();
         builder.Services.AddHostedService<RollupBackgroundService>();
 
+        // Add CORS
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowFrontend", policy =>
+            {
+                policy.WithOrigins("https://localhost:55610", "http://localhost:55610", "https://localhost:5173", "http://localhost:5173")
+                      .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials();
+            });
+        });
+
         builder.Services.AddControllers(options =>
         {
             options.InputFormatters.Insert(0, new PlainTextInputFormatter());
@@ -70,6 +82,8 @@ public class Program
         }
 
         app.UseHttpsRedirection();
+
+        app.UseCors("AllowFrontend");
 
         app.UseAuthorization();
 

@@ -22,14 +22,14 @@ export function StatusTable({ items, isLoading }: StatusTableProps) {
     }
   }
 
-  const formatRTT = (rtt?: number | null) => {
-    if (rtt == null) return '-'
-    return `${rtt}ms`
+  const formatRTT = (rttMs?: number | null) => {
+    if (rttMs == null) return '-'
+    return `${rttMs}ms`
   }
 
-  const formatLastChange = (timestamp: string) => {
+  const formatLastChange = (lastChangeTs: string) => {
     try {
-      return formatDistanceToNow(new Date(timestamp), { addSuffix: true })
+      return formatDistanceToNow(new Date(lastChangeTs), { addSuffix: true })
     } catch {
       return 'Unknown'
     }
@@ -144,16 +144,16 @@ export function StatusTable({ items, isLoading }: StatusTableProps) {
                 <Text 
                   fontFamily="mono" 
                   fontSize="sm"
-                  color={item.rtt_ms ? 'inherit' : 'gray.400'}
+                  color={item.rttMs ? 'inherit' : 'gray.400'}
                   data-testid="endpoint-rtt"
                 >
-                  {formatRTT(item.rtt_ms)}
+                  {formatRTT(item.rttMs)}
                 </Text>
               </Table.Cell>
               
               <Table.Cell>
                 <Text fontSize="sm" color="gray.600" _dark={{ color: 'gray.400' }}>
-                  {formatLastChange(item.last_change_ts)}
+                  {formatLastChange(item.lastChangeTs)}
                 </Text>
               </Table.Cell>
               

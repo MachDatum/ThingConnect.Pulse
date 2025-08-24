@@ -4,7 +4,7 @@
 export interface Group {
   id: string
   name: string
-  parent_id?: string | null
+  parentId?: string | null
   color?: string | null
 }
 
@@ -15,10 +15,10 @@ export interface Endpoint {
   type: 'icmp' | 'tcp' | 'http'
   host: string
   port?: number | null
-  http_path?: string | null
-  http_match?: string | null
-  interval_seconds: number
-  timeout_ms: number
+  httpPath?: string | null
+  httpMatch?: string | null
+  intervalSeconds: number
+  timeoutMs: number
   retries: number
   enabled: boolean
 }
@@ -31,8 +31,8 @@ export interface SparklinePoint {
 export interface LiveStatusItem {
   endpoint: Endpoint
   status: 'up' | 'down' | 'flapping'
-  rtt_ms?: number | null
-  last_change_ts: string
+  rttMs?: number | null
+  lastChangeTs: string
   sparkline: SparklinePoint[]
 }
 
