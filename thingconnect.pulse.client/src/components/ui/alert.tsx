@@ -8,7 +8,10 @@ export interface AlertProps extends Omit<ChakraAlert.RootProps, 'title'> {
   icon?: React.ReactElement;
 }
 
-export const Alert = function Alert({ ref, ...props }: AlertProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
+export const Alert = function Alert({
+  ref,
+  ...props
+}: AlertProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
   const { title, children, icon, startElement, endElement, ...rest } = props;
   return (
     <ChakraAlert.Root ref={ref} {...rest}>

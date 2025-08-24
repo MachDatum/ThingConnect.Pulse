@@ -5,6 +5,7 @@ React-based web interface for the ThingConnect Pulse network monitoring system.
 ## ✅ Current Status
 
 **Issue #17 - App Shell & Routing: COMPLETED**
+
 - Complete application routing with React Router v7
 - Responsive layout with mobile-first design
 - ThingConnect branding and theming
@@ -64,6 +65,7 @@ src/
 ## Key Features
 
 ### ✅ Implemented
+
 - **Responsive Layout**: Mobile-first design with breakpoint-based navigation
 - **React Router v7**: Lazy-loaded routes with code splitting
 - **Chakra UI v3**: Modern component library with theming
@@ -75,6 +77,7 @@ src/
 - **ESLint**: Code quality enforcement with auto-fixing
 
 ### 🚧 Planned (Issue #18+)
+
 - Real-time dashboard with live endpoint status
 - Historical data visualization with charts
 - Configuration management UI

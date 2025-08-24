@@ -1,139 +1,136 @@
-import { useState, useMemo } from 'react'
-import { 
-  Box, 
-  Table, 
-  Text, 
-  Badge, 
-  HStack, 
-  Button, 
-  IconButton,
-  VStack
-} from '@chakra-ui/react'
-import { ChevronLeft, ChevronRight, AlertCircle, CheckCircle, Clock } from 'lucide-react'
-import type { RollupBucket, DailyBucket, RawCheck } from '@/api/types'
-import type { BucketType } from './BucketSelector'
+import { useState, useMemo } from 'react';
+import { Box, Table, Text, Badge, HStack, Button, IconButton, VStack } from '@chakra-ui/react';
+import { ChevronLeft, ChevronRight, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import type { RollupBucket, DailyBucket, RawCheck } from '@/api/types';
+import type { BucketType } from '@/types/bucket';
 
 export interface HistoryTableProps {
   data: {
-    raw: RawCheck[]
-    rollup15m: RollupBucket[]
-    rollupDaily: DailyBucket[]
-  }
-  bucket: BucketType
-  pageSize?: number
+    raw: RawCheck[];
+    rollup15m: RollupBucket[];
+    rollupDaily: DailyBucket[];
+  };
+  bucket: BucketType;
+  pageSize?: number;
 }
 
 export function HistoryTable({ data, bucket, pageSize = 20 }: HistoryTableProps) {
-  const [currentPage, setCurrentPage] = useState(0)
+  const [currentPage, setCurrentPage] = useState(0);
 
   const tableData = useMemo(() => {
     switch (bucket) {
       case 'raw':
-        return data.raw.map(check => ({
-          timestamp: check.ts,
-          displayTime: new Date(check.ts).toLocaleString(),
-          status: check.status,
-          responseTime: check.rttMs,
-          error: check.error,
-          type: 'raw' as const
-        })).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        return data.raw
+          .map(check => ({
+            timestamp: check.ts,
+            displayTime: new Date(check.ts).toLocaleString(),
+            status: check.status,
+            responseTime: check.rttMs,
+            error: check.error,
+            type: 'raw' as const,
+          }))
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
       case '15m':
-        return data.rollup15m.map(bucket => ({
-          timestamp: bucket.bucketTs,
-          displayTime: new Date(bucket.bucketTs).toLocaleString(),
-          uptime: bucket.upPct,
-          responseTime: bucket.avgRttMs,
-          downEvents: bucket.downEvents,
-          type: '15m' as const
-        })).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        return data.rollup15m
+          .map(bucket => ({
+            timestamp: bucket.bucketTs,
+            displayTime: new Date(bucket.bucketTs).toLocaleString(),
+            uptime: bucket.upPct,
+            responseTime: bucket.avgRttMs,
+            downEvents: bucket.downEvents,
+            type: '15m' as const,
+          }))
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
       case 'daily':
-        return data.rollupDaily.map(bucket => ({
-          timestamp: bucket.bucketDate,
-          displayTime: new Date(bucket.bucketDate).toLocaleDateString('en-US', {
-            weekday: 'short',
-            month: 'short', 
-            day: 'numeric'
-          }),
-          uptime: bucket.upPct,
-          responseTime: bucket.avgRttMs,
-          downEvents: bucket.downEvents,
-          type: 'daily' as const
-        })).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        return data.rollupDaily
+          .map(bucket => ({
+            timestamp: bucket.bucketDate,
+            displayTime: new Date(bucket.bucketDate).toLocaleDateString('en-US', {
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric',
+            }),
+            uptime: bucket.upPct,
+            responseTime: bucket.avgRttMs,
+            downEvents: bucket.downEvents,
+            type: 'daily' as const,
+          }))
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
       default:
-        return []
+        return [];
     }
-  }, [data, bucket])
+  }, [data, bucket]);
 
   const paginatedData = useMemo(() => {
-    const startIndex = currentPage * pageSize
-    return tableData.slice(startIndex, startIndex + pageSize)
-  }, [tableData, currentPage, pageSize])
+    const startIndex = currentPage * pageSize;
+    return tableData.slice(startIndex, startIndex + pageSize);
+  }, [tableData, currentPage, pageSize]);
 
-  const totalPages = Math.ceil(tableData.length / pageSize)
+  const totalPages = Math.ceil(tableData.length / pageSize);
 
   const getStatusBadge = (status?: string) => {
-    if (!status) return null
-    
+    if (!status) return null;
+
     const statusConfig = {
       up: { color: 'green', icon: CheckCircle },
-      down: { color: 'red', icon: AlertCircle }
-    }
+      down: { color: 'red', icon: AlertCircle },
+    };
 
-    const config = statusConfig[status as keyof typeof statusConfig]
-    if (!config) return <Badge>{status}</Badge>
+    const config = statusConfig[status as keyof typeof statusConfig];
+    if (!config) return <Badge>{status}</Badge>;
 
-    const Icon = config.icon
+    const Icon = config.icon;
     return (
-      <Badge colorPalette={config.color} size="sm">
+      <Badge colorPalette={config.color} size='sm'>
         <HStack gap={1}>
           <Icon size={12} />
           <Text>{status.toUpperCase()}</Text>
         </HStack>
       </Badge>
-    )
-  }
+    );
+  };
 
   const formatResponseTime = (rtt?: number | null) => {
-    if (rtt === null || rtt === undefined) return '-'
-    return `${rtt.toFixed(1)}ms`
-  }
+    if (rtt === null || rtt === undefined) return '-';
+    return `${rtt.toFixed(1)}ms`;
+  };
 
   const formatUptime = (uptime?: number) => {
-    if (uptime === undefined) return '-'
-    return `${uptime.toFixed(1)}%`
-  }
+    if (uptime === undefined) return '-';
+    return `${uptime.toFixed(1)}%`;
+  };
 
   if (tableData.length === 0) {
     return (
       <Box
         p={8}
-        textAlign="center"
-        bg="gray.50"
-        borderRadius="md"
-        border="2px dashed"
-        borderColor="gray.300"
+        textAlign='center'
+        bg='gray.50'
+        borderRadius='md'
+        border='2px dashed'
+        borderColor='gray.300'
         _dark={{ bg: 'gray.800', borderColor: 'gray.600' }}
       >
         <VStack gap={3}>
-          <Clock size={32} color="#9CA3AF" />
-          <Text color="gray.500" _dark={{ color: 'gray.400' }}>
+          <Clock size={32} color='#9CA3AF' />
+          <Text color='gray.500' _dark={{ color: 'gray.400' }}>
             No historical data available
           </Text>
-          <Text fontSize="sm" color="gray.400" _dark={{ color: 'gray.500' }}>
+          <Text fontSize='sm' color='gray.400' _dark={{ color: 'gray.500' }}>
             Try adjusting your date range or check if monitoring is enabled for this endpoint
           </Text>
         </VStack>
       </Box>
-    )
+    );
   }
 
   return (
-    <VStack gap={4} align="stretch">
-      <Box overflowX="auto">
-        <Table.Root size="sm">
+    <VStack gap={4} align='stretch'>
+      <Box overflowX='auto'>
+        <Table.Root size='sm'>
           <Table.Header>
             <Table.Row>
               <Table.ColumnHeader>Timestamp</Table.ColumnHeader>
@@ -152,35 +149,35 @@ export function HistoryTable({ data, bucket, pageSize = 20 }: HistoryTableProps)
               )}
             </Table.Row>
           </Table.Header>
-          
+
           <Table.Body>
-            {paginatedData.map((row, index) => (
-              <Table.Row key={`${row.timestamp}-${index}`}>
+            {paginatedData.map(row => (
+              <Table.Row key={`${row.timestamp}-${row.type}`}>
                 <Table.Cell>
-                  <Text fontSize="sm" fontFamily="mono">
+                  <Text fontSize='sm' fontFamily='mono'>
                     {row.displayTime}
                   </Text>
                 </Table.Cell>
-                
+
                 {row.type === 'raw' ? (
                   <>
                     <Table.Cell>
                       {getStatusBadge('status' in row ? row.status : undefined)}
                     </Table.Cell>
                     <Table.Cell>
-                      <Text fontSize="sm" fontFamily="mono">
+                      <Text fontSize='sm' fontFamily='mono'>
                         {formatResponseTime(row.responseTime)}
                       </Text>
                     </Table.Cell>
                     <Table.Cell>
-                      <Text 
-                        fontSize="sm" 
-                        color={('error' in row && row.error) ? 'red.600' : 'gray.500'}
-                        _dark={{ color: ('error' in row && row.error) ? 'red.400' : 'gray.400' }}
-                        maxW="200px"
-                        overflow="hidden"
-                        textOverflow="ellipsis"
-                        whiteSpace="nowrap"
+                      <Text
+                        fontSize='sm'
+                        color={'error' in row && row.error ? 'red.600' : 'gray.500'}
+                        _dark={{ color: 'error' in row && row.error ? 'red.400' : 'gray.400' }}
+                        maxW='200px'
+                        overflow='hidden'
+                        textOverflow='ellipsis'
+                        whiteSpace='nowrap'
                         title={'error' in row ? row.error || undefined : undefined}
                       >
                         {'error' in row ? row.error || '-' : '-'}
@@ -190,22 +187,28 @@ export function HistoryTable({ data, bucket, pageSize = 20 }: HistoryTableProps)
                 ) : (
                   <>
                     <Table.Cell>
-                      <Badge 
-                        colorPalette={'uptime' in row && row.uptime >= 99 ? 'green' : 'uptime' in row && row.uptime >= 95 ? 'yellow' : 'red'}
-                        size="sm"
+                      <Badge
+                        colorPalette={
+                          'uptime' in row && row.uptime >= 99
+                            ? 'green'
+                            : 'uptime' in row && row.uptime >= 95
+                              ? 'yellow'
+                              : 'red'
+                        }
+                        size='sm'
                       >
                         {formatUptime('uptime' in row ? row.uptime : undefined)}
                       </Badge>
                     </Table.Cell>
                     <Table.Cell>
-                      <Text fontSize="sm" fontFamily="mono">
+                      <Text fontSize='sm' fontFamily='mono'>
                         {formatResponseTime(row.responseTime)}
                       </Text>
                     </Table.Cell>
                     <Table.Cell>
-                      <Badge 
+                      <Badge
                         colorPalette={'downEvents' in row && row.downEvents > 0 ? 'red' : 'green'}
-                        size="sm"
+                        size='sm'
                       >
                         {'downEvents' in row ? row.downEvents : 0}
                       </Badge>
@@ -220,55 +223,56 @@ export function HistoryTable({ data, bucket, pageSize = 20 }: HistoryTableProps)
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <HStack justify="space-between" align="center">
-          <Text fontSize="sm" color="gray.600" _dark={{ color: 'gray.400' }}>
-            Showing {currentPage * pageSize + 1}-{Math.min((currentPage + 1) * pageSize, tableData.length)} of {tableData.length} entries
+        <HStack justify='space-between' align='center'>
+          <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
+            Showing {currentPage * pageSize + 1}-
+            {Math.min((currentPage + 1) * pageSize, tableData.length)} of {tableData.length} entries
           </Text>
-          
+
           <HStack gap={2}>
             <IconButton
-              size="sm"
-              variant="outline"
+              size='sm'
+              variant='outline'
               onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
               disabled={currentPage === 0}
-              aria-label="Previous page"
+              aria-label='Previous page'
             >
               <ChevronLeft size={16} />
             </IconButton>
-            
+
             <HStack gap={1}>
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNum: number
+                let pageNum: number;
                 if (totalPages <= 5) {
-                  pageNum = i
+                  pageNum = i;
                 } else if (currentPage <= 2) {
-                  pageNum = i
+                  pageNum = i;
                 } else if (currentPage >= totalPages - 3) {
-                  pageNum = totalPages - 5 + i
+                  pageNum = totalPages - 5 + i;
                 } else {
-                  pageNum = currentPage - 2 + i
+                  pageNum = currentPage - 2 + i;
                 }
-                
+
                 return (
                   <Button
                     key={pageNum}
-                    size="sm"
-                    variant={pageNum === currentPage ? "solid" : "outline"}
+                    size='sm'
+                    variant={pageNum === currentPage ? 'solid' : 'outline'}
                     onClick={() => setCurrentPage(pageNum)}
-                    minW="32px"
+                    minW='32px'
                   >
                     {pageNum + 1}
                   </Button>
-                )
+                );
               })}
             </HStack>
-            
+
             <IconButton
-              size="sm"
-              variant="outline"
+              size='sm'
+              variant='outline'
               onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
               disabled={currentPage >= totalPages - 1}
-              aria-label="Next page"
+              aria-label='Next page'
             >
               <ChevronRight size={16} />
             </IconButton>
@@ -276,5 +280,5 @@ export function HistoryTable({ data, bucket, pageSize = 20 }: HistoryTableProps)
         </HStack>
       )}
     </VStack>
-  )
+  );
 }

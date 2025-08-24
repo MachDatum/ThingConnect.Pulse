@@ -37,96 +37,105 @@ export interface PasswordInputProps extends InputProps, PasswordVisibilityProps 
   rootProps?: GroupProps;
 }
 
-export const PasswordInput = function PasswordInput({ ref, ...props }: PasswordInputProps & { ref?: React.RefObject<HTMLInputElement | null> }) {
-    const {
-      rootProps,
-      defaultVisible,
-      visible: visibleProp,
-      onVisibleChange,
-      visibilityIcon = { on: <LuEye />, off: <LuEyeOff /> },
-      ...rest
-    } = props;
+export const PasswordInput = function PasswordInput({
+  ref,
+  ...props
+}: PasswordInputProps & { ref?: React.RefObject<HTMLInputElement | null> }) {
+  const {
+    rootProps,
+    defaultVisible,
+    visible: visibleProp,
+    onVisibleChange,
+    visibilityIcon = { on: <LuEye />, off: <LuEyeOff /> },
+    ...rest
+  } = props;
 
-    const [visible, setVisible] = useControllableState({
-      value: visibleProp,
-      defaultValue: defaultVisible || false,
-      onChange: onVisibleChange,
-    });
+  const [visible, setVisible] = useControllableState({
+    value: visibleProp,
+    defaultValue: defaultVisible || false,
+    onChange: onVisibleChange,
+  });
 
-    const inputRef = React.useRef<HTMLInputElement>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
-    return (
-      <InputGroup
-        endElement={
-          <VisibilityTrigger
-            disabled={rest.disabled}
-            onPointerDown={e => {
-              if (rest.disabled) return;
-              if (e.button !== 0) return;
-              e.preventDefault();
-              setVisible(!visible);
-            }}
-          >
-            {visible ? visibilityIcon.off : visibilityIcon.on}
-          </VisibilityTrigger>
-        }
-        {...rootProps}
-      >
-        <Input {...rest} ref={mergeRefs(ref, inputRef)} type={visible ? 'text' : 'password'} />
-      </InputGroup>
-    );
-  };
+  return (
+    <InputGroup
+      endElement={
+        <VisibilityTrigger
+          disabled={rest.disabled}
+          onPointerDown={e => {
+            if (rest.disabled) return;
+            if (e.button !== 0) return;
+            e.preventDefault();
+            setVisible(!visible);
+          }}
+        >
+          {visible ? visibilityIcon.off : visibilityIcon.on}
+        </VisibilityTrigger>
+      }
+      {...rootProps}
+    >
+      <Input {...rest} ref={mergeRefs(ref, inputRef)} type={visible ? 'text' : 'password'} />
+    </InputGroup>
+  );
+};
 
-const VisibilityTrigger = function VisibilityTrigger({ ref, ...props }: ButtonProps & { ref?: React.RefObject<HTMLButtonElement | null> }) {
-    return (
-      <IconButton
-        tabIndex={-1}
-        ref={ref}
-        me='-2'
-        aspectRatio='square'
-        size='sm'
-        variant='ghost'
-        height='calc(100% - {spacing.2})'
-        aria-label='Toggle password visibility'
-        {...props}
-      />
-    );
-  };
+const VisibilityTrigger = function VisibilityTrigger({
+  ref,
+  ...props
+}: ButtonProps & { ref?: React.RefObject<HTMLButtonElement | null> }) {
+  return (
+    <IconButton
+      tabIndex={-1}
+      ref={ref}
+      me='-2'
+      aspectRatio='square'
+      size='sm'
+      variant='ghost'
+      height='calc(100% - {spacing.2})'
+      aria-label='Toggle password visibility'
+      {...props}
+    />
+  );
+};
 
 interface PasswordStrengthMeterProps extends StackProps {
   max?: number;
   value: number;
 }
 
-export const PasswordStrengthMeter = function PasswordStrengthMeter({ ref, ...props }: PasswordStrengthMeterProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
-    const { max = 4, value, ...rest } = props;
+export const PasswordStrengthMeter = function PasswordStrengthMeter({
+  ref,
+  ...props
+}: PasswordStrengthMeterProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
+  const { max = 4, value, ...rest } = props;
 
-    const percent = (value / max) * 100;
-    const { label, colorPalette } = getColorPalette(percent);
+  const percent = (value / max) * 100;
+  const { label, colorPalette } = getColorPalette(percent);
 
-    return (
-      <Stack align='flex-end' gap='1' ref={ref} {...rest}>
-        <HStack width='full' {...rest}>
-          {Array.from({ length: max }).map((_, index) => (
-            <Box
-              key={index}
-              height='1'
-              flex='1'
-              rounded='sm'
-              data-selected={index < value ? '' : undefined}
-              layerStyle='fill.subtle'
-              colorPalette='gray'
-              _selected={{
-                colorPalette,
-                layerStyle: 'fill.solid',
-              }}
-            />
-          ))}
-        </HStack>
-        {label && <HStack textStyle='xs'>{label}</HStack>}
-      </Stack>
-    );
-  };
+  return (
+    <Stack align='flex-end' gap='1' ref={ref} {...rest}>
+      <HStack width='full' {...rest}>
+        {Array.from({ length: max }).map((_, index) => (
+          <Box
+            key={index}
+            height='1'
+            flex='1'
+            rounded='sm'
+            data-selected={index < value ? '' : undefined}
+            layerStyle='fill.subtle'
+            colorPalette='gray'
+            _selected={{
+              colorPalette,
+              layerStyle: 'fill.solid',
+            }}
+          />
+        ))}
+      </HStack>
+      {label && <HStack textStyle='xs'>{label}</HStack>}
+    </Stack>
+  );
+};
 
 function getColorPalette(percent: number) {
   switch (true) {

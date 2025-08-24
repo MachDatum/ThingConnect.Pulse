@@ -1,15 +1,15 @@
-import { Box, Spinner } from '@chakra-ui/react'
+import { Box, Spinner } from '@chakra-ui/react';
 
 export function PageLoader() {
   return (
-    <Box 
-      display="flex" 
-      alignItems="center" 
-      justifyContent="center" 
-      minH="200px"
-      data-testid="suspense-fallback"
+    <Box
+      display='flex'
+      alignItems='center'
+      justifyContent='center'
+      minH='200px'
+      data-testid='suspense-fallback'
     >
-      <Spinner size="lg" />
+      <Spinner size='lg' />
     </Box>
-  )
+  );
 }

@@ -10,7 +10,10 @@ export interface TooltipProps extends ChakraTooltip.RootProps {
   disabled?: boolean;
 }
 
-export const Tooltip = function Tooltip({ ref, ...props }: TooltipProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
+export const Tooltip = function Tooltip({
+  ref,
+  ...props
+}: TooltipProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
   const {
     showArrow,
     children,

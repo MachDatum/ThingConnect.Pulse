@@ -15,7 +15,10 @@ const statusMap: Record<StatusValue, ColorPalette> = {
   info: 'blue',
 };
 
-export const Status = function Status({ ref, ...props }: StatusProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
+export const Status = function Status({
+  ref,
+  ...props
+}: StatusProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
   const { children, value = 'info', ...rest } = props;
   const colorPalette = rest.colorPalette ?? statusMap[value];
   return (

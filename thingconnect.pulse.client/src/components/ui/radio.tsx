@@ -6,7 +6,10 @@ export interface RadioProps extends ChakraRadioGroup.ItemProps {
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 }
 
-export const Radio = function Radio({ ref, ...props }: RadioProps & { ref?: React.RefObject<HTMLInputElement | null> }) {
+export const Radio = function Radio({
+  ref,
+  ...props
+}: RadioProps & { ref?: React.RefObject<HTMLInputElement | null> }) {
   const { children, inputProps, rootRef, ...rest } = props;
   return (
     <ChakraRadioGroup.Item ref={rootRef} {...rest}>

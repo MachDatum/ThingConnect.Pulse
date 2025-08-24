@@ -8,7 +8,10 @@ export interface SwitchProps extends ChakraSwitch.RootProps {
   thumbLabel?: { on: React.ReactNode; off: React.ReactNode };
 }
 
-export const Switch = function Switch({ ref, ...props }: SwitchProps & { ref?: React.RefObject<HTMLInputElement | null> }) {
+export const Switch = function Switch({
+  ref,
+  ...props
+}: SwitchProps & { ref?: React.RefObject<HTMLInputElement | null> }) {
   const { inputProps, children, rootRef, trackLabel, thumbLabel, ...rest } = props;
 
   return (

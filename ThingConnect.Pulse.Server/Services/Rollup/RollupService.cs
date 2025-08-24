@@ -157,8 +157,8 @@ public sealed class RollupService : IRollupService
         foreach (var bucketGroup in bucketGroups)
         {
             var bucketChecks = bucketGroup.Select(x => x.Check).OrderBy(c => c.Ts).ToList();
-            
-            if (!bucketChecks.Any()) 
+
+            if (!bucketChecks.Any())
             {
                 continue;
             }
@@ -167,7 +167,7 @@ public sealed class RollupService : IRollupService
             int totalChecks = bucketChecks.Count;
             int upChecks = bucketChecks.Count(c => c.Status == UpDown.up);
             double upPct = totalChecks > 0 ? (double)upChecks / totalChecks * 100.0 : 0.0;
-            
+
             var rttValues = bucketChecks
                 .Where(c => c.RttMs.HasValue && c.RttMs > 0)
                 .Select(c => c.RttMs!.Value)
@@ -214,8 +214,8 @@ public sealed class RollupService : IRollupService
         foreach (var dateGroup in dateGroups)
         {
             var dayChecks = dateGroup.Select(x => x.Check).OrderBy(c => c.Ts).ToList();
-            
-            if (!dayChecks.Any()) 
+
+            if (!dayChecks.Any())
             {
                 continue;
             }
@@ -224,7 +224,7 @@ public sealed class RollupService : IRollupService
             int totalChecks = dayChecks.Count;
             int upChecks = dayChecks.Count(c => c.Status == UpDown.up);
             double upPct = totalChecks > 0 ? (double)upChecks / totalChecks * 100.0 : 0.0;
-            
+
             var rttValues = dayChecks
                 .Where(c => c.RttMs.HasValue && c.RttMs > 0)
                 .Select(c => c.RttMs!.Value)
@@ -259,13 +259,13 @@ public sealed class RollupService : IRollupService
         // Round down to nearest 15-minute boundary
         int minute = ts.Minute;
         int bucketMinute = (minute / 15) * 15;
-        
+
         return new DateTimeOffset(ts.Year, ts.Month, ts.Day, ts.Hour, bucketMinute, 0, ts.Offset);
     }
 
     private async Task UpsertRollups15mAsync(List<Data.Rollup15m> rollups, CancellationToken cancellationToken)
     {
-        if (!rollups.Any()) 
+        if (!rollups.Any())
         {
             return;
         }
@@ -296,7 +296,7 @@ public sealed class RollupService : IRollupService
 
     private async Task UpsertRollupsDailyAsync(List<Data.RollupDaily> rollups, CancellationToken cancellationToken)
     {
-        if (!rollups.Any()) 
+        if (!rollups.Any())
         {
             return;
         }

@@ -8,20 +8,23 @@ export interface BlockquoteProps extends ChakraBlockquote.RootProps {
   showDash?: boolean;
 }
 
-export const Blockquote = function Blockquote({ ref, ...props }: BlockquoteProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
-    const { children, cite, citeUrl, showDash, icon, ...rest } = props;
+export const Blockquote = function Blockquote({
+  ref,
+  ...props
+}: BlockquoteProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
+  const { children, cite, citeUrl, showDash, icon, ...rest } = props;
 
-    return (
-      <ChakraBlockquote.Root ref={ref} {...rest}>
-        {icon}
-        <ChakraBlockquote.Content cite={citeUrl}>{children}</ChakraBlockquote.Content>
-        {cite && (
-          <ChakraBlockquote.Caption>
-            {showDash ? <>&mdash;</> : null} <cite>{cite}</cite>
-          </ChakraBlockquote.Caption>
-        )}
-      </ChakraBlockquote.Root>
-    );
-  };
+  return (
+    <ChakraBlockquote.Root ref={ref} {...rest}>
+      {icon}
+      <ChakraBlockquote.Content cite={citeUrl}>{children}</ChakraBlockquote.Content>
+      {cite && (
+        <ChakraBlockquote.Caption>
+          {showDash ? <>&mdash;</> : null} <cite>{cite}</cite>
+        </ChakraBlockquote.Caption>
+      )}
+    </ChakraBlockquote.Root>
+  );
+};
 
 export const BlockquoteIcon = ChakraBlockquote.Icon;

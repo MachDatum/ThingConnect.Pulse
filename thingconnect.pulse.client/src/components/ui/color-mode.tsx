@@ -46,45 +46,54 @@ export function ColorModeIcon() {
 
 interface ColorModeButtonProps extends Omit<IconButtonProps, 'aria-label'> {}
 
-export const ColorModeButton = function ColorModeButton({ ref, ...props }: ColorModeButtonProps & { ref?: React.RefObject<HTMLButtonElement | null> }) {
-    const { toggleColorMode } = useColorMode();
-    return (
-      <ClientOnly fallback={<Skeleton boxSize='8' />}>
-        <IconButton
-          onClick={toggleColorMode}
-          variant='ghost'
-          aria-label='Toggle color mode'
-          size='sm'
-          ref={ref}
-          {...props}
-          css={{
-            _icon: {
-              width: '5',
-              height: '5',
-            },
-          }}
-        >
-          <ColorModeIcon />
-        </IconButton>
-      </ClientOnly>
-    );
-  };
-
-export const LightMode = function LightMode({ ref, ...props }: SpanProps & { ref?: React.RefObject<HTMLSpanElement | null> }) {
-    return (
-      <Span
-        color='fg'
-        display='contents'
-        className='chakra-theme light'
-        colorPalette='gray'
-        colorScheme='light'
+export const ColorModeButton = function ColorModeButton({
+  ref,
+  ...props
+}: ColorModeButtonProps & { ref?: React.RefObject<HTMLButtonElement | null> }) {
+  const { toggleColorMode } = useColorMode();
+  return (
+    <ClientOnly fallback={<Skeleton boxSize='8' />}>
+      <IconButton
+        onClick={toggleColorMode}
+        variant='ghost'
+        aria-label='Toggle color mode'
+        size='sm'
         ref={ref}
         {...props}
-      />
-    );
-  };
+        css={{
+          _icon: {
+            width: '5',
+            height: '5',
+          },
+        }}
+      >
+        <ColorModeIcon />
+      </IconButton>
+    </ClientOnly>
+  );
+};
 
-export const DarkMode = function DarkMode({ ref, ...props }: SpanProps & { ref?: React.RefObject<HTMLSpanElement | null> }) {
+export const LightMode = function LightMode({
+  ref,
+  ...props
+}: SpanProps & { ref?: React.RefObject<HTMLSpanElement | null> }) {
+  return (
+    <Span
+      color='fg'
+      display='contents'
+      className='chakra-theme light'
+      colorPalette='gray'
+      colorScheme='light'
+      ref={ref}
+      {...props}
+    />
+  );
+};
+
+export const DarkMode = function DarkMode({
+  ref,
+  ...props
+}: SpanProps & { ref?: React.RefObject<HTMLSpanElement | null> }) {
   return (
     <Span
       color='fg'

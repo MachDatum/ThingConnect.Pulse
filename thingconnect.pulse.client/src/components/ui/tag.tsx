@@ -8,7 +8,10 @@ export interface TagProps extends ChakraTag.RootProps {
   closable?: boolean;
 }
 
-export const Tag = function Tag({ ref, ...props }: TagProps & { ref?: React.RefObject<HTMLSpanElement | null> }) {
+export const Tag = function Tag({
+  ref,
+  ...props
+}: TagProps & { ref?: React.RefObject<HTMLSpanElement | null> }) {
   const { startElement, endElement, onClose, closable = !!onClose, children, ...rest } = props;
 
   return (

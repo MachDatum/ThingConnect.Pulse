@@ -64,21 +64,22 @@ export const testIds = {
     errorBoundary: 'error-boundary',
     suspenseFallback: 'suspense-fallback',
   },
-} as const
+} as const;
 
 // Type for all test IDs for TypeScript safety
-export type TestId = typeof testIds[keyof typeof testIds][keyof typeof testIds[keyof typeof testIds]]
+export type TestId =
+  (typeof testIds)[keyof typeof testIds][keyof (typeof testIds)[keyof typeof testIds]];
 
 // Helper function to get nested test IDs
 export function getTestId(category: keyof typeof testIds, key: string): string {
-  const categoryObj = testIds[category] as Record<string, string>
-  return categoryObj[key] || `${String(category)}-${key}`
+  const categoryObj = testIds[category] as Record<string, string>;
+  return categoryObj[key] || `${String(category)}-${key}`;
 }
 
 // Playwright selector helpers
 export const selectors = {
   byTestId: (testId: string) => `[data-testid="${testId}"]`,
   byAriaLabel: (label: string) => `[aria-label="${label}"]`,
-  byRole: (role: string, name?: string) => 
+  byRole: (role: string, name?: string) =>
     name ? `[role="${role}"][aria-label="${name}"]` : `[role="${role}"]`,
-} as const
+} as const;

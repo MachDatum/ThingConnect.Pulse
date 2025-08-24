@@ -1,14 +1,10 @@
-import { Suspense } from 'react'
-import { PageLoader } from './PageLoader'
+import { Suspense } from 'react';
+import { PageLoader } from './PageLoader';
 
 interface LazyWrapperProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 export function LazyWrapper({ children }: LazyWrapperProps) {
-  return (
-    <Suspense fallback={<PageLoader />}>
-      {children}
-    </Suspense>
-  )
+  return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
 }
