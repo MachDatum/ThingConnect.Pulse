@@ -4,6 +4,7 @@ using ThingConnect.Pulse.Server.Data;
 using ThingConnect.Pulse.Server.Infrastructure;
 using ThingConnect.Pulse.Server.Services;
 using ThingConnect.Pulse.Server.Services.Monitoring;
+using ThingConnect.Pulse.Server.Services.Prune;
 using ThingConnect.Pulse.Server.Services.Rollup;
 
 namespace ThingConnect.Pulse.Server;
@@ -40,6 +41,9 @@ public class Program
         // Add rollup services
         builder.Services.AddScoped<IRollupService, RollupService>();
         builder.Services.AddHostedService<RollupBackgroundService>();
+
+        // Add prune services
+        builder.Services.AddScoped<IPruneService, PruneService>();
 
         builder.Services.AddControllers(options =>
         {
