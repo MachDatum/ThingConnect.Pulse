@@ -1,30 +1,50 @@
 // API Types based on OpenAPI specification
 // This file contains TypeScript interfaces for the Pulse API responses
 
-export interface LiveEndpoint {
+export interface Group {
   id: string
   name: string
+  parent_id?: string | null
+  color?: string | null
+}
+
+export interface Endpoint {
+  id: string
+  name: string
+  group: Group
+  type: 'icmp' | 'tcp' | 'http'
   host: string
-  group?: string
-  status: 'UP' | 'DOWN' | 'FLAPPING'
-  rtt?: number
-  lastCheck?: string
-  sparkline?: number[]
-  config: {
-    type: 'ICMP' | 'TCP' | 'HTTP' | 'HTTPS'
-    port?: number
-    path?: string
-    timeout?: number
-    interval?: number
-  }
+  port?: number | null
+  http_path?: string | null
+  http_match?: string | null
+  interval_seconds: number
+  timeout_ms: number
+  retries: number
+  enabled: boolean
+}
+
+export interface SparklinePoint {
+  ts: string
+  s: 'u' | 'd'
+}
+
+export interface LiveStatusItem {
+  endpoint: Endpoint
+  status: 'up' | 'down' | 'flapping'
+  rtt_ms?: number | null
+  last_change_ts: string
+  sparkline: SparklinePoint[]
+}
+
+export interface PageMeta {
+  page: number
+  pageSize: number
+  total: number
 }
 
 export interface PagedLive {
-  data: LiveEndpoint[]
-  page: number
-  pageSize: number
-  totalCount: number
-  totalPages: number
+  meta: PageMeta
+  items: LiveStatusItem[]
 }
 
 export interface StateChange {
