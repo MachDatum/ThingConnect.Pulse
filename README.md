@@ -55,9 +55,15 @@ npm run dev
 
 ## API Endpoints
 
-The server provides REST API endpoints for configuration management:
+The server provides REST API endpoints for configuration management and monitoring data:
 
 ```bash
+# Live monitoring data
+GET /api/status/live
+
+# Historical data by endpoint  
+GET /api/history/endpoint/{id}
+
 # Apply YAML configuration
 POST /api/config/apply
 Content-Type: text/plain
@@ -115,7 +121,7 @@ GET /api/test/monitoring/outages
 - **Network Monitoring**: ✅ ICMP ping, TCP connect, HTTP status checks with concurrent execution
 - **Configuration**: ✅ YAML-based with JSON Schema validation and version tracking
 - **Data Storage**: ✅ SQLite with automatic 15-minute/daily rollups running every 5 minutes
-- **Web Interface**: ✅ Real-time status dashboard with live data integration, endpoint detail pages, and responsive layout
+- **Web Interface**: ✅ Real-time status dashboard with live data integration, endpoint detail pages, history view with CSV export, and responsive layout
 - **Configuration Management**: ✅ Apply, list, and download configuration versions
 - **Settings Management**: ✅ Key-value store with watermark tracking for rollup jobs
 - **Alerting**: ✅ Status change detection with flap damping (2/2 thresholds)
