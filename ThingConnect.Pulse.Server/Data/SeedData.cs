@@ -106,7 +106,7 @@ public static class SeedData
             Id = "test-config-001",
             AppliedTs = now,
             FileHash = "abcd1234",
-            FilePath = @"C:\ProgramData\ThingConnect.Pulse\config.yaml",
+            FilePath = @"C:\ProgramData\ThingConnect.Pulse\config\config.yaml",
             Actor = "system",
             Note = "Initial test configuration"
         };

@@ -53,6 +53,50 @@ npm run dev
 - **[Data Model](./docs/data-model.cs)** - Entity Framework Core entities
 - **[Rollup Algorithms](./docs/rollup-spec.md)** - Data aggregation specifications
 
+## Installation & Deployment
+
+### Windows Installer
+
+Build and create a professional Windows installer:
+
+```bash
+# Build installer (includes build and packaging)
+.\build-installer.ps1
+
+# Build installer without rebuilding (faster for testing)
+.\build-installer.ps1 -SkipBuild
+
+# Open installer directory after build
+.\build-installer.ps1 -OpenInstaller
+```
+
+The installer will:
+- Install to `Program Files\ThingConnect.Pulse`
+- Create data directories in `ProgramData\ThingConnect.Pulse`
+- Register and start `ThingConnectPulseSvc` Windows service
+- Create Start Menu shortcuts
+- Ask before deleting data on uninstall
+
+### Development Installation
+
+For development and testing:
+
+```bash
+# Install as Windows service (development)
+.\install-service.ps1 install
+
+# Manage service
+.\install-service.ps1 start|stop|status
+
+# Uninstall service  
+.\install-service.ps1 uninstall
+```
+
+### Documentation
+
+- **[Installer Conventions](./docs/installer-map.md)** - Windows service installation specification
+- **[Logging Configuration](./docs/logging.md)** - Structured logging setup and policies
+
 ## API Endpoints
 
 The server provides REST API endpoints for configuration management and monitoring data:

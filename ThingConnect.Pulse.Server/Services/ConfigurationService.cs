@@ -17,22 +17,26 @@ public sealed class ConfigurationService : IConfigurationService
 {
     private readonly PulseDbContext _context;
     private readonly ConfigParser _parser;
-    private readonly string _versionsPath;
+    private readonly IPathService _pathService;
 
-    public ConfigurationService(PulseDbContext context, ConfigParser parser)
+    public ConfigurationService(PulseDbContext context, ConfigParser parser, IPathService pathService)
     {
         _context = context;
         _parser = parser;
-        _versionsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-            "ThingConnect.Pulse", "versions");
+        _pathService = pathService;
     }
 
     public async Task<ApplyResultDto> ApplyConfigurationAsync(string yamlContent, string? actor = null, string? note = null)
     {
-        (ConfigYaml config, ValidationErrorsDto validationErrors) = _parser.ParseAndValidate(yamlContent);
+        (ConfigYaml? config, ValidationErrorsDto? validationErrors) = _parser.ParseAndValidate(yamlContent);
         if (validationErrors != null)
         {
             throw new InvalidOperationException($"Validation failed: {validationErrors.Message}");
+        }
+        
+        if (config == null)
+        {
+            throw new InvalidOperationException("Configuration parsing returned null");
         }
 
         string fileHash = ComputeHash(yamlContent);
@@ -61,9 +65,8 @@ public sealed class ConfigurationService : IConfigurationService
             string versionId = GenerateVersionId();
             DateTimeOffset timestamp = DateTimeOffset.UtcNow;
             string fileName = $"{timestamp:yyyyMMdd_HHmmss}_{fileHash[..8]}.yaml";
-            string filePath = Path.Combine(_versionsPath, fileName);
+            string filePath = Path.Combine(_pathService.GetVersionsDirectory(), fileName);
 
-            Directory.CreateDirectory(_versionsPath);
             await File.WriteAllTextAsync(filePath, yamlContent);
 
             var configVersion = new ConfigVersion
