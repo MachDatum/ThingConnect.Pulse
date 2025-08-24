@@ -110,7 +110,7 @@ GET /api/test/monitoring/outages
 - **Network Monitoring**: ✅ ICMP ping, TCP connect, HTTP status checks with concurrent execution
 - **Configuration**: ✅ YAML-based with JSON Schema validation and version tracking
 - **Data Storage**: ✅ SQLite with automatic rollups and retention foundation
-- **Web Interface**: Real-time status dashboard and historical views
+- **Web Interface**: ✅ React app shell with routing and responsive layout
 - **Configuration Management**: ✅ Apply, list, and download configuration versions
 - **Settings Management**: ✅ Key-value store with watermark tracking for rollup jobs
 - **Alerting**: ✅ Status change detection with flap damping (2/2 thresholds)
