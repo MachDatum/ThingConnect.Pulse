@@ -115,7 +115,7 @@ GET /api/test/monitoring/outages
 - **Network Monitoring**: ✅ ICMP ping, TCP connect, HTTP status checks with concurrent execution
 - **Configuration**: ✅ YAML-based with JSON Schema validation and version tracking
 - **Data Storage**: ✅ SQLite with automatic 15-minute/daily rollups running every 5 minutes
-- **Web Interface**: ✅ Real-time status dashboard with live data integration and responsive layout
+- **Web Interface**: ✅ Real-time status dashboard with live data integration, endpoint detail pages, and responsive layout
 - **Configuration Management**: ✅ Apply, list, and download configuration versions
 - **Settings Management**: ✅ Key-value store with watermark tracking for rollup jobs
 - **Alerting**: ✅ Status change detection with flap damping (2/2 thresholds)

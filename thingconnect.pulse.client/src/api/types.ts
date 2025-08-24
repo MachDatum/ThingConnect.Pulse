@@ -55,33 +55,24 @@ export interface StateChange {
   error?: string
 }
 
+export interface RawCheck {
+  ts: string
+  status: 'up' | 'down'
+  rttMs?: number | null
+  error?: string | null
+}
+
 export interface Outage {
-  id: string
-  startTime: string
-  endTime?: string
-  duration?: number
-  affectedChecks: number
+  startedTs: string
+  endedTs?: string | null
+  durationS?: number | null
+  lastError?: string | null
 }
 
 export interface EndpointDetail {
-  id: string
-  name: string
-  host: string
-  group?: string
-  currentStatus: 'UP' | 'DOWN' | 'FLAPPING'
-  config: {
-    type: 'ICMP' | 'TCP' | 'HTTP' | 'HTTPS'
-    port?: number
-    path?: string
-    timeout?: number
-    interval?: number
-  }
-  recentStateChanges: StateChange[]
-  recentOutages: Outage[]
-  rttHistory: Array<{
-    timestamp: string
-    rtt?: number
-  }>
+  endpoint: Endpoint
+  recent: RawCheck[]
+  outages: Outage[]
 }
 
 export interface HistoryDataPoint {
@@ -91,15 +82,26 @@ export interface HistoryDataPoint {
   error?: string
 }
 
+export interface RollupBucket {
+  bucketTs: string
+  upPct: number
+  avgRttMs?: number | null
+  downEvents: number
+}
+
+export interface DailyBucket {
+  bucketDate: string
+  upPct: number
+  avgRttMs?: number | null
+  downEvents: number
+}
+
 export interface HistoryResponse {
-  endpointId: string
-  from: string
-  to: string
-  bucket: 'raw' | '15m' | 'daily'
-  data: HistoryDataPoint[]
-  availabilityPercentage?: number
-  totalUptime?: number
-  totalDowntime?: number
+  endpoint: Endpoint
+  raw: RawCheck[]
+  rollup15m: RollupBucket[]
+  rollupDaily: DailyBucket[]
+  outages: Outage[]
 }
 
 // Request parameter types
