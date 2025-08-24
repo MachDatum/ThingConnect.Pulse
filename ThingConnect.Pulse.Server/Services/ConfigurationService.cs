@@ -29,10 +29,15 @@ public sealed class ConfigurationService : IConfigurationService
 
     public async Task<ApplyResultDto> ApplyConfigurationAsync(string yamlContent, string? actor = null, string? note = null)
     {
-        (ConfigYaml config, ValidationErrorsDto validationErrors) = _parser.ParseAndValidate(yamlContent);
+        (ConfigYaml? config, ValidationErrorsDto? validationErrors) = _parser.ParseAndValidate(yamlContent);
         if (validationErrors != null)
         {
             throw new InvalidOperationException($"Validation failed: {validationErrors.Message}");
+        }
+        
+        if (config == null)
+        {
+            throw new InvalidOperationException("Configuration parsing returned null");
         }
 
         string fileHash = ComputeHash(yamlContent);

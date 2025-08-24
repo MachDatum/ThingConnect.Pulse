@@ -1,5 +1,7 @@
 
 using Microsoft.EntityFrameworkCore;
+using Serilog;
+using Serilog.Events;
 using ThingConnect.Pulse.Server.Data;
 using ThingConnect.Pulse.Server.Infrastructure;
 using ThingConnect.Pulse.Server.Services;
@@ -13,75 +15,110 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+        // Configure Serilog for rolling file logging
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Information()
+            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+            .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
+            .Enrich.FromLogContext()
+            .WriteTo.Console()
+            .WriteTo.File(
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), 
+                            "ThingConnect.Pulse", "logs", "pulse-.log"),
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 30,
+                shared: true)
+            .CreateLogger();
 
-        // Add services to the container.
-        builder.Services.AddDbContext<PulseDbContext>(options =>
-            options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-        // Add memory cache for settings service
-        builder.Services.AddMemoryCache();
-
-        // Add HTTP client for probes
-        builder.Services.AddHttpClient();
-
-        // Add configuration services
-        builder.Services.AddSingleton<ConfigParser>();
-        builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
-        builder.Services.AddScoped<ISettingsService, SettingsService>();
-
-        // Add monitoring services
-        builder.Services.AddScoped<IProbeService, ProbeService>();
-        builder.Services.AddScoped<IOutageDetectionService, OutageDetectionService>();
-        builder.Services.AddScoped<IDiscoveryService, DiscoveryService>();
-        builder.Services.AddScoped<IStatusService, StatusService>();
-        builder.Services.AddScoped<IHistoryService, HistoryService>();
-        builder.Services.AddHostedService<MonitoringBackgroundService>();
-
-        // Add rollup services
-        builder.Services.AddScoped<IRollupService, RollupService>();
-        builder.Services.AddHostedService<RollupBackgroundService>();
-
-        // Add prune services
-        builder.Services.AddScoped<IPruneService, PruneService>();
-
-        builder.Services.AddControllers(options =>
+        try
         {
-            options.InputFormatters.Insert(0, new PlainTextInputFormatter());
-        });
-        // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-        builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
+            Log.Information("Starting ThingConnect Pulse Server");
 
-        WebApplication app = builder.Build();
+            WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+            
+            // Use Serilog as the logging provider
+            builder.Host.UseSerilog();
+            
+            // Configure Windows Service hosting
+            builder.Host.UseWindowsService();
 
-        // Initialize database with seed data in development
-        if (app.Environment.IsDevelopment())
-        {
-            using IServiceScope scope = app.Services.CreateScope();
-            PulseDbContext context = scope.ServiceProvider.GetRequiredService<PulseDbContext>();
-            SeedData.Initialize(context);
+            // Add services to the container.
+            builder.Services.AddDbContext<PulseDbContext>(options =>
+                options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            // Add memory cache for settings service
+            builder.Services.AddMemoryCache();
+
+            // Add HTTP client for probes
+            builder.Services.AddHttpClient();
+
+            // Add configuration services
+            builder.Services.AddSingleton<ConfigParser>();
+            builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
+            builder.Services.AddScoped<ISettingsService, SettingsService>();
+
+            // Add monitoring services
+            builder.Services.AddScoped<IProbeService, ProbeService>();
+            builder.Services.AddScoped<IOutageDetectionService, OutageDetectionService>();
+            builder.Services.AddScoped<IDiscoveryService, DiscoveryService>();
+            builder.Services.AddScoped<IStatusService, StatusService>();
+            builder.Services.AddScoped<IHistoryService, HistoryService>();
+            builder.Services.AddHostedService<MonitoringBackgroundService>();
+
+            // Add rollup services
+            builder.Services.AddScoped<IRollupService, RollupService>();
+            builder.Services.AddHostedService<RollupBackgroundService>();
+
+            // Add prune services
+            builder.Services.AddScoped<IPruneService, PruneService>();
+
+            builder.Services.AddControllers(options =>
+            {
+                options.InputFormatters.Insert(0, new PlainTextInputFormatter());
+            });
+            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
+
+            WebApplication app = builder.Build();
+
+            // Initialize database with seed data in development
+            if (app.Environment.IsDevelopment())
+            {
+                using IServiceScope scope = app.Services.CreateScope();
+                PulseDbContext context = scope.ServiceProvider.GetRequiredService<PulseDbContext>();
+                SeedData.Initialize(context);
+            }
+
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
+
+            // Configure the HTTP request pipeline.
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
+
+            app.UseHttpsRedirection();
+
+            app.UseAuthorization();
+
+            app.MapControllers();
+
+            app.MapFallbackToFile("/index.html");
+
+            Log.Information("ThingConnect Pulse Server configured successfully");
+            app.Run();
         }
-
-        app.UseDefaultFiles();
-        app.UseStaticFiles();
-
-        // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
+        catch (Exception ex)
         {
-            app.UseSwagger();
-            app.UseSwaggerUI();
+            Log.Fatal(ex, "ThingConnect Pulse Server terminated unexpectedly");
         }
-
-        app.UseHttpsRedirection();
-
-        app.UseAuthorization();
-
-
-        app.MapControllers();
-
-        app.MapFallbackToFile("/index.html");
-
-        app.Run();
+        finally
+        {
+            Log.Information("ThingConnect Pulse Server stopped");
+            Log.CloseAndFlush();
+        }
     }
 }
