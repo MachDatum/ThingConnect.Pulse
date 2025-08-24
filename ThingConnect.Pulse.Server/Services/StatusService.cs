@@ -1,0 +1,253 @@
+using Microsoft.EntityFrameworkCore;
+using ThingConnect.Pulse.Server.Data;
+using ThingConnect.Pulse.Server.Models;
+using ThingConnect.Pulse.Server.Services.Monitoring;
+
+namespace ThingConnect.Pulse.Server.Services;
+
+public interface IStatusService
+{
+    Task<PagedLiveDto> GetLiveStatusAsync(string? group, string? search, int page, int pageSize);
+}
+
+public sealed class StatusService : IStatusService
+{
+    private readonly PulseDbContext _context;
+    private readonly ILogger<StatusService> _logger;
+
+    public StatusService(PulseDbContext context, ILogger<StatusService> logger)
+    {
+        _context = context;
+        _logger = logger;
+    }
+
+    public async Task<PagedLiveDto> GetLiveStatusAsync(string? group, string? search, int page, int pageSize)
+    {
+        _logger.LogDebug("Getting live status with filters: group={Group}, search={Search}, page={Page}, pageSize={PageSize}", 
+            group, search, page, pageSize);
+
+        // Build base query for enabled endpoints
+        var query = _context.Endpoints
+            .Include(e => e.Group)
+            .Where(e => e.Enabled)
+            .AsQueryable();
+
+        // Apply group filter
+        if (!string.IsNullOrWhiteSpace(group))
+        {
+            query = query.Where(e => e.GroupId == group);
+        }
+
+        // Apply search filter (matches name or host)
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var searchLower = search.ToLower();
+            query = query.Where(e => 
+                e.Name.ToLower().Contains(searchLower) || 
+                e.Host.ToLower().Contains(searchLower));
+        }
+
+        // Get total count for pagination
+        var totalCount = await query.CountAsync();
+
+        // Apply pagination
+        var endpoints = await query
+            .OrderBy(e => e.GroupId)
+            .ThenBy(e => e.Name)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        // Get live status for each endpoint
+        var items = new List<LiveStatusItemDto>();
+        var endpointIds = endpoints.Select(e => e.Id).ToList();
+        
+        // Get latest checks for all endpoints
+        // SQLite doesn't support DateTimeOffset in OrderBy, so we need to fetch and order in memory
+        var allChecks = await _context.CheckResultsRaw
+            .Where(c => endpointIds.Contains(c.EndpointId))
+            .ToListAsync();
+        
+        var latestChecks = allChecks
+            .GroupBy(c => c.EndpointId)
+            .Select(g => new
+            {
+                EndpointId = g.Key,
+                LatestCheck = g.OrderByDescending(c => c.Ts).FirstOrDefault()
+            })
+            .ToList();
+
+        var latestCheckDict = latestChecks.ToDictionary(x => x.EndpointId, x => x.LatestCheck);
+
+        // Get sparkline data (last 20 checks per endpoint for mini chart)
+        var sparklineData = await GetSparklineDataAsync(endpointIds);
+
+        foreach (var endpoint in endpoints)
+        {
+            var status = DetermineStatus(endpoint, latestCheckDict);
+            var sparkline = sparklineData.ContainsKey(endpoint.Id) 
+                ? sparklineData[endpoint.Id] 
+                : new List<SparklinePoint>();
+
+            items.Add(new LiveStatusItemDto
+            {
+                Endpoint = MapToEndpointDto(endpoint),
+                Status = status.ToString().ToLower(),
+                RttMs = endpoint.LastRttMs,
+                LastChangeTs = endpoint.LastChangeTs ?? DateTimeOffset.Now,
+                Sparkline = sparkline
+            });
+        }
+
+        return new PagedLiveDto
+        {
+            Meta = new PageMetaDto
+            {
+                Page = page,
+                PageSize = pageSize,
+                Total = totalCount
+            },
+            Items = items
+        };
+    }
+
+    private async Task<Dictionary<Guid, List<SparklinePoint>>> GetSparklineDataAsync(List<Guid> endpointIds)
+    {
+        var sparklineData = new Dictionary<Guid, List<SparklinePoint>>();
+        
+        if (!endpointIds.Any())
+        {
+            return sparklineData;
+        }
+        
+        // Get last 20 checks for each endpoint
+        // SQLite limitation: fetch all recent data and filter in memory
+        var recentChecks = await _context.CheckResultsRaw
+            .Where(c => endpointIds.Contains(c.EndpointId))
+            .Select(c => new { c.EndpointId, c.Ts, c.Status })
+            .ToListAsync();
+        
+        // Filter to last 2 hours in memory
+        var cutoffTime = DateTimeOffset.Now.AddHours(-2);
+        recentChecks = recentChecks
+            .Where(c => c.Ts >= cutoffTime)
+            .ToList();
+        
+        recentChecks = recentChecks
+            .OrderBy(c => c.EndpointId)
+            .ThenByDescending(c => c.Ts)
+            .ToList();
+
+        var groupedChecks = recentChecks.GroupBy(c => c.EndpointId);
+        
+        foreach (var group in groupedChecks)
+        {
+            var points = group
+                .Take(20) // Maximum 20 points for sparkline
+                .OrderBy(c => c.Ts) // Order chronologically for display
+                .Select(c => new SparklinePoint
+                {
+                    Ts = c.Ts,
+                    S = c.Status == UpDown.up ? "u" : "d"
+                })
+                .ToList();
+                
+            sparklineData[group.Key] = points;
+        }
+
+        return sparklineData;
+    }
+
+    private StatusType DetermineStatus(Data.Endpoint endpoint, Dictionary<Guid, CheckResultRaw?> latestChecks)
+    {
+        // Check if we have recent check data
+        if (!latestChecks.TryGetValue(endpoint.Id, out var latestCheck) || latestCheck == null)
+        {
+            return StatusType.Down; // No data means down
+        }
+
+        // Check if the latest check is recent enough (within 2x interval)
+        var expectedInterval = TimeSpan.FromSeconds(endpoint.IntervalSeconds * 2);
+        if (DateTimeOffset.Now - latestCheck.Ts > expectedInterval)
+        {
+            return StatusType.Down; // Stale data means down
+        }
+
+        // Check for flapping (multiple state changes in short period)
+        // This is simplified - in production you'd want more sophisticated flap detection
+        if (IsFlapping(endpoint.Id).Result)
+        {
+            return StatusType.Flapping;
+        }
+
+        return latestCheck.Status == UpDown.up ? StatusType.Up : StatusType.Down;
+    }
+
+    private async Task<bool> IsFlapping(Guid endpointId)
+    {
+        // Simple flap detection: check if there were > 3 state changes in last 5 minutes
+        var checks = await _context.CheckResultsRaw
+            .Where(c => c.EndpointId == endpointId)
+            .Select(c => new { c.Ts, c.Status })
+            .ToListAsync();
+        
+        // Filter to last 5 minutes in memory
+        var cutoffTime = DateTimeOffset.Now.AddMinutes(-5);
+        checks = checks
+            .Where(c => c.Ts >= cutoffTime)
+            .ToList();
+        
+        var recentChecks = checks
+            .OrderBy(c => c.Ts)
+            .Select(c => c.Status)
+            .ToList();
+
+        if (recentChecks.Count < 4)
+        {
+            return false;
+        }
+
+        int stateChanges = 0;
+        for (int i = 1; i < recentChecks.Count; i++)
+        {
+            if (recentChecks[i] != recentChecks[i - 1])
+            {
+                stateChanges++;
+            }
+        }
+
+        return stateChanges > 3;
+    }
+
+    private EndpointDto MapToEndpointDto(Data.Endpoint endpoint)
+    {
+        return new EndpointDto
+        {
+            Id = endpoint.Id,
+            Name = endpoint.Name,
+            Group = new GroupDto
+            {
+                Id = endpoint.Group.Id,
+                Name = endpoint.Group.Name,
+                ParentId = endpoint.Group.ParentId,
+                Color = endpoint.Group.Color
+            },
+            Type = endpoint.Type.ToString().ToLower(),
+            Host = endpoint.Host,
+            Port = endpoint.Port,
+            HttpPath = endpoint.HttpPath,
+            HttpMatch = endpoint.HttpMatch,
+            IntervalSeconds = endpoint.IntervalSeconds,
+            TimeoutMs = endpoint.TimeoutMs,
+            Retries = endpoint.Retries,
+            Enabled = endpoint.Enabled
+        };
+    }
+
+    private enum StatusType
+    {
+        Up,
+        Down,
+        Flapping
+    }
+}

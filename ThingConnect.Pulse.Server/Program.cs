@@ -32,6 +32,8 @@ public class Program
         builder.Services.AddScoped<IProbeService, ProbeService>();
         builder.Services.AddScoped<IOutageDetectionService, OutageDetectionService>();
         builder.Services.AddScoped<IDiscoveryService, DiscoveryService>();
+        builder.Services.AddScoped<IStatusService, StatusService>();
+        builder.Services.AddScoped<IHistoryService, HistoryService>();
         builder.Services.AddHostedService<MonitoringBackgroundService>();
 
         builder.Services.AddControllers(options =>
