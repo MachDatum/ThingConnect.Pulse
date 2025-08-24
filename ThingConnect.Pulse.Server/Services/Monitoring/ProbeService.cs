@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using ThingConnect.Pulse.Server.Data;
@@ -24,17 +23,17 @@ public sealed class ProbeService : IProbeService
 
     public async Task<CheckResult> ProbeAsync(Data.Endpoint endpoint, CancellationToken cancellationToken = default)
     {
-        var timestamp = DateTimeOffset.UtcNow;
+        DateTimeOffset timestamp = DateTimeOffset.UtcNow;
 
         try
         {
             return endpoint.Type switch
             {
                 ProbeType.icmp => await PingAsync(endpoint.Id, endpoint.Host, endpoint.TimeoutMs, cancellationToken),
-                ProbeType.tcp => await TcpConnectAsync(endpoint.Id, endpoint.Host, 
+                ProbeType.tcp => await TcpConnectAsync(endpoint.Id, endpoint.Host,
                     endpoint.Port ?? 80, endpoint.TimeoutMs, cancellationToken),
-                ProbeType.http => await HttpCheckAsync(endpoint.Id, endpoint.Host, 
-                    endpoint.Port ?? (endpoint.Host.StartsWith("https://") ? 443 : 80), 
+                ProbeType.http => await HttpCheckAsync(endpoint.Id, endpoint.Host,
+                    endpoint.Port ?? (endpoint.Host.StartsWith("https://") ? 443 : 80),
                     endpoint.HttpPath, endpoint.HttpMatch, endpoint.TimeoutMs, cancellationToken),
                 _ => CheckResult.Failure(endpoint.Id, timestamp, $"Unknown probe type: {endpoint.Type}")
             };
@@ -48,14 +47,14 @@ public sealed class ProbeService : IProbeService
 
     public async Task<CheckResult> PingAsync(Guid endpointId, string host, int timeoutMs, CancellationToken cancellationToken = default)
     {
-        var timestamp = DateTimeOffset.UtcNow;
-        
+        DateTimeOffset timestamp = DateTimeOffset.UtcNow;
+
         try
         {
             using var ping = new Ping();
             var stopwatch = Stopwatch.StartNew();
-            
-            var reply = await ping.SendPingAsync(host, timeoutMs);
+
+            PingReply reply = await ping.SendPingAsync(host, timeoutMs);
             stopwatch.Stop();
 
             if (reply.Status == IPStatus.Success)
@@ -75,18 +74,18 @@ public sealed class ProbeService : IProbeService
 
     public async Task<CheckResult> TcpConnectAsync(Guid endpointId, string host, int port, int timeoutMs, CancellationToken cancellationToken = default)
     {
-        var timestamp = DateTimeOffset.UtcNow;
-        
+        DateTimeOffset timestamp = DateTimeOffset.UtcNow;
+
         try
         {
             using var tcpClient = new TcpClient();
             var stopwatch = Stopwatch.StartNew();
-            
+
             // Create a timeout task
             var timeoutTask = Task.Delay(timeoutMs, cancellationToken);
-            var connectTask = tcpClient.ConnectAsync(host, port);
-            
-            var completedTask = await Task.WhenAny(connectTask, timeoutTask);
+            Task connectTask = tcpClient.ConnectAsync(host, port);
+
+            Task completedTask = await Task.WhenAny(connectTask, timeoutTask);
             stopwatch.Stop();
 
             if (completedTask == connectTask && connectTask.IsCompletedSuccessfully)
@@ -99,7 +98,7 @@ public sealed class ProbeService : IProbeService
             }
             else
             {
-                var exception = connectTask.Exception?.GetBaseException();
+                Exception? exception = connectTask.Exception?.GetBaseException();
                 return CheckResult.Failure(endpointId, timestamp, $"TCP connection failed: {exception?.Message}");
             }
         }
@@ -109,50 +108,50 @@ public sealed class ProbeService : IProbeService
         }
     }
 
-    public async Task<CheckResult> HttpCheckAsync(Guid endpointId, string host, int port, string? path, 
+    public async Task<CheckResult> HttpCheckAsync(Guid endpointId, string host, int port, string? path,
         string? expectedText, int timeoutMs, CancellationToken cancellationToken = default)
     {
-        var timestamp = DateTimeOffset.UtcNow;
-        
+        DateTimeOffset timestamp = DateTimeOffset.UtcNow;
+
         try
         {
             // Build URL
-            var scheme = port == 443 ? "https" : "http";
-            var url = $"{scheme}://{host}";
-            
+            string scheme = port == 443 ? "https" : "http";
+            string url = $"{scheme}://{host}";
+
             if (port != 80 && port != 443)
             {
                 url += $":{port}";
             }
-            
+
             if (!string.IsNullOrEmpty(path))
             {
                 url += path.StartsWith("/") ? path : "/" + path;
             }
 
             var stopwatch = Stopwatch.StartNew();
-            
+
             // Create timeout token
             using var timeoutCts = new CancellationTokenSource(timeoutMs);
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
 
-            var response = await _httpClient.GetAsync(url, linkedCts.Token);
+            HttpResponseMessage response = await _httpClient.GetAsync(url, linkedCts.Token);
             stopwatch.Stop();
 
             // Check status code
             if (!response.IsSuccessStatusCode)
             {
-                return CheckResult.Failure(endpointId, timestamp, 
+                return CheckResult.Failure(endpointId, timestamp,
                     $"HTTP {(int)response.StatusCode} {response.ReasonPhrase}");
             }
 
             // Check expected text if specified
             if (!string.IsNullOrEmpty(expectedText))
             {
-                var content = await response.Content.ReadAsStringAsync(linkedCts.Token);
+                string content = await response.Content.ReadAsStringAsync(linkedCts.Token);
                 if (!content.Contains(expectedText, StringComparison.OrdinalIgnoreCase))
                 {
-                    return CheckResult.Failure(endpointId, timestamp, 
+                    return CheckResult.Failure(endpointId, timestamp,
                         $"Expected text '{expectedText}' not found in response");
                 }
             }

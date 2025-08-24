@@ -109,8 +109,13 @@ GET /api/test/monitoring/outages
 ### v1.0 Scope
 - **Network Monitoring**: ✅ ICMP ping, TCP connect, HTTP status checks with concurrent execution
 - **Configuration**: ✅ YAML-based with JSON Schema validation and version tracking
+<<<<<<< HEAD
 - **Data Storage**: ✅ SQLite with automatic rollups and retention foundation
 - **Web Interface**: ✅ React app shell with routing and responsive layout
+=======
+- **Data Storage**: ✅ SQLite with automatic 15-minute/daily rollups running every 5 minutes
+- **Web Interface**: Real-time status dashboard and historical views
+>>>>>>> eca8109102259deb41bba4cf33476a6cf6005f65
 - **Configuration Management**: ✅ Apply, list, and download configuration versions
 - **Settings Management**: ✅ Key-value store with watermark tracking for rollup jobs
 - **Alerting**: ✅ Status change detection with flap damping (2/2 thresholds)
@@ -123,6 +128,7 @@ GET /api/test/monitoring/outages
 - **Probe Types**: ✅ ICMP ping, TCP port checks, HTTP/HTTPS requests with content matching
 - **Status Logic**: ✅ 2 failures → DOWN, 2 successes → UP (flap damping)
 - **Background Processing**: ✅ Continuous monitoring with configurable intervals per endpoint
+- **Data Aggregation**: ✅ 15-minute and daily rollups with UpPct, AvgRttMs, DownEvents calculations
 - **Data Retention**: Raw data (60 days), rollups (indefinite) 
 - **Performance**: ✅ 100 concurrent probes, configurable timeouts, retry logic
 - **State Management**: ✅ Per-endpoint success/fail streak tracking with outage detection

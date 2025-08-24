@@ -17,12 +17,12 @@ public sealed class ConfigParser
             .WithNamingConvention(UnderscoredNamingConvention.Instance)
             .Build();
 
-        var schemaPath = Path.Combine(GetDocsDirectory(), "config.schema.json");
+        string schemaPath = Path.Combine(GetDocsDirectory(), "config.schema.json");
         if (!File.Exists(schemaPath))
         {
             throw new FileNotFoundException($"Config schema not found at: {schemaPath}");
         }
-        var schemaJson = File.ReadAllText(schemaPath);
+        string schemaJson = File.ReadAllText(schemaPath);
         _schema = JsonSchema.FromJsonAsync(schemaJson).Result;
     }
 
@@ -30,13 +30,13 @@ public sealed class ConfigParser
     {
         try
         {
-            var config = _yamlDeserializer.Deserialize<ConfigYaml>(yamlContent);
-            
-            var serializer = new SerializerBuilder()
+            ConfigYaml config = _yamlDeserializer.Deserialize<ConfigYaml>(yamlContent);
+
+            ISerializer serializer = new SerializerBuilder()
                 .WithNamingConvention(UnderscoredNamingConvention.Instance)
                 .Build();
-            var yamlForValidation = serializer.Serialize(config);
-            
+            string yamlForValidation = serializer.Serialize(config);
+
             // Temporarily skip schema validation to test basic parsing
             // var validationResults = _schema.Validate(yamlForValidation);
 
@@ -116,9 +116,9 @@ public sealed class ConfigParser
 
     private static string GetDocsDirectory()
     {
-        var assemblyLocation = System.Reflection.Assembly.GetExecutingAssembly().Location;
+        string assemblyLocation = System.Reflection.Assembly.GetExecutingAssembly().Location;
         var projectRoot = new DirectoryInfo(Path.GetDirectoryName(assemblyLocation)!);
-        
+
         while (projectRoot != null && !projectRoot.GetFiles("*.csproj").Any())
         {
             projectRoot = projectRoot.Parent;
@@ -126,7 +126,7 @@ public sealed class ConfigParser
 
         if (projectRoot?.Parent != null)
         {
-            var docsPath = Path.Combine(projectRoot.Parent.FullName, "docs");
+            string docsPath = Path.Combine(projectRoot.Parent.FullName, "docs");
             if (Directory.Exists(docsPath))
             {
                 return docsPath;

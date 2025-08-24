@@ -1,11 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using ThingConnect.Pulse.Server.Data;
 
 namespace ThingConnect.Pulse.Server.Services;
@@ -16,7 +11,7 @@ public sealed class SettingsService : ISettingsService
     private readonly IMemoryCache _cache;
     private readonly SemaphoreSlim _semaphore;
     private readonly TimeSpan _cacheExpiration = TimeSpan.FromMinutes(5);
-    
+
     private const string LastRollup15mKey = "last_rollup_15m";
     private const string LastRollupDailyKey = "last_rollup_daily";
     private const string LastPruneKey = "last_prune";
@@ -31,8 +26,8 @@ public sealed class SettingsService : ISettingsService
 
     public async Task<string?> GetAsync(string key)
     {
-        var cacheKey = $"setting:{key}";
-        
+        string cacheKey = $"setting:{key}";
+
         if (_cache.TryGetValue(cacheKey, out string? cachedValue))
         {
             return cachedValue;
@@ -46,12 +41,12 @@ public sealed class SettingsService : ISettingsService
                 return cachedValue;
             }
 
-            var setting = await _context.Settings
+            Setting? setting = await _context.Settings
                 .FirstOrDefaultAsync(s => s.K == key);
 
-            var value = setting?.V;
+            string? value = setting?.V;
             _cache.Set(cacheKey, value, _cacheExpiration);
-            
+
             return value;
         }
         finally
@@ -65,7 +60,7 @@ public sealed class SettingsService : ISettingsService
         await _semaphore.WaitAsync();
         try
         {
-            var setting = await _context.Settings
+            Setting? setting = await _context.Settings
                 .FirstOrDefaultAsync(s => s.K == key);
 
             if (setting == null)
@@ -79,8 +74,8 @@ public sealed class SettingsService : ISettingsService
             }
 
             await _context.SaveChangesAsync();
-            
-            var cacheKey = $"setting:{key}";
+
+            string cacheKey = $"setting:{key}";
             _cache.Set(cacheKey, value, _cacheExpiration);
         }
         finally
@@ -91,7 +86,7 @@ public sealed class SettingsService : ISettingsService
 
     public async Task<T?> GetAsync<T>(string key) where T : struct
     {
-        var stringValue = await GetAsync(key);
+        string? stringValue = await GetAsync(key);
         if (string.IsNullOrEmpty(stringValue))
         {
             return null;
@@ -102,29 +97,29 @@ public sealed class SettingsService : ISettingsService
 
     public async Task<T?> GetAsync<T>(string key, T defaultValue) where T : struct
     {
-        var result = await GetAsync<T>(key);
+        T? result = await GetAsync<T>(key);
         return result ?? defaultValue;
     }
 
     public async Task SetAsync<T>(string key, T value) where T : struct
     {
-        var stringValue = ConvertToString(value);
+        string stringValue = ConvertToString(value);
         await SetAsync(key, stringValue);
     }
 
     public async Task<Dictionary<string, string>> GetManyAsync(params string[] keys)
     {
         var result = new Dictionary<string, string>();
-        
-        foreach (var key in keys)
+
+        foreach (string key in keys)
         {
-            var value = await GetAsync(key);
+            string? value = await GetAsync(key);
             if (value != null)
             {
                 result[key] = value;
             }
         }
-        
+
         return result;
     }
 
@@ -133,13 +128,13 @@ public sealed class SettingsService : ISettingsService
         await _semaphore.WaitAsync();
         try
         {
-            var existingSettings = await _context.Settings
+            List<Setting> existingSettings = await _context.Settings
                 .Where(s => values.Keys.Contains(s.K))
                 .ToListAsync();
 
-            foreach (var kvp in values)
+            foreach (KeyValuePair<string, string> kvp in values)
             {
-                var existing = existingSettings.FirstOrDefault(s => s.K == kvp.Key);
+                Setting? existing = existingSettings.FirstOrDefault(s => s.K == kvp.Key);
                 if (existing == null)
                 {
                     _context.Settings.Add(new Setting { K = kvp.Key, V = kvp.Value });
@@ -149,7 +144,7 @@ public sealed class SettingsService : ISettingsService
                     existing.V = kvp.Value;
                 }
 
-                var cacheKey = $"setting:{kvp.Key}";
+                string cacheKey = $"setting:{kvp.Key}";
                 _cache.Set(cacheKey, kvp.Value, _cacheExpiration);
             }
 
@@ -166,7 +161,7 @@ public sealed class SettingsService : ISettingsService
         await _semaphore.WaitAsync();
         try
         {
-            var setting = await _context.Settings
+            Setting? setting = await _context.Settings
                 .FirstOrDefaultAsync(s => s.K == key);
 
             if (setting != null)
@@ -175,7 +170,7 @@ public sealed class SettingsService : ISettingsService
                 await _context.SaveChangesAsync();
             }
 
-            var cacheKey = $"setting:{key}";
+            string cacheKey = $"setting:{key}";
             _cache.Remove(cacheKey);
         }
         finally
@@ -186,7 +181,7 @@ public sealed class SettingsService : ISettingsService
 
     public async Task<bool> ExistsAsync(string key)
     {
-        var value = await GetAsync(key);
+        string? value = await GetAsync(key);
         return value != null;
     }
 
@@ -236,42 +231,42 @@ public sealed class SettingsService : ISettingsService
         {
             if (typeof(T) == typeof(DateTimeOffset))
             {
-                if (DateTimeOffset.TryParse(value, null, DateTimeStyles.RoundtripKind, out var dateTimeOffset))
+                if (DateTimeOffset.TryParse(value, null, DateTimeStyles.RoundtripKind, out DateTimeOffset dateTimeOffset))
                 {
                     return (T)(object)dateTimeOffset;
                 }
             }
             else if (typeof(T) == typeof(DateOnly))
             {
-                if (DateOnly.TryParse(value, out var dateOnly))
+                if (DateOnly.TryParse(value, out DateOnly dateOnly))
                 {
                     return (T)(object)dateOnly;
                 }
             }
             else if (typeof(T) == typeof(int))
             {
-                if (int.TryParse(value, out var intValue))
+                if (int.TryParse(value, out int intValue))
                 {
                     return (T)(object)intValue;
                 }
             }
             else if (typeof(T) == typeof(long))
             {
-                if (long.TryParse(value, out var longValue))
+                if (long.TryParse(value, out long longValue))
                 {
                     return (T)(object)longValue;
                 }
             }
             else if (typeof(T) == typeof(bool))
             {
-                if (bool.TryParse(value, out var boolValue))
+                if (bool.TryParse(value, out bool boolValue))
                 {
                     return (T)(object)boolValue;
                 }
             }
             else if (typeof(T) == typeof(double))
             {
-                if (double.TryParse(value, out var doubleValue))
+                if (double.TryParse(value, out double doubleValue))
                 {
                     return (T)(object)doubleValue;
                 }
@@ -295,7 +290,7 @@ public sealed class SettingsService : ISettingsService
         {
             return ((DateOnly)(object)value).ToString("yyyy-MM-dd");
         }
-        
+
         return value.ToString() ?? string.Empty;
     }
 }
