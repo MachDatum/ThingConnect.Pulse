@@ -24,11 +24,15 @@ cd thingconnect.pulse.client
 npm install
 cd ..
 
-# Run application
+# Run backend server
 cd ThingConnect.Pulse.Server
 dotnet run
-# Backend: http://localhost:8080
-# Frontend: http://localhost:8080 (proxied)
+# Backend API: http://localhost:8080
+
+# Run frontend (in separate terminal)
+cd thingconnect.pulse.client
+npm run dev
+# Frontend: https://localhost:55610 (or similar port)
 ```
 
 ## Project Structure
@@ -82,6 +86,7 @@ GET /api/test/monitoring/outages
 ## Development
 
 - **[Backend Setup](./ops/dev-backend.md)** - Zero-to-first-run backend development
+- **[Frontend Setup](./ops/dev-frontend.md)** - Frontend development environment setup
 - **[General Commands](./ops/dev.md)** - Code formatting, testing, and build commands
 
 ## Issues & Project Management
@@ -109,13 +114,8 @@ GET /api/test/monitoring/outages
 ### v1.0 Scope
 - **Network Monitoring**: ✅ ICMP ping, TCP connect, HTTP status checks with concurrent execution
 - **Configuration**: ✅ YAML-based with JSON Schema validation and version tracking
-<<<<<<< HEAD
-- **Data Storage**: ✅ SQLite with automatic rollups and retention foundation
-- **Web Interface**: ✅ React app shell with routing and responsive layout
-=======
 - **Data Storage**: ✅ SQLite with automatic 15-minute/daily rollups running every 5 minutes
-- **Web Interface**: Real-time status dashboard and historical views
->>>>>>> eca8109102259deb41bba4cf33476a6cf6005f65
+- **Web Interface**: ✅ Real-time status dashboard with live data integration and responsive layout
 - **Configuration Management**: ✅ Apply, list, and download configuration versions
 - **Settings Management**: ✅ Key-value store with watermark tracking for rollup jobs
 - **Alerting**: ✅ Status change detection with flap damping (2/2 thresholds)
