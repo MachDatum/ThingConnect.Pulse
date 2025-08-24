@@ -12,7 +12,10 @@ export interface AvatarProps extends ChakraAvatar.RootProps {
   fallback?: React.ReactNode;
 }
 
-export const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(function Avatar(props, ref) {
+export const Avatar = function Avatar({
+  ref,
+  ...props
+}: AvatarProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
   const { name, src, srcSet, loading, icon, fallback, children, ...rest } = props;
   return (
     <ChakraAvatar.Root ref={ref} {...rest}>
@@ -21,6 +24,6 @@ export const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(function Ava
       {children}
     </ChakraAvatar.Root>
   );
-});
+};
 
 export const AvatarGroup = ChakraAvatarGroup;

@@ -7,32 +7,33 @@ interface ActionBarContentProps extends ActionBar.ContentProps {
   portalRef?: React.RefObject<HTMLElement>;
 }
 
-export const ActionBarContent = React.forwardRef<HTMLDivElement, ActionBarContentProps>(
-  function ActionBarContent(props, ref) {
-    const { children, portalled = true, portalRef, ...rest } = props;
+export const ActionBarContent = function ActionBarContent({
+  ref,
+  ...props
+}: ActionBarContentProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
+  const { children, portalled = true, portalRef, ...rest } = props;
 
-    return (
-      <Portal disabled={!portalled} container={portalRef}>
-        <ActionBar.Positioner>
-          <ActionBar.Content ref={ref} {...rest} asChild={false}>
-            {children}
-          </ActionBar.Content>
-        </ActionBar.Positioner>
-      </Portal>
-    );
-  }
-);
+  return (
+    <Portal disabled={!portalled} container={portalRef}>
+      <ActionBar.Positioner>
+        <ActionBar.Content ref={ref} {...rest} asChild={false}>
+          {children}
+        </ActionBar.Content>
+      </ActionBar.Positioner>
+    </Portal>
+  );
+};
 
-export const ActionBarCloseTrigger = React.forwardRef<
-  HTMLButtonElement,
-  ActionBar.CloseTriggerProps
->(function ActionBarCloseTrigger(props, ref) {
+export const ActionBarCloseTrigger = function ActionBarCloseTrigger({
+  ref,
+  ...props
+}: ActionBar.CloseTriggerProps & { ref?: React.RefObject<HTMLButtonElement | null> }) {
   return (
     <ActionBar.CloseTrigger {...props} asChild ref={ref}>
       <CloseButton size='sm' />
     </ActionBar.CloseTrigger>
   );
-});
+};
 
 export const ActionBarRoot = ActionBar.Root;
 export const ActionBarSelectionTrigger = ActionBar.SelectionTrigger;

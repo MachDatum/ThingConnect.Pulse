@@ -39,3 +39,4 @@ ThingConnect Pulse is a network availability monitoring system for manufacturing
 - No monitoring logic implemented yet
 - No database integration yet
 - Ready to begin implementation based on issues
+- When using Chakra UI always refer to the MCP and not on your own

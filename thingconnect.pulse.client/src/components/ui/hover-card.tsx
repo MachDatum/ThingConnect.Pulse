@@ -6,29 +6,31 @@ interface HoverCardContentProps extends HoverCard.ContentProps {
   portalRef?: React.RefObject<HTMLElement>;
 }
 
-export const HoverCardContent = React.forwardRef<HTMLDivElement, HoverCardContentProps>(
-  function HoverCardContent(props, ref) {
-    const { portalled = true, portalRef, ...rest } = props;
+export const HoverCardContent = function HoverCardContent({
+  ref,
+  ...props
+}: HoverCardContentProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
+  const { portalled = true, portalRef, ...rest } = props;
 
-    return (
-      <Portal disabled={!portalled} container={portalRef}>
-        <HoverCard.Positioner>
-          <HoverCard.Content ref={ref} {...rest} />
-        </HoverCard.Positioner>
-      </Portal>
-    );
-  }
-);
+  return (
+    <Portal disabled={!portalled} container={portalRef}>
+      <HoverCard.Positioner>
+        <HoverCard.Content ref={ref} {...rest} />
+      </HoverCard.Positioner>
+    </Portal>
+  );
+};
 
-export const HoverCardArrow = React.forwardRef<HTMLDivElement, HoverCard.ArrowProps>(
-  function HoverCardArrow(props, ref) {
-    return (
-      <HoverCard.Arrow ref={ref} {...props}>
-        <HoverCard.ArrowTip />
-      </HoverCard.Arrow>
-    );
-  }
-);
+export const HoverCardArrow = function HoverCardArrow({
+  ref,
+  ...props
+}: HoverCard.ArrowProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
+  return (
+    <HoverCard.Arrow ref={ref} {...props}>
+      <HoverCard.ArrowTip />
+    </HoverCard.Arrow>
+  );
+};
 
 export const HoverCardRoot = HoverCard.Root;
 export const HoverCardTrigger = HoverCard.Trigger;

@@ -127,16 +127,39 @@ You can effectively work on **up to 6 parallel worktrees** without conflicts:
 | #28 | P2 | 4-6h | Daily rollup job | 3 | ✅ **COMPLETE** |
 | #29 | P2 | 4-6h | Prune tool for raw data | 3 | ✅ **COMPLETE** |
 
-### PHASE 6: Frontend Core (Week 2-3, Parallel)
+### PHASE 6: Frontend Core (Week 2-3, Parallel) ✅ **COMPLETE**
 **UI foundation - EPIC #7**
 
-| Issue | Priority | Time | Description | Worktree |
-|-------|----------|------|-------------|----------|
-| ENV-10 | P1 | 1d | Frontend dev setup, Vite config | 5 |
-| #17 | P1 | 4-6h | App shell, routing, layout | 5 |
-| #18 | P1 | 1d | Live board dashboard page | 5 |
-| #19 | P2 | 1d | Endpoint detail page | 5 |
-| #20 | P1 | 1d | History view & CSV export | 5 |
+| Issue | Priority | Time | Description | Worktree | Status |
+|-------|----------|------|-------------|----------|---------|
+| ENV-10 | P1 | 1d | Frontend dev setup, Vite config | 5 | ✅ **COMPLETE** - Documentation created |
+| #17 | P1 | 4-6h | App shell, routing, layout | 5 | ✅ **COMPLETE** - Closed |
+| #18 | P1 | 1d | Live board dashboard page | 5 | ✅ **COMPLETE** - Live data integration working |
+| #19 | P2 | 1d | Endpoint detail page | 5 | ✅ **COMPLETE** - Full functionality with fallback |
+| #20 | P1 | 1d | History view & CSV export | 5 | ✅ **COMPLETE** |
+
+**Phase 6 Summary**: Core frontend infrastructure is complete and operational:
+- React 19 + TypeScript + Chakra UI v3 setup with Vite
+- Real-time dashboard displaying live monitoring data from backend API
+- CORS-enabled frontend-backend integration with 5-second auto-refresh
+- App shell with navigation, routing, and responsive layout
+- Live status table and card views with sparkline charts
+- Environment-based configuration with .env support
+- **Endpoint detail page** with comprehensive monitoring data (Issue #19):
+  - Dynamic routing for `/endpoints/{id}` with React Router v7
+  - Real-time refresh with 10-second polling using React Query
+  - Recent checks timeline, outage tracking, and performance statistics
+  - Intelligent fallback mechanism for missing backend endpoints
+  - Responsive design optimized for desktop, tablet, and mobile
+  - Full end-to-end testing with Puppeteer verification
+- **NEW: History View & CSV Export** with complete functionality (Issue #20):
+  - Interactive date range picker with quick presets (1h, 24h, week, month)
+  - Bucket selector for data granularity (raw, 15-minute, daily)
+  - Custom SVG availability charts with area visualization
+  - Comprehensive history table with pagination and sorting
+  - Client-side CSV export with full data formatting
+  - Performance statistics dashboard showing uptime trends
+  - Responsive design for all screen sizes with proper error handling
 
 ### PHASE 7: Service & Deployment (Week 3, Days 3-5)
 **Windows service - EPIC #8**
@@ -228,7 +251,7 @@ git worktree remove ../pulse-env-setup
 - **Phase 3**: ✅ **COMPLETE** - Can detect UP/DOWN state changes with continuous monitoring, outage tracking, and concurrent probe execution
 - **Phase 4**: ✅ **COMPLETE** - All 4 API endpoints implemented and tested: live status, history, config apply, and config versions.
 - **Phase 5**: ✅ **COMPLETE** - Issues #27, #28, and #29 complete: 15-minute and daily rollups computed automatically every 5 minutes with watermark tracking, plus configurable raw data pruning with 60-day default retention
-- **Phase 6**: UI loads, shows live status
+- **Phase 6**: ✅ **COMPLETE** - UI loads, shows live status with real-time updates from backend, CORS integration working
 - **Phase 7**: Service installs and runs
 - **Phase 8**: All tests pass, code quality gates met
 

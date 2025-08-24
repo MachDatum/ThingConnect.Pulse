@@ -7,7 +7,10 @@ export interface SliderProps extends ChakraSlider.RootProps {
   showValue?: boolean;
 }
 
-export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(function Slider(props, ref) {
+export const Slider = function Slider({
+  ref,
+  ...props
+}: SliderProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
   const { marks: marksProp, label, showValue, ...rest } = props;
   const value = props.defaultValue ?? props.value;
 
@@ -36,7 +39,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(function Sli
       </ChakraSlider.Control>
     </ChakraSlider.Root>
   );
-});
+};
 
 function SliderThumbs(props: { value?: number[] }) {
   const { value } = props;
@@ -55,24 +58,25 @@ interface SliderMarksProps {
   marks?: Array<number | { value: number; label: React.ReactNode }>;
 }
 
-const SliderMarks = React.forwardRef<HTMLDivElement, SliderMarksProps>(
-  function SliderMarks(props, ref) {
-    const { marks } = props;
-    if (!marks?.length) return null;
+const SliderMarks = function SliderMarks({
+  ref,
+  ...props
+}: SliderMarksProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
+  const { marks } = props;
+  if (!marks?.length) return null;
 
-    return (
-      <ChakraSlider.MarkerGroup ref={ref}>
-        {marks.map((mark, index) => {
-          const value = typeof mark === 'number' ? mark : mark.value;
-          const label = typeof mark === 'number' ? undefined : mark.label;
-          return (
-            <ChakraSlider.Marker key={index} value={value}>
-              <ChakraSlider.MarkerIndicator />
-              {label}
-            </ChakraSlider.Marker>
-          );
-        })}
-      </ChakraSlider.MarkerGroup>
-    );
-  }
-);
+  return (
+    <ChakraSlider.MarkerGroup ref={ref}>
+      {marks.map((mark, index) => {
+        const value = typeof mark === 'number' ? mark : mark.value;
+        const label = typeof mark === 'number' ? undefined : mark.label;
+        return (
+          <ChakraSlider.Marker key={index} value={value}>
+            <ChakraSlider.MarkerIndicator />
+            {label}
+          </ChakraSlider.Marker>
+        );
+      })}
+    </ChakraSlider.MarkerGroup>
+  );
+};
