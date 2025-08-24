@@ -49,6 +49,11 @@ dotnet run
 - **[Data Model](./docs/data-model.cs)** - Entity Framework Core entities
 - **[Rollup Algorithms](./docs/rollup-spec.md)** - Data aggregation specifications
 
+## Installation & Deployment
+
+- **[Installer Conventions](./docs/installer-map.md)** - Windows service installation specification
+- **[Logging Configuration](./docs/logging.md)** - Structured logging setup and policies
+
 ## API Endpoints
 
 The server provides REST API endpoints for configuration management:

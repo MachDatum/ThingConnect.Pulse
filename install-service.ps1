@@ -5,9 +5,16 @@ param(
     [string]$Action = "install"
 )
 
-$ServiceName = "ThingConnectPulse"
+$ServiceName = "ThingConnectPulseSvc"
 $ServiceDisplayName = "ThingConnect Pulse Server"
 $ServiceDescription = "Network availability monitoring system for manufacturing sites"
+
+# Directory paths following installer conventions
+$ProgramDataRoot = "$env:ProgramData\ThingConnect.Pulse"
+$ConfigDir = "$ProgramDataRoot\config"
+$VersionsDir = "$ProgramDataRoot\versions"
+$LogsDir = "$ProgramDataRoot\logs"
+$DataDir = "$ProgramDataRoot\data"
 
 # Get the current script directory
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -19,9 +26,57 @@ if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
     exit 1
 }
 
+# Function to create directory structure with proper permissions
+function Initialize-DirectoryStructure {
+    Write-Host "Creating directory structure..." -ForegroundColor Yellow
+    
+    $directories = @($ProgramDataRoot, $ConfigDir, $VersionsDir, $LogsDir, $DataDir)
+    
+    foreach ($dir in $directories) {
+        if (-not (Test-Path $dir)) {
+            New-Item -ItemType Directory -Path $dir -Force | Out-Null
+            Write-Host "  Created: $dir" -ForegroundColor Green
+        } else {
+            Write-Host "  Exists: $dir" -ForegroundColor Cyan
+        }
+    }
+    
+    # Create default config file if it doesn't exist
+    $configFile = "$ConfigDir\config.yaml"
+    if (-not (Test-Path $configFile)) {
+        $defaultConfig = @"
+# ThingConnect Pulse Configuration
+# This is the main configuration file for network monitoring
+# 
+# For configuration syntax and examples, see:
+# https://github.com/MachDatum/ThingConnect.Pulse/blob/main/docs/config.schema.json
+
+# Example configuration:
+# targets:
+#   - name: "Router"
+#     endpoints:
+#       - host: "192.168.1.1"
+#         type: "icmp"
+#   - name: "Web Services" 
+#     endpoints:
+#       - host: "www.example.com"
+#         type: "http"
+#         path: "/health"
+
+# Empty configuration - add your monitoring targets above
+targets: []
+"@
+        Set-Content -Path $configFile -Value $defaultConfig -Encoding UTF8
+        Write-Host "  Created default config: $configFile" -ForegroundColor Green
+    }
+}
+
 switch ($Action.ToLower()) {
     "install" {
         Write-Host "Installing ThingConnect Pulse Windows Service..." -ForegroundColor Green
+        
+        # Create directory structure
+        Initialize-DirectoryStructure
         
         # Build the application first
         Write-Host "Building application..." -ForegroundColor Yellow
@@ -47,11 +102,14 @@ switch ($Action.ToLower()) {
         
         # Create the service
         Write-Host "Creating service..." -ForegroundColor Yellow
-        New-Service -Name $ServiceName -BinaryPathName $BinaryPath -DisplayName $ServiceDisplayName -Description $ServiceDescription -StartupType Manual
+        New-Service -Name $ServiceName -BinaryPathName $BinaryPath -DisplayName $ServiceDisplayName -Description $ServiceDescription -StartupType Automatic
         
         Write-Host "Service '$ServiceDisplayName' installed successfully!" -ForegroundColor Green
         Write-Host "Use 'Start-Service $ServiceName' to start the service" -ForegroundColor Cyan
-        Write-Host "Logs will be written to: C:\ProgramData\ThingConnect.Pulse\logs\" -ForegroundColor Cyan
+        Write-Host "Configuration: $ConfigDir\config.yaml" -ForegroundColor Cyan
+        Write-Host "Database: $DataDir\pulse.db" -ForegroundColor Cyan
+        Write-Host "Logs: $LogsDir\" -ForegroundColor Cyan
+        Write-Host "Web interface: http://localhost:8080" -ForegroundColor Cyan
     }
     
     "uninstall" {
@@ -68,6 +126,29 @@ switch ($Action.ToLower()) {
             Write-Host "Service '$ServiceDisplayName' uninstalled successfully!" -ForegroundColor Green
         } else {
             Write-Host "Service '$ServiceName' not found." -ForegroundColor Yellow
+        }
+        
+        # Ask about data cleanup
+        Write-Host ""
+        Write-Host "Data cleanup options:" -ForegroundColor Yellow
+        Write-Host "The following directories contain application data:"
+        Write-Host "  Config: $ConfigDir" 
+        Write-Host "  Database: $DataDir"
+        Write-Host "  Logs: $LogsDir"
+        Write-Host "  Versions: $VersionsDir"
+        Write-Host ""
+        Write-Host "Would you like to remove application data? (y/N)" -ForegroundColor Yellow -NoNewline
+        $response = Read-Host " "
+        
+        if ($response -eq 'y' -or $response -eq 'Y') {
+            Write-Host "Removing application data..." -ForegroundColor Yellow
+            if (Test-Path $ProgramDataRoot) {
+                Remove-Item -Path $ProgramDataRoot -Recurse -Force
+                Write-Host "Application data removed." -ForegroundColor Green
+            }
+        } else {
+            Write-Host "Application data preserved." -ForegroundColor Cyan
+            Write-Host "To manually remove later: Remove-Item '$ProgramDataRoot' -Recurse -Force" -ForegroundColor Gray
         }
     }
     

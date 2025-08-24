@@ -13,8 +13,11 @@ namespace ThingConnect.Pulse.Server;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
+        // Initialize path service for directory management
+        var pathService = new PathService();
+        
         // Configure Serilog for rolling file logging
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Information()
@@ -23,8 +26,7 @@ public class Program
             .Enrich.FromLogContext()
             .WriteTo.Console()
             .WriteTo.File(
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), 
-                            "ThingConnect.Pulse", "logs", "pulse-.log"),
+                Path.Combine(pathService.GetLogsDirectory(), "pulse-.log"),
                 rollingInterval: RollingInterval.Day,
                 retainedFileCountLimit: 30,
                 shared: true)
@@ -52,6 +54,9 @@ public class Program
             // Add HTTP client for probes
             builder.Services.AddHttpClient();
 
+            // Add path service
+            builder.Services.AddSingleton<IPathService, PathService>();
+            
             // Add configuration services
             builder.Services.AddSingleton<ConfigParser>();
             builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
@@ -81,6 +86,14 @@ public class Program
             builder.Services.AddSwaggerGen();
 
             WebApplication app = builder.Build();
+
+            // Ensure all required directories exist
+            using (IServiceScope scope = app.Services.CreateScope())
+            {
+                IPathService pathSvc = scope.ServiceProvider.GetRequiredService<IPathService>();
+                await pathSvc.EnsureDirectoriesExistAsync();
+                Log.Information("Directory structure verified at {RootPath}", pathSvc.GetRootDirectory());
+            }
 
             // Initialize database with seed data in development
             if (app.Environment.IsDevelopment())
