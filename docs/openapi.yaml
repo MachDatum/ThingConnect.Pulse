@@ -547,37 +547,34 @@ paths:
   # Update Management
   /api/updates/latest:
     get:
-      summary: Check for software updates
+      summary: Get update check information
       description: >
-        Checks for available software updates by comparing current version with
-        latest release. Manual update checking only - no automatic updates.
-      operationId: checkUpdates
+        Returns static update check information following the manual update JSON contract.
+        Contains current version, latest available version, and release notes URL.
+        Manual checking only - no automatic updates or downloads.
+      operationId: getUpdateInfo
       tags:
         - Updates
       responses:
         "200":
-          description: Update information retrieved successfully
+          description: Update check information retrieved successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UpdateInfo"
+                $ref: "#/components/schemas/UpdateCheck"
               examples:
                 update_available:
                   summary: Update available
                   value:
-                    current_version: "0.1.0"
-                    latest_version: "0.2.0"
-                    update_available: true
-                    release_notes_url: "https://github.com/MachDatum/ThingConnect.Pulse/releases/tag/v0.2.0"
-                    download_url: "https://github.com/MachDatum/ThingConnect.Pulse/releases/download/v0.2.0/ThingConnect.Pulse.Setup.exe"
+                    current: "1.0.0"
+                    latest: "1.2.1"
+                    notes_url: "https://github.com/MachDatum/ThingConnect.Pulse/releases/tag/v1.2.1"
                 up_to_date:
                   summary: Current version is latest
                   value:
-                    current_version: "0.1.0"
-                    latest_version: "0.1.0"
-                    update_available: false
-                    release_notes_url: null
-                    download_url: null
+                    current: "1.2.1"
+                    latest: "1.2.1"
+                    notes_url: "https://github.com/MachDatum/ThingConnect.Pulse/releases/tag/v1.2.1"
         "500":
           $ref: "#/components/responses/InternalError"
 
@@ -1069,40 +1066,29 @@ components:
         - errors
 
     # Update Management
-    UpdateInfo:
+    UpdateCheck:
       type: object
-      description: Software update information
+      description: Update check JSON contract for manual update checking
       properties:
-        current_version:
+        current:
           type: string
-          pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+(-[a-zA-Z0-9.-]+)?$"
-          description: Current installed version (SemVer)
-          example: "0.1.0"
-        latest_version:
+          pattern: "^\\d+\\.\\d+\\.\\d+(-.+)?$"
+          description: Current installed version in SemVer format
+          example: "1.0.0"
+        latest:
           type: string
-          pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+(-[a-zA-Z0-9.-]+)?$"
-          description: Latest available version (SemVer)
-          example: "0.2.0"
-        update_available:
-          type: boolean
-          description: Whether an update is available
-          example: true
-        release_notes_url:
+          pattern: "^\\d+\\.\\d+\\.\\d+(-.+)?$"
+          description: Latest available version in SemVer format
+          example: "1.2.1"
+        notes_url:
           type: string
           format: uri
-          nullable: true
-          description: URL to release notes for latest version
-          example: "https://github.com/MachDatum/ThingConnect.Pulse/releases/tag/v0.2.0"
-        download_url:
-          type: string
-          format: uri
-          nullable: true
-          description: URL to download latest version installer
-          example: "https://github.com/MachDatum/ThingConnect.Pulse/releases/download/v0.2.0/ThingConnect.Pulse.Setup.exe"
+          description: URL to release notes for the latest version
+          example: "https://github.com/MachDatum/ThingConnect.Pulse/releases/tag/v1.2.1"
       required:
-        - current_version
-        - latest_version
-        - update_available
+        - current
+        - latest
+        - notes_url
 
     # Error Response
     ErrorResponse:

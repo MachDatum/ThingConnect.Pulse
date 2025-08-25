@@ -63,49 +63,102 @@ graph TD
 
 ## Update Detection & Notification
 
-### GitHub Release Integration
+### Manual Update Check JSON Contract
 
-**Release API Endpoint**:
-```
-GET https://api.github.com/repos/MachDatum/ThingConnect.Pulse/releases/latest
+ThingConnect Pulse uses a **static JSON contract** for manual update checks, designed to be offline-safe and simple to implement.
+
+**Update Check JSON Schema**:
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ThingConnect Pulse Update Check",
+  "type": "object",
+  "required": ["current", "latest", "notes_url"],
+  "properties": {
+    "current": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-.+)?$",
+      "description": "Current application version in SemVer format"
+    },
+    "latest": {
+      "type": "string", 
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-.+)?$",
+      "description": "Latest available version in SemVer format"
+    },
+    "notes_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to release notes for the latest version"
+    }
+  }
+}
 ```
 
-**Response Processing**:
+**Example Update Check Response**:
+```json
+{
+  "current": "1.0.0",
+  "latest": "1.2.1", 
+  "notes_url": "https://github.com/MachDatum/ThingConnect.Pulse/releases/tag/v1.2.1"
+}
+```
+
+### Update Check Implementation
+
+**Manual Update Check Service**:
 ```csharp
 public sealed class UpdateService : IUpdateService
 {
-    public async Task<UpdateInfo> CheckForUpdatesAsync()
+    private readonly HttpClient _httpClient;
+    private readonly ILogger<UpdateService> _logger;
+    
+    public async Task<UpdateInfo> CheckForUpdatesAsync(string updateJsonUrl)
     {
         try
         {
-            using var client = new HttpClient();
-            client.DefaultRequestHeaders.Add("User-Agent", "ThingConnect.Pulse/1.0.0");
+            _httpClient.DefaultRequestHeaders.Add("User-Agent", "ThingConnect.Pulse/1.0.0");
             
-            var response = await client.GetStringAsync(
-                "https://api.github.com/repos/MachDatum/ThingConnect.Pulse/releases/latest");
-            var release = JsonSerializer.Deserialize<GitHubRelease>(response);
+            var response = await _httpClient.GetStringAsync(updateJsonUrl);
+            var updateCheck = JsonSerializer.Deserialize<UpdateCheckResponse>(response);
             
-            var latestVersion = Version.Parse(release.TagName.TrimStart('v'));
-            var currentVersion = Assembly.GetExecutingAssembly().GetName().Version;
+            var latestVersion = Version.Parse(updateCheck.Latest);
+            var currentVersion = Version.Parse(updateCheck.Current);
             
             return new UpdateInfo
             {
                 HasUpdate = latestVersion > currentVersion,
                 LatestVersion = latestVersion,
                 CurrentVersion = currentVersion,
-                ReleaseNotes = release.Body,
-                DownloadUrl = release.Assets.FirstOrDefault()?.BrowserDownloadUrl,
-                PublishedAt = release.PublishedAt
+                NotesUrl = updateCheck.NotesUrl,
+                UpdateAvailable = latestVersion > currentVersion
             };
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to check for updates");
+            _logger.LogWarning(ex, "Failed to check for updates from {Url}", updateJsonUrl);
             return UpdateInfo.CheckFailed();
         }
     }
 }
+
+public record UpdateCheckResponse(
+    string Current,
+    string Latest, 
+    string NotesUrl
+);
 ```
+
+### Static JSON Hosting
+
+**GitHub Pages Hosting** (Recommended):
+- Host `updates.json` in the repository's `gh-pages` branch
+- Accessible via: `https://machDatum.github.io/ThingConnect.Pulse/updates.json`
+- Automatically updated via GitHub Actions on new releases
+
+**Alternative Hosting Options**:
+- **CDN**: CloudFlare, AWS CloudFront, or Azure CDN for global distribution
+- **Static hosting**: Netlify, Vercel, or similar services
+- **Enterprise**: Internal web servers for air-gapped environments
 
 ### Update Check Configuration
 
