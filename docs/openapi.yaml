@@ -1,317 +1,1203 @@
 openapi: 3.1.0
 info:
-  title: ThingConnect Pulse API
+  title: ThingConnect Pulse API v1
   version: 1.0.0
   description: >
-    Internal-only HTTP API for Pulse v1 (availability monitoring).
+    Internal REST API for ThingConnect Pulse v1 availability monitoring system.
+    Provides live status, historical data, configuration management, and CSV export capabilities.
+  license:
+    name: Proprietary
+    url: "https://thingconnect.io"
+  contact:
+    name: ThingConnect Support
+    url: "https://thingconnect.io/support"
+
 servers:
   - url: http://localhost:8080
+    description: Development server (localhost binding)
+  - url: http://{host}:8080
+    description: Production server (LAN binding)
+    variables:
+      host:
+        default: "192.168.1.100"
+        description: LAN IP address of monitoring server
+
+security: []  # No authentication required in v1
+
 paths:
+  # Live Status Endpoints
   /api/status/live:
     get:
-      summary: Paged live status feed
+      summary: Get paged live status feed
+      description: >
+        Returns paginated list of all monitored endpoints with current status, 
+        RTT, last change timestamp, and recent sparkline data for dashboard display.
+      operationId: getLiveStatus
+      tags:
+        - Status
       parameters:
-        - in: query
-          name: group
-          schema: { type: string }
-        - in: query
-          name: search
-          schema: { type: string, description: "matches name/host" }
-        - in: query
-          name: page
-          schema: { type: integer, minimum: 1, default: 1 }
-        - in: query
-          name: pageSize
-          schema: { type: integer, minimum: 1, maximum: 500, default: 50 }
+        - name: group
+          in: query
+          description: Filter by group ID (exact match)
+          schema:
+            type: string
+            example: "production"
+        - name: search
+          in: query
+          description: Search filter matching endpoint name or host (case-insensitive substring)
+          schema:
+            type: string
+            example: "web"
+        - name: page
+          in: query
+          description: Page number (1-based)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - name: pageSize
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 50
+            example: 20
       responses:
         "200":
-          description: Live status page
+          description: Live status page retrieved successfully
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/PagedLive"
+              examples:
+                production_status:
+                  summary: Production endpoints status
+                  value:
+                    meta:
+                      page: 1
+                      pageSize: 2
+                      total: 15
+                    items:
+                      - endpoint:
+                          id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                          name: "Production API"
+                          group:
+                            id: "production"
+                            name: "Production Systems"
+                            color: "#FF5722"
+                          type: "http"
+                          host: "api.company.com"
+                          port: 443
+                          http_path: "/health"
+                          http_match: "OK"
+                          interval_seconds: 10
+                          timeout_ms: 2000
+                          retries: 1
+                          enabled: true
+                        status: "up"
+                        rtt_ms: 145.7
+                        last_change_ts: "2024-08-25T12:30:15Z"
+                        sparkline:
+                          - ts: "2024-08-25T12:25:00Z"
+                            s: "u"
+                          - ts: "2024-08-25T12:30:00Z"
+                            s: "u"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  # Endpoint Detail
   /api/endpoints/{id}:
     get:
-      summary: Endpoint detail (with recent window)
+      summary: Get endpoint detail with recent checks
+      description: >
+        Returns detailed information for a specific endpoint including recent check results
+        within a configurable time window and any active/recent outages.
+      operationId: getEndpointDetail
+      tags:
+        - Endpoints
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
+          description: Endpoint UUID
           required: true
-          schema: { type: string }
-        - in: query
-          name: windowMinutes
-          schema: { type: integer, minimum: 5, maximum: 1440, default: 60 }
+          schema:
+            type: string
+            format: uuid
+            example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        - name: windowMinutes
+          in: query
+          description: Time window for recent checks in minutes
+          schema:
+            type: integer
+            minimum: 5
+            maximum: 1440
+            default: 60
+            example: 120
       responses:
         "200":
-          description: Endpoint detail
+          description: Endpoint detail retrieved successfully
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/EndpointDetail"
-        "404": { description: Not found }
+              examples:
+                endpoint_detail:
+                  summary: Endpoint with recent outage
+                  value:
+                    endpoint:
+                      id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                      name: "Production API"
+                      group:
+                        id: "production"
+                        name: "Production Systems"
+                        color: "#FF5722"
+                      type: "http"
+                      host: "api.company.com"
+                      port: 443
+                      http_path: "/health"
+                      interval_seconds: 10
+                      timeout_ms: 2000
+                      enabled: true
+                    recent:
+                      - ts: "2024-08-25T12:35:00Z"
+                        status: "up"
+                        rtt_ms: 142.3
+                        error: null
+                      - ts: "2024-08-25T12:34:50Z"
+                        status: "down"
+                        rtt_ms: null
+                        error: "Connection timeout"
+                    outages:
+                      - started_ts: "2024-08-25T10:15:30Z"
+                        ended_ts: "2024-08-25T10:18:45Z"
+                        duration_s: 195
+                        last_error: "HTTP 503 Service Unavailable"
+        "404":
+          description: Endpoint not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                message: "Endpoint with ID a1b2c3d4-e5f6-7890-abcd-ef1234567890 not found"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  # Historical Data
   /api/history/endpoint/{id}:
     get:
-      summary: History for one endpoint
+      summary: Get historical data for endpoint
+      description: >
+        Returns time-series historical data for a specific endpoint within the specified
+        date range. Supports different aggregation buckets: raw checks, 15-minute rollups,
+        or daily rollups. Also includes outage events within the time range.
+      operationId: getEndpointHistory
+      tags:
+        - History
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
+          description: Endpoint UUID
           required: true
-          schema: { type: string }
-        - in: query
-          name: from
+          schema:
+            type: string
+            format: uuid
+            example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        - name: from
+          in: query
+          description: Start time (ISO 8601 format)
           required: true
-          description: ISO8601 timestamp
-          schema: { type: string, format: date-time }
-        - in: query
-          name: to
+          schema:
+            type: string
+            format: date-time
+            example: "2024-08-25T00:00:00Z"
+        - name: to
+          in: query
+          description: End time (ISO 8601 format)
           required: true
-          description: ISO8601 timestamp
-          schema: { type: string, format: date-time }
-        - in: query
-          name: bucket
+          schema:
+            type: string
+            format: date-time
+            example: "2024-08-25T23:59:59Z"
+        - name: bucket
+          in: query
+          description: Data aggregation level
           schema:
             type: string
             enum: [raw, 15m, daily]
-            default: 15m
+            default: "15m"
+            example: "15m"
       responses:
         "200":
-          description: History slice
+          description: Historical data retrieved successfully
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/HistoryResponse"
-        "400": { description: Invalid range }
-        "404": { description: Not found }
+              examples:
+                history_15m:
+                  summary: 15-minute rollup data
+                  value:
+                    endpoint:
+                      id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                      name: "Production API"
+                      type: "http"
+                      host: "api.company.com"
+                    rollup_15m:
+                      - bucket_ts: "2024-08-25T12:00:00Z"
+                        up_pct: 98.5
+                        avg_rtt_ms: 145.2
+                        down_events: 1
+                      - bucket_ts: "2024-08-25T12:15:00Z"
+                        up_pct: 100.0
+                        avg_rtt_ms: 138.7
+                        down_events: 0
+                    outages:
+                      - started_ts: "2024-08-25T12:03:15Z"
+                        ended_ts: "2024-08-25T12:04:30Z"
+                        duration_s: 75
+                        last_error: "Connection refused"
+        "400":
+          description: Invalid date range or parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                message: "Invalid date range: 'from' must be before 'to'"
+        "404":
+          description: Endpoint not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  # CSV Export
   /api/export/csv:
     get:
-      summary: Export CSV for endpoint or group
+      summary: Export historical data as CSV
+      description: >
+        Exports monitoring data as CSV format for external analysis. Supports exporting
+        data for a single endpoint or all endpoints in a group. Different bucket types
+        provide varying levels of detail and aggregation.
+      operationId: exportCsv
+      tags:
+        - Export
       parameters:
-        - in: query
-          name: scope
+        - name: scope
+          in: query
+          description: Export scope
           required: true
-          schema: { type: string, enum: [endpoint, group] }
-        - in: query
-          name: id
+          schema:
+            type: string
+            enum: [endpoint, group]
+            example: "endpoint"
+        - name: id
+          in: query
+          description: Endpoint UUID or Group ID depending on scope
           required: true
-          schema: { type: string }
-        - in: query
-          name: from
+          schema:
+            type: string
+            example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        - name: from
+          in: query
+          description: Start time (ISO 8601 format)
           required: true
-          schema: { type: string, format: date-time }
-        - in: query
-          name: to
+          schema:
+            type: string
+            format: date-time
+            example: "2024-08-25T00:00:00Z"
+        - name: to
+          in: query
+          description: End time (ISO 8601 format)
           required: true
-          schema: { type: string, format: date-time }
-        - in: query
-          name: bucket
-          schema: { type: string, enum: [raw, 15m, daily, outages], default: 15m }
+          schema:
+            type: string
+            format: date-time
+            example: "2024-08-25T23:59:59Z"
+        - name: bucket
+          in: query
+          description: Data bucket type for export
+          schema:
+            type: string
+            enum: [raw, 15m, daily, outages]
+            default: "15m"
+            example: "raw"
       responses:
         "200":
-          description: CSV stream
+          description: CSV data exported successfully
           headers:
             Content-Disposition:
-              schema: { type: string }
+              description: Attachment filename
+              schema:
+                type: string
+                example: 'attachment; filename="endpoint_data_20240825.csv"'
+            Content-Type:
+              description: CSV content type
+              schema:
+                type: string
+                example: "text/csv; charset=utf-8"
           content:
             text/csv:
               schema:
                 type: string
                 format: binary
+              example: |
+                timestamp,endpoint_name,status,rtt_ms,error
+                2024-08-25T12:00:00Z,Production API,up,142.5,
+                2024-08-25T12:00:10Z,Production API,up,138.2,
+                2024-08-25T12:00:20Z,Production API,down,,Connection timeout
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          description: Endpoint or group not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  # Configuration Management
   /api/config/apply:
     post:
-      summary: Validate and apply YAML
+      summary: Apply YAML configuration
+      description: >
+        Validates and applies a complete YAML configuration. Performs atomic transaction
+        with duplicate detection, diff calculation, and snapshot storage. Returns detailed
+        results showing added/updated/removed entities and any warnings.
+      operationId: applyConfig
+      tags:
+        - Configuration
+      parameters:
+        - name: X-Actor
+          in: header
+          description: Optional actor (user/system) applying the configuration
+          schema:
+            type: string
+            example: "admin@company.com"
+        - name: X-Note
+          in: header
+          description: Optional change description/note
+          schema:
+            type: string
+            example: "Updated production monitoring endpoints"
       requestBody:
+        description: Complete YAML configuration content
         required: true
         content:
           text/plain:
-            schema: { type: string, description: "Full YAML contents" }
+            schema:
+              type: string
+              example: |
+                version: 1
+                defaults:
+                  interval_seconds: 10
+                  timeout_ms: 1500
+                  retries: 1
+                groups:
+                  - id: "production"
+                    name: "Production Systems"
+                    color: "#FF5722"
+                targets:
+                  - name: "Main API"
+                    group: "production"
+                    type: "https"
+                    host: "api.company.com"
+                    port: 443
+                    path: "/health"
+                    expect_text: "OK"
       responses:
         "200":
-          description: Apply result
+          description: Configuration applied successfully
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApplyResult"
+              examples:
+                successful_apply:
+                  summary: Configuration applied with changes
+                  value:
+                    config_version_id: "20240825143052-a7b8c9d0"
+                    added: 5
+                    updated: 3
+                    removed: 1
+                    warnings:
+                      - "Group 'legacy' has no targets and may be unused"
+                no_changes:
+                  summary: Configuration already applied
+                  value:
+                    config_version_id: "20240825120000-existing1"
+                    added: 0
+                    updated: 0
+                    removed: 0
+                    warnings:
+                      - "Configuration already applied - no changes made"
         "400":
-          description: Validation errors
+          description: Validation errors in YAML configuration
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ValidationErrors"
+              example:
+                message: "Configuration validation failed"
+                errors:
+                  - path: "targets[0].interval_seconds"
+                    message: "Value must be at least 1 second"
+                    value: 0
+                  - path: "groups[1].id"
+                    message: "Group ID must match pattern ^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$"
+                    value: "Invalid-Group-ID!"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   /api/config/versions:
     get:
-      summary: List config versions
+      summary: List configuration versions
+      description: >
+        Returns chronological list of all applied configuration versions with metadata.
+        Ordered by application timestamp (most recent first).
+      operationId: getConfigVersions
+      tags:
+        - Configuration
       responses:
         "200":
-          description: Versions
+          description: Configuration versions retrieved successfully
           content:
             application/json:
               schema:
                 type: array
-                items: { $ref: "#/components/schemas/ConfigVersion" }
+                items:
+                  $ref: "#/components/schemas/ConfigVersion"
+              example:
+                - id: "20240825143052-a7b8c9d0"
+                  applied_ts: "2024-08-25T14:30:52Z"
+                  file_hash: "a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8"
+                  file_path: "/data/versions/20240825_143052_a7b8c9d0.yaml"
+                  actor: "admin@company.com"
+                  note: "Updated production endpoints"
+                - id: "20240825120000-b1c2d3e4"
+                  applied_ts: "2024-08-25T12:00:00Z"
+                  file_hash: "b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2"
+                  file_path: "/data/versions/20240825_120000_b1c2d3e4.yaml"
+                  actor: null
+                  note: null
+        "500":
+          $ref: "#/components/responses/InternalError"
+
   /api/config/versions/{id}:
     get:
-      summary: Download a prior config version
+      summary: Download configuration version
+      description: >
+        Downloads the raw YAML content for a specific configuration version.
+        Returns the exact YAML that was originally applied.
+      operationId: getConfigVersion
+      tags:
+        - Configuration
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
+          description: Configuration version ID
           required: true
-          schema: { type: string }
+          schema:
+            type: string
+            pattern: "^[0-9]{14}-[a-f0-9]{8}$"
+            example: "20240825143052-a7b8c9d0"
       responses:
         "200":
-          description: Plain YAML
+          description: Configuration version content retrieved successfully
           content:
             text/plain:
-              schema: { type: string }
-        "404": { description: Not found }
+              schema:
+                type: string
+              example: |
+                version: 1
+                defaults:
+                  interval_seconds: 10
+                  timeout_ms: 1500
+                  retries: 1
+                groups:
+                  - id: "production"
+                    name: "Production Systems"
+                targets:
+                  - name: "Main API"
+                    group: "production"
+                    type: "https"
+                    host: "api.company.com"
+        "404":
+          description: Configuration version not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                message: "Configuration version not found"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  # Update Management
   /api/updates/latest:
     get:
-      summary: Check for updates (manual)
+      summary: Check for software updates
+      description: >
+        Checks for available software updates by comparing current version with
+        latest release. Manual update checking only - no automatic updates.
+      operationId: checkUpdates
+      tags:
+        - Updates
       responses:
         "200":
-          description: Version info
+          description: Update information retrieved successfully
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/UpdateInfo"
+              examples:
+                update_available:
+                  summary: Update available
+                  value:
+                    current_version: "0.1.0"
+                    latest_version: "0.2.0"
+                    update_available: true
+                    release_notes_url: "https://github.com/MachDatum/ThingConnect.Pulse/releases/tag/v0.2.0"
+                    download_url: "https://github.com/MachDatum/ThingConnect.Pulse/releases/download/v0.2.0/ThingConnect.Pulse.Setup.exe"
+                up_to_date:
+                  summary: Current version is latest
+                  value:
+                    current_version: "0.1.0"
+                    latest_version: "0.1.0"
+                    update_available: false
+                    release_notes_url: null
+                    download_url: null
+        "500":
+          $ref: "#/components/responses/InternalError"
 
 components:
   schemas:
+    # Core Domain Objects
     Group:
       type: object
+      description: Organizational group for endpoints
       properties:
-        id: { type: string }
-        name: { type: string }
-        parent_id: { type: string, nullable: true }
-        color: { type: string, nullable: true }
+        id:
+          type: string
+          description: Unique group identifier
+          pattern: "^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$"
+          example: "production"
+        name:
+          type: string
+          description: Human-readable group name
+          minLength: 1
+          maxLength: 128
+          example: "Production Systems"
+        parent_id:
+          type: string
+          nullable: true
+          description: Parent group ID for hierarchical organization
+          example: "infrastructure"
+        color:
+          type: string
+          nullable: true
+          description: UI color for group (hex format)
+          pattern: "^#[0-9A-Fa-f]{6}$"
+          example: "#FF5722"
+      required:
+        - id
+        - name
+
     Endpoint:
       type: object
+      description: Monitoring endpoint configuration
       properties:
-        id: { type: string }
-        name: { type: string }
-        group: { $ref: "#/components/schemas/Group" }
-        type: { type: string, enum: [icmp, tcp, http] }
-        host: { type: string }
-        port: { type: integer, nullable: true }
-        http_path: { type: string, nullable: true }
-        http_match: { type: string, nullable: true }
-        interval_seconds: { type: integer }
-        timeout_ms: { type: integer }
-        retries: { type: integer }
-        enabled: { type: boolean }
+        id:
+          type: string
+          format: uuid
+          description: Unique endpoint identifier
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        name:
+          type: string
+          description: Human-readable endpoint name
+          minLength: 1
+          maxLength: 128
+          example: "Production API"
+        group:
+          $ref: "#/components/schemas/Group"
+        type:
+          type: string
+          enum: [icmp, tcp, http]
+          description: Probe type for monitoring
+          example: "http"
+        host:
+          type: string
+          description: Target hostname or IP address
+          minLength: 1
+          maxLength: 255
+          example: "api.company.com"
+        port:
+          type: integer
+          nullable: true
+          minimum: 1
+          maximum: 65535
+          description: Target port number (required for TCP/HTTP)
+          example: 443
+        http_path:
+          type: string
+          nullable: true
+          description: HTTP request path
+          example: "/health"
+        http_match:
+          type: string
+          nullable: true
+          description: Expected text in HTTP response
+          example: "OK"
+        interval_seconds:
+          type: integer
+          minimum: 1
+          description: Check interval in seconds
+          example: 10
+        timeout_ms:
+          type: integer
+          minimum: 100
+          description: Probe timeout in milliseconds
+          example: 1500
+        retries:
+          type: integer
+          minimum: 0
+          description: Retry attempts on failure
+          example: 1
+        enabled:
+          type: boolean
+          description: Whether endpoint is actively monitored
+          example: true
+      required:
+        - id
+        - name
+        - group
+        - type
+        - host
+        - interval_seconds
+        - timeout_ms
+        - retries
+        - enabled
+
+    # Live Status Objects
+    SparklinePoint:
+      type: object
+      description: Single point in sparkline chart
+      properties:
+        ts:
+          type: string
+          format: date-time
+          description: Timestamp of the data point
+          example: "2024-08-25T12:30:00Z"
+        s:
+          type: string
+          enum: [u, d]
+          description: Status (u=up, d=down)
+          example: "u"
+      required:
+        - ts
+        - s
+
     LiveStatusItem:
       type: object
+      description: Current status of a monitored endpoint
       properties:
-        endpoint: { $ref: "#/components/schemas/Endpoint" }
-        status: { type: string, enum: [up, down, flapping] }
-        rtt_ms: { type: number, nullable: true }
-        last_change_ts: { type: string, format: date-time }
-        sparkline: 
+        endpoint:
+          $ref: "#/components/schemas/Endpoint"
+        status:
+          type: string
+          enum: [up, down, flapping]
+          description: Current endpoint status
+          example: "up"
+        rtt_ms:
+          type: number
+          nullable: true
+          minimum: 0
+          description: Last round-trip time in milliseconds
+          example: 142.5
+        last_change_ts:
+          type: string
+          format: date-time
+          description: Timestamp of last status change
+          example: "2024-08-25T12:30:15Z"
+        sparkline:
           type: array
           items:
-            type: object
-            properties:
-              ts: { type: string, format: date-time }
-              s: { type: string, enum: [u, d] }
+            $ref: "#/components/schemas/SparklinePoint"
+          description: Recent status history for mini-chart
+          maxItems: 50
+      required:
+        - endpoint
+        - status
+        - last_change_ts
+        - sparkline
+
     PageMeta:
       type: object
+      description: Pagination metadata
       properties:
-        page: { type: integer }
-        pageSize: { type: integer }
-        total: { type: integer }
+        page:
+          type: integer
+          minimum: 1
+          description: Current page number
+          example: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 500
+          description: Items per page
+          example: 50
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of items
+          example: 150
+      required:
+        - page
+        - pageSize
+        - total
+
     PagedLive:
       type: object
+      description: Paginated live status response
       properties:
-        meta: { $ref: "#/components/schemas/PageMeta" }
+        meta:
+          $ref: "#/components/schemas/PageMeta"
         items:
           type: array
-          items: { $ref: "#/components/schemas/LiveStatusItem" }
+          items:
+            $ref: "#/components/schemas/LiveStatusItem"
+          description: Status items for current page
+      required:
+        - meta
+        - items
+
+    # Historical Data Objects
     RawCheck:
       type: object
+      description: Individual probe check result
       properties:
-        ts: { type: string, format: date-time }
-        status: { type: string, enum: [up, down] }
-        rtt_ms: { type: number, nullable: true }
-        error: { type: string, nullable: true }
+        ts:
+          type: string
+          format: date-time
+          description: Check timestamp
+          example: "2024-08-25T12:30:15Z"
+        status:
+          type: string
+          enum: [up, down]
+          description: Check result status
+          example: "up"
+        rtt_ms:
+          type: number
+          nullable: true
+          minimum: 0
+          description: Round-trip time in milliseconds
+          example: 142.5
+        error:
+          type: string
+          nullable: true
+          description: Error message if check failed
+          example: "Connection timeout"
+      required:
+        - ts
+        - status
+
     RollupBucket:
       type: object
+      description: 15-minute aggregated data bucket
       properties:
-        bucket_ts: { type: string, format: date-time }
-        up_pct: { type: number, minimum: 0, maximum: 100 }
-        avg_rtt_ms: { type: number, nullable: true }
-        down_events: { type: integer }
+        bucket_ts:
+          type: string
+          format: date-time
+          description: Bucket start timestamp (15-minute aligned)
+          example: "2024-08-25T12:15:00Z"
+        up_pct:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Percentage of successful checks
+          example: 98.5
+        avg_rtt_ms:
+          type: number
+          nullable: true
+          minimum: 0
+          description: Average round-trip time in milliseconds
+          example: 145.2
+        down_events:
+          type: integer
+          minimum: 0
+          description: Number of failure events
+          example: 1
+      required:
+        - bucket_ts
+        - up_pct
+        - down_events
+
     DailyBucket:
       type: object
+      description: Daily aggregated data bucket
       properties:
-        bucket_date: { type: string, format: date }
-        up_pct: { type: number, minimum: 0, maximum: 100 }
-        avg_rtt_ms: { type: number, nullable: true }
-        down_events: { type: integer }
+        bucket_date:
+          type: string
+          format: date
+          description: Bucket date (YYYY-MM-DD)
+          example: "2024-08-25"
+        up_pct:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Daily uptime percentage
+          example: 99.2
+        avg_rtt_ms:
+          type: number
+          nullable: true
+          minimum: 0
+          description: Daily average round-trip time
+          example: 143.8
+        down_events:
+          type: integer
+          minimum: 0
+          description: Number of outage events
+          example: 2
+      required:
+        - bucket_date
+        - up_pct
+        - down_events
+
     Outage:
       type: object
+      description: Detected outage event
       properties:
-        started_ts: { type: string, format: date-time }
-        ended_ts: { type: string, format: date-time, nullable: true }
-        duration_s: { type: integer, nullable: true }
-        last_error: { type: string, nullable: true }
+        started_ts:
+          type: string
+          format: date-time
+          description: Outage start timestamp
+          example: "2024-08-25T10:15:30Z"
+        ended_ts:
+          type: string
+          format: date-time
+          nullable: true
+          description: Outage end timestamp (null if ongoing)
+          example: "2024-08-25T10:18:45Z"
+        duration_s:
+          type: integer
+          nullable: true
+          minimum: 0
+          description: Outage duration in seconds (null if ongoing)
+          example: 195
+        last_error:
+          type: string
+          nullable: true
+          description: Last recorded error message
+          example: "HTTP 503 Service Unavailable"
+      required:
+        - started_ts
+
     HistoryResponse:
       type: object
+      description: Historical data response for an endpoint
       properties:
-        endpoint: { $ref: "#/components/schemas/Endpoint" }
+        endpoint:
+          $ref: "#/components/schemas/Endpoint"
         raw:
           type: array
-          items: { $ref: "#/components/schemas/RawCheck" }
+          items:
+            $ref: "#/components/schemas/RawCheck"
+          description: Raw check results (if bucket=raw)
         rollup_15m:
           type: array
-          items: { $ref: "#/components/schemas/RollupBucket" }
+          items:
+            $ref: "#/components/schemas/RollupBucket"
+          description: 15-minute rollup data (if bucket=15m)
         rollup_daily:
           type: array
-          items: { $ref: "#/components/schemas/DailyBucket" }
+          items:
+            $ref: "#/components/schemas/DailyBucket"
+          description: Daily rollup data (if bucket=daily)
         outages:
           type: array
-          items: { $ref: "#/components/schemas/Outage" }
+          items:
+            $ref: "#/components/schemas/Outage"
+          description: Outage events within time range
+      required:
+        - endpoint
+        - outages
+
     EndpointDetail:
       type: object
+      description: Detailed endpoint information with recent data
       properties:
-        endpoint: { $ref: "#/components/schemas/Endpoint" }
+        endpoint:
+          $ref: "#/components/schemas/Endpoint"
         recent:
           type: array
-          items: { $ref: "#/components/schemas/RawCheck" }
+          items:
+            $ref: "#/components/schemas/RawCheck"
+          description: Recent check results within time window
         outages:
           type: array
-          items: { $ref: "#/components/schemas/Outage" }
+          items:
+            $ref: "#/components/schemas/Outage"
+          description: Recent outage events
+      required:
+        - endpoint
+        - recent
+        - outages
+
+    # Configuration Objects
     ConfigVersion:
       type: object
+      description: Configuration version metadata
       properties:
-        id: { type: string }
-        applied_ts: { type: string, format: date-time }
-        file_hash: { type: string }
-        file_path: { type: string }
-        actor: { type: string, nullable: true }
-        note: { type: string, nullable: true }
+        id:
+          type: string
+          pattern: "^[0-9]{14}-[a-f0-9]{8}$"
+          description: Unique version identifier (timestamp-hash)
+          example: "20240825143052-a7b8c9d0"
+        applied_ts:
+          type: string
+          format: date-time
+          description: When configuration was applied
+          example: "2024-08-25T14:30:52Z"
+        file_hash:
+          type: string
+          pattern: "^[a-f0-9]{64}$"
+          description: SHA-256 hash of YAML content
+          example: "a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8"
+        file_path:
+          type: string
+          description: File system path to YAML snapshot
+          example: "/data/versions/20240825_143052_a7b8c9d0.yaml"
+        actor:
+          type: string
+          nullable: true
+          description: User or system that applied configuration
+          example: "admin@company.com"
+        note:
+          type: string
+          nullable: true
+          description: Optional change description
+          example: "Updated production monitoring endpoints"
+      required:
+        - id
+        - applied_ts
+        - file_hash
+        - file_path
+
     ApplyResult:
       type: object
+      description: Configuration apply operation result
       properties:
-        config_version_id: { type: string }
-        added: { type: integer }
-        updated: { type: integer }
-        removed: { type: integer }
+        config_version_id:
+          type: string
+          description: Version ID of applied configuration
+          example: "20240825143052-a7b8c9d0"
+        added:
+          type: integer
+          minimum: 0
+          description: Number of entities added
+          example: 5
+        updated:
+          type: integer
+          minimum: 0
+          description: Number of entities updated
+          example: 3
+        removed:
+          type: integer
+          minimum: 0
+          description: Number of entities removed
+          example: 1
         warnings:
           type: array
-          items: { type: string }
+          items:
+            type: string
+          description: Non-blocking validation warnings
+          example:
+            - "Group 'legacy' has no targets and may be unused"
+      required:
+        - config_version_id
+        - added
+        - updated
+        - removed
+        - warnings
+
+    ValidationError:
+      type: object
+      description: Single validation error detail
+      properties:
+        path:
+          type: string
+          description: JSON path to invalid property
+          example: "targets[0].interval_seconds"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Value must be at least 1 second"
+        value:
+          nullable: true
+          description: Invalid value that caused error
+          example: 0
+      required:
+        - path
+        - message
+
     ValidationErrors:
       type: object
+      description: Configuration validation error response
       properties:
-        message: { type: string }
+        message:
+          type: string
+          description: Overall error summary
+          example: "Configuration validation failed"
         errors:
           type: array
           items:
-            type: object
-            properties:
-              path: { type: string }
-              error: { type: string }
+            $ref: "#/components/schemas/ValidationError"
+          description: Detailed validation errors
+      required:
+        - message
+        - errors
+
+    # Update Management
     UpdateInfo:
       type: object
+      description: Software update information
       properties:
-        current_version: { type: string }
-        latest_version: { type: string }
-        release_notes_url: { type: string }
+        current_version:
+          type: string
+          pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+(-[a-zA-Z0-9.-]+)?$"
+          description: Current installed version (SemVer)
+          example: "0.1.0"
+        latest_version:
+          type: string
+          pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+(-[a-zA-Z0-9.-]+)?$"
+          description: Latest available version (SemVer)
+          example: "0.2.0"
+        update_available:
+          type: boolean
+          description: Whether an update is available
+          example: true
+        release_notes_url:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to release notes for latest version
+          example: "https://github.com/MachDatum/ThingConnect.Pulse/releases/tag/v0.2.0"
+        download_url:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to download latest version installer
+          example: "https://github.com/MachDatum/ThingConnect.Pulse/releases/download/v0.2.0/ThingConnect.Pulse.Setup.exe"
+      required:
+        - current_version
+        - latest_version
+        - update_available
+
+    # Error Response
+    ErrorResponse:
+      type: object
+      description: Generic error response
+      properties:
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Resource not found"
+        code:
+          type: string
+          nullable: true
+          description: Machine-readable error code
+          example: "ENDPOINT_NOT_FOUND"
+        details:
+          type: object
+          nullable: true
+          description: Additional error details
+      required:
+        - message
+
+  responses:
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            message: "Invalid request parameters"
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            message: "Internal server error"
+
+  examples:
+    # Common reusable examples
+    ProductionEndpoint:
+      summary: Production API endpoint
+      value:
+        id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        name: "Production API"
+        group:
+          id: "production"
+          name: "Production Systems"
+          color: "#FF5722"
+        type: "http"
+        host: "api.company.com"
+        port: 443
+        http_path: "/health"
+        http_match: "OK"
+        interval_seconds: 10
+        timeout_ms: 2000
+        retries: 1
+        enabled: true
+
+    InfrastructureEndpoint:
+      summary: Network infrastructure endpoint
+      value:
+        id: "b2c3d4e5-f6a7-8901-bcde-f23456789012"
+        name: "Core Router"
+        group:
+          id: "infrastructure"
+          name: "Network Infrastructure"
+          color: "#2196F3"
+        type: "icmp"
+        host: "192.168.1.1"
+        port: null
+        http_path: null
+        http_match: null
+        interval_seconds: 30
+        timeout_ms: 1500
+        retries: 1
+        enabled: true
+
+tags:
+  - name: Status
+    description: Live endpoint status operations
+  - name: Endpoints
+    description: Individual endpoint detail operations
+  - name: History
+    description: Historical monitoring data operations
+  - name: Export
+    description: Data export operations
+  - name: Configuration
+    description: Configuration management operations
+  - name: Updates
+    description: Software update operations
+
+externalDocs:
+  description: ThingConnect Pulse Documentation
+  url: https://thingconnect.io/pulse/docs

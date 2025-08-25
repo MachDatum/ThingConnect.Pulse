@@ -1,0 +1,154 @@
+# ThingConnect Pulse - Sample Configuration
+# This file demonstrates the complete YAML configuration format
+
+version: 1
+
+# Default probe parameters applied to all targets unless overridden
+defaults:
+  interval_seconds: 10     # Check every 10 seconds
+  timeout_ms: 1500         # 1.5 second timeout per probe
+  retries: 1               # Single retry attempt (not implemented in v1)
+  http:
+    user_agent: "ThingConnectPulse/1.0"
+    expect_text: ""        # Default: no content validation
+
+# Organizational groups for dashboard display
+groups:
+  - id: "production"
+    name: "Production Systems"
+    color: "#FF5722"       # Red for critical systems
+    sort_order: 1
+
+  - id: "staging"
+    name: "Staging Environment" 
+    parent_id: "production"  # Nested under production
+    color: "#FF9800"       # Orange for staging
+    sort_order: 2
+
+  - id: "infrastructure"
+    name: "Network Infrastructure"
+    color: "#2196F3"       # Blue for network gear
+    sort_order: 3
+
+  - id: "databases"
+    name: "Database Servers"
+    parent_id: "production"
+    color: "#4CAF50"       # Green for databases
+    sort_order: 4
+
+# Monitoring targets - the endpoints to check
+targets:
+  # Production web services
+  - name: "Main Website"
+    group: "production"
+    type: "https"
+    host: "www.company.com" 
+    port: 443
+    path: "/"
+    expect_text: "Welcome to Company"
+    interval_seconds: 5    # Check every 5 seconds (critical)
+    timeout_ms: 3000       # 3 second timeout
+
+  - name: "API Gateway"
+    group: "production"
+    type: "https"
+    host: "api.company.com"
+    port: 443
+    path: "/health"
+    expect_text: '"status":"healthy"'
+    interval_seconds: 5
+    timeout_ms: 2000
+
+  - name: "Admin Portal"
+    group: "production" 
+    type: "https"
+    host: "admin.company.com"
+    port: 443
+    path: "/login"
+    interval_seconds: 15   # Less critical, check every 15s
+
+  # Staging environment
+  - name: "Staging API"
+    group: "staging"
+    type: "http"           # Staging uses HTTP
+    host: "staging-api.company.com"
+    port: 8080
+    path: "/api/status"
+    expect_text: "OK"
+    interval_seconds: 30   # Check every 30 seconds
+
+  - name: "Staging Database"
+    group: "staging" 
+    type: "tcp"
+    host: "staging-db.company.com"
+    port: 5432
+    interval_seconds: 60   # Check every minute
+    timeout_ms: 5000       # Databases can be slow
+
+  # Network infrastructure 
+  - name: "Core Router"
+    group: "infrastructure"
+    type: "icmp"
+    host: "192.168.1.1"
+    interval_seconds: 30
+
+  - name: "Firewall"
+    group: "infrastructure"
+    type: "icmp" 
+    host: "192.168.1.254"
+    interval_seconds: 30
+
+  - name: "Switch - Floor 1"
+    group: "infrastructure"
+    type: "icmp"
+    host: "192.168.10.1"
+    interval_seconds: 60   # Network gear checked less frequently
+
+  # Database servers
+  - name: "Primary DB"
+    group: "databases"
+    type: "tcp"
+    host: "db-primary.company.com"
+    port: 5432             # PostgreSQL
+    interval_seconds: 15
+    timeout_ms: 5000
+
+  - name: "Secondary DB"
+    group: "databases"
+    type: "tcp"
+    host: "db-secondary.company.com" 
+    port: 5432
+    interval_seconds: 30   # Secondary checked less often
+
+  - name: "Redis Cache"
+    group: "databases"
+    type: "tcp"
+    host: "cache.company.com"
+    port: 6379
+    interval_seconds: 10
+
+  # External dependencies
+  - name: "Payment Gateway"
+    group: "production"
+    type: "https"
+    host: "api.stripe.com"
+    port: 443
+    path: "/v1"
+    interval_seconds: 60   # External service, check less frequently
+    timeout_ms: 10000      # Allow longer timeout for external
+
+  # CIDR range expansion example (single target)
+  - name: "Office Network"
+    group: "infrastructure" 
+    type: "icmp"
+    host: "192.168.100.1-254"  # Will expand to 254 individual endpoints
+    interval_seconds: 300      # Check every 5 minutes (large range)
+
+  # Wildcard hostname expansion example
+  - name: "Web Servers"
+    group: "production"
+    type: "http"
+    host: "web*.company.com"   # Expands via DNS resolution
+    port: 80
+    path: "/health"
+    interval_seconds: 20
