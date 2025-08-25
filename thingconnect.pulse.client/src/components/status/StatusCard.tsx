@@ -54,8 +54,16 @@ export function StatusCard({ item }: StatusCardProps) {
       data-testid={`status-card-${item.endpoint.id}`}
       transition='all 0.2s'
       size='sm'
+      minHeight='120px'
+      minWidth={{ base: '280px', md: '300px' }}
     >
-      <Card.Body>
+      <Card.Body
+        p={{ base: 3, md: 4 }}
+        minHeight='44px'
+        _active={{
+          transform: 'scale(0.98)',
+        }}
+      >
         <VStack align='stretch' gap={3}>
           {/* Header with status and name */}
           <HStack justify='space-between' align='start'>
@@ -74,6 +82,8 @@ export function StatusCard({ item }: StatusCardProps) {
               textTransform='uppercase'
               fontSize='xs'
               data-testid={`card-status-badge-${item.status}`}
+              minHeight='20px'
+              px={2}
             >
               {item.status}
             </Badge>

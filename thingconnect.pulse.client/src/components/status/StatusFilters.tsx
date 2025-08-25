@@ -41,46 +41,76 @@ export function StatusFilters({
   const hasFilters = filters.group || filters.search;
 
   return (
-    <HStack gap={4} align='center' data-testid='status-filters'>
-      {/* Group Filter */}
-      <Box minW='200px'>
-        <NativeSelect.Root data-testid='group-filter'>
-          <NativeSelect.Field
-            value={filters.group || ''}
-            onChange={e => handleGroupChange(e.target.value)}
-            placeholder='All Groups'
-          >
-            <option value=''>All Groups</option>
-            {groups.map(group => (
-              <option key={group} value={group}>
-                {group}
-              </option>
-            ))}
-          </NativeSelect.Field>
-        </NativeSelect.Root>
-      </Box>
-
-      {/* Search Input */}
-      <Box flex='1' maxW='400px' position='relative'>
-        <Input
-          placeholder='Search endpoints by name or host...'
-          value={filters.search || ''}
-          onChange={e => handleSearchChange(e.target.value)}
-          data-testid='search-input'
-          pl='10'
-        />
-        <Box position='absolute' left='3' top='50%' transform='translateY(-50%)' color='gray.400'>
-          <Search size={16} />
+    <Box
+      position={{ base: 'sticky', md: 'static' }}
+      top={{ base: '0', md: 'auto' }}
+      zIndex={{ base: 10, md: 'auto' }}
+      bg={{ base: 'white', md: 'transparent' }}
+      _dark={{ bg: { base: 'gray.800', md: 'transparent' } }}
+      py={{ base: 3, md: 0 }}
+      px={{ base: 4, md: 0 }}
+      mx={{ base: -4, md: 0 }}
+      borderBottom={{ base: '1px', md: 'none' }}
+      borderColor={{ base: 'gray.200', md: 'transparent' }}
+      _dark={{ borderColor: { base: 'gray.700', md: 'transparent' } }}
+      data-testid='status-filters'
+    >
+      <HStack
+        gap={{ base: 2, md: 4 }}
+        align='center'
+        flexWrap={{ base: 'wrap', md: 'nowrap' }}
+      >
+        {/* Group Filter */}
+        <Box minW={{ base: '150px', md: '200px' }} flex={{ base: '1', md: 'none' }}>
+          <NativeSelect.Root data-testid='group-filter'>
+            <NativeSelect.Field
+              value={filters.group || ''}
+              onChange={e => handleGroupChange(e.target.value)}
+              placeholder='All Groups'
+              minHeight='44px'
+              fontSize={{ base: 'sm', md: 'md' }}
+            >
+              <option value=''>All Groups</option>
+              {groups.map(group => (
+                <option key={group} value={group}>
+                  {group}
+                </option>
+              ))}
+            </NativeSelect.Field>
+          </NativeSelect.Root>
         </Box>
-      </Box>
 
-      {/* Clear Filters */}
-      {hasFilters && (
-        <Button variant='outline' size='sm' onClick={clearFilters} data-testid='clear-filters'>
-          <X size={16} />
-          Clear
-        </Button>
-      )}
-    </HStack>
+        {/* Search Input */}
+        <Box flex='1' maxW={{ base: '100%', md: '400px' }} position='relative' w='100%'>
+          <Input
+            placeholder='Search endpoints by name or host...'
+            value={filters.search || ''}
+            onChange={e => handleSearchChange(e.target.value)}
+            data-testid='search-input'
+            pl='10'
+            minHeight='44px'
+            fontSize={{ base: 'sm', md: 'md' }}
+          />
+          <Box position='absolute' left='3' top='50%' transform='translateY(-50%)' color='gray.400'>
+            <Search size={16} />
+          </Box>
+        </Box>
+
+        {/* Clear Filters */}
+        {hasFilters && (
+          <Button 
+            variant='outline' 
+            size={{ base: 'sm', md: 'md' }}
+            onClick={clearFilters} 
+            data-testid='clear-filters'
+            minHeight='44px'
+            flexShrink={0}
+          >
+            <X size={16} />
+            Clear
+          </Button>
+        )}
+      </HStack>
+    </Box>
   );
 }

@@ -132,6 +132,36 @@ export interface ExportParams {
   bucket?: 'raw' | '15m' | 'daily';
 }
 
+// Configuration Management Types
+export interface ConfigVersion {
+  id: string;
+  applied_ts: string;
+  file_hash: string;
+  file_path?: string | null;
+  actor?: string | null;
+  note?: string | null;
+}
+
+export interface ConfigApplyRequest {
+  yamlContent: string;
+  dryRun?: boolean;
+}
+
+export interface ConfigDiff {
+  type: 'add' | 'update' | 'remove';
+  entity: 'endpoint' | 'group' | 'setting';
+  name: string;
+  details?: Record<string, unknown>;
+}
+
+export interface ConfigApplyResponse {
+  config_version_id: string;
+  changes: ConfigDiff[];
+  validation_errors?: string[];
+  applied_ts: string;
+  file_hash: string;
+}
+
 // Error response type
 export interface ApiError {
   message: string;

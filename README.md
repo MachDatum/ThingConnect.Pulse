@@ -1,6 +1,17 @@
 # ThingConnect Pulse
 
-Network availability monitoring system for manufacturing sites.
+**Free, on-premises availability monitoring for manufacturing IT/OT over IPv4/IPv6.**
+
+ThingConnect Pulse provides YAML-configured monitoring with live dashboard, historical rollups, and CSV export. Designed for plant IT/OT admins, production supervisors, and maintenance engineers who need reliable network device monitoring with zero external dependencies.
+
+**Value:**
+- **Lightweight**: 5-minute setup with single Windows Service installer
+- **Local-first**: No cloud dependencies, all data stays on-premises  
+- **Readable config**: Simple YAML configuration with explicit Apply workflow
+
+**Non-Goals (v1):**
+- No TLS/auth UI, no WAN exposure, no localization
+- Links: [Complete Specification](./ONE_PAGER.MD) • [Problem & Value](./docs/value.md) • [Scope & Non-Goals](./docs/scope-v1.md) • [Product Roadmap](./docs/roadmap.md)
 
 ## Quick Start
 

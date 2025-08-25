@@ -5,7 +5,7 @@ using ThingConnect.Pulse.Server.Data;
 
 namespace ThingConnect.Pulse.Server.Services;
 
-public sealed class SettingsService : ISettingsService
+public sealed class SettingsService : ISettingsService, IDisposable
 {
     private readonly PulseDbContext _context;
     private readonly IMemoryCache _cache;
@@ -292,5 +292,10 @@ public sealed class SettingsService : ISettingsService
         }
 
         return value.ToString() ?? string.Empty;
+    }
+
+    public void Dispose()
+    {
+        _semaphore.Dispose();
     }
 }

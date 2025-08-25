@@ -1,6 +1,6 @@
 import { Box, VStack, Link, Icon, Text, Image, HStack } from '@chakra-ui/react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
-import { Home, Clock, Settings, Wrench, Activity } from 'lucide-react';
+import { Home, Clock, Settings, Wrench, Activity, Info } from 'lucide-react';
 import thingConnectIcon from '@/assets/thingconnect-icon.svg';
 
 interface NavigationProps {
@@ -31,6 +31,12 @@ const navigationItems = [
     path: '/settings',
     icon: Settings,
     description: 'Application settings',
+  },
+  {
+    label: 'About',
+    path: '/about',
+    icon: Info,
+    description: 'Product information',
   },
 ];
 

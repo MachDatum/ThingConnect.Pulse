@@ -1,8 +1,19 @@
+import { useState } from 'react';
 import { Box, Heading, Text, VStack, HStack } from '@chakra-ui/react';
-import { Alert } from '@/components/ui/alert';
-import { Wrench, FileText, Upload } from 'lucide-react';
+import { TabsRoot, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Wrench } from 'lucide-react';
+import { ConfigEditor } from '@/components/config/ConfigEditor';
+import { ConfigVersions } from '@/components/config/ConfigVersions';
+import type { ConfigApplyResponse } from '@/api/types';
 
 export default function Config() {
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const handleConfigApplied = (response: ConfigApplyResponse) => {
+    // Trigger refresh of versions list when config is applied
+    setRefreshTrigger(prev => prev + 1);
+  };
+
   return (
     <VStack gap={6} align='stretch' data-testid='config-page'>
       <Box>
@@ -19,78 +30,32 @@ export default function Config() {
         </HStack>
       </Box>
 
-      <Alert status='warning'>
-        <Box>
-          <Text fontWeight='semibold'>Future Implementation: Issue #21</Text>
-          <Text fontSize='sm' mt={1}>
-            Configuration management UI will be implemented after the core monitoring functionality.
-            For now, configuration is managed via YAML files in the ProgramData folder.
-          </Text>
-        </Box>
-      </Alert>
-
-      {/* Preview sections */}
-      <VStack gap={4}>
-        <Box
-          p={6}
-          borderRadius='md'
-          border='2px dashed'
-          borderColor='gray.300'
-          _dark={{ borderColor: 'gray.600' }}
-          w='100%'
-        >
-          <VStack gap={3} color='gray.500' _dark={{ color: 'gray.400' }}>
-            <FileText size={32} />
-            <Text textAlign='center'>
-              <strong>YAML Configuration Editor</strong>
-              <br />
-              Visual editor for monitoring endpoints, groups, and probe settings
-            </Text>
-          </VStack>
-        </Box>
-
-        <Box
-          p={6}
-          borderRadius='md'
-          border='2px dashed'
-          borderColor='gray.300'
-          _dark={{ borderColor: 'gray.600' }}
-          w='100%'
-        >
-          <VStack gap={3} color='gray.500' _dark={{ color: 'gray.400' }}>
-            <Upload size={32} />
-            <Text textAlign='center'>
-              <strong>Configuration Upload/Apply</strong>
-              <br />
-              Upload new configuration files and apply changes to the monitoring system
-            </Text>
-          </VStack>
-        </Box>
-
-        <Box
-          p={6}
-          borderRadius='md'
-          border='2px dashed'
-          borderColor='gray.300'
-          _dark={{ borderColor: 'gray.600' }}
-          w='100%'
-        >
-          <VStack gap={3} color='gray.500' _dark={{ color: 'gray.400' }}>
-            <Wrench size={32} />
-            <Text textAlign='center'>
-              <strong>Configuration Validation</strong>
-              <br />
-              Real-time validation and testing of endpoint configurations
-            </Text>
-          </VStack>
-        </Box>
-      </VStack>
+      <TabsRoot defaultValue='editor' variant='enclosed'>
+        <TabsList>
+          <TabsTrigger value='editor'>
+            <Text>YAML Editor</Text>
+          </TabsTrigger>
+          <TabsTrigger value='versions'>
+            <Text>Version History</Text>
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value='editor' py={6}>
+          <ConfigEditor onConfigApplied={handleConfigApplied} />
+        </TabsContent>
+        
+        <TabsContent value='versions' py={6}>
+          <ConfigVersions refreshTrigger={refreshTrigger} />
+        </TabsContent>
+      </TabsRoot>
 
       <Box p={4} borderRadius='md' bg='blue.50' _dark={{ bg: 'blue.900' }}>
         <Text fontSize='sm' color='blue.800' _dark={{ color: 'blue.200' }}>
-          <strong>Current Configuration Location:</strong>
+          <strong>Configuration Storage:</strong>
           <br />
-          C:\ProgramData\ThingConnect.Pulse\config.yaml
+          Active configuration: C:\ProgramData\ThingConnect.Pulse\config.yaml
+          <br />
+          Version history: C:\ProgramData\ThingConnect.Pulse\versions\
         </Text>
       </Box>
     </VStack>

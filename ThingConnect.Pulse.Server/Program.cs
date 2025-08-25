@@ -18,18 +18,18 @@ public class Program
         // Initialize path service for directory management
         var pathService = new PathService();
         
-        // Configure Serilog for rolling file logging
+        // Create initial configuration to read Serilog settings
+        var configuration = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true, reloadOnChange: true)
+            .Build();
+        
+        // Configure Serilog from configuration files
         Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Information()
-            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
-            .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
+            .ReadFrom.Configuration(configuration)
             .Enrich.FromLogContext()
-            .WriteTo.Console()
-            .WriteTo.File(
-                Path.Combine(pathService.GetLogsDirectory(), "pulse-.log"),
-                rollingInterval: RollingInterval.Day,
-                retainedFileCountLimit: 30,
-                shared: true)
+            .Enrich.WithMachineName()
+            .Enrich.WithProcessId()
             .CreateLogger();
 
         try
@@ -76,13 +76,16 @@ public class Program
 
             // Add prune services
             builder.Services.AddScoped<IPruneService, PruneService>();
+            
+            // Add log cleanup service
+            builder.Services.AddHostedService<LogCleanupBackgroundService>();
 
             // Add CORS
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowFrontend", policy =>
                 {
-                    policy.WithOrigins("https://localhost:55610", "http://localhost:55610", "https://localhost:5173", "http://localhost:5173")
+                    policy.WithOrigins("https://localhost:55610", "http://localhost:55610", "https://localhost:5173", "http://localhost:5173", "https://localhost:55605")
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials();

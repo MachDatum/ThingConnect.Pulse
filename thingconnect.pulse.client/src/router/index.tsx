@@ -9,6 +9,7 @@ const EndpointDetail = lazy(() => import('@/pages/EndpointDetail'));
 const History = lazy(() => import('@/pages/History'));
 const Config = lazy(() => import('@/pages/Config'));
 const Settings = lazy(() => import('@/pages/Settings'));
+const About = lazy(() => import('@/pages/About'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 export const router = createBrowserRouter([
@@ -53,6 +54,14 @@ export const router = createBrowserRouter([
         element: (
           <LazyWrapper>
             <Settings />
+          </LazyWrapper>
+        ),
+      },
+      {
+        path: 'about',
+        element: (
+          <LazyWrapper>
+            <About />
           </LazyWrapper>
         ),
       },

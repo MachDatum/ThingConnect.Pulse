@@ -7,6 +7,11 @@
     <SpaRoot>..\thingconnect.pulse.client</SpaRoot>
     <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
     <SpaProxyServerUrl>https://localhost:55605</SpaProxyServerUrl>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors>CA1001;CA1009;CA1016;CA1033;CA1049;CA1060;CA1061;CA1063;CA1065;CA1301;CA1400;CA1401;CA1403;CA1404;CA1405;CA1410;CA1415;CA1821;CA1900;CA1901;CA2002;CA2100;CA2101;CA2108;CA2111;CA2112;CA2114;CA2116;CA2117;CA2122;CA2123;CA2124;CA2131;CA2132;CA2133;CA2134;CA2137;CA2138;CA2140;CA2141;CA2146;CA2147;CA2149;CA2200;CA2202;CA2207;CA2212;CA2213;CA2214;CA2216;CA2220;CA2229;CA2231;CA2232;CA2235;CA2236;CA2237;CA2238;CA2240;CA2241;CA2242</WarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,8 +24,18 @@
     <PackageReference Include="NJsonSchema" Version="11.4.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageReference Include="Serilog.Enrichers.Environment" Version="3.0.1" />
+    <PackageReference Include="Serilog.Enrichers.Process" Version="3.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
+    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>

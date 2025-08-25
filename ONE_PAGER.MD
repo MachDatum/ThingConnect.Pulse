@@ -2,7 +2,9 @@
 
 ## 0) One‑liner & Intent
 
-A free, on‑prem, Windows‑service + web UI tool for manufacturing sites to monitor device **availability** (Ethernet/Wi‑Fi, IPv4/IPv6) using a **YAML** configuration, with **live status**, **historical rollups**, and **CSV export**. Designed for wide adoption to promote the ThingConnect brand.
+**Free, on-premises availability monitoring for manufacturing IT/OT over IPv4/IPv6.**
+
+ThingConnect Pulse provides YAML-configured monitoring with live dashboard, historical rollups, and CSV export. Designed for plant IT/OT admins, production supervisors, and maintenance engineers who need reliable network device monitoring with zero external dependencies and 5-minute setup.
 
 ---
 
@@ -30,8 +32,10 @@ A free, on‑prem, Windows‑service + web UI tool for manufacturing sites to mo
 ## 2) Primary Users & Jobs‑to‑Be‑Done
 
 * **Plant IT/OT Admin:** define targets via YAML; confirm site health; export reports.
-* **Production Supervisor:** glance “all green?” view on phone/tablet before/after shift.
+* **Production Supervisor:** glance "all green?" view on phone/tablet before/after shift.
 * **Maintenance/Controls Engineer:** correlate device outages with line incidents.
+
+*See [detailed personas](./docs/personas.md) for complete user profiles and JTBD analysis.*
 
 **Confidence:** 0.9
 

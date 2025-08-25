@@ -66,6 +66,35 @@ csharp_style_var_for_built_in_types = false:suggestion
 csharp_style_var_when_type_is_apparent = true:suggestion
 csharp_style_var_elsewhere = false:suggestion
 
+# Organize usings
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+
+# Code quality rules (relaxed for internal project)
+dotnet_diagnostic.CA1031.severity = none  # Do not catch general exception types
+dotnet_diagnostic.CA2007.severity = none  # Consider calling ConfigureAwait on the awaited task
+dotnet_diagnostic.CA1062.severity = suggestion  # Validate arguments of public methods
+
+# StyleCop Rules (selective enforcement for internal project)
+dotnet_diagnostic.SA0001.severity = none  # XML comment analysis disabled
+dotnet_diagnostic.SA1633.severity = none  # File should have header
+dotnet_diagnostic.SA1200.severity = none  # Using directives should be placed correctly
+dotnet_diagnostic.SA1101.severity = none  # Prefix local calls with this
+dotnet_diagnostic.SA1309.severity = none  # Field names should not begin with underscore
+dotnet_diagnostic.SA1413.severity = none  # Use trailing comma in multi-line initializers
+dotnet_diagnostic.SA1118.severity = suggestion  # Parameter should not span multiple lines
+dotnet_diagnostic.SA1600.severity = none  # Elements should be documented
+dotnet_diagnostic.SA1601.severity = none  # Partial elements should be documented
+dotnet_diagnostic.SA1602.severity = none  # Enumeration items should be documented
+dotnet_diagnostic.SA1116.severity = suggestion  # Parameters should begin on line after declaration
+dotnet_diagnostic.SA1117.severity = suggestion  # Parameters should be on same line or separate lines
+dotnet_diagnostic.SA1127.severity = suggestion  # Generic constraints should be on own line
+dotnet_diagnostic.SA1108.severity = suggestion  # Block statements should not contain embedded comments
+dotnet_diagnostic.SA1502.severity = suggestion  # Element should not be on single line
+dotnet_diagnostic.SA1516.severity = suggestion  # Elements should be separated by blank line
+dotnet_diagnostic.SA1300.severity = suggestion  # Element should begin with uppercase letter
+dotnet_diagnostic.SA1136.severity = suggestion  # Enum values should be on separate lines
+
 # TypeScript, JavaScript, JSX, TSX files
 [*.{ts,tsx,js,jsx}]
 indent_size = 2

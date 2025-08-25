@@ -1,0 +1,98 @@
+name: Quality Gates
+
+on:
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master, develop ]
+
+jobs:
+  backend-quality:
+    runs-on: ubuntu-latest
+    name: Backend Code Quality
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+        
+    - name: Restore dependencies
+      run: dotnet restore ThingConnect.Pulse.Server/ThingConnect.Pulse.Server.csproj
+      
+    - name: Build with analyzers
+      run: dotnet build ThingConnect.Pulse.Server/ThingConnect.Pulse.Server.csproj --no-restore --configuration Release --verbosity normal
+      
+    - name: Run tests (if any)
+      run: |
+        if [ -d "ThingConnect.Pulse.Tests" ]; then
+          dotnet test ThingConnect.Pulse.Tests --no-build --configuration Release
+        else
+          echo "No test project found - skipping tests"
+        fi
+
+  frontend-quality:
+    runs-on: ubuntu-latest
+    name: Frontend Code Quality
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: thingconnect.pulse.client/package-lock.json
+        
+    - name: Install dependencies
+      run: |
+        cd thingconnect.pulse.client
+        npm ci
+        
+    - name: Run ESLint
+      run: |
+        cd thingconnect.pulse.client
+        npm run lint
+        
+    - name: Check Prettier formatting
+      run: |
+        cd thingconnect.pulse.client
+        npm run format -- --check
+        
+    - name: Build frontend
+      run: |
+        cd thingconnect.pulse.client
+        npm run build
+
+  security-scan:
+    runs-on: ubuntu-latest
+    name: Security Analysis
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Run npm audit
+      run: |
+        cd thingconnect.pulse.client
+        npm audit --audit-level=high
+        
+    - name: Setup .NET for security scan
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+        
+    - name: Install security scanning tool
+      run: dotnet tool install --global Microsoft.CST.DevSkim.CLI
+      
+    - name: Run DevSkim security analysis
+      run: devskim analyze . --output-file security-report.json --output-format json || true
+      
+    - name: Upload security report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-report
+        path: security-report.json
