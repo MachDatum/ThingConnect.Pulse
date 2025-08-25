@@ -1,0 +1,113 @@
+name-template: 'ThingConnect Pulse v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+
+categories:
+  - title: '🚀 Features'
+    labels:
+      - 'feature'
+      - 'enhancement'
+      - 'feat'
+  - title: '🐛 Bug Fixes'
+    labels:
+      - 'fix'
+      - 'bugfix'
+      - 'bug'
+  - title: '📚 Documentation'
+    labels:
+      - 'docs'
+      - 'documentation'
+  - title: '🔧 Maintenance'
+    labels:
+      - 'chore'
+      - 'maintenance'
+      - 'refactor'
+  - title: '⚡ Performance'
+    labels:
+      - 'performance'
+      - 'perf'
+  - title: '🛡️ Security'
+    labels:
+      - 'security'
+      - 'sec'
+
+change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
+change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add ` to disable code blocks.
+
+version-resolver:
+  major:
+    labels:
+      - 'major'
+      - 'breaking'
+  minor:
+    labels:
+      - 'minor'
+      - 'feature'
+      - 'enhancement'
+  patch:
+    labels:
+      - 'patch'
+      - 'fix'
+      - 'bugfix'
+      - 'bug'
+  default: patch
+
+template: |
+  ## What's Changed
+
+  $CHANGES
+
+  ## 🔗 Full Changelog
+  **Full Changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION
+
+  ## 📦 Installation
+  Download the installer from the assets below:
+  - `ThingConnect.Pulse.Setup.exe` - Windows installer
+  - `ThingConnect.Pulse.v$RESOLVED_VERSION.zip` - Portable version
+
+  ## 🏗️ Requirements
+  - Windows 10 (1809+) or Windows Server 2016+
+  - .NET 8.0 Runtime
+  - Administrator privileges for service installation
+
+  ## 📋 Release Validation
+  This release has been tested with:
+  - ✅ Fresh installation testing
+  - ✅ Upgrade testing from previous version
+  - ✅ Core functionality validation
+  - ✅ Security scanning
+  - ✅ Performance benchmarks
+
+autolabeler:
+  - label: 'feature'
+    files:
+      - '*.feature'
+    branch:
+      - '/feat(ure)?[/-].+/'
+  - label: 'fix'
+    branch:
+      - '/fix[/-].+/'
+  - label: 'chore'
+    files:
+      - '.gitignore'
+      - '.gitattributes'
+      - '*.md'
+    branch:
+      - '/chore[/-].+/'
+  - label: 'docs'
+    files:
+      - 'docs/**/*'
+      - '*.md'
+    branch:
+      - '/docs?[/-].+/'
+  - label: 'security'
+    files:
+      - 'docs/security.md'
+      - '**/security/**'
+    branch:
+      - '/sec(urity)?[/-].+/'
+
+exclude-labels:
+  - 'skip-changelog'
+  - 'dependencies'
+
+sort-direction: 'descending'

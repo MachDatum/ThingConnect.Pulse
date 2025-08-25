@@ -78,7 +78,7 @@ C:\ProgramData\ThingConnect.Pulse\
 
 ### Post-Installation
 - Service starts automatically on system boot
-- Web interface available at `http://localhost:8080`
+- Web interface available at `http://localhost:8080` (see [Security Baseline](security.md))
 - Configuration UI available for initial setup
 - Event log entries confirm successful startup
 
@@ -134,7 +134,7 @@ No configuration stored in registry - all settings in files.
 - Database: Encrypt sensitive connection strings if external DB used
 
 ### Network Security
-- Default binding: `localhost:8080` (local access only)
+- Default binding: `localhost:8080` (local access only) - See [Security Baseline](security.md)
 - No authentication in v1 (LAN-only deployment assumed)
 - HTTPS available via reverse proxy configuration
 - Firewall: No inbound rules required for localhost binding

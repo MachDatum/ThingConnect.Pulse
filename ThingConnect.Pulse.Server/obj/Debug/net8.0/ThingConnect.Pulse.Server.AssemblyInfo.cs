@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyCopyrightAttribute("Copyright © ThingConnect")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a50d52a0c718c9a3df5f6f8ffdcbfc68310ec9a6")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4554beedc24167a152f35aa89a0fcdf77d43f561")]
 [assembly: System.Reflection.AssemblyProductAttribute("ThingConnect Pulse")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ThingConnect.Pulse.Server")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
