@@ -12,7 +12,7 @@ jobs:
     name: Backend Code Quality
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -38,7 +38,7 @@ jobs:
     name: Frontend Code Quality
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -72,7 +72,7 @@ jobs:
     name: Security Analysis
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Run npm audit
       run: |
