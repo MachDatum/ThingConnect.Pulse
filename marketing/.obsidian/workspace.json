@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "content/blog-posts/category-1-getting-started/first-day-quick-wins.md",
+                "file": "content/blog-posts/blog-index-all-topics.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "first-day-quick-wins"
+              "title": "blog-index-all-topics"
             }
           }
         ]
@@ -171,10 +171,20 @@
   },
   "active": "ffaee7d95a949b68",
   "lastOpenFiles": [
+    "content/blog-posts/category-1-getting-started/yaml-configuration-basics.md",
+    "content/blog-posts/category-1-getting-started/windows-service-installation-management.md",
+    "content/blog-posts/category-1-getting-started/migrating-from-prtg-complete-guide.md",
+    "content/blog-posts/category-1-getting-started/manufacturing-network-map-setup.md",
+    "content/blog-posts/category-1-getting-started/installing-thingconnect-pulse-5-minute-guide.md",
+    "content/blog-posts/category-1-getting-started/first-day-quick-wins.md",
+    "social/linkedin-minimal.md",
+    "content/pulse-focused-blog-topics.md",
+    "content/llm-content-prompt.md",
+    "content/blog-topics-queue.md",
+    "content/blog-calendar.md",
+    "content/blog-posts/category-2-features/dashboard-metrics-kpis.md",
     "content/blog-posts/category-5-business-value/roi-analysis-manufacturing-savings.md",
     "content/blog-posts/category-4-technical/monitoring-industrial-protocols-modbus-opc-ua.md",
-    "content/blog-posts/category-3-industry/food-beverage-manufacturing-harsh-environments.md",
-    "content/blog-posts/category-2-features/dashboard-metrics-kpis.md",
-    "content/blog-posts/category-1-getting-started/first-day-quick-wins.md"
+    "content/blog-posts/category-3-industry/food-beverage-manufacturing-harsh-environments.md"
   ]
 }
