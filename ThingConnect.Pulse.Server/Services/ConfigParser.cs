@@ -126,13 +126,13 @@ public sealed class ConfigParser
 
         if (projectRoot?.Parent != null)
         {
-            string docsPath = Path.Combine(projectRoot.Parent.FullName, "docs");
-            if (Directory.Exists(docsPath))
+            string thingConnectPulsePath = Path.Combine(projectRoot.Parent.FullName, "ThingConnect.Pulse");
+            if (Directory.Exists(thingConnectPulsePath))
             {
-                return docsPath;
+                return thingConnectPulsePath;
             }
         }
 
-        return Path.Combine(Directory.GetCurrentDirectory(), "..", "docs");
+        return Path.Combine(Directory.GetCurrentDirectory(), "..", "ThingConnect.Pulse");
     }
 }
