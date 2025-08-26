@@ -1,24 +1,24 @@
 {
   "main": {
-    "id": "feb031ce52bb4678",
+    "id": "8ea64b001ba0fe43",
     "type": "split",
     "children": [
       {
-        "id": "9fd9db166c75ab29",
+        "id": "e90d2fa11f531859",
         "type": "tabs",
         "children": [
           {
-            "id": "b4760b41f62170d3",
+            "id": "ffaee7d95a949b68",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "roadmap.md",
+                "file": "content/blog-posts/category-1-getting-started/first-day-quick-wins.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "roadmap"
+              "title": "first-day-quick-wins"
             }
           }
         ]
@@ -27,15 +27,15 @@
     "direction": "vertical"
   },
   "left": {
-    "id": "4856fdb7b882910b",
+    "id": "15e6e52f3c7d19a6",
     "type": "split",
     "children": [
       {
-        "id": "adce544daa2209ec",
+        "id": "923db5799b9d8e22",
         "type": "tabs",
         "children": [
           {
-            "id": "0191fd9d6d10fce2",
+            "id": "2646ce294c95bd17",
             "type": "leaf",
             "state": {
               "type": "file-explorer",
@@ -48,7 +48,7 @@
             }
           },
           {
-            "id": "ea3fc3f36abc5e10",
+            "id": "8d52227cce953ae3",
             "type": "leaf",
             "state": {
               "type": "search",
@@ -65,7 +65,7 @@
             }
           },
           {
-            "id": "59c3af9f73ec1a22",
+            "id": "f8b127f34f393f5a",
             "type": "leaf",
             "state": {
               "type": "bookmarks",
@@ -81,20 +81,20 @@
     "width": 300
   },
   "right": {
-    "id": "e493ce9f93dc009b",
+    "id": "007cfd27e771f5c0",
     "type": "split",
     "children": [
       {
-        "id": "ef5b98345b533221",
+        "id": "74bbf3acc3c67291",
         "type": "tabs",
         "children": [
           {
-            "id": "99d7cf3d2c820caf",
+            "id": "dc71ab57dd6424b6",
             "type": "leaf",
             "state": {
               "type": "backlink",
               "state": {
-                "file": "value.md",
+                "file": "content/blog-posts/category-1-getting-started/first-day-quick-wins.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,25 +104,25 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for value"
+              "title": "Backlinks for first-day-quick-wins"
             }
           },
           {
-            "id": "8b7702cc41e11a7b",
+            "id": "f9e0e87e3c76d085",
             "type": "leaf",
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "value.md",
+                "file": "content/blog-posts/category-1-getting-started/first-day-quick-wins.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from value"
+              "title": "Outgoing links from first-day-quick-wins"
             }
           },
           {
-            "id": "f3392c17b8179016",
+            "id": "5333af5eb6cf230e",
             "type": "leaf",
             "state": {
               "type": "tag",
@@ -137,18 +137,18 @@
             }
           },
           {
-            "id": "3693d22c2c77640f",
+            "id": "0ee162e9472a50fc",
             "type": "leaf",
             "state": {
               "type": "outline",
               "state": {
-                "file": "value.md",
+                "file": "content/blog-posts/category-1-getting-started/first-day-quick-wins.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of value"
+              "title": "Outline of first-day-quick-wins"
             }
           }
         ]
@@ -169,28 +169,12 @@
       "bases:Create new base": false
     }
   },
-  "active": "b4760b41f62170d3",
+  "active": "ffaee7d95a949b68",
   "lastOpenFiles": [
-    "probes-spec.md",
-    "quality-gates.md",
-    "README.md",
-    "Untitled.canvas",
-    "rollup-spec.md",
-    "scope-v1.md",
-    "security.md",
-    "updates.md",
-    "value.md",
-    "roadmap.md",
-    "privacy.md",
-    "personas.md",
-    "nfr.md",
-    "migrations.md",
-    "logging-spec.md",
-    "logging.md",
-    "installer-spec.md",
-    "installer-map.md",
-    "erd-diagram.md",
-    "config-apply.md",
-    "assumptions.md"
+    "content/blog-posts/category-5-business-value/roi-analysis-manufacturing-savings.md",
+    "content/blog-posts/category-4-technical/monitoring-industrial-protocols-modbus-opc-ua.md",
+    "content/blog-posts/category-3-industry/food-beverage-manufacturing-harsh-environments.md",
+    "content/blog-posts/category-2-features/dashboard-metrics-kpis.md",
+    "content/blog-posts/category-1-getting-started/first-day-quick-wins.md"
   ]
 }
