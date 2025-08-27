@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using ThingConnect.Pulse.Server.Data;
 using ThingConnect.Pulse.Server.Models;
 

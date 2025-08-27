@@ -27,7 +27,7 @@ public sealed class TestPruneController : ControllerBase
     {
         try
         {
-            var days = await _pruneService.GetRetentionDaysAsync();
+            int days = await _pruneService.GetRetentionDaysAsync();
             return Ok(new { retentionDays = days });
         }
         catch (Exception ex)
@@ -69,11 +69,11 @@ public sealed class TestPruneController : ControllerBase
         try
         {
             _logger.LogInformation("Manual dry-run prune requested");
-            var wouldDeleteCount = await _pruneService.PruneRawDataAsync(dryRun: true);
-            var retentionDays = await _pruneService.GetRetentionDaysAsync();
-            
-            return Ok(new 
-            { 
+            int wouldDeleteCount = await _pruneService.PruneRawDataAsync(dryRun: true);
+            int retentionDays = await _pruneService.GetRetentionDaysAsync();
+
+            return Ok(new
+            {
                 message = "Dry-run prune completed",
                 wouldDeleteCount = wouldDeleteCount,
                 retentionDays = retentionDays,
@@ -96,11 +96,11 @@ public sealed class TestPruneController : ControllerBase
         try
         {
             _logger.LogInformation("Manual prune execution requested");
-            var deletedCount = await _pruneService.PruneRawDataAsync(dryRun: false);
-            var retentionDays = await _pruneService.GetRetentionDaysAsync();
-            
-            return Ok(new 
-            { 
+            int deletedCount = await _pruneService.PruneRawDataAsync(dryRun: false);
+            int retentionDays = await _pruneService.GetRetentionDaysAsync();
+
+            return Ok(new
+            {
                 message = "Prune operation completed successfully",
                 deletedCount = deletedCount,
                 retentionDays = retentionDays

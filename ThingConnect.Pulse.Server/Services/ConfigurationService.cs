@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
 using ThingConnect.Pulse.Server.Data;
@@ -33,7 +32,7 @@ public sealed class ConfigurationService : IConfigurationService
         {
             throw new InvalidOperationException($"Validation failed: {validationErrors.Message}");
         }
-        
+
         if (config == null)
         {
             throw new InvalidOperationException("Configuration parsing returned null");

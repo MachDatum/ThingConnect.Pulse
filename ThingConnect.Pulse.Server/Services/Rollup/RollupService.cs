@@ -1,6 +1,4 @@
-using Microsoft.EntityFrameworkCore;
 using ThingConnect.Pulse.Server.Data;
-using ThingConnect.Pulse.Server.Services;
 
 namespace ThingConnect.Pulse.Server.Services.Rollup;
 
@@ -36,7 +34,7 @@ public sealed class RollupService : IRollupService
             // Get all raw checks in the time window
             // SQLite has issues with DateTimeOffset comparisons in LINQ, so fetch all and filter in memory
             List<CheckResultRaw> allChecks = await _context.CheckResultsRaw.ToListAsync(cancellationToken);
-            List<CheckResultRaw> rawChecks = allChecks
+            var rawChecks = allChecks
                 .Where(c => c.Ts > fromTs && c.Ts <= toTs)
                 .OrderBy(c => c.EndpointId)
                 .ThenBy(c => c.Ts)
@@ -51,13 +49,13 @@ public sealed class RollupService : IRollupService
             _logger.LogInformation("Processing {Count} raw checks", rawChecks.Count);
 
             // Group by endpoint and calculate rollups
-            var endpointGroups = rawChecks.GroupBy(c => c.EndpointId);
+            IEnumerable<IGrouping<Guid, CheckResultRaw>> endpointGroups = rawChecks.GroupBy(c => c.EndpointId);
             List<Data.Rollup15m> rollupsToUpsert = new();
 
-            foreach (var endpointGroup in endpointGroups)
+            foreach (IGrouping<Guid, CheckResultRaw> endpointGroup in endpointGroups)
             {
                 var checks = endpointGroup.OrderBy(c => c.Ts).ToList();
-                var endpointRollups = CalculateRollups15m(endpointGroup.Key, checks);
+                List<Rollup15m> endpointRollups = CalculateRollups15m(endpointGroup.Key, checks);
                 rollupsToUpsert.AddRange(endpointRollups);
             }
 
@@ -85,7 +83,7 @@ public sealed class RollupService : IRollupService
             // Get last watermark
             DateOnly? lastWatermark = await _settingsService.GetLastRollupDailyDateAsync();
             DateOnly fromDate = lastWatermark?.AddDays(1) ?? DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-7));
-            DateOnly toDate = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+            var toDate = DateOnly.FromDateTime(DateTime.UtcNow.Date);
 
             if (fromDate >= toDate)
             {
@@ -101,7 +99,7 @@ public sealed class RollupService : IRollupService
 
             // SQLite has issues with DateTimeOffset comparisons in LINQ, so fetch all and filter in memory
             List<CheckResultRaw> allChecks = await _context.CheckResultsRaw.ToListAsync(cancellationToken);
-            List<CheckResultRaw> rawChecks = allChecks
+            var rawChecks = allChecks
                 .Where(c => c.Ts >= fromTs && c.Ts < toTs)
                 .OrderBy(c => c.EndpointId)
                 .ThenBy(c => c.Ts)
@@ -116,13 +114,13 @@ public sealed class RollupService : IRollupService
             _logger.LogInformation("Processing {Count} raw checks for daily rollup", rawChecks.Count);
 
             // Group by endpoint and calculate rollups
-            var endpointGroups = rawChecks.GroupBy(c => c.EndpointId);
+            IEnumerable<IGrouping<Guid, CheckResultRaw>> endpointGroups = rawChecks.GroupBy(c => c.EndpointId);
             List<Data.RollupDaily> rollupsToUpsert = new();
 
-            foreach (var endpointGroup in endpointGroups)
+            foreach (IGrouping<Guid, CheckResultRaw> endpointGroup in endpointGroups)
             {
                 var checks = endpointGroup.OrderBy(c => c.Ts).ToList();
-                var endpointRollups = CalculateRollupsDaily(endpointGroup.Key, checks, fromDate, toDate);
+                List<RollupDaily> endpointRollups = CalculateRollupsDaily(endpointGroup.Key, checks, fromDate, toDate);
                 rollupsToUpsert.AddRange(endpointRollups);
             }
 

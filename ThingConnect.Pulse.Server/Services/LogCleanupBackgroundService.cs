@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Options;
-
 namespace ThingConnect.Pulse.Server.Services;
 
 public class LogRetentionOptions
@@ -22,36 +20,36 @@ public sealed class LogCleanupBackgroundService : BackgroundService
     {
         _logger = logger;
         _configuration = configuration;
-        
+
         // Default to ProgramData logs directory, fall back to local logs for development
         _logsDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
             "ThingConnect.Pulse", "logs");
-        
+
         if (!Directory.Exists(_logsDirectory))
         {
             _logsDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
         }
-        
+
         _options = new LogRetentionOptions();
         configuration.GetSection("Logging:Retention").Bind(_options);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Log cleanup service started. Directory: {LogsDirectory}, Retention: {Days} days", 
+        _logger.LogInformation("Log cleanup service started. Directory: {LogsDirectory}, Retention: {Days} days",
             _logsDirectory, _options.DaysToKeep);
-        
+
         // Run cleanup immediately on startup
         await CleanupOldLogFilesAsync();
-        
+
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                var nextRun = GetNextCleanupTime();
-                var delay = nextRun - DateTime.Now;
-                
+                DateTime nextRun = GetNextCleanupTime();
+                TimeSpan delay = nextRun - DateTime.Now;
+
                 if (delay > TimeSpan.Zero)
                 {
                     _logger.LogDebug("Next log cleanup scheduled for {NextRun}", nextRun);
@@ -63,7 +61,7 @@ public sealed class LogCleanupBackgroundService : BackgroundService
                     _logger.LogDebug("Missed scheduled cleanup time, running in 1 hour");
                     await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
                 }
-                
+
                 if (!stoppingToken.IsCancellationRequested)
                 {
                     await CleanupOldLogFilesAsync();
@@ -80,26 +78,26 @@ public sealed class LogCleanupBackgroundService : BackgroundService
                 await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
             }
         }
-        
+
         _logger.LogInformation("Log cleanup service stopped");
     }
 
     private DateTime GetNextCleanupTime()
     {
-        if (!TimeSpan.TryParse(_options.CleanupSchedule, out var cleanupTime))
+        if (!TimeSpan.TryParse(_options.CleanupSchedule, out TimeSpan cleanupTime))
         {
             cleanupTime = TimeSpan.FromHours(2); // Default to 2 AM
         }
-        
-        var today = DateTime.Today;
-        var nextRun = today.Add(cleanupTime);
-        
+
+        DateTime today = DateTime.Today;
+        DateTime nextRun = today.Add(cleanupTime);
+
         // If the time has already passed today, schedule for tomorrow
         if (nextRun <= DateTime.Now)
         {
             nextRun = nextRun.AddDays(1);
         }
-        
+
         return nextRun;
     }
 
@@ -112,46 +110,46 @@ public sealed class LogCleanupBackgroundService : BackgroundService
                 _logger.LogWarning("Logs directory does not exist: {LogsDirectory}", _logsDirectory);
                 return;
             }
-            
-            var cutoffDate = DateTime.UtcNow.AddDays(-_options.DaysToKeep);
+
+            DateTime cutoffDate = DateTime.UtcNow.AddDays(-_options.DaysToKeep);
             _logger.LogDebug("Starting log cleanup for files older than {CutoffDate}", cutoffDate);
-            
+
             var logFiles = Directory.GetFiles(_logsDirectory, "pulse*.log", SearchOption.TopDirectoryOnly)
                                    .Select(f => new FileInfo(f))
                                    .Where(f => f.CreationTimeUtc < cutoffDate)
                                    .OrderBy(f => f.CreationTimeUtc)
                                    .ToList();
-            
+
             if (logFiles.Count == 0)
             {
                 _logger.LogDebug("No log files found that need cleanup");
                 return;
             }
-            
-            var deletedCount = 0;
-            var totalSizeDeleted = 0L;
-            
-            foreach (var file in logFiles)
+
+            int deletedCount = 0;
+            long totalSizeDeleted = 0L;
+
+            foreach (FileInfo? file in logFiles)
             {
                 try
                 {
-                    var fileSize = file.Length;
+                    long fileSize = file.Length;
                     file.Delete();
-                    
+
                     deletedCount++;
                     totalSizeDeleted += fileSize;
-                    
-                    _logger.LogInformation("Deleted expired log file: {FileName} ({SizeMB:F2} MB)", 
+
+                    _logger.LogInformation("Deleted expired log file: {FileName} ({SizeMB:F2} MB)",
                         file.Name, fileSize / (1024.0 * 1024.0));
                 }
                 catch (UnauthorizedAccessException ex)
                 {
-                    _logger.LogWarning("Access denied deleting log file {FileName}: {Error}", 
+                    _logger.LogWarning("Access denied deleting log file {FileName}: {Error}",
                         file.Name, ex.Message);
                 }
                 catch (IOException ex)
                 {
-                    _logger.LogWarning("IO error deleting log file {FileName}: {Error}", 
+                    _logger.LogWarning("IO error deleting log file {FileName}: {Error}",
                         file.Name, ex.Message);
                 }
                 catch (Exception ex)
@@ -159,12 +157,12 @@ public sealed class LogCleanupBackgroundService : BackgroundService
                     _logger.LogError(ex, "Unexpected error deleting log file: {FileName}", file.Name);
                 }
             }
-            
+
             if (deletedCount > 0)
             {
-                _logger.LogInformation("Log cleanup completed: {DeletedCount} files removed, {TotalSizeMB:F2} MB freed", 
+                _logger.LogInformation("Log cleanup completed: {DeletedCount} files removed, {TotalSizeMB:F2} MB freed",
                     deletedCount, totalSizeDeleted / (1024.0 * 1024.0));
-                
+
                 // Check total size after cleanup
                 await CheckTotalLogSizeAsync();
             }
@@ -179,19 +177,19 @@ public sealed class LogCleanupBackgroundService : BackgroundService
     {
         try
         {
-            var logFiles = Directory.GetFiles(_logsDirectory, "pulse*.log", SearchOption.TopDirectoryOnly);
-            var totalSize = logFiles.Sum(f => new FileInfo(f).Length);
-            var totalSizeMB = totalSize / (1024.0 * 1024.0);
-            
-            _logger.LogDebug("Current total log size: {TotalSizeMB:F2} MB ({FileCount} files)", 
+            string[] logFiles = Directory.GetFiles(_logsDirectory, "pulse*.log", SearchOption.TopDirectoryOnly);
+            long totalSize = logFiles.Sum(f => new FileInfo(f).Length);
+            double totalSizeMB = totalSize / (1024.0 * 1024.0);
+
+            _logger.LogDebug("Current total log size: {TotalSizeMB:F2} MB ({FileCount} files)",
                 totalSizeMB, logFiles.Length);
-            
+
             if (totalSizeMB > _options.MaxTotalSizeMB)
             {
                 _logger.LogWarning("Total log size ({TotalSizeMB:F2} MB) exceeds limit ({MaxSizeMB} MB). " +
-                    "Consider reducing retention days or increasing size limit.", 
+                    "Consider reducing retention days or increasing size limit.",
                     totalSizeMB, _options.MaxTotalSizeMB);
-                
+
                 // Optional: Force cleanup of oldest files if over size limit
                 await ForceCleanupOldestFilesAsync(totalSize);
             }
@@ -206,39 +204,39 @@ public sealed class LogCleanupBackgroundService : BackgroundService
     {
         try
         {
-            var maxSizeBytes = (long)_options.MaxTotalSizeMB * 1024 * 1024;
-            var targetSizeBytes = (long)(maxSizeBytes * 0.8); // Clean up to 80% of limit
-            var sizeToFree = currentTotalSize - targetSizeBytes;
-            
+            long maxSizeBytes = (long)_options.MaxTotalSizeMB * 1024 * 1024;
+            long targetSizeBytes = (long)(maxSizeBytes * 0.8); // Clean up to 80% of limit
+            long sizeToFree = currentTotalSize - targetSizeBytes;
+
             if (sizeToFree <= 0)
             {
                 return Task.CompletedTask;
             }
-            
+
             var logFiles = Directory.GetFiles(_logsDirectory, "pulse*.log", SearchOption.TopDirectoryOnly)
                                    .Select(f => new FileInfo(f))
                                    .OrderBy(f => f.CreationTimeUtc)
                                    .ToList();
-            
-            var freedSize = 0L;
-            var deletedCount = 0;
-            
-            foreach (var file in logFiles)
+
+            long freedSize = 0L;
+            int deletedCount = 0;
+
+            foreach (FileInfo? file in logFiles)
             {
                 if (freedSize >= sizeToFree)
                 {
                     break;
                 }
-                
+
                 try
                 {
-                    var fileSize = file.Length;
+                    long fileSize = file.Length;
                     file.Delete();
-                    
+
                     freedSize += fileSize;
                     deletedCount++;
-                    
-                    _logger.LogWarning("Force deleted log file to reduce size: {FileName} ({SizeMB:F2} MB)", 
+
+                    _logger.LogWarning("Force deleted log file to reduce size: {FileName} ({SizeMB:F2} MB)",
                         file.Name, fileSize / (1024.0 * 1024.0));
                 }
                 catch (Exception ex)
@@ -246,10 +244,10 @@ public sealed class LogCleanupBackgroundService : BackgroundService
                     _logger.LogError(ex, "Error force deleting log file: {FileName}", file.Name);
                 }
             }
-            
+
             if (deletedCount > 0)
             {
-                _logger.LogWarning("Force cleanup completed: {DeletedCount} files removed to reduce total size", 
+                _logger.LogWarning("Force cleanup completed: {DeletedCount} files removed to reduce total size",
                     deletedCount);
             }
         }
@@ -257,7 +255,7 @@ public sealed class LogCleanupBackgroundService : BackgroundService
         {
             _logger.LogError(ex, "Error during force log cleanup");
         }
-        
+
         return Task.CompletedTask;
     }
 }

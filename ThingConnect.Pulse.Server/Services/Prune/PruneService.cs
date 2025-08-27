@@ -1,6 +1,4 @@
-using Microsoft.EntityFrameworkCore;
 using ThingConnect.Pulse.Server.Data;
-using ThingConnect.Pulse.Server.Services;
 
 namespace ThingConnect.Pulse.Server.Services.Prune;
 
@@ -29,8 +27,8 @@ public sealed class PruneService : IPruneService
     /// <inheritdoc />
     public async Task<int> PruneRawDataAsync(bool dryRun = false, CancellationToken cancellationToken = default)
     {
-        var retentionDays = await GetRetentionDaysAsync(cancellationToken);
-        var cutoffDate = DateTimeOffset.UtcNow.AddDays(-retentionDays);
+        int retentionDays = await GetRetentionDaysAsync(cancellationToken);
+        DateTimeOffset cutoffDate = DateTimeOffset.UtcNow.AddDays(-retentionDays);
 
         _logger.LogInformation(
             "Starting raw data prune (dryRun={DryRun}) with {RetentionDays}d retention. Cutoff: {CutoffDate}",
@@ -45,8 +43,8 @@ public sealed class PruneService : IPruneService
                 var allRecords = await _db.CheckResultsRaw
                     .Select(c => c.Ts)
                     .ToListAsync(cancellationToken);
-                
-                var countToDelete = allRecords.Count(ts => ts < cutoffDate);
+
+                int countToDelete = allRecords.Count(ts => ts < cutoffDate);
 
                 _logger.LogInformation(
                     "DRY RUN: Would delete {Count} raw check results older than {CutoffDate} (out of {Total})",
@@ -57,8 +55,8 @@ public sealed class PruneService : IPruneService
             else
             {
                 // For actual deletion, load records in batches and delete client-side
-                var batchSize = 1000;
-                var totalDeleted = 0;
+                int batchSize = 1000;
+                int totalDeleted = 0;
 
                 while (true)
                 {
@@ -92,7 +90,7 @@ public sealed class PruneService : IPruneService
                         string.Join(",", idsToDelete));
 
                     totalDeleted += idsToDelete.Count;
-                    
+
                     _logger.LogDebug("Deleted batch of {Count} raw check results", idsToDelete.Count);
 
                     // Small delay between batches to avoid blocking other operations
@@ -119,8 +117,8 @@ public sealed class PruneService : IPruneService
     /// <inheritdoc />
     public async Task<int> GetRetentionDaysAsync(CancellationToken cancellationToken = default)
     {
-        var setting = await _settingsService.GetAsync(RetentionDaysKey);
-        
+        string? setting = await _settingsService.GetAsync(RetentionDaysKey);
+
         if (setting == null)
         {
             // Set default value if not configured
@@ -128,7 +126,7 @@ public sealed class PruneService : IPruneService
             return DefaultRetentionDays;
         }
 
-        if (int.TryParse(setting, out var days) && days > 0)
+        if (int.TryParse(setting, out int days) && days > 0)
         {
             return days;
         }
@@ -136,7 +134,7 @@ public sealed class PruneService : IPruneService
         _logger.LogWarning(
             "Invalid retention days setting: {Value}. Using default: {DefaultDays}",
             setting, DefaultRetentionDays);
-        
+
         return DefaultRetentionDays;
     }
 
@@ -149,7 +147,7 @@ public sealed class PruneService : IPruneService
         }
 
         await _settingsService.SetAsync(RetentionDaysKey, days.ToString());
-        
+
         _logger.LogInformation("Set raw data retention period to {Days} days", days);
     }
 }

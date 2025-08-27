@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
 using ThingConnect.Pulse.Server.Data;
 

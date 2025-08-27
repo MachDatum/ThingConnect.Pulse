@@ -1,7 +1,3 @@
-
-using Microsoft.EntityFrameworkCore;
-using Serilog;
-using Serilog.Events;
 using ThingConnect.Pulse.Server.Data;
 using ThingConnect.Pulse.Server.Infrastructure;
 using ThingConnect.Pulse.Server.Services;
@@ -17,13 +13,13 @@ public class Program
     {
         // Initialize path service for directory management
         var pathService = new PathService();
-        
+
         // Create initial configuration to read Serilog settings
-        var configuration = new ConfigurationBuilder()
+        IConfigurationRoot configuration = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true, reloadOnChange: true)
             .Build();
-        
+
         // Configure Serilog from configuration files
         Log.Logger = new LoggerConfiguration()
             .ReadFrom.Configuration(configuration)
@@ -37,10 +33,10 @@ public class Program
             Log.Information("Starting ThingConnect Pulse Server");
 
             WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
-            
+
             // Use Serilog as the logging provider
             builder.Host.UseSerilog();
-            
+
             // Configure Windows Service hosting
             builder.Host.UseWindowsService();
 
@@ -56,7 +52,7 @@ public class Program
 
             // Add path service
             builder.Services.AddSingleton<IPathService, PathService>();
-            
+
             // Add configuration services
             builder.Services.AddSingleton<ConfigParser>();
             builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
@@ -76,7 +72,7 @@ public class Program
 
             // Add prune services
             builder.Services.AddScoped<IPruneService, PruneService>();
-            
+
             // Add log cleanup service
             builder.Services.AddHostedService<LogCleanupBackgroundService>();
 

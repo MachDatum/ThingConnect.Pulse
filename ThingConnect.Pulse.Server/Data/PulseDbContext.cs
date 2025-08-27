@@ -1,7 +1,4 @@
 // ThingConnect Pulse - EF Core DbContext (v1)
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-
 namespace ThingConnect.Pulse.Server.Data;
 
 public sealed class PulseDbContext : DbContext

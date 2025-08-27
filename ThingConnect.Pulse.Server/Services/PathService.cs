@@ -45,7 +45,7 @@ public sealed class PathService : IPathService
 
     public async Task EnsureDirectoriesExistAsync()
     {
-        var directories = new[]
+        string[] directories = new[]
         {
             GetRootDirectory(),
             GetConfigDirectory(),
@@ -59,7 +59,7 @@ public sealed class PathService : IPathService
             if (!Directory.Exists(directory))
             {
                 Directory.CreateDirectory(directory);
-                
+
                 // Set proper permissions for the service account (Windows only)
                 if (OperatingSystem.IsWindows())
                 {
