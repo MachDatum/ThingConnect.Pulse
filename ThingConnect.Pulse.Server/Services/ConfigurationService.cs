@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
 using ThingConnect.Pulse.Server.Data;
 using ThingConnect.Pulse.Server.Models;
 
@@ -27,7 +28,7 @@ public sealed class ConfigurationService : IConfigurationService
 
     public async Task<ApplyResultDto> ApplyConfigurationAsync(string yamlContent, string? actor = null, string? note = null)
     {
-        (ConfigurationYaml? config, ValidationErrorsDto? validationErrors) = _parser.ParseAndValidate(yamlContent);
+        (ConfigurationYaml? config, ValidationErrorsDto? validationErrors) = await _parser.ParseAndValidateAsync(yamlContent);
         if (validationErrors != null)
         {
             throw new InvalidOperationException($"Validation failed: {validationErrors.Message}");

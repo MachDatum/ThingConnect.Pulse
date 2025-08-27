@@ -1,5 +1,7 @@
 #nullable disable
 
+using Microsoft.EntityFrameworkCore.Migrations;
+
 namespace ThingConnect.Pulse.Server.Migrations;
 
 /// <inheritdoc />

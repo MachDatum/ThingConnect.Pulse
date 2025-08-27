@@ -1,4 +1,7 @@
 // ThingConnect Pulse - EF Core DbContext (v1)
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+
 namespace ThingConnect.Pulse.Server.Data;
 
 public sealed class PulseDbContext : DbContext
@@ -11,6 +14,7 @@ public sealed class PulseDbContext : DbContext
     public DbSet<RollupDaily> RollupsDaily => Set<RollupDaily>();
     public DbSet<Setting> Settings => Set<Setting>();
     public DbSet<ConfigVersion> ConfigVersions => Set<ConfigVersion>();
+    public DbSet<MonitoringSession> MonitoringSessions => Set<MonitoringSession>();
 
     public PulseDbContext(DbContextOptions<PulseDbContext> options) : base(options) { }
 
@@ -100,6 +104,16 @@ public sealed class PulseDbContext : DbContext
             e.HasKey(x => x.Id);
             e.Property(x => x.Id).HasMaxLength(40);
             e.HasIndex(x => x.AppliedTs);
+        });
+
+        b.Entity<MonitoringSession>(e =>
+        {
+            e.ToTable("monitoring_session");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.ShutdownReason).HasMaxLength(200);
+            e.Property(x => x.Version).HasMaxLength(50);
+            e.HasIndex(x => x.StartedTs);
+            e.HasIndex(x => x.EndedTs);
         });
     }
 }

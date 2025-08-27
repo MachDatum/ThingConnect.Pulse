@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using ThingConnect.Pulse.Server.Data;
 
 namespace ThingConnect.Pulse.Server.Services.Rollup;
@@ -34,7 +35,7 @@ public sealed class RollupService : IRollupService
             // Get all raw checks in the time window
             // SQLite has issues with DateTimeOffset comparisons in LINQ, so fetch all and filter in memory
             List<CheckResultRaw> allChecks = await _context.CheckResultsRaw.ToListAsync(cancellationToken);
-            var rawChecks = allChecks
+            List<CheckResultRaw> rawChecks = allChecks
                 .Where(c => c.Ts > fromTs && c.Ts <= toTs)
                 .OrderBy(c => c.EndpointId)
                 .ThenBy(c => c.Ts)

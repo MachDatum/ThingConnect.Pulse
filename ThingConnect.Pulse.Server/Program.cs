@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using Serilog;
 using ThingConnect.Pulse.Server.Data;
 using ThingConnect.Pulse.Server.Infrastructure;
 using ThingConnect.Pulse.Server.Services;
@@ -54,7 +56,11 @@ public class Program
             builder.Services.AddSingleton<IPathService, PathService>();
 
             // Add configuration services
-            builder.Services.AddSingleton<ConfigurationParser>();
+            builder.Services.AddSingleton<ConfigurationParser>(serviceProvider =>
+            {
+                ILogger<ConfigurationParser> logger = serviceProvider.GetRequiredService<ILogger<ConfigurationParser>>();
+                return ConfigurationParser.CreateAsync(logger).GetAwaiter().GetResult();
+            });
             builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
             builder.Services.AddScoped<ISettingsService, SettingsService>();
 

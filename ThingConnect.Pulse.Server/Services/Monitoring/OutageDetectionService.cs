@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Microsoft.EntityFrameworkCore;
 using ThingConnect.Pulse.Server.Data;
 using ThingConnect.Pulse.Server.Models;
 
@@ -75,11 +76,162 @@ public sealed class OutageDetectionService : IOutageDetectionService
         _logger.LogInformation("Cleared all monitor states");
     }
 
+    /// <summary>
+    /// Initializes monitor states from database on service startup.
+    /// Loads last known status, handles monitoring gaps, and starts new monitoring session.
+    /// </summary>
+    public async Task InitializeStatesFromDatabaseAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            DateTimeOffset now = DateTimeOffset.UtcNow;
+            
+            // Check for monitoring gap (when was the last monitoring session)
+            var lastSession = await _context.MonitoringSessions
+                .OrderByDescending(s => s.StartedTs)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            DateTimeOffset? lastMonitoringTime = lastSession?.EndedTs ?? lastSession?.StartedTs;
+            bool hasMonitoringGap = lastMonitoringTime.HasValue && 
+                                   (now - lastMonitoringTime.Value).TotalMinutes > 5;
+
+            if (hasMonitoringGap)
+            {
+                _logger.LogWarning("Detected monitoring gap since {LastMonitoringTime}. " +
+                    "Handling open outages with uncertainty.", lastMonitoringTime);
+                
+                await HandleMonitoringGapAsync(lastMonitoringTime.Value, now, cancellationToken);
+            }
+
+            // Start new monitoring session
+            var newSession = new MonitoringSession
+            {
+                StartedTs = now,
+                Version = GetType().Assembly.GetName().Version?.ToString()
+            };
+            
+            _context.MonitoringSessions.Add(newSession);
+            await _context.SaveChangesAsync(cancellationToken);
+            
+            // Load endpoints and current states
+            var endpoints = await _context.Endpoints
+                .Where(e => e.Enabled)
+                .ToListAsync(cancellationToken);
+
+            var openOutages = await _context.Outages
+                .Where(o => o.EndedTs == null)
+                .ToListAsync(cancellationToken);
+
+            var openOutagesByEndpoint = openOutages.ToDictionary(o => o.EndpointId, o => o.Id);
+
+            int initializedCount = 0;
+            foreach (var endpoint in endpoints)
+            {
+                var state = new MonitorState
+                {
+                    LastPublicStatus = endpoint.LastStatus,
+                    LastChangeTs = endpoint.LastChangeTs,
+                    OpenOutageId = openOutagesByEndpoint.GetValueOrDefault(endpoint.Id)
+                };
+
+                if (_states.TryAdd(endpoint.Id, state))
+                {
+                    initializedCount++;
+                }
+            }
+
+            _logger.LogInformation("Started monitoring session {SessionId}, initialized {Count} states", 
+                newSession.Id, initializedCount);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to initialize monitor states from database");
+        }
+    }
+
+    private async Task HandleMonitoringGapAsync(DateTimeOffset lastMonitoringTime, 
+        DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        // Handle open outages that span the monitoring gap
+        var openOutages = await _context.Outages
+            .Where(o => o.EndedTs == null && o.StartedTs < lastMonitoringTime)
+            .ToListAsync(cancellationToken);
+
+        foreach (var outage in openOutages)
+        {
+            // Mark outage as having monitoring gap and close it at last known monitoring time
+            outage.EndedTs = lastMonitoringTime;
+            outage.DurationSeconds = (int)(lastMonitoringTime - outage.StartedTs).TotalSeconds;
+            outage.MonitoringStoppedTs = lastMonitoringTime;
+            outage.HasMonitoringGap = true;
+            outage.LastError = "Monitoring gap detected - actual end time unknown";
+
+            _logger.LogWarning("Closed outage {OutageId} for endpoint {EndpointId} due to monitoring gap. " +
+                "Actual outage may have been shorter.", outage.Id, outage.EndpointId);
+        }
+
+        // Reset endpoint statuses to null since we don't know their current state
+        var endpoints = await _context.Endpoints
+            .Where(e => e.Enabled)
+            .ToListAsync(cancellationToken);
+
+        foreach (var endpoint in endpoints)
+        {
+            endpoint.LastStatus = null; // Unknown status after monitoring gap
+            endpoint.LastChangeTs = now;
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Handles graceful shutdown by closing the current monitoring session and marking open outages.
+    /// </summary>
+    public async Task HandleGracefulShutdownAsync(string? shutdownReason = null, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            DateTimeOffset now = DateTimeOffset.UtcNow;
+
+            // Close current monitoring session
+            var currentSession = await _context.MonitoringSessions
+                .Where(s => s.EndedTs == null)
+                .OrderByDescending(s => s.StartedTs)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (currentSession != null)
+            {
+                currentSession.EndedTs = now;
+                currentSession.ShutdownReason = shutdownReason ?? "Graceful shutdown";
+                
+                _logger.LogInformation("Closed monitoring session {SessionId}", currentSession.Id);
+            }
+
+            // Mark all open outages with monitoring stop time (but don't close them yet)
+            var openOutages = await _context.Outages
+                .Where(o => o.EndedTs == null && o.MonitoringStoppedTs == null)
+                .ToListAsync(cancellationToken);
+
+            foreach (var outage in openOutages)
+            {
+                outage.MonitoringStoppedTs = now;
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation("Gracefully shut down monitoring, marked {Count} open outages", openOutages.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to handle graceful shutdown");
+        }
+    }
+
     private async Task TransitionToDownAsync(Guid endpointId, MonitorState state, DateTimeOffset timestamp,
         string? error, CancellationToken cancellationToken)
     {
         // Create new outage record
-        var outage = new Outage
+        Outage outage = new Outage
         {
             EndpointId = endpointId,
             StartedTs = timestamp,
@@ -136,7 +288,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
 
     private async Task SaveCheckResultAsync(CheckResult result, CancellationToken cancellationToken)
     {
-        var rawResult = new CheckResultRaw
+        CheckResultRaw rawResult = new CheckResultRaw
         {
             EndpointId = result.EndpointId,
             Ts = result.Timestamp,

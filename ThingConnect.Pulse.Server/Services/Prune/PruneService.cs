@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using ThingConnect.Pulse.Server.Data;
 
 namespace ThingConnect.Pulse.Server.Services.Prune;

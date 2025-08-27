@@ -1,8 +1,8 @@
 using NJsonSchema;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 using ThingConnect.Pulse.Server.Data;
 using ThingConnect.Pulse.Server.Models;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace ThingConnect.Pulse.Server.Services;
 
@@ -10,69 +10,125 @@ public sealed class ConfigurationParser
 {
     private readonly IDeserializer _yamlDeserializer;
     private readonly JsonSchema _schema;
+    private readonly ILogger<ConfigurationParser> _logger;
 
-    public ConfigurationParser()
+    private ConfigurationParser(JsonSchema schema, ILogger<ConfigurationParser> logger)
     {
         _yamlDeserializer = new DeserializerBuilder()
             .WithNamingConvention(UnderscoredNamingConvention.Instance)
             .Build();
-
-        string schemaPath = Path.Combine(GetDocsDirectory(), "config.schema.json");
-        if (!File.Exists(schemaPath))
-        {
-            throw new FileNotFoundException($"Config schema not found at: {schemaPath}");
-        }
-        string schemaJson = File.ReadAllText(schemaPath);
-        _schema = JsonSchema.FromJsonAsync(schemaJson).Result;
+        _schema = schema;
+        _logger = logger;
     }
 
-    public (ConfigurationYaml? config, ValidationErrorsDto? errors) ParseAndValidate(string yamlContent)
+    public static async Task<ConfigurationParser> CreateAsync(ILogger<ConfigurationParser> logger)
+    {
+        string assemblyLocation = System.Reflection.Assembly.GetExecutingAssembly().Location;
+        string? assemblyDirectory = Path.GetDirectoryName(assemblyLocation);
+
+        if (string.IsNullOrEmpty(assemblyDirectory))
+        {
+            logger.LogWarning("Unable to determine assembly directory from location: {AssemblyLocation}", assemblyLocation);
+            throw new InvalidOperationException("Unable to determine assembly directory");
+        }
+
+        string schemaPath = Path.Combine(assemblyDirectory, "config.schema.json");
+        if (!File.Exists(schemaPath))
+        {
+            logger.LogWarning("Config schema file not found at expected path: {SchemaPath}", schemaPath);
+            throw new FileNotFoundException($"Config schema not found at: {schemaPath}");
+        }
+
+        logger.LogDebug("Loading config schema from: {SchemaPath}", schemaPath);
+        string schemaJson = await File.ReadAllTextAsync(schemaPath);
+        JsonSchema schema = await JsonSchema.FromJsonAsync(schemaJson);
+        logger.LogInformation("Configuration schema loaded successfully");
+        return new ConfigurationParser(schema, logger);
+    }
+
+    public Task<(ConfigurationYaml? config, ValidationErrorsDto? errors)> ParseAndValidateAsync(string yamlContent)
     {
         try
         {
+            _logger.LogDebug("Starting YAML configuration parsing and validation");
+
+            // First, deserialize the YAML
             ConfigurationYaml config = _yamlDeserializer.Deserialize<ConfigurationYaml>(yamlContent);
 
+            // Convert back to JSON for schema validation
             ISerializer serializer = new SerializerBuilder()
                 .WithNamingConvention(UnderscoredNamingConvention.Instance)
+                .JsonCompatible()
                 .Build();
-            string yamlForValidation = serializer.Serialize(config);
+            string configJson = serializer.Serialize(config);
 
-            // Temporarily skip schema validation to test basic parsing
-            // var validationResults = _schema.Validate(yamlForValidation);
+            // Perform schema validation
+            ICollection<NJsonSchema.Validation.ValidationError> validationResults = _schema.Validate(configJson);
 
-            // if (validationResults.Count > 0)
-            // {
-            //     var errors = new ValidationErrorsDto
-            //     {
-            //         Message = "Configuration validation failed",
-            //         Errors = validationResults.Select(v => new ValidationError
-            //         {
-            //             Path = v.Path ?? "",
-            //             Message = v.ToString(),
-            //             Value = null
-            //         }).ToList()
-            //     };
-            //     return (null, errors);
-            // }
+            if (validationResults.Count > 0)
+            {
+                _logger.LogWarning("Configuration validation failed with {ErrorCount} errors", validationResults.Count);
+                foreach (NJsonSchema.Validation.ValidationError validationResult in validationResults)
+                {
+                    _logger.LogWarning("Validation error at {Path}: {Message}", validationResult.Path ?? "", validationResult.ToString());
+                }
 
-            return (config, null);
+                var errors = new ValidationErrorsDto
+                {
+                    Message = "Configuration validation failed",
+                    Errors = validationResults.Select(v => new ValidationError
+                    {
+                        Path = v.Path ?? "",
+                        Message = v.ToString(),
+                        Value = null
+                    }).ToList()
+                };
+                return Task.FromResult<(ConfigurationYaml? config, ValidationErrorsDto? errors)>((null, errors));
+            }
+
+            _logger.LogInformation("Configuration parsed and validated successfully with {GroupCount} groups and {TargetCount} targets",
+                config.Groups.Count, config.Targets.Count);
+            return Task.FromResult<(ConfigurationYaml? config, ValidationErrorsDto? errors)>((config, null));
+        }
+        catch (YamlDotNet.Core.YamlException yamlEx)
+        {
+            _logger.LogWarning(yamlEx, "YAML parsing failed at line {Line}, column {Column}: {Message}",
+                yamlEx.Start.Line, yamlEx.Start.Column, yamlEx.Message);
+
+            var errors = new ValidationErrorsDto
+            {
+                Message = "Invalid YAML format",
+                Errors = new List<ValidationError>
+                {
+                    new()
+                    {
+                        Path = $"Line {yamlEx.Start.Line}, Column {yamlEx.Start.Column}",
+                        Message = yamlEx.Message,
+                        Value = null
+                    }
+                }
+            };
+            return Task.FromResult<(ConfigurationYaml? config, ValidationErrorsDto? errors)>((null, errors));
         }
         catch (Exception ex)
         {
+            _logger.LogWarning(ex, "Configuration parsing failed with {ExceptionType}: {Message}",
+                ex.GetType().Name, ex.Message);
+
             var errors = new ValidationErrorsDto
             {
-                Message = $"Failed to parse YAML configuration: {ex.GetType().Name}",
+                Message = $"Failed to parse configuration: {ex.GetType().Name}",
                 Errors = new List<ValidationError>
                 {
                     new()
                     {
                         Path = "",
-                        Message = $"{ex.Message} (Stack: {ex.StackTrace?.Substring(0, Math.Min(200, ex.StackTrace.Length))})",
+                        Message = ex.Message,
                         Value = null
                     }
                 }
             };
-            return (null, errors);
+            return Task.FromResult<(ConfigurationYaml? config, ValidationErrorsDto? errors)>((null, errors));
         }
     }
 
@@ -113,26 +169,4 @@ public sealed class ConfigurationParser
         "https" => ProbeType.http,
         _ => ProbeType.icmp
     };
-
-    private static string GetDocsDirectory()
-    {
-        string assemblyLocation = System.Reflection.Assembly.GetExecutingAssembly().Location;
-        var projectRoot = new DirectoryInfo(Path.GetDirectoryName(assemblyLocation)!);
-
-        while (projectRoot != null && !projectRoot.GetFiles("*.csproj").Any())
-        {
-            projectRoot = projectRoot.Parent;
-        }
-
-        if (projectRoot?.Parent != null)
-        {
-            string thingConnectPulsePath = Path.Combine(projectRoot.Parent.FullName, "ThingConnect.Pulse");
-            if (Directory.Exists(thingConnectPulsePath))
-            {
-                return thingConnectPulsePath;
-            }
-        }
-
-        return Path.Combine(Directory.GetCurrentDirectory(), "..", "ThingConnect.Pulse");
-    }
 }

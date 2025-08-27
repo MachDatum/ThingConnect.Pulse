@@ -61,6 +61,18 @@ public sealed class Outage
     public DateTimeOffset? EndedTs { get; set; }
     public int? DurationSeconds { get; set; }
     public string? LastError { get; set; }
+    
+    /// <summary>
+    /// Timestamp when monitoring was lost during this outage (service downtime).
+    /// If not null, indicates outage duration may be inaccurate due to monitoring gap.
+    /// </summary>
+    public DateTimeOffset? MonitoringStoppedTs { get; set; }
+    
+    /// <summary>
+    /// True if this outage spans a period when monitoring service was unavailable.
+    /// Indicates uncertainty in the actual endpoint availability during that time.
+    /// </summary>
+    public bool HasMonitoringGap { get; set; }
 }
 
 public sealed class Rollup15m
@@ -97,4 +109,16 @@ public sealed class ConfigVersion
     public string FilePath { get; set; } = default!;
     public string? Actor { get; set; }
     public string? Note { get; set; }
+}
+
+/// <summary>
+/// Tracks monitoring service uptime sessions to detect monitoring gaps.
+/// </summary>
+public sealed class MonitoringSession
+{
+    public long Id { get; set; }
+    public DateTimeOffset StartedTs { get; set; }
+    public DateTimeOffset? EndedTs { get; set; }
+    public string? ShutdownReason { get; set; }
+    public string? Version { get; set; }
 }
