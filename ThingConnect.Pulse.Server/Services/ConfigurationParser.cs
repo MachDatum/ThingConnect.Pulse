@@ -1,14 +1,17 @@
+using NJsonSchema;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 using ThingConnect.Pulse.Server.Data;
 using ThingConnect.Pulse.Server.Models;
 
 namespace ThingConnect.Pulse.Server.Services;
 
-public sealed class ConfigParser
+public sealed class ConfigurationParser
 {
     private readonly IDeserializer _yamlDeserializer;
     private readonly JsonSchema _schema;
 
-    public ConfigParser()
+    public ConfigurationParser()
     {
         _yamlDeserializer = new DeserializerBuilder()
             .WithNamingConvention(UnderscoredNamingConvention.Instance)
@@ -23,11 +26,11 @@ public sealed class ConfigParser
         _schema = JsonSchema.FromJsonAsync(schemaJson).Result;
     }
 
-    public (ConfigYaml? config, ValidationErrorsDto? errors) ParseAndValidate(string yamlContent)
+    public (ConfigurationYaml? config, ValidationErrorsDto? errors) ParseAndValidate(string yamlContent)
     {
         try
         {
-            ConfigYaml config = _yamlDeserializer.Deserialize<ConfigYaml>(yamlContent);
+            ConfigurationYaml config = _yamlDeserializer.Deserialize<ConfigurationYaml>(yamlContent);
 
             ISerializer serializer = new SerializerBuilder()
                 .WithNamingConvention(UnderscoredNamingConvention.Instance)
@@ -73,7 +76,7 @@ public sealed class ConfigParser
         }
     }
 
-    public (List<Group> groups, List<Data.Endpoint> endpoints) ConvertToEntities(ConfigYaml config)
+    public (List<Group> groups, List<Data.Endpoint> endpoints) ConvertToEntities(ConfigurationYaml config)
     {
         var groups = config.Groups.Select(g => new Group
         {

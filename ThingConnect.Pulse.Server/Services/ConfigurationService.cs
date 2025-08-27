@@ -8,17 +8,17 @@ namespace ThingConnect.Pulse.Server.Services;
 public interface IConfigurationService
 {
     Task<ApplyResultDto> ApplyConfigurationAsync(string yamlContent, string? actor = null, string? note = null);
-    Task<List<ConfigVersionDto>> GetVersionsAsync();
+    Task<List<ConfigurationVersionDto>> GetVersionsAsync();
     Task<string?> GetVersionContentAsync(string versionId);
 }
 
 public sealed class ConfigurationService : IConfigurationService
 {
     private readonly PulseDbContext _context;
-    private readonly ConfigParser _parser;
+    private readonly ConfigurationParser _parser;
     private readonly IPathService _pathService;
 
-    public ConfigurationService(PulseDbContext context, ConfigParser parser, IPathService pathService)
+    public ConfigurationService(PulseDbContext context, ConfigurationParser parser, IPathService pathService)
     {
         _context = context;
         _parser = parser;
@@ -27,7 +27,7 @@ public sealed class ConfigurationService : IConfigurationService
 
     public async Task<ApplyResultDto> ApplyConfigurationAsync(string yamlContent, string? actor = null, string? note = null)
     {
-        (ConfigYaml? config, ValidationErrorsDto? validationErrors) = _parser.ParseAndValidate(yamlContent);
+        (ConfigurationYaml? config, ValidationErrorsDto? validationErrors) = _parser.ParseAndValidate(yamlContent);
         if (validationErrors != null)
         {
             throw new InvalidOperationException($"Validation failed: {validationErrors.Message}");
@@ -98,10 +98,10 @@ public sealed class ConfigurationService : IConfigurationService
         }
     }
 
-    public async Task<List<ConfigVersionDto>> GetVersionsAsync()
+    public async Task<List<ConfigurationVersionDto>> GetVersionsAsync()
     {
-        List<ConfigVersionDto> versions = await _context.ConfigVersions
-            .Select(cv => new ConfigVersionDto
+        List<ConfigurationVersionDto> versions = await _context.ConfigVersions
+            .Select(cv => new ConfigurationVersionDto
             {
                 Id = cv.Id,
                 AppliedTs = cv.AppliedTs,

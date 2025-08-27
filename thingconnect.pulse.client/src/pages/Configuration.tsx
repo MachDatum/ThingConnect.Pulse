@@ -2,20 +2,20 @@ import { useState } from 'react';
 import { Box, Heading, Text, VStack, HStack } from '@chakra-ui/react';
 import { TabsRoot, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Wrench } from 'lucide-react';
-import { ConfigEditor } from '@/components/config/ConfigEditor';
-import { ConfigVersions } from '@/components/config/ConfigVersions';
-import type { ConfigApplyResponse } from '@/api/types';
+import { ConfigurationEditor } from '@/components/config/ConfigurationEditor';
+import { ConfigurationVersions } from '@/components/config/ConfigurationVersions';
+import type { ConfigurationApplyResponse } from '@/api/types';
 
-export default function Config() {
+export default function Configuration() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const handleConfigApplied = (response: ConfigApplyResponse) => {
+  const handleConfigurationApplied = (response: ConfigurationApplyResponse) => {
     // Trigger refresh of versions list when config is applied
     setRefreshTrigger(prev => prev + 1);
   };
 
   return (
-    <VStack gap={6} align='stretch' data-testid='config-page'>
+    <VStack gap={6} align='stretch' data-testid='configuration-page'>
       <Box>
         <HStack gap={3} align='center'>
           <Wrench size={24} />
@@ -41,11 +41,11 @@ export default function Config() {
         </TabsList>
         
         <TabsContent value='editor' py={6}>
-          <ConfigEditor onConfigApplied={handleConfigApplied} />
+          <ConfigurationEditor onConfigurationApplied={handleConfigurationApplied} />
         </TabsContent>
         
         <TabsContent value='versions' py={6}>
-          <ConfigVersions refreshTrigger={refreshTrigger} />
+          <ConfigurationVersions refreshTrigger={refreshTrigger} />
         </TabsContent>
       </TabsRoot>
 

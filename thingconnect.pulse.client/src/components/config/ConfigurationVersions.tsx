@@ -11,15 +11,15 @@ import {
 } from '@chakra-ui/react';
 import { Alert } from '@/components/ui/alert';
 import { History, Download, FileText, Clock } from 'lucide-react';
-import { configService } from '@/api/services/config.service';
-import type { ConfigVersion } from '@/api/types';
+import { configurationService } from '@/api/services/configuration.service';
+import type { ConfigurationVersion } from '@/api/types';
 
-interface ConfigVersionsProps {
+interface ConfigurationVersionsProps {
   refreshTrigger?: number;
 }
 
-export function ConfigVersions({ refreshTrigger }: ConfigVersionsProps) {
-  const [versions, setVersions] = useState<ConfigVersion[]>([]);
+export function ConfigurationVersions({ refreshTrigger }: ConfigurationVersionsProps) {
+  const [versions, setVersions] = useState<ConfigurationVersion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
@@ -28,7 +28,7 @@ export function ConfigVersions({ refreshTrigger }: ConfigVersionsProps) {
     try {
       setIsLoading(true);
       setError(null);
-      const data = await configService.getVersions();
+      const data = await configurationService.getVersions();
       // Sort by applied timestamp descending (most recent first)
       const sortedVersions = data.sort((a, b) => 
         new Date(b.applied_ts).getTime() - new Date(a.applied_ts).getTime()
@@ -41,10 +41,10 @@ export function ConfigVersions({ refreshTrigger }: ConfigVersionsProps) {
     }
   };
 
-  const handleDownload = async (version: ConfigVersion) => {
+  const handleDownload = async (version: ConfigurationVersion) => {
     try {
       setDownloadingId(version.id);
-      await configService.downloadVersion(version.id);
+      await configurationService.downloadVersion(version.id);
     } catch (err) {
       setError((err as Error).message);
     } finally {

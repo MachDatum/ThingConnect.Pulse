@@ -11,21 +11,21 @@ import {
 } from '@chakra-ui/react';
 import { Alert } from '@/components/ui/alert';
 import { FileText, Upload, Check, AlertCircle, Download } from 'lucide-react';
-import { configService } from '@/api/services/config.service';
-import type { ConfigApplyResponse } from '@/api/types';
+import { configurationService } from '@/api/services/configuration.service';
+import type { ConfigurationApplyResponse } from '@/api/types';
 
-interface ConfigEditorProps {
-  onConfigApplied?: (response: ConfigApplyResponse) => void;
+interface ConfigurationEditorProps {
+  onConfigurationApplied?: (response: ConfigurationApplyResponse) => void;
 }
 
-export function ConfigEditor({ onConfigApplied }: ConfigEditorProps) {
+export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEditorProps) {
   const [yamlContent, setYamlContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [validationResult, setValidationResult] = useState<{
     isValid: boolean;
     errors?: string[];
   } | null>(null);
-  const [applyResult, setApplyResult] = useState<ConfigApplyResponse | null>(null);
+  const [applyResult, setApplyResult] = useState<ConfigurationApplyResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -56,7 +56,7 @@ export function ConfigEditor({ onConfigApplied }: ConfigEditorProps) {
     setError(null);
     
     try {
-      const result = await configService.validateConfig(yamlContent);
+      const result = await configurationService.validateConfiguration(yamlContent);
       setValidationResult(result);
     } catch (err) {
       setError((err as Error).message);
@@ -76,9 +76,9 @@ export function ConfigEditor({ onConfigApplied }: ConfigEditorProps) {
     setError(null);
     
     try {
-      const response = await configService.applyConfig(yamlContent);
+      const response = await configurationService.applyConfiguration(yamlContent);
       setApplyResult(response);
-      onConfigApplied?.(response);
+      onConfigurationApplied?.(response);
     } catch (err) {
       setError((err as Error).message);
       setApplyResult(null);

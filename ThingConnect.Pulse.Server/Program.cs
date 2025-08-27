@@ -54,7 +54,7 @@ public class Program
             builder.Services.AddSingleton<IPathService, PathService>();
 
             // Add configuration services
-            builder.Services.AddSingleton<ConfigParser>();
+            builder.Services.AddSingleton<ConfigurationParser>();
             builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
             builder.Services.AddScoped<ISettingsService, SettingsService>();
 

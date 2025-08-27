@@ -133,7 +133,7 @@ export interface ExportParams {
 }
 
 // Configuration Management Types
-export interface ConfigVersion {
+export interface ConfigurationVersion {
   id: string;
   applied_ts: string;
   file_hash: string;
@@ -142,21 +142,21 @@ export interface ConfigVersion {
   note?: string | null;
 }
 
-export interface ConfigApplyRequest {
+export interface ConfigurationApplyRequest {
   yamlContent: string;
   dryRun?: boolean;
 }
 
-export interface ConfigDiff {
+export interface ConfigurationDiff {
   type: 'add' | 'update' | 'remove';
   entity: 'endpoint' | 'group' | 'setting';
   name: string;
   details?: Record<string, unknown>;
 }
 
-export interface ConfigApplyResponse {
+export interface ConfigurationApplyResponse {
   config_version_id: string;
-  changes: ConfigDiff[];
+  changes: ConfigurationDiff[];
   validation_errors?: string[];
   applied_ts: string;
   file_hash: string;

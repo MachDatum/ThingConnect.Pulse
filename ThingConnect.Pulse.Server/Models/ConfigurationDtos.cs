@@ -1,6 +1,6 @@
 namespace ThingConnect.Pulse.Server.Models;
 
-public sealed class ConfigVersionDto
+public sealed class ConfigurationVersionDto
 {
     public string Id { get; set; } = default!;
     public DateTimeOffset AppliedTs { get; set; }
@@ -32,7 +32,7 @@ public sealed class ValidationError
     public object? Value { get; set; }
 }
 
-public sealed class ConfigYaml
+public sealed class ConfigurationYaml
 {
     public int Version { get; set; } = 1;
     public DefaultsSection Defaults { get; set; } = default!;

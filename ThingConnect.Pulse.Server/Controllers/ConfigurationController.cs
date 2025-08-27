@@ -6,13 +6,13 @@ namespace ThingConnect.Pulse.Server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public sealed class ConfigController : ControllerBase
+public sealed class ConfigurationController : ControllerBase
 {
-    private readonly IConfigurationService _configService;
+    private readonly IConfigurationService _configurationService;
 
-    public ConfigController(IConfigurationService configService)
+    public ConfigurationController(IConfigurationService configurationService)
     {
-        _configService = configService;
+        _configurationService = configurationService;
     }
 
     /// <summary>
@@ -40,7 +40,7 @@ public sealed class ConfigController : ControllerBase
                 });
             }
 
-            ApplyResultDto result = await _configService.ApplyConfigurationAsync(
+            ApplyResultDto result = await _configurationService.ApplyConfigurationAsync(
                 yamlContent,
                 Request.Headers["X-Actor"].FirstOrDefault(),
                 Request.Headers["X-Note"].FirstOrDefault());
@@ -76,11 +76,11 @@ public sealed class ConfigController : ControllerBase
     /// </summary>
     /// <returns>List of configuration versions ordered by applied timestamp descending</returns>
     [HttpGet("versions")]
-    public async Task<ActionResult<List<ConfigVersionDto>>> GetVersionsAsync()
+    public async Task<ActionResult<List<ConfigurationVersionDto>>> GetVersionsAsync()
     {
         try
         {
-            List<ConfigVersionDto> versions = await _configService.GetVersionsAsync();
+            List<ConfigurationVersionDto> versions = await _configurationService.GetVersionsAsync();
             return Ok(versions);
         }
         catch (Exception ex)
@@ -99,7 +99,7 @@ public sealed class ConfigController : ControllerBase
     {
         try
         {
-            string? content = await _configService.GetVersionContentAsync(id);
+            string? content = await _configurationService.GetVersionContentAsync(id);
             if (content == null)
             {
                 return NotFound(new { message = "Configuration version not found" });
