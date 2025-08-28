@@ -38,4 +38,9 @@ public interface IOutageDetectionService
     /// Handles graceful shutdown by closing monitoring session and marking open outages.
     /// </summary>
     Task HandleGracefulShutdownAsync(string? shutdownReason = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Batch save multiple check results in a single transaction for better performance.
+    /// </summary>
+    Task SaveCheckResultsBatchAsync(IEnumerable<CheckResult> results, CancellationToken cancellationToken = default);
 }

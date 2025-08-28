@@ -25,7 +25,7 @@ public sealed class ConfigurationController : ControllerBase
     {
         try
         {
-            using var reader = new StreamReader(Request.Body);
+            using StreamReader reader = new StreamReader(Request.Body);
             string yamlContent = await reader.ReadToEndAsync();
 
             if (string.IsNullOrWhiteSpace(yamlContent))

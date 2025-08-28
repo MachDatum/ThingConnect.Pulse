@@ -11,7 +11,7 @@ using ThingConnect.Pulse.Server.Data;
 namespace ThingConnect.Pulse.Server.Migrations
 {
     [DbContext(typeof(PulseDbContext))]
-    [Migration("20250823180826_InitialCreate")]
+    [Migration("20250827171003_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -39,8 +39,8 @@ namespace ThingConnect.Pulse.Server.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("Ts")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("Ts")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
@@ -58,8 +58,8 @@ namespace ThingConnect.Pulse.Server.Migrations
                     b.Property<string>("Actor")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("AppliedTs")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("AppliedTs")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("FileHash")
                         .IsRequired()
@@ -112,8 +112,8 @@ namespace ThingConnect.Pulse.Server.Migrations
                     b.Property<int>("IntervalSeconds")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTimeOffset?>("LastChangeTs")
-                        .HasColumnType("TEXT");
+                    b.Property<long?>("LastChangeTs")
+                        .HasColumnType("INTEGER");
 
                     b.Property<double?>("LastRttMs")
                         .HasColumnType("REAL");
@@ -177,6 +177,35 @@ namespace ThingConnect.Pulse.Server.Migrations
                     b.ToTable("group", (string)null);
                 });
 
+            modelBuilder.Entity("ThingConnect.Pulse.Server.Data.MonitoringSession", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("EndedTs")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ShutdownReason")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("StartedTs")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Version")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EndedTs");
+
+                    b.HasIndex("StartedTs");
+
+                    b.ToTable("monitoring_session", (string)null);
+                });
+
             modelBuilder.Entity("ThingConnect.Pulse.Server.Data.Outage", b =>
                 {
                     b.Property<long>("Id")
@@ -186,17 +215,23 @@ namespace ThingConnect.Pulse.Server.Migrations
                     b.Property<int?>("DurationSeconds")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTimeOffset?>("EndedTs")
-                        .HasColumnType("TEXT");
+                    b.Property<long?>("EndedTs")
+                        .HasColumnType("INTEGER");
 
                     b.Property<Guid>("EndpointId")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("HasMonitoringGap")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("LastError")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("StartedTs")
-                        .HasColumnType("TEXT");
+                    b.Property<long?>("MonitoringStoppedTs")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("StartedTs")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
@@ -212,8 +247,8 @@ namespace ThingConnect.Pulse.Server.Migrations
                     b.Property<Guid>("EndpointId")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("BucketTs")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("BucketTs")
+                        .HasColumnType("INTEGER");
 
                     b.Property<double?>("AvgRttMs")
                         .HasColumnType("double precision");
@@ -236,8 +271,8 @@ namespace ThingConnect.Pulse.Server.Migrations
                     b.Property<Guid>("EndpointId")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("BucketDate")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("BucketDate")
+                        .HasColumnType("INTEGER");
 
                     b.Property<double?>("AvgRttMs")
                         .HasColumnType("double precision");

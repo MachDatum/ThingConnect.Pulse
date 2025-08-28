@@ -36,8 +36,8 @@ namespace ThingConnect.Pulse.Server.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("Ts")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("Ts")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
@@ -55,8 +55,8 @@ namespace ThingConnect.Pulse.Server.Migrations
                     b.Property<string>("Actor")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("AppliedTs")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("AppliedTs")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("FileHash")
                         .IsRequired()
@@ -109,8 +109,8 @@ namespace ThingConnect.Pulse.Server.Migrations
                     b.Property<int>("IntervalSeconds")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTimeOffset?>("LastChangeTs")
-                        .HasColumnType("TEXT");
+                    b.Property<long?>("LastChangeTs")
+                        .HasColumnType("INTEGER");
 
                     b.Property<double?>("LastRttMs")
                         .HasColumnType("REAL");
@@ -180,15 +180,15 @@ namespace ThingConnect.Pulse.Server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTimeOffset?>("EndedTs")
-                        .HasColumnType("TEXT");
+                    b.Property<long?>("EndedTs")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("ShutdownReason")
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("StartedTs")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("StartedTs")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Version")
                         .HasMaxLength(50)
@@ -212,8 +212,8 @@ namespace ThingConnect.Pulse.Server.Migrations
                     b.Property<int?>("DurationSeconds")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTimeOffset?>("EndedTs")
-                        .HasColumnType("TEXT");
+                    b.Property<long?>("EndedTs")
+                        .HasColumnType("INTEGER");
 
                     b.Property<Guid>("EndpointId")
                         .HasColumnType("TEXT");
@@ -224,11 +224,11 @@ namespace ThingConnect.Pulse.Server.Migrations
                     b.Property<string>("LastError")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset?>("MonitoringStoppedTs")
-                        .HasColumnType("TEXT");
+                    b.Property<long?>("MonitoringStoppedTs")
+                        .HasColumnType("INTEGER");
 
-                    b.Property<DateTimeOffset>("StartedTs")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("StartedTs")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
@@ -244,8 +244,8 @@ namespace ThingConnect.Pulse.Server.Migrations
                     b.Property<Guid>("EndpointId")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("BucketTs")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("BucketTs")
+                        .HasColumnType("INTEGER");
 
                     b.Property<double?>("AvgRttMs")
                         .HasColumnType("double precision");
@@ -268,8 +268,8 @@ namespace ThingConnect.Pulse.Server.Migrations
                     b.Property<Guid>("EndpointId")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("BucketDate")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("BucketDate")
+                        .HasColumnType("INTEGER");
 
                     b.Property<double?>("AvgRttMs")
                         .HasColumnType("double precision");

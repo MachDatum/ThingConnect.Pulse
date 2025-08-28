@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Microsoft.EntityFrameworkCore;
 using ThingConnect.Pulse.Server.Data;
+using ThingConnect.Pulse.Server.Helpers;
 using ThingConnect.Pulse.Server.Models;
 
 namespace ThingConnect.Pulse.Server.Services.Monitoring;
@@ -39,7 +40,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
         // Check for DOWN transition
         if (state.ShouldTransitionToDown())
         {
-            await TransitionToDownAsync(result.EndpointId, state, result.Timestamp, result.Error, cancellationToken);
+            await TransitionToDownAsync(result.EndpointId, state, UnixTimestamp.ToUnixSeconds(result.Timestamp), result.Error, cancellationToken);
             stateChanged = true;
             _logger.LogWarning("Endpoint {EndpointId} transitioned to DOWN after {FailStreak} consecutive failures",
                 result.EndpointId, state.FailStreak);
@@ -47,7 +48,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
         // Check for UP transition
         else if (state.ShouldTransitionToUp())
         {
-            await TransitionToUpAsync(result.EndpointId, state, result.Timestamp, cancellationToken);
+            await TransitionToUpAsync(result.EndpointId, state, UnixTimestamp.ToUnixSeconds(result.Timestamp), cancellationToken);
             stateChanged = true;
             _logger.LogInformation("Endpoint {EndpointId} transitioned to UP after {SuccessStreak} consecutive successes",
                 result.EndpointId, state.SuccessStreak);
@@ -84,21 +85,21 @@ public sealed class OutageDetectionService : IOutageDetectionService
     {
         try
         {
-            DateTimeOffset now = DateTimeOffset.UtcNow;
+            long now = UnixTimestamp.Now();
             
             // Check for monitoring gap (when was the last monitoring session)
             var lastSession = await _context.MonitoringSessions
                 .OrderByDescending(s => s.StartedTs)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            DateTimeOffset? lastMonitoringTime = lastSession?.EndedTs ?? lastSession?.StartedTs;
+            long? lastMonitoringTime = lastSession?.EndedTs ?? lastSession?.StartedTs;
             bool hasMonitoringGap = lastMonitoringTime.HasValue && 
-                                   (now - lastMonitoringTime.Value).TotalMinutes > 5;
+                                   (now - lastMonitoringTime.Value) > 300; // 5 minutes in seconds
 
             if (hasMonitoringGap)
             {
                 _logger.LogWarning("Detected monitoring gap since {LastMonitoringTime}. " +
-                    "Handling open outages with uncertainty.", lastMonitoringTime);
+                    "Handling open outages with uncertainty.", UnixTimestamp.FromUnixSeconds(lastMonitoringTime!.Value));
                 
                 await HandleMonitoringGapAsync(lastMonitoringTime.Value, now, cancellationToken);
             }
@@ -149,8 +150,8 @@ public sealed class OutageDetectionService : IOutageDetectionService
         }
     }
 
-    private async Task HandleMonitoringGapAsync(DateTimeOffset lastMonitoringTime, 
-        DateTimeOffset now, CancellationToken cancellationToken)
+    private async Task HandleMonitoringGapAsync(long lastMonitoringTime, 
+        long now, CancellationToken cancellationToken)
     {
         // Handle open outages that span the monitoring gap
         var openOutages = await _context.Outages
@@ -161,7 +162,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
         {
             // Mark outage as having monitoring gap and close it at last known monitoring time
             outage.EndedTs = lastMonitoringTime;
-            outage.DurationSeconds = (int)(lastMonitoringTime - outage.StartedTs).TotalSeconds;
+            outage.DurationSeconds = (int)(lastMonitoringTime - outage.StartedTs);
             outage.MonitoringStoppedTs = lastMonitoringTime;
             outage.HasMonitoringGap = true;
             outage.LastError = "Monitoring gap detected - actual end time unknown";
@@ -191,7 +192,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
     {
         try
         {
-            DateTimeOffset now = DateTimeOffset.UtcNow;
+            long now = UnixTimestamp.Now();
 
             // Close current monitoring session
             var currentSession = await _context.MonitoringSessions
@@ -227,7 +228,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
         }
     }
 
-    private async Task TransitionToDownAsync(Guid endpointId, MonitorState state, DateTimeOffset timestamp,
+    private async Task TransitionToDownAsync(Guid endpointId, MonitorState state, long timestamp,
         string? error, CancellationToken cancellationToken)
     {
         // Create new outage record
@@ -250,7 +251,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
         _logger.LogWarning("Created outage {OutageId} for endpoint {EndpointId}", outage.Id, endpointId);
     }
 
-    private async Task TransitionToUpAsync(Guid endpointId, MonitorState state, DateTimeOffset timestamp,
+    private async Task TransitionToUpAsync(Guid endpointId, MonitorState state, long timestamp,
         CancellationToken cancellationToken)
     {
         // Close existing outage if any
@@ -260,7 +261,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
             if (outage != null)
             {
                 outage.EndedTs = timestamp;
-                outage.DurationSeconds = (int)(timestamp - outage.StartedTs).TotalSeconds;
+                outage.DurationSeconds = (int)(timestamp - outage.StartedTs);
                 _logger.LogInformation("Closed outage {OutageId} for endpoint {EndpointId}, duration: {DurationSeconds}s",
                     outage.Id, endpointId, outage.DurationSeconds);
             }
@@ -275,7 +276,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    private async Task UpdateEndpointStatusAsync(Guid endpointId, UpDown status, DateTimeOffset timestamp,
+    private async Task UpdateEndpointStatusAsync(Guid endpointId, UpDown status, long timestamp,
         CancellationToken cancellationToken)
     {
         Data.Endpoint? endpoint = await _context.Endpoints.FindAsync([endpointId], cancellationToken);
@@ -291,7 +292,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
         CheckResultRaw rawResult = new CheckResultRaw
         {
             EndpointId = result.EndpointId,
-            Ts = result.Timestamp,
+            Ts = UnixTimestamp.ToUnixSeconds(result.Timestamp),
             Status = result.Status,
             RttMs = result.RttMs,
             Error = result.Error
@@ -299,5 +300,28 @@ public sealed class OutageDetectionService : IOutageDetectionService
 
         _context.CheckResultsRaw.Add(rawResult);
         await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Batch save multiple check results in a single transaction for better performance
+    /// </summary>
+    public async Task SaveCheckResultsBatchAsync(IEnumerable<CheckResult> results, CancellationToken cancellationToken = default)
+    {
+        var rawResults = results.Select(result => new CheckResultRaw
+        {
+            EndpointId = result.EndpointId,
+            Ts = UnixTimestamp.ToUnixSeconds(result.Timestamp),
+            Status = result.Status,
+            RttMs = result.RttMs,
+            Error = result.Error
+        }).ToList();
+
+        if (rawResults.Count > 0)
+        {
+            _context.CheckResultsRaw.AddRange(rawResults);
+            await _context.SaveChangesAsync(cancellationToken);
+            
+            _logger.LogDebug("Batch saved {Count} check results", rawResults.Count);
+        }
     }
 }

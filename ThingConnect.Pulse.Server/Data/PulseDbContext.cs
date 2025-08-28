@@ -21,7 +21,6 @@ public sealed class PulseDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder b)
     {
         bool isSqlite = Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true;
-        var dateOnlyToString = new ValueConverter<DateOnly, string>(d => d.ToString("yyyy-MM-dd"), s => DateOnly.Parse(s));
 
         b.Entity<Group>(e =>
         {
@@ -54,12 +53,6 @@ public sealed class PulseDbContext : DbContext
             e.Property(x => x.Status).HasConversion<string>().IsRequired();
             e.Property(x => x.RttMs).HasColumnType("double precision");
             e.HasIndex(x => new { x.EndpointId, x.Ts });
-            if (!isSqlite)
-            {
-                e.HasIndex(x => new { x.EndpointId, x.Ts })
-                 .HasDatabaseName("ix_raw_down_only")
-                 .HasFilter("status = 'down'");
-            }
         });
 
         b.Entity<Outage>(e =>
@@ -82,11 +75,6 @@ public sealed class PulseDbContext : DbContext
         {
             e.ToTable("rollup_daily");
             e.HasKey(x => new { x.EndpointId, x.BucketDate });
-            if (isSqlite)
-            {
-                e.Property(x => x.BucketDate).HasConversion(dateOnlyToString);
-            }
-
             e.HasIndex(x => x.BucketDate);
             e.Property(x => x.AvgRttMs).HasColumnType("double precision");
         });

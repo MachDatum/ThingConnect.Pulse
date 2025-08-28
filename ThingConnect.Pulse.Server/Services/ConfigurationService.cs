@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using ThingConnect.Pulse.Server.Data;
+using ThingConnect.Pulse.Server.Helpers;
 using ThingConnect.Pulse.Server.Models;
 
 namespace ThingConnect.Pulse.Server.Services;
@@ -28,13 +29,13 @@ public sealed class ConfigurationService : IConfigurationService
 
     public async Task<ApplyResultDto> ApplyConfigurationAsync(string yamlContent, string? actor = null, string? note = null)
     {
-        (ConfigurationYaml? config, ValidationErrorsDto? validationErrors) = await _parser.ParseAndValidateAsync(yamlContent);
+        (ConfigurationYaml? configuration, ValidationErrorsDto? validationErrors) = await _parser.ParseAndValidateAsync(yamlContent);
         if (validationErrors != null)
         {
             throw new InvalidOperationException($"Validation failed: {validationErrors.Message}");
         }
 
-        if (config == null)
+        if (configuration == null)
         {
             throw new InvalidOperationException("Configuration parsing returned null");
         }
@@ -55,7 +56,7 @@ public sealed class ConfigurationService : IConfigurationService
             };
         }
 
-        (List<Group> groups, List<Data.Endpoint> endpoints) = _parser.ConvertToEntities(config!);
+        (List<Group> groups, List<Data.Endpoint> endpoints) = _parser.ConvertToEntities(configuration!);
 
         using Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -63,8 +64,9 @@ public sealed class ConfigurationService : IConfigurationService
             (int Added, int Updated, int Removed) changes = await ApplyChangesToDatabaseAsync(groups, endpoints);
 
             string versionId = GenerateVersionId();
-            DateTimeOffset timestamp = DateTimeOffset.UtcNow;
-            string fileName = $"{timestamp:yyyyMMdd_HHmmss}_{fileHash[..8]}.yaml";
+            long timestamp = UnixTimestamp.Now();
+            DateTimeOffset displayTime = UnixTimestamp.FromUnixSeconds(timestamp);
+            string fileName = $"{displayTime:yyyyMMdd_HHmmss}_{fileHash[..8]}.yaml";
             string filePath = Path.Combine(_pathService.GetVersionsDirectory(), fileName);
 
             await File.WriteAllTextAsync(filePath, yamlContent);
@@ -105,7 +107,7 @@ public sealed class ConfigurationService : IConfigurationService
             .Select(cv => new ConfigurationVersionDto
             {
                 Id = cv.Id,
-                AppliedTs = cv.AppliedTs,
+                AppliedTs = UnixTimestamp.FromUnixSeconds(cv.AppliedTs),
                 FileHash = cv.FileHash,
                 FilePath = cv.FilePath,
                 Actor = cv.Actor,
@@ -236,7 +238,7 @@ public sealed class ConfigurationService : IConfigurationService
 
     private static string GenerateVersionId()
     {
-        return DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss") + "-" +
+        return UnixTimestamp.FromUnixSeconds(UnixTimestamp.Now()).ToString("yyyyMMddHHmmss") + "-" +
                Guid.NewGuid().ToString("N")[..8];
     }
 }

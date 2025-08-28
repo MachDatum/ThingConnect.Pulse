@@ -1,4 +1,5 @@
 using ThingConnect.Pulse.Server.Data;
+using ThingConnect.Pulse.Server.Helpers;
 
 namespace ThingConnect.Pulse.Server.Services.Monitoring;
 
@@ -26,7 +27,7 @@ public sealed class MonitorState
     /// <summary>
     /// Timestamp of the last status change (UP→DOWN or DOWN→UP).
     /// </summary>
-    public DateTimeOffset? LastChangeTs { get; set; }
+    public long? LastChangeTs { get; set; }
 
     /// <summary>
     /// ID of the currently open outage record. Null if endpoint is UP.
@@ -84,7 +85,7 @@ public sealed class MonitorState
     /// <summary>
     /// Transitions the state to DOWN and records the change timestamp.
     /// </summary>
-    public void TransitionToDown(DateTimeOffset timestamp, long outageId)
+    public void TransitionToDown(long timestamp, long outageId)
     {
         LastPublicStatus = UpDown.down;
         LastChangeTs = timestamp;
@@ -94,7 +95,7 @@ public sealed class MonitorState
     /// <summary>
     /// Transitions the state to UP and records the change timestamp.
     /// </summary>
-    public void TransitionToUp(DateTimeOffset timestamp)
+    public void TransitionToUp(long timestamp)
     {
         LastPublicStatus = UpDown.up;
         LastChangeTs = timestamp;

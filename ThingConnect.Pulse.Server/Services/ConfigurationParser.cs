@@ -46,7 +46,7 @@ public sealed class ConfigurationParser
         return new ConfigurationParser(schema, logger);
     }
 
-    public Task<(ConfigurationYaml? config, ValidationErrorsDto? errors)> ParseAndValidateAsync(string yamlContent)
+    public Task<(ConfigurationYaml? Configuration, ValidationErrorsDto? Errors)> ParseAndValidateAsync(string yamlContent)
     {
         try
         {
@@ -128,11 +128,11 @@ public sealed class ConfigurationParser
                     }
                 }
             };
-            return Task.FromResult<(ConfigurationYaml? config, ValidationErrorsDto? errors)>((null, errors));
+            return Task.FromResult<(ConfigurationYaml? Configuration, ValidationErrorsDto? Errors)>((null, errors));
         }
     }
 
-    public (List<Group> groups, List<Data.Endpoint> endpoints) ConvertToEntities(ConfigurationYaml config)
+    public (List<Group> Groups, List<Data.Endpoint> Endpoints) ConvertToEntities(ConfigurationYaml config)
     {
         var groups = config.Groups.Select(g => new Group
         {

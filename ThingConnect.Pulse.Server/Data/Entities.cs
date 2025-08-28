@@ -36,7 +36,7 @@ public sealed class Endpoint
     public int? ExpectedRttMs { get; set; }
     public bool Enabled { get; set; } = true;
     public string? Notes { get; set; }
-    public DateTimeOffset? LastChangeTs { get; set; }
+    public long? LastChangeTs { get; set; }
     public UpDown? LastStatus { get; set; }
     public double? LastRttMs { get; set; }
 }
@@ -46,7 +46,7 @@ public sealed class CheckResultRaw
     public long Id { get; set; }
     public Guid EndpointId { get; set; }
     public Endpoint Endpoint { get; set; } = default!;
-    public DateTimeOffset Ts { get; set; }
+    public long Ts { get; set; }
     public UpDown Status { get; set; }
     public double? RttMs { get; set; }
     public string? Error { get; set; }
@@ -57,8 +57,8 @@ public sealed class Outage
     public long Id { get; set; }
     public Guid EndpointId { get; set; }
     public Endpoint Endpoint { get; set; } = default!;
-    public DateTimeOffset StartedTs { get; set; }
-    public DateTimeOffset? EndedTs { get; set; }
+    public long StartedTs { get; set; }
+    public long? EndedTs { get; set; }
     public int? DurationSeconds { get; set; }
     public string? LastError { get; set; }
     
@@ -66,7 +66,7 @@ public sealed class Outage
     /// Timestamp when monitoring was lost during this outage (service downtime).
     /// If not null, indicates outage duration may be inaccurate due to monitoring gap.
     /// </summary>
-    public DateTimeOffset? MonitoringStoppedTs { get; set; }
+    public long? MonitoringStoppedTs { get; set; }
     
     /// <summary>
     /// True if this outage spans a period when monitoring service was unavailable.
@@ -79,7 +79,7 @@ public sealed class Rollup15m
 {
     public Guid EndpointId { get; set; }
     public Endpoint Endpoint { get; set; } = default!;
-    public DateTimeOffset BucketTs { get; set; }
+    public long BucketTs { get; set; }
     public double UpPct { get; set; }
     public double? AvgRttMs { get; set; }
     public int DownEvents { get; set; }
@@ -89,7 +89,7 @@ public sealed class RollupDaily
 {
     public Guid EndpointId { get; set; }
     public Endpoint Endpoint { get; set; } = default!;
-    public DateOnly BucketDate { get; set; }
+    public long BucketDate { get; set; }
     public double UpPct { get; set; }
     public double? AvgRttMs { get; set; }
     public int DownEvents { get; set; }
@@ -104,7 +104,7 @@ public sealed class Setting
 public sealed class ConfigVersion
 {
     public string Id { get; set; } = default!;
-    public DateTimeOffset AppliedTs { get; set; }
+    public long AppliedTs { get; set; }
     public string FileHash { get; set; } = default!;
     public string FilePath { get; set; } = default!;
     public string? Actor { get; set; }
@@ -117,8 +117,8 @@ public sealed class ConfigVersion
 public sealed class MonitoringSession
 {
     public long Id { get; set; }
-    public DateTimeOffset StartedTs { get; set; }
-    public DateTimeOffset? EndedTs { get; set; }
+    public long StartedTs { get; set; }
+    public long? EndedTs { get; set; }
     public string? ShutdownReason { get; set; }
     public string? Version { get; set; }
 }
