@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__chakra-ui__list_components",
+      "Bash(npm run storybook:*)",
+      "Bash(move preview.ts preview.tsx)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
