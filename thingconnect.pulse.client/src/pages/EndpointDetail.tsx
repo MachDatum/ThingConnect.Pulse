@@ -1,6 +1,5 @@
 import {
   Box,
-  Heading,
   Text,
   VStack,
   Badge,
@@ -12,9 +11,12 @@ import {
   Button,
   Stack,
 } from '@chakra-ui/react';
-import { Alert } from '@/components/ui/alert';
 import { useParams, Link as RouterLink, Navigate } from 'react-router-dom';
 import { TrendingUp, AlertCircle, ArrowLeft, Globe, Wifi, Activity, Server } from 'lucide-react';
+import { Page } from '@/components/layout/Page';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { PageContent } from '@/components/layout/PageContent';
+import { PageSection } from '@/components/layout/PageSection';
 import { useQuery } from '@tanstack/react-query';
 import { EndpointService } from '@/api/services/endpoint.service';
 import { formatDistanceToNow } from 'date-fns';
@@ -196,62 +198,26 @@ export default function EndpointDetail() {
     refetchInterval: 10000, // Refresh every 10 seconds
   });
 
-  if (isLoading) {
+  if (!endpointDetail && !isLoading && !error) {
     return (
-      <VStack gap={6} align='stretch'>
-        <HStack gap={3} align='center'>
-          <ArrowLeft size={20} />
-          <Text>Loading endpoint details...</Text>
-        </HStack>
-      </VStack>
+      <Page title="Endpoint Not Found">
+        <PageHeader
+          title="Endpoint Not Found"
+          description={`The endpoint with ID "${id}" was not found`}
+          actions={
+            <RouterLink to="/">
+              <Button variant="ghost" size="sm">
+                <ArrowLeft size={16} />
+                Back to Dashboard
+              </Button>
+            </RouterLink>
+          }
+        />
+      </Page>
     );
   }
 
-  if (error) {
-    return (
-      <VStack gap={6} align='stretch'>
-        <HStack gap={3} align='center'>
-          <RouterLink to='/'>
-            <Button variant='ghost' size='sm'>
-              <ArrowLeft size={16} />
-              Back to Dashboard
-            </Button>
-          </RouterLink>
-        </HStack>
-        <Alert status='error'>
-          <Box>
-            <Text fontWeight='semibold'>Failed to load endpoint details</Text>
-            <Text fontSize='sm' mt={1}>
-              {error instanceof Error ? error.message : 'Unknown error occurred'}
-            </Text>
-          </Box>
-        </Alert>
-      </VStack>
-    );
-  }
-
-  if (!endpointDetail) {
-    return (
-      <VStack gap={6} align='stretch'>
-        <HStack gap={3} align='center'>
-          <RouterLink to='/'>
-            <Button variant='ghost' size='sm'>
-              <ArrowLeft size={16} />
-              Back to Dashboard
-            </Button>
-          </RouterLink>
-        </HStack>
-        <Alert status='warning'>
-          <Box>
-            <Text fontWeight='semibold'>Endpoint not found</Text>
-            <Text fontSize='sm' mt={1}>
-              The endpoint with ID "{id}" was not found.
-            </Text>
-          </Box>
-        </Alert>
-      </VStack>
-    );
-  }
+  if (!endpointDetail) return null;
 
   const { endpoint, recent, outages } = endpointDetail;
 
@@ -270,20 +236,30 @@ export default function EndpointDetail() {
   const latestCheck = recent.length > 0 ? recent[0] : null;
   const currentStatus = latestCheck?.status || 'unknown';
 
-  return (
-    <VStack gap={6} align='stretch'>
-      {/* Header with back button */}
-      <HStack justify='space-between' align='center'>
-        <RouterLink to='/'>
-          <Button variant='ghost' size='sm'>
-            <ArrowLeft size={16} />
-            Back to Dashboard
-          </Button>
-        </RouterLink>
-      </HStack>
+  const backButton = (
+    <RouterLink to="/">
+      <Button variant="ghost" size="sm" h="32px">
+        <ArrowLeft size={16} />
+        Back to Dashboard
+      </Button>
+    </RouterLink>
+  );
 
-      {/* Endpoint overview */}
-      <Card.Root>
+  return (
+    <Page title={endpoint.name}>
+      <PageHeader
+        title={endpoint.name}
+        description={`${endpoint.type.toUpperCase()} endpoint monitoring`}
+        icon={getEndpointTypeIcon(endpoint.type)}
+        actions={backButton}
+      />
+      
+      <PageContent
+        loading={isLoading}
+        error={error as Error | null}
+      >
+        <PageSection>
+          <Card.Root>
         <Card.Body>
           <VStack gap={4} align='stretch'>
             <HStack justify='space-between' align='start'>
