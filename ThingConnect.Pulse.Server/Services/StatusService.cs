@@ -1,4 +1,7 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using ThingConnect.Pulse.Server.Data;
+using ThingConnect.Pulse.Server.Helpers;
 using ThingConnect.Pulse.Server.Models;
 
 namespace ThingConnect.Pulse.Server.Services;
@@ -12,11 +15,13 @@ public sealed class StatusService : IStatusService
 {
     private readonly PulseDbContext _context;
     private readonly ILogger<StatusService> _logger;
+    private readonly IMemoryCache _cache;
 
-    public StatusService(PulseDbContext context, ILogger<StatusService> logger)
+    public StatusService(PulseDbContext context, ILogger<StatusService> logger, IMemoryCache cache)
     {
         _context = context;
         _logger = logger;
+        _cache = cache;
     }
 
     public async Task<PagedLiveDto> GetLiveStatusAsync(string? group, string? search, int page, int pageSize)
@@ -28,6 +33,7 @@ public sealed class StatusService : IStatusService
         IQueryable<Data.Endpoint> query = _context.Endpoints
             .Include(e => e.Group)
             .Where(e => e.Enabled)
+            .AsNoTracking()
             .AsQueryable();
 
         // Apply group filter
@@ -60,20 +66,17 @@ public sealed class StatusService : IStatusService
         var items = new List<LiveStatusItemDto>();
         var endpointIds = endpoints.Select(e => e.Id).ToList();
 
-        // Get latest checks for all endpoints
-        // SQLite doesn't support DateTimeOffset in OrderBy, so we need to fetch and order in memory
-        List<CheckResultRaw> allChecks = await _context.CheckResultsRaw
+        // Get latest checks for all endpoints - optimized query using window functions in SQLite
+        var latestChecks = await _context.CheckResultsRaw
             .Where(c => endpointIds.Contains(c.EndpointId))
-            .ToListAsync();
-
-        var latestChecks = allChecks
+            .AsNoTracking()
             .GroupBy(c => c.EndpointId)
             .Select(g => new
             {
                 EndpointId = g.Key,
                 LatestCheck = g.OrderByDescending(c => c.Ts).FirstOrDefault()
             })
-            .ToList();
+            .ToListAsync();
 
         var latestCheckDict = latestChecks.ToDictionary(x => x.EndpointId, x => x.LatestCheck);
 
@@ -92,7 +95,7 @@ public sealed class StatusService : IStatusService
                 Endpoint = MapToEndpointDto(endpoint),
                 Status = status.ToString().ToLower(),
                 RttMs = endpoint.LastRttMs,
-                LastChangeTs = endpoint.LastChangeTs ?? DateTimeOffset.Now,
+                LastChangeTs = endpoint.LastChangeTs.HasValue ? UnixTimestamp.FromUnixSeconds(endpoint.LastChangeTs.Value) : DateTimeOffset.Now,
                 Sparkline = sparkline
             });
         }
@@ -109,6 +112,39 @@ public sealed class StatusService : IStatusService
         };
     }
 
+    /// <summary>
+    /// Gets all groups with caching for better performance
+    /// </summary>
+    public async Task<List<Data.Group>> GetGroupsCachedAsync()
+    {
+        const string cacheKey = "all_groups";
+        
+        if (_cache.TryGetValue(cacheKey, out List<Data.Group>? cachedGroups) && cachedGroups != null)
+        {
+            return cachedGroups;
+        }
+
+        var groups = await _context.Groups
+            .AsNoTracking()
+            .OrderBy(g => g.Name)
+            .ToListAsync();
+
+        // Cache for 5 minutes since groups don't change frequently
+        _cache.Set(cacheKey, groups, TimeSpan.FromMinutes(5));
+        
+        _logger.LogDebug("Cached {Count} groups", groups.Count);
+        return groups;
+    }
+
+    /// <summary>
+    /// Invalidates the groups cache - call when groups are modified
+    /// </summary>
+    public void InvalidateGroupsCache()
+    {
+        _cache.Remove("all_groups");
+        _logger.LogDebug("Invalidated groups cache");
+    }
+
     private async Task<Dictionary<Guid, List<SparklinePoint>>> GetSparklineDataAsync(List<Guid> endpointIds)
     {
         var sparklineData = new Dictionary<Guid, List<SparklinePoint>>();
@@ -118,18 +154,13 @@ public sealed class StatusService : IStatusService
             return sparklineData;
         }
 
-        // Get last 20 checks for each endpoint
-        // SQLite limitation: fetch all recent data and filter in memory
+        // Get last 20 checks for each endpoint - optimized with time filter in query
+        long cutoffTime = UnixTimestamp.Subtract(UnixTimestamp.Now(), TimeSpan.FromHours(2));
         var recentChecks = await _context.CheckResultsRaw
-            .Where(c => endpointIds.Contains(c.EndpointId))
+            .Where(c => endpointIds.Contains(c.EndpointId) && c.Ts >= cutoffTime)
+            .AsNoTracking()
             .Select(c => new { c.EndpointId, c.Ts, c.Status })
             .ToListAsync();
-
-        // Filter to last 2 hours in memory
-        DateTimeOffset cutoffTime = DateTimeOffset.Now.AddHours(-2);
-        recentChecks = recentChecks
-            .Where(c => c.Ts >= cutoffTime)
-            .ToList();
 
         recentChecks = recentChecks
             .OrderBy(c => c.EndpointId)
@@ -145,7 +176,7 @@ public sealed class StatusService : IStatusService
                 .OrderBy(c => c.Ts) // Order chronologically for display
                 .Select(c => new SparklinePoint
                 {
-                    Ts = c.Ts,
+                    Ts = UnixTimestamp.FromUnixSeconds(c.Ts),
                     S = c.Status == UpDown.up ? "u" : "d"
                 })
                 .ToList();
@@ -166,7 +197,7 @@ public sealed class StatusService : IStatusService
 
         // Check if the latest check is recent enough (within 2x interval)
         var expectedInterval = TimeSpan.FromSeconds(endpoint.IntervalSeconds * 2);
-        if (DateTimeOffset.Now - latestCheck.Ts > expectedInterval)
+        if (UnixTimestamp.Now() - latestCheck.Ts > (long)expectedInterval.TotalSeconds)
         {
             return StatusType.Down; // Stale data means down
         }
@@ -184,16 +215,12 @@ public sealed class StatusService : IStatusService
     private async Task<bool> IsFlapping(Guid endpointId)
     {
         // Simple flap detection: check if there were > 3 state changes in last 5 minutes
+        long cutoffTime = UnixTimestamp.Subtract(UnixTimestamp.Now(), TimeSpan.FromMinutes(5));
         var checks = await _context.CheckResultsRaw
-            .Where(c => c.EndpointId == endpointId)
+            .Where(c => c.EndpointId == endpointId && c.Ts >= cutoffTime)
+            .AsNoTracking()
             .Select(c => new { c.Ts, c.Status })
             .ToListAsync();
-
-        // Filter to last 5 minutes in memory
-        DateTimeOffset cutoffTime = DateTimeOffset.Now.AddMinutes(-5);
-        checks = checks
-            .Where(c => c.Ts >= cutoffTime)
-            .ToList();
 
         var recentChecks = checks
             .OrderBy(c => c.Ts)

@@ -10,7 +10,6 @@ public class LogRetentionOptions
 public sealed class LogCleanupBackgroundService : BackgroundService
 {
     private readonly ILogger<LogCleanupBackgroundService> _logger;
-    private readonly IConfiguration _configuration;
     private readonly string _logsDirectory;
     private readonly LogRetentionOptions _options;
 
@@ -19,7 +18,6 @@ public sealed class LogCleanupBackgroundService : BackgroundService
         IConfiguration configuration)
     {
         _logger = logger;
-        _configuration = configuration;
 
         // Default to ProgramData logs directory, fall back to local logs for development
         _logsDirectory = Path.Combine(

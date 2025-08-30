@@ -1,4 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using ThingConnect.Pulse.Server.Data;
+using ThingConnect.Pulse.Server.Helpers;
 
 namespace ThingConnect.Pulse.Server.Services.Prune;
 
@@ -28,11 +30,11 @@ public sealed class PruneService : IPruneService
     public async Task<int> PruneRawDataAsync(bool dryRun = false, CancellationToken cancellationToken = default)
     {
         int retentionDays = await GetRetentionDaysAsync(cancellationToken);
-        DateTimeOffset cutoffDate = DateTimeOffset.UtcNow.AddDays(-retentionDays);
+        long cutoffDate = UnixTimestamp.Subtract(UnixTimestamp.Now(), TimeSpan.FromDays(retentionDays));
 
         _logger.LogInformation(
             "Starting raw data prune (dryRun={DryRun}) with {RetentionDays}d retention. Cutoff: {CutoffDate}",
-            dryRun, retentionDays, cutoffDate);
+            dryRun, retentionDays, UnixTimestamp.FromUnixSeconds(cutoffDate));
 
         try
         {
@@ -48,61 +50,27 @@ public sealed class PruneService : IPruneService
 
                 _logger.LogInformation(
                     "DRY RUN: Would delete {Count} raw check results older than {CutoffDate} (out of {Total})",
-                    countToDelete, cutoffDate, allRecords.Count);
+                    countToDelete, UnixTimestamp.FromUnixSeconds(cutoffDate), allRecords.Count);
 
                 return countToDelete;
             }
             else
             {
-                // For actual deletion, load records in batches and delete client-side
-                int batchSize = 1000;
-                int totalDeleted = 0;
+                // Use EF Core 7+ ExecuteDeleteAsync for optimal bulk delete performance
+                int totalDeleted = await _db.CheckResultsRaw
+                    .Where(c => c.Ts < cutoffDate)
+                    .ExecuteDeleteAsync(cancellationToken);
 
-                while (true)
+                // Analyze database after large deletion to optimize query planner
+                if (totalDeleted > 10000)
                 {
-                    // Load a batch of records with their IDs to avoid EF tracking issues
-                    var batch = await _db.CheckResultsRaw
-                        .Select(c => new { c.Id, c.Ts })
-                        .Take(batchSize)
-                        .ToListAsync(cancellationToken);
-
-                    if (batch.Count == 0)
-                    {
-                        break;
-                    }
-
-                    // Filter client-side to find records older than cutoff
-                    var idsToDelete = batch
-                        .Where(r => r.Ts < cutoffDate)
-                        .Select(r => r.Id)
-                        .ToList();
-
-                    if (idsToDelete.Count == 0)
-                    {
-                        // If no records in this batch need deletion, we're done
-                        break;
-                    }
-
-                    // Delete the filtered records
-                    await _db.Database.ExecuteSqlRawAsync(
-                        "DELETE FROM check_result_raw WHERE Id IN ({0})",
-                        cancellationToken,
-                        string.Join(",", idsToDelete));
-
-                    totalDeleted += idsToDelete.Count;
-
-                    _logger.LogDebug("Deleted batch of {Count} raw check results", idsToDelete.Count);
-
-                    // Small delay between batches to avoid blocking other operations
-                    if (batch.Count == batchSize)
-                    {
-                        await Task.Delay(100, cancellationToken);
-                    }
+                    await _db.Database.ExecuteSqlRawAsync("ANALYZE check_result_raw", cancellationToken);
+                    _logger.LogInformation("Analyzed check_result_raw table after deleting {Count} records", totalDeleted);
                 }
 
                 _logger.LogInformation(
                     "Successfully deleted {TotalDeleted} raw check results older than {CutoffDate}",
-                    totalDeleted, cutoffDate);
+                    totalDeleted, UnixTimestamp.FromUnixSeconds(cutoffDate));
 
                 return totalDeleted;
             }

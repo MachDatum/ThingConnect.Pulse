@@ -1,4 +1,5 @@
 using System.Globalization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using ThingConnect.Pulse.Server.Data;
 
@@ -6,15 +7,15 @@ namespace ThingConnect.Pulse.Server.Services;
 
 public sealed class SettingsService : ISettingsService, IDisposable
 {
-    private readonly PulseDbContext _context;
-    private readonly IMemoryCache _cache;
-    private readonly SemaphoreSlim _semaphore;
-    private readonly TimeSpan _cacheExpiration = TimeSpan.FromMinutes(5);
-
     private const string LastRollup15mKey = "last_rollup_15m";
     private const string LastRollupDailyKey = "last_rollup_daily";
     private const string LastPruneKey = "last_prune";
     private const string VersionKey = "version";
+
+    private readonly PulseDbContext _context;
+    private readonly IMemoryCache _cache;
+    private readonly SemaphoreSlim _semaphore;
+    private readonly TimeSpan _cacheExpiration = TimeSpan.FromMinutes(5);
 
     public SettingsService(PulseDbContext context, IMemoryCache cache)
     {

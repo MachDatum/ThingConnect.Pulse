@@ -1,4 +1,7 @@
 // ThingConnect Pulse - EF Core DbContext (v1)
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+
 namespace ThingConnect.Pulse.Server.Data;
 
 public sealed class PulseDbContext : DbContext
@@ -11,13 +14,13 @@ public sealed class PulseDbContext : DbContext
     public DbSet<RollupDaily> RollupsDaily => Set<RollupDaily>();
     public DbSet<Setting> Settings => Set<Setting>();
     public DbSet<ConfigVersion> ConfigVersions => Set<ConfigVersion>();
+    public DbSet<MonitoringSession> MonitoringSessions => Set<MonitoringSession>();
 
     public PulseDbContext(DbContextOptions<PulseDbContext> options) : base(options) { }
 
     protected override void OnModelCreating(ModelBuilder b)
     {
         bool isSqlite = Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true;
-        var dateOnlyToString = new ValueConverter<DateOnly, string>(d => d.ToString("yyyy-MM-dd"), s => DateOnly.Parse(s));
 
         b.Entity<Group>(e =>
         {
@@ -50,12 +53,6 @@ public sealed class PulseDbContext : DbContext
             e.Property(x => x.Status).HasConversion<string>().IsRequired();
             e.Property(x => x.RttMs).HasColumnType("double precision");
             e.HasIndex(x => new { x.EndpointId, x.Ts });
-            if (!isSqlite)
-            {
-                e.HasIndex(x => new { x.EndpointId, x.Ts })
-                 .HasDatabaseName("ix_raw_down_only")
-                 .HasFilter("status = 'down'");
-            }
         });
 
         b.Entity<Outage>(e =>
@@ -78,11 +75,6 @@ public sealed class PulseDbContext : DbContext
         {
             e.ToTable("rollup_daily");
             e.HasKey(x => new { x.EndpointId, x.BucketDate });
-            if (isSqlite)
-            {
-                e.Property(x => x.BucketDate).HasConversion(dateOnlyToString);
-            }
-
             e.HasIndex(x => x.BucketDate);
             e.Property(x => x.AvgRttMs).HasColumnType("double precision");
         });
@@ -100,6 +92,16 @@ public sealed class PulseDbContext : DbContext
             e.HasKey(x => x.Id);
             e.Property(x => x.Id).HasMaxLength(40);
             e.HasIndex(x => x.AppliedTs);
+        });
+
+        b.Entity<MonitoringSession>(e =>
+        {
+            e.ToTable("monitoring_session");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.ShutdownReason).HasMaxLength(200);
+            e.Property(x => x.Version).HasMaxLength(50);
+            e.HasIndex(x => x.StartedTs);
+            e.HasIndex(x => x.EndedTs);
         });
     }
 }

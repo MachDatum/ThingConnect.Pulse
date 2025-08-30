@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using Serilog;
 using ThingConnect.Pulse.Server.Data;
 using ThingConnect.Pulse.Server.Infrastructure;
 using ThingConnect.Pulse.Server.Services;
@@ -44,6 +46,7 @@ public class Program
             builder.Services.AddDbContext<PulseDbContext>(options =>
                 options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+
             // Add memory cache for settings service
             builder.Services.AddMemoryCache();
 
@@ -54,7 +57,11 @@ public class Program
             builder.Services.AddSingleton<IPathService, PathService>();
 
             // Add configuration services
-            builder.Services.AddSingleton<ConfigParser>();
+            builder.Services.AddSingleton<ConfigurationParser>(serviceProvider =>
+            {
+                ILogger<ConfigurationParser> logger = serviceProvider.GetRequiredService<ILogger<ConfigurationParser>>();
+                return ConfigurationParser.CreateAsync(logger).GetAwaiter().GetResult();
+            });
             builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
             builder.Services.AddScoped<ISettingsService, SettingsService>();
 

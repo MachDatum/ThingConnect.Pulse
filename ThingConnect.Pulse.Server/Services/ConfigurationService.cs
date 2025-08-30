@@ -1,6 +1,8 @@
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
 using ThingConnect.Pulse.Server.Data;
+using ThingConnect.Pulse.Server.Helpers;
 using ThingConnect.Pulse.Server.Models;
 
 namespace ThingConnect.Pulse.Server.Services;
@@ -8,17 +10,17 @@ namespace ThingConnect.Pulse.Server.Services;
 public interface IConfigurationService
 {
     Task<ApplyResultDto> ApplyConfigurationAsync(string yamlContent, string? actor = null, string? note = null);
-    Task<List<ConfigVersionDto>> GetVersionsAsync();
+    Task<List<ConfigurationVersionDto>> GetVersionsAsync();
     Task<string?> GetVersionContentAsync(string versionId);
 }
 
 public sealed class ConfigurationService : IConfigurationService
 {
     private readonly PulseDbContext _context;
-    private readonly ConfigParser _parser;
+    private readonly ConfigurationParser _parser;
     private readonly IPathService _pathService;
 
-    public ConfigurationService(PulseDbContext context, ConfigParser parser, IPathService pathService)
+    public ConfigurationService(PulseDbContext context, ConfigurationParser parser, IPathService pathService)
     {
         _context = context;
         _parser = parser;
@@ -27,13 +29,13 @@ public sealed class ConfigurationService : IConfigurationService
 
     public async Task<ApplyResultDto> ApplyConfigurationAsync(string yamlContent, string? actor = null, string? note = null)
     {
-        (ConfigYaml? config, ValidationErrorsDto? validationErrors) = _parser.ParseAndValidate(yamlContent);
+        (ConfigurationYaml? configuration, ValidationErrorsDto? validationErrors) = await _parser.ParseAndValidateAsync(yamlContent);
         if (validationErrors != null)
         {
             throw new InvalidOperationException($"Validation failed: {validationErrors.Message}");
         }
 
-        if (config == null)
+        if (configuration == null)
         {
             throw new InvalidOperationException("Configuration parsing returned null");
         }
@@ -54,7 +56,7 @@ public sealed class ConfigurationService : IConfigurationService
             };
         }
 
-        (List<Group> groups, List<Data.Endpoint> endpoints) = _parser.ConvertToEntities(config!);
+        (List<Group> groups, List<Data.Endpoint> endpoints) = _parser.ConvertToEntities(configuration!);
 
         using Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -62,8 +64,9 @@ public sealed class ConfigurationService : IConfigurationService
             (int Added, int Updated, int Removed) changes = await ApplyChangesToDatabaseAsync(groups, endpoints);
 
             string versionId = GenerateVersionId();
-            DateTimeOffset timestamp = DateTimeOffset.UtcNow;
-            string fileName = $"{timestamp:yyyyMMdd_HHmmss}_{fileHash[..8]}.yaml";
+            long timestamp = UnixTimestamp.Now();
+            DateTimeOffset displayTime = UnixTimestamp.FromUnixSeconds(timestamp);
+            string fileName = $"{displayTime:yyyyMMdd_HHmmss}_{fileHash[..8]}.yaml";
             string filePath = Path.Combine(_pathService.GetVersionsDirectory(), fileName);
 
             await File.WriteAllTextAsync(filePath, yamlContent);
@@ -98,13 +101,13 @@ public sealed class ConfigurationService : IConfigurationService
         }
     }
 
-    public async Task<List<ConfigVersionDto>> GetVersionsAsync()
+    public async Task<List<ConfigurationVersionDto>> GetVersionsAsync()
     {
-        List<ConfigVersionDto> versions = await _context.ConfigVersions
-            .Select(cv => new ConfigVersionDto
+        List<ConfigurationVersionDto> versions = await _context.ConfigVersions
+            .Select(cv => new ConfigurationVersionDto
             {
                 Id = cv.Id,
-                AppliedTs = cv.AppliedTs,
+                AppliedTs = UnixTimestamp.FromUnixSeconds(cv.AppliedTs),
                 FileHash = cv.FileHash,
                 FilePath = cv.FilePath,
                 Actor = cv.Actor,
@@ -235,7 +238,7 @@ public sealed class ConfigurationService : IConfigurationService
 
     private static string GenerateVersionId()
     {
-        return DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss") + "-" +
+        return UnixTimestamp.FromUnixSeconds(UnixTimestamp.Now()).ToString("yyyyMMddHHmmss") + "-" +
                Guid.NewGuid().ToString("N")[..8];
     }
 }

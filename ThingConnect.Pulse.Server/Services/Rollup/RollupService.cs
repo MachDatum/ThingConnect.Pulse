@@ -1,4 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using ThingConnect.Pulse.Server.Data;
+using ThingConnect.Pulse.Server.Helpers;
 
 namespace ThingConnect.Pulse.Server.Services.Rollup;
 
@@ -26,15 +28,15 @@ public sealed class RollupService : IRollupService
         {
             // Get last watermark
             DateTimeOffset? lastWatermark = await _settingsService.GetLastRollup15mTimestampAsync();
-            DateTimeOffset fromTs = lastWatermark ?? DateTimeOffset.UtcNow.AddDays(-7); // Default: 7 days back
-            DateTimeOffset toTs = DateTimeOffset.UtcNow;
+            long fromTs = lastWatermark.HasValue ? UnixTimestamp.ToUnixSeconds(lastWatermark.Value) : UnixTimestamp.Subtract(UnixTimestamp.Now(), TimeSpan.FromDays(7)); // Default: 7 days back
+            long toTs = UnixTimestamp.Now();
 
-            _logger.LogDebug("Processing 15m rollups from {FromTs} to {ToTs}", fromTs, toTs);
+            _logger.LogDebug("Processing 15m rollups from {FromTs} to {ToTs}", UnixTimestamp.FromUnixSeconds(fromTs), UnixTimestamp.FromUnixSeconds(toTs));
 
             // Get all raw checks in the time window
             // SQLite has issues with DateTimeOffset comparisons in LINQ, so fetch all and filter in memory
             List<CheckResultRaw> allChecks = await _context.CheckResultsRaw.ToListAsync(cancellationToken);
-            var rawChecks = allChecks
+            List<CheckResultRaw> rawChecks = allChecks
                 .Where(c => c.Ts > fromTs && c.Ts <= toTs)
                 .OrderBy(c => c.EndpointId)
                 .ThenBy(c => c.Ts)
@@ -63,7 +65,7 @@ public sealed class RollupService : IRollupService
             await UpsertRollups15mAsync(rollupsToUpsert, cancellationToken);
 
             // Update watermark
-            await _settingsService.SetLastRollup15mTimestampAsync(toTs);
+            await _settingsService.SetLastRollup15mTimestampAsync(UnixTimestamp.FromUnixSeconds(toTs));
 
             _logger.LogInformation("Completed 15m rollup processing. Generated {Count} rollup records", rollupsToUpsert.Count);
         }
@@ -94,8 +96,8 @@ public sealed class RollupService : IRollupService
             _logger.LogDebug("Processing daily rollups from {FromDate} to {ToDate}", fromDate, toDate);
 
             // Get all raw checks in the date range
-            var fromTs = fromDate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
-            var toTs = toDate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+            long fromTs = UnixTimestamp.ToUnixDate(fromDate);
+            long toTs = UnixTimestamp.ToUnixDate(toDate);
 
             // SQLite has issues with DateTimeOffset comparisons in LINQ, so fetch all and filter in memory
             List<CheckResultRaw> allChecks = await _context.CheckResultsRaw.ToListAsync(cancellationToken);
@@ -204,7 +206,7 @@ public sealed class RollupService : IRollupService
             .Select(c => new
             {
                 Check = c,
-                Date = DateOnly.FromDateTime(c.Ts.Date)
+                Date = DateOnly.FromDateTime(UnixTimestamp.FromUnixSeconds(c.Ts).Date)
             })
             .Where(x => x.Date >= fromDate && x.Date < toDate)
             .GroupBy(x => x.Date);
@@ -242,7 +244,7 @@ public sealed class RollupService : IRollupService
             rollups.Add(new Data.RollupDaily
             {
                 EndpointId = endpointId,
-                BucketDate = dateGroup.Key,
+                BucketDate = UnixTimestamp.ToUnixDate(dateGroup.Key),
                 UpPct = upPct,
                 AvgRttMs = avgRttMs,
                 DownEvents = downEvents
@@ -252,13 +254,15 @@ public sealed class RollupService : IRollupService
         return rollups;
     }
 
-    private static DateTimeOffset GetBucketTimestamp15m(DateTimeOffset ts)
+    private static long GetBucketTimestamp15m(long unixTs)
     {
         // Round down to nearest 15-minute boundary
+        DateTimeOffset ts = UnixTimestamp.FromUnixSeconds(unixTs);
         int minute = ts.Minute;
         int bucketMinute = (minute / 15) * 15;
 
-        return new DateTimeOffset(ts.Year, ts.Month, ts.Day, ts.Hour, bucketMinute, 0, ts.Offset);
+        var bucketTime = new DateTimeOffset(ts.Year, ts.Month, ts.Day, ts.Hour, bucketMinute, 0, ts.Offset);
+        return UnixTimestamp.ToUnixSeconds(bucketTime);
     }
 
     private async Task UpsertRollups15mAsync(List<Data.Rollup15m> rollups, CancellationToken cancellationToken)

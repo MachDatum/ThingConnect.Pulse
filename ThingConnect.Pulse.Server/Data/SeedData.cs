@@ -1,4 +1,6 @@
 // ThingConnect Pulse - Database Seed Data for Testing (v1)
+using ThingConnect.Pulse.Server.Helpers;
+
 namespace ThingConnect.Pulse.Server.Data;
 
 public static class SeedData
@@ -71,7 +73,7 @@ public static class SeedData
         context.Endpoints.AddRange(endpoints);
 
         // Seed some test check results
-        DateTimeOffset now = DateTimeOffset.UtcNow;
+        long now = UnixTimestamp.Now();
         var checkResults = new List<CheckResultRaw>();
 
         foreach (Endpoint? endpoint in endpoints)
@@ -81,7 +83,7 @@ public static class SeedData
                 checkResults.Add(new CheckResultRaw
                 {
                     EndpointId = endpoint.Id,
-                    Ts = now.AddMinutes(-i * 5),
+                    Ts = UnixTimestamp.Subtract(now, TimeSpan.FromMinutes(i * 5)),
                     Status = i % 4 == 0 ? UpDown.down : UpDown.up,
                     RttMs = 10.5 + (i * 2.1)
                 });
@@ -94,8 +96,8 @@ public static class SeedData
         Setting[] settings = new[]
         {
             new Setting { K = "version", V = "1.0.0" },
-            new Setting { K = "last_rollup_15m", V = now.ToString("O") },
-            new Setting { K = "last_rollup_daily", V = DateOnly.FromDateTime(now.DateTime).ToString("yyyy-MM-dd") }
+            new Setting { K = "last_rollup_15m", V = UnixTimestamp.FromUnixSeconds(now).ToString("O") },
+            new Setting { K = "last_rollup_daily", V = DateOnly.FromDateTime(UnixTimestamp.FromUnixSeconds(now).DateTime).ToString("yyyy-MM-dd") }
         };
 
         context.Settings.AddRange(settings);

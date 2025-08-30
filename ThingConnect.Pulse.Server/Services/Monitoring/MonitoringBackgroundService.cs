@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Microsoft.EntityFrameworkCore;
 using ThingConnect.Pulse.Server.Data;
 
 namespace ThingConnect.Pulse.Server.Services.Monitoring;
@@ -33,6 +34,13 @@ public sealed class MonitoringBackgroundService : BackgroundService
     {
         _logger.LogInformation("Monitoring background service started");
 
+        // Initialize monitor states from database on startup
+        using (IServiceScope scope = _serviceProvider.CreateScope())
+        {
+            IOutageDetectionService outageService = scope.ServiceProvider.GetRequiredService<IOutageDetectionService>();
+            await outageService.InitializeStatesFromDatabaseAsync(stoppingToken);
+        }
+
         while (!stoppingToken.IsCancellationRequested)
         {
             try
@@ -45,6 +53,13 @@ public sealed class MonitoringBackgroundService : BackgroundService
                 _logger.LogError(ex, "Error in monitoring background service");
                 await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken); // Brief delay on error
             }
+        }
+
+        // Handle graceful shutdown
+        using (IServiceScope scope = _serviceProvider.CreateScope())
+        {
+            IOutageDetectionService outageService = scope.ServiceProvider.GetRequiredService<IOutageDetectionService>();
+            await outageService.HandleGracefulShutdownAsync("Service stopping", CancellationToken.None);
         }
 
         // Clean up timers
@@ -67,8 +82,8 @@ public sealed class MonitoringBackgroundService : BackgroundService
             .Where(e => e.Enabled)
             .ToListAsync(cancellationToken);
 
-        var currentEndpointIds = endpoints.Select(e => e.Id).ToHashSet();
-        var existingEndpointIds = _endpointTimers.Keys.ToHashSet();
+        HashSet<Guid> currentEndpointIds = endpoints.Select(e => e.Id).ToHashSet();
+        HashSet<Guid> existingEndpointIds = _endpointTimers.Keys.ToHashSet();
 
         // Remove timers for endpoints that no longer exist or are disabled
         IEnumerable<Guid> endpointsToRemove = existingEndpointIds.Except(currentEndpointIds);
@@ -94,7 +109,7 @@ public sealed class MonitoringBackgroundService : BackgroundService
             else
             {
                 // Create new timer for new endpoint
-                var timer = new Timer(
+                Timer timer = new Timer(
                     callback: async _ => await ProbeEndpointAsync(endpoint.Id),
                     state: null,
                     dueTime: TimeSpan.Zero, // Start immediately

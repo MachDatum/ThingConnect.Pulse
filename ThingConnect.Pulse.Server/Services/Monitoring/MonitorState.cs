@@ -1,4 +1,5 @@
 using ThingConnect.Pulse.Server.Data;
+using ThingConnect.Pulse.Server.Helpers;
 
 namespace ThingConnect.Pulse.Server.Services.Monitoring;
 
@@ -26,7 +27,7 @@ public sealed class MonitorState
     /// <summary>
     /// Timestamp of the last status change (UP→DOWN or DOWN→UP).
     /// </summary>
-    public DateTimeOffset? LastChangeTs { get; set; }
+    public long? LastChangeTs { get; set; }
 
     /// <summary>
     /// ID of the currently open outage record. Null if endpoint is UP.
@@ -35,19 +36,31 @@ public sealed class MonitorState
 
     /// <summary>
     /// Evaluates if the current state should transition to DOWN based on fail streak.
-    /// Default threshold: 2 consecutive failures.
+    /// If never initialized (startup), transitions immediately on first failure.
+    /// Otherwise requires threshold consecutive failures (default: 2).
     /// </summary>
     public bool ShouldTransitionToDown(int threshold = 2)
     {
+        // If never initialized, transition immediately on first failure
+        if (LastPublicStatus == null && FailStreak >= 1)
+            return true;
+        
+        // Otherwise require threshold for state change from UP to DOWN
         return LastPublicStatus != UpDown.down && FailStreak >= threshold;
     }
 
     /// <summary>
     /// Evaluates if the current state should transition to UP based on success streak.
-    /// Default threshold: 2 consecutive successes.
+    /// If never initialized (startup), transitions immediately on first success.
+    /// Otherwise requires threshold consecutive successes (default: 2).
     /// </summary>
     public bool ShouldTransitionToUp(int threshold = 2)
     {
+        // If never initialized, transition immediately on first success
+        if (LastPublicStatus == null && SuccessStreak >= 1)
+            return true;
+        
+        // Otherwise require threshold for state change from DOWN to UP
         return LastPublicStatus != UpDown.up && SuccessStreak >= threshold;
     }
 
@@ -72,7 +85,7 @@ public sealed class MonitorState
     /// <summary>
     /// Transitions the state to DOWN and records the change timestamp.
     /// </summary>
-    public void TransitionToDown(DateTimeOffset timestamp, long outageId)
+    public void TransitionToDown(long timestamp, long outageId)
     {
         LastPublicStatus = UpDown.down;
         LastChangeTs = timestamp;
@@ -82,7 +95,7 @@ public sealed class MonitorState
     /// <summary>
     /// Transitions the state to UP and records the change timestamp.
     /// </summary>
-    public void TransitionToUp(DateTimeOffset timestamp)
+    public void TransitionToUp(long timestamp)
     {
         LastPublicStatus = UpDown.up;
         LastChangeTs = timestamp;

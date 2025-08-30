@@ -1,4 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using ThingConnect.Pulse.Server.Data;
+using ThingConnect.Pulse.Server.Helpers;
 using ThingConnect.Pulse.Server.Models;
 
 namespace ThingConnect.Pulse.Server.Services;
@@ -79,6 +81,9 @@ public sealed class HistoryService : IHistoryService
 
     private async Task<List<RawCheckDto>> GetRawDataAsync(Guid endpointId, DateTimeOffset from, DateTimeOffset to)
     {
+        long fromUnix = UnixTimestamp.ToUnixSeconds(from);
+        long toUnix = UnixTimestamp.ToUnixSeconds(to);
+
         // SQLite limitation: fetch all data and filter in memory
         var rawData = await _context.CheckResultsRaw
             .Where(c => c.EndpointId == endpointId)
@@ -86,11 +91,11 @@ public sealed class HistoryService : IHistoryService
             .ToListAsync();
 
         return rawData
-            .Where(c => c.Ts >= from && c.Ts <= to)
+            .Where(c => c.Ts >= fromUnix && c.Ts <= toUnix)
             .OrderBy(c => c.Ts)
             .Select(c => new RawCheckDto
             {
-                Ts = c.Ts,
+                Ts = UnixTimestamp.FromUnixSeconds(c.Ts),
                 Status = c.Status == UpDown.up ? "up" : "down",
                 RttMs = c.RttMs,
                 Error = c.Error
@@ -100,6 +105,9 @@ public sealed class HistoryService : IHistoryService
 
     private async Task<List<RollupBucketDto>> GetRollup15mDataAsync(Guid endpointId, DateTimeOffset from, DateTimeOffset to)
     {
+        long fromUnix = UnixTimestamp.ToUnixSeconds(from);
+        long toUnix = UnixTimestamp.ToUnixSeconds(to);
+
         // SQLite limitation: fetch all data and filter in memory
         var rollupData = await _context.Rollups15m
             .Where(r => r.EndpointId == endpointId)
@@ -107,11 +115,11 @@ public sealed class HistoryService : IHistoryService
             .ToListAsync();
 
         return rollupData
-            .Where(r => r.BucketTs >= from && r.BucketTs <= to)
+            .Where(r => r.BucketTs >= fromUnix && r.BucketTs <= toUnix)
             .OrderBy(r => r.BucketTs)
             .Select(r => new RollupBucketDto
             {
-                BucketTs = r.BucketTs,
+                BucketTs = UnixTimestamp.FromUnixSeconds(r.BucketTs),
                 UpPct = r.UpPct,
                 AvgRttMs = r.AvgRttMs,
                 DownEvents = r.DownEvents
@@ -121,9 +129,9 @@ public sealed class HistoryService : IHistoryService
 
     private async Task<List<DailyBucketDto>> GetRollupDailyDataAsync(Guid endpointId, DateTimeOffset from, DateTimeOffset to)
     {
-        // Convert DateTimeOffset to DateOnly for filtering
-        var fromDate = DateOnly.FromDateTime(from.Date);
-        var toDate = DateOnly.FromDateTime(to.Date);
+        // Convert DateTimeOffset to Unix timestamp at midnight for filtering
+        long fromUnix = UnixTimestamp.ToUnixDate(DateOnly.FromDateTime(from.Date));
+        long toUnix = UnixTimestamp.ToUnixDate(DateOnly.FromDateTime(to.Date));
 
         // SQLite limitation: fetch all data and filter in memory
         var dailyData = await _context.RollupsDaily
@@ -132,11 +140,11 @@ public sealed class HistoryService : IHistoryService
             .ToListAsync();
 
         return dailyData
-            .Where(r => r.BucketDate >= fromDate && r.BucketDate <= toDate)
+            .Where(r => r.BucketDate >= fromUnix && r.BucketDate <= toUnix)
             .OrderBy(r => r.BucketDate)
             .Select(r => new DailyBucketDto
             {
-                BucketDate = r.BucketDate,
+                BucketDate = UnixTimestamp.FromUnixDate(r.BucketDate),
                 UpPct = r.UpPct,
                 AvgRttMs = r.AvgRttMs,
                 DownEvents = r.DownEvents
@@ -146,6 +154,9 @@ public sealed class HistoryService : IHistoryService
 
     private async Task<List<OutageDto>> GetOutagesAsync(Guid endpointId, DateTimeOffset from, DateTimeOffset to)
     {
+        long fromUnix = UnixTimestamp.ToUnixSeconds(from);
+        long toUnix = UnixTimestamp.ToUnixSeconds(to);
+
         // SQLite limitation: fetch all data and filter in memory
         var outageData = await _context.Outages
             .Where(o => o.EndpointId == endpointId)
@@ -153,12 +164,12 @@ public sealed class HistoryService : IHistoryService
             .ToListAsync();
 
         return outageData
-            .Where(o => o.StartedTs <= to && (o.EndedTs == null || o.EndedTs >= from))
+            .Where(o => o.StartedTs <= toUnix && (o.EndedTs == null || o.EndedTs >= fromUnix))
             .OrderBy(o => o.StartedTs)
             .Select(o => new OutageDto
             {
-                StartedTs = o.StartedTs,
-                EndedTs = o.EndedTs,
+                StartedTs = UnixTimestamp.FromUnixSeconds(o.StartedTs),
+                EndedTs = o.EndedTs.HasValue ? UnixTimestamp.FromUnixSeconds(o.EndedTs.Value) : null,
                 DurationS = o.DurationSeconds,
                 LastError = o.LastError
             })
