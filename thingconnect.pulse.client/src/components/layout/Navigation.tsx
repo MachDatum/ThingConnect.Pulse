@@ -11,9 +11,9 @@ import {
   Button,
 } from '@chakra-ui/react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
-import { Activity, Wifi } from 'lucide-react';
+import { History, Wifi } from 'lucide-react';
 import thingConnectIcon from '@/assets/thingconnect-icon.svg';
-import { Clock, Wrench, Settings, Info, Dashboard, Moon, Sun } from '@/icons';
+import { Clock, Wrench, Settings, Info, Dashboard } from '@/icons';
 import { useColorMode } from '../ui/color-mode';
 interface NavigationProps {
   onItemClick?: () => void;
@@ -117,23 +117,14 @@ export function Navigation({ onItemClick }: NavigationProps) {
         <VStack align='stretch' gap={2}>
           <HStack display={{ base: 'none', md: 'flex' }}>
             <Wifi size={16} aria-label='Connection status' />
-            <Badge colorPalette='green' variant='solid' size='sm'>
+            <Badge bg='gray.200' size='sm' _dark={{ color: 'gray.800' }}>
               Connected
             </Badge>
-            <Text
-              data-testid='last-refresh-time'
-              fontSize='xs'
-              color='gray.500'
-              _dark={{ color: 'gray.400' }}
-              display={{ base: 'none', md: 'block' }}
-            >
-              Updated 2s ago
-            </Text>
           </HStack>
           <HStack gap={2}>
-            <Icon as={Activity} boxSize={4} color='green.500' />
-            <Text fontSize='xs' color='gray.600' _dark={{ color: 'gray.400' }}>
-              System Online
+            <Icon as={History} boxSize={4} />
+            <Text fontSize='xs' _dark={{ color: 'gray.400' }}>
+              Updated 2s ago
             </Text>
           </HStack>
           <Separator _dark={{ borderColor: 'gray.600' }} />
@@ -162,9 +153,7 @@ export function Navigation({ onItemClick }: NavigationProps) {
                 bg='white'
                 color={'gray.600'}
                 shadow='sm'
-              >
-                {colorMode === 'light' ? <Sun size={14} /> : <Moon size={14} />}
-              </Flex>
+              />
             </Button>
           </HStack>
         </VStack>
