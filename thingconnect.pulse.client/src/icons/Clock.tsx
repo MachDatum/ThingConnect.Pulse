@@ -1,34 +1,16 @@
 import React from 'react';
 
-interface ClockProps extends React.SVGProps<SVGSVGElement> {
-  filled?: boolean;
-}
-
-export function Clock({ filled = false, ...props }: ClockProps) {
+export function Clock(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       xmlns='http://www.w3.org/2000/svg'
-      width={props.width || 24}
-      height={props.height || 24}
-      viewBox='0 0 24 24'
-      fill={filled ? 'currentColor' : 'none'}
-      stroke={filled ? 'none' : 'currentColor'}
-      strokeWidth={2}
-      strokeLinecap='round'
-      strokeLinejoin='round'
-      className={`lucide lucide-clock-icon ${filled ? 'lucide-clock-filled' : 'lucide-clock'}`}
+      width='16'
+      height='16'
+      fill='currentColor'
+      viewBox='0 0 16 16'
       {...props}
     >
-      {filled ? (
-        // Filled version
-        <path d='M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm1 12.59L10 12V7h2v4.17l2.59 1.42Z' />
-      ) : (
-        // Outline version
-        <>
-          <circle cx='12' cy='12' r='10' />
-          <path d='M12 6v6l4 2' />
-        </>
-      )}
+      <path d='M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z' />
     </svg>
   );
 }
