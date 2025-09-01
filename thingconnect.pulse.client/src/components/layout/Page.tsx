@@ -15,6 +15,8 @@ export interface PageProps {
   emptyMsgDescription?: string;
   onButton?: ReactNode;
   actions?: ReactNode;
+  breadcrumbs?: (string | null | undefined)[];
+  tos?: string[];
 }
 
 export function Page({
@@ -28,11 +30,19 @@ export function Page({
   emptyMsgDescription,
   onButton,
   actions,
+  breadcrumbs,
+  tos,
 }: PageProps) {
   return (
     <Flex direction={'column'} w='full' h='full' gap={2} id='page-container'>
       <Box position='sticky' top={0} zIndex={10} background={'white'}>
-        <PageHeader title={title} description={description} actions={actions} />
+        <PageHeader
+          title={title}
+          description={description}
+          actions={actions}
+          breadcrumbs={breadcrumbs}
+          tos={tos}
+        />
       </Box>
       <Box h={'full'} w='full' flex={1} id='page-content'>
         <PageContent
