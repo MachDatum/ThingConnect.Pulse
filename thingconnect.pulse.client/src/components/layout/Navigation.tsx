@@ -1,4 +1,15 @@
-import { Box, VStack, Text, Icon, Image, HStack, Badge, Flex, Separator } from '@chakra-ui/react';
+import {
+  Box,
+  VStack,
+  Text,
+  Icon,
+  Image,
+  HStack,
+  Badge,
+  Flex,
+  Separator,
+  Button,
+} from '@chakra-ui/react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { Activity, Wifi } from 'lucide-react';
 import thingConnectIcon from '@/assets/thingconnect-icon.svg';
@@ -130,9 +141,7 @@ export function Navigation({ onItemClick }: NavigationProps) {
             <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
               {colorMode === 'light' ? 'Light Mode' : 'Dark Mode'}
             </Text>
-            <Box
-              as='button'
-              typeof='button'
+            <Button
               onClick={toggleColorMode}
               w='50px'
               h='24px'
@@ -156,7 +165,7 @@ export function Navigation({ onItemClick }: NavigationProps) {
               >
                 {colorMode === 'light' ? <Sun size={14} /> : <Moon size={14} />}
               </Flex>
-            </Box>
+            </Button>
           </HStack>
         </VStack>
       </Box>
