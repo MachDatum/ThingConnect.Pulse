@@ -1,7 +1,8 @@
 import { Box, VStack, Text, Icon, Image, HStack } from '@chakra-ui/react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
-import { Home, Clock, Settings, Wrench, Activity, Info } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import thingConnectIcon from '@/assets/thingconnect-icon.svg';
+import { Home, Clock, Wrench, Settings, Info } from '@/icons';
 
 interface NavigationProps {
   onItemClick?: () => void;
@@ -78,7 +79,7 @@ export function Navigation({ onItemClick }: NavigationProps) {
                 borderLeft='3px solid'
                 borderLeftColor={isActive ? 'blue.500' : 'transparent'}
               >
-                <Icon as={item.icon} boxSize={4} fill='currentColor' />
+                <Icon as={item.icon} boxSize={4} />
                 <Text fontSize='sm' fontWeight={isActive ? 'semibold' : 'normal'}>
                   {item.label}
                 </Text>
@@ -95,7 +96,7 @@ export function Navigation({ onItemClick }: NavigationProps) {
         data-testid='system-status'
       >
         <HStack gap={2}>
-          <Icon as={Activity} boxSize={4} color='green.500' fill='currentColor' />
+          <Icon as={Activity} boxSize={4} color='green.500' />
           <Text fontSize='xs' color='gray.600' _dark={{ color: 'gray.400' }}>
             System Online
           </Text>
