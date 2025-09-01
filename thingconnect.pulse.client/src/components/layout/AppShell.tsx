@@ -14,7 +14,7 @@ export function AppShell() {
   };
 
   return (
-    <Flex h='100vh' direction='column' data-testid='app-shell'>
+    <Flex h='100dvh' direction='column' data-testid='app-shell'>
       {/* Header */}
       {/* <Header onMenuClick={toggleSidebar} /> */}
 
@@ -61,13 +61,26 @@ export function AppShell() {
         <Box
           data-testid='page-content'
           flex='1'
-          overflow='auto'
-          bg='white'
           _dark={{ bg: 'gray.900' }}
+          px={6}
+          h={'100%'}
+          w={'100%'}
+          overflow={'auto'}
+          css={{
+            '&::-webkit-scrollbar': {
+              width: '8px',
+              height: '8px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: 'gray.300',
+              borderRadius: '4px',
+              '&:hover': {
+                background: 'gray.400',
+              },
+            },
+          }}
         >
-          <Box p={6} maxW='full'>
-            <Outlet />
-          </Box>
+          <Outlet />
         </Box>
       </Flex>
 

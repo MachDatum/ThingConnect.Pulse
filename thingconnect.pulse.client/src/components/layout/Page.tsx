@@ -1,37 +1,51 @@
-import { Box, VStack } from '@chakra-ui/react';
-import { useEffect } from 'react';
+import { Box, Flex } from '@chakra-ui/react';
 import type { ReactNode } from 'react';
+import { PageHeader } from './PageHeader';
+import { PageContent } from './PageContent';
+import { type LucideIcon } from 'lucide-react';
 
 export interface PageProps {
-  title?: string;
-  testId?: string;
+  title: string;
+  description?: string;
   children: ReactNode;
-  compact?: boolean;
+  isLoading?: boolean;
+  isEmpty?: boolean;
+  emptyIcon?: LucideIcon;
+  emptyMsgHeader?: string;
+  emptyMsgDescription?: string;
+  onButton?: ReactNode;
+  actions?: ReactNode;
 }
 
-export function Page({ title, testId, children, compact = false }: PageProps) {
-  // Set document title when provided
-  useEffect(() => {
-    if (title) {
-      document.title = `${title} - ThingConnect Pulse`;
-    }
-  }, [title]);
-
+export function Page({
+  title,
+  description,
+  children,
+  isLoading,
+  isEmpty,
+  emptyIcon,
+  emptyMsgHeader,
+  emptyMsgDescription,
+  onButton,
+  actions,
+}: PageProps) {
   return (
-    <Box
-      data-testid={testId || 'page'}
-      h="full"
-      overflow="auto"
-      p={{ base: 2, md: compact ? 2 : 4 }}
-    >
-      <VStack
-        align="stretch"
-        gap={compact ? 1 : 2}
-        h="full"
-        maxW="full"
-      >
-        {children}
-      </VStack>
-    </Box>
+    <Flex direction={'column'} w='full' h='full' gap={2} id='page-container'>
+      <Box position='sticky' top={0} zIndex={10} background={'white'}>
+        <PageHeader title={title} description={description} actions={actions} />
+      </Box>
+      <Box h={'full'} w='full' flex={1} id='page-content'>
+        <PageContent
+          isLoading={isLoading}
+          isEmpty={isEmpty}
+          emptyIcon={emptyIcon}
+          emptyMsgHeader={emptyMsgHeader}
+          emptyMsgDescription={emptyMsgDescription}
+          onButton={onButton}
+        >
+          {children}
+        </PageContent>
+      </Box>
+    </Flex>
   );
 }
