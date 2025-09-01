@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Box, Text } from '@chakra-ui/react';
 import { TabsRoot, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Wrench } from 'lucide-react';
 import { ConfigurationEditor } from '@/components/config/ConfigurationEditor';
 import { ConfigurationVersions } from '@/components/config/ConfigurationVersions';
 import { Page } from '@/components/layout/Page';
@@ -21,8 +20,7 @@ export default function Configuration() {
     <Page title="Configuration" testId="configuration-page">
       <PageHeader
         title="Configuration Management"
-        description="Manage monitoring endpoints and YAML configuration"
-        icon={<Wrench size={20} />}
+        info="Manage monitoring endpoints and YAML configuration"
       />
       
       <PageContent>
