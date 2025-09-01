@@ -132,6 +132,7 @@ export function Navigation({ onItemClick }: NavigationProps) {
             </Text>
             <Box
               as='button'
+              typeof='button'
               onClick={toggleColorMode}
               w='50px'
               h='24px'
