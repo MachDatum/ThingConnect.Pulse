@@ -1,10 +1,10 @@
 import React from 'react';
 
-interface SunProps extends React.SVGProps<SVGSVGElement> {
+interface IProps extends React.SVGProps<SVGSVGElement> {
   size?: number;
 }
 
-export function Sun({ size = 24, ...props }: SunProps) {
+export function Sun({ size = 24, ...props }: IProps) {
   return (
     <svg
       xmlns='http://www.w3.org/2000/svg'
