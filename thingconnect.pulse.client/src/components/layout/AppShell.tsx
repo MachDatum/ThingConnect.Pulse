@@ -29,7 +29,7 @@ export function AppShell() {
           top={{ base: '60px', md: 0 }}
           w={sidebarWidth}
           h={{ base: 'calc(100vh - 60px)', md: '100%' }}
-          bg='gray.50'
+          bg='gray.100'
           borderRight='1px'
           borderColor='gray.200'
           transition='left 0.3s ease'

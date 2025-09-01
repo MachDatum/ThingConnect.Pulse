@@ -2,14 +2,14 @@ import { Box, VStack, Text, Icon, Image, HStack } from '@chakra-ui/react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { Activity } from 'lucide-react';
 import thingConnectIcon from '@/assets/thingconnect-icon.svg';
-import { Home, Clock, Wrench, Settings, Info } from '@/icons';
+import { Clock, Wrench, Settings, Info, Dashboard } from '@/icons';
 
 interface NavigationProps {
   onItemClick?: () => void;
 }
 
 const navigationItems = [
-  { label: 'Dashboard', path: '/', icon: Home },
+  { label: 'Dashboard', path: '/', icon: Dashboard },
   { label: 'History', path: '/history', icon: Clock },
   { label: 'Config', path: '/config', icon: Wrench },
   { label: 'Settings', path: '/settings', icon: Settings },
@@ -65,22 +65,29 @@ export function Navigation({ onItemClick }: NavigationProps) {
           return (
             <RouterLink key={item.path} to={item.path} onClick={onItemClick}>
               <HStack
-                px={3}
-                py={2}
+                px={2}
+                py={1}
                 borderRadius='md'
-                bg={isActive ? 'blue.50' : 'transparent'}
-                color={isActive ? 'blue.700' : 'gray.700'}
-                _hover={{ bg: isActive ? 'blue.100' : 'gray.100' }}
+                color={isActive ? 'blue.600' : 'gray.600'}
+                bg={isActive ? 'whiteAlpha.950' : 'transparent'}
+                border={isActive ? '1px solid' : undefined}
+                borderColor={isActive ? 'border' : undefined}
+                _hover={
+                  isActive
+                    ? undefined
+                    : {
+                        bg: 'blackAlpha.50',
+                        _dark: { bg: 'gray.700' },
+                      }
+                }
                 _dark={{
-                  bg: isActive ? 'blue.900' : 'transparent',
                   color: isActive ? 'blue.200' : 'gray.200',
-                  _hover: { bg: isActive ? 'blue.800' : 'gray.700' },
+                  bg: isActive ? 'blackAlpha.200' : undefined,
+                  border: isActive ? '1px solid rgba(255,255,255,0.1)' : undefined,
                 }}
-                borderLeft='3px solid'
-                borderLeftColor={isActive ? 'blue.500' : 'transparent'}
               >
                 <Icon as={item.icon} boxSize={4} />
-                <Text fontSize='sm' fontWeight={isActive ? 'semibold' : 'normal'}>
+                <Text fontSize='sm' fontWeight={'semibold'}>
                   {item.label}
                 </Text>
               </HStack>

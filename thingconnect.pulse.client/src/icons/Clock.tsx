@@ -4,13 +4,13 @@ export function Clock(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       xmlns='http://www.w3.org/2000/svg'
-      width='16'
-      height='16'
+      width={props.width || 24}
+      height={props.height || 24}
+      viewBox='0 0 24 24'
       fill='currentColor'
-      viewBox='0 0 16 16'
       {...props}
     >
-      <path d='M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z' />
+      <path d='M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm-.75 5.5a.75.75 0 0 1 1.5 0v4.25l3.5 2.1a.75.75 0 0 1-.75 1.3l-4-2.4a.75.75 0 0 1-.375-.65V7.5Z' />
     </svg>
   );
 }
