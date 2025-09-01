@@ -6,14 +6,13 @@ import {
   Image,
   HStack,
   Badge,
-  Flex,
   Separator,
-  Button,
+  IconButton,
 } from '@chakra-ui/react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { History, Wifi } from 'lucide-react';
 import thingConnectIcon from '@/assets/thingconnect-icon.svg';
-import { Clock, Wrench, Settings, Info, Dashboard } from '@/icons';
+import { Clock, Wrench, Settings, Info, Dashboard, Moon, Sun } from '@/icons';
 import { useColorMode } from '../ui/color-mode';
 interface NavigationProps {
   onItemClick?: () => void;
@@ -129,32 +128,20 @@ export function Navigation({ onItemClick }: NavigationProps) {
           </HStack>
           <Separator _dark={{ borderColor: 'gray.600' }} />
           <HStack justify='space-between'>
-            <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
+            <Text fontSize='sm' color='gray.700' _dark={{ color: 'gray.400' }}>
               {colorMode === 'light' ? 'Light Mode' : 'Dark Mode'}
             </Text>
-            <Button
+            <IconButton
+              data-testid='theme-toggle'
+              aria-label='Toggle color mode'
+              variant='ghost'
+              size='sm'
               onClick={toggleColorMode}
-              w='50px'
-              h='24px'
-              borderRadius='full'
-              bg={colorMode === 'light' ? 'gray.200' : 'gray.700'}
-              px='1'
-              display='flex'
-              alignItems='center'
-              justifyContent={colorMode === 'light' ? 'flex-start' : 'flex-end'}
-              transition='all 0.3s ease'
+              color={'gray.700'}
+              _dark={{ color: 'gray.300' }}
             >
-              <Flex
-                align='center'
-                justify='center'
-                w='20px'
-                h='20px'
-                borderRadius='full'
-                bg='white'
-                color={'gray.600'}
-                shadow='sm'
-              />
-            </Button>
+              {colorMode === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
+            </IconButton>
           </HStack>
         </VStack>
       </Box>
