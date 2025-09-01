@@ -1,7 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import { Box, Flex, useBreakpointValue } from '@chakra-ui/react';
 import { useState } from 'react';
-import { Header } from './Header';
 import { Navigation } from './Navigation';
 import { Footer } from './Footer';
 
@@ -16,10 +15,6 @@ export function AppShell() {
 
   return (
     <Flex h='100vh' direction='column' data-testid='app-shell'>
-      {/* Header */}
-      <Header onMenuClick={toggleSidebar} />
-
-      {/* Main content area with sidebar */}
       <Flex flex='1' overflow='hidden' data-testid='main-layout'>
         {/* Navigation Sidebar */}
         <Box
