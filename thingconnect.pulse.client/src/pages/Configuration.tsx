@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, Text } from '@chakra-ui/react';
+import { Box, Button, Text } from '@chakra-ui/react';
 import { TabsRoot, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ConfigurationEditor } from '@/components/config/ConfigurationEditor';
 import { ConfigurationVersions } from '@/components/config/ConfigurationVersions';
@@ -15,6 +15,7 @@ export default function Configuration() {
     <Page
       title='Configuration Management'
       description='Manage monitoring endpoints and YAML configuration'
+      testId="configuration-page"
     >
       <TabsRoot defaultValue='editor' variant='enclosed'>
         <TabsList>

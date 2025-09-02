@@ -54,28 +54,7 @@ export function AppShell() {
         )}
 
         {/* Main content */}
-        <Box
-          data-testid='page-content'
-          flex='1'
-          _dark={{ bg: 'gray.900' }}
-          px={6}
-          h={'100%'}
-          w={'100%'}
-          overflow={'auto'}
-          css={{
-            '&::-webkit-scrollbar': {
-              width: '8px',
-              height: '8px',
-            },
-            '&::-webkit-scrollbar-thumb': {
-              background: 'gray.300',
-              borderRadius: '4px',
-              '&:hover': {
-                background: 'gray.400',
-              },
-            },
-          }}
-        >
+        <Box data-testid='page-content' flex='1' _dark={{ bg: 'gray.900' }} h={'full'} w={'full'}>
           <Outlet />
         </Box>
       </Flex>

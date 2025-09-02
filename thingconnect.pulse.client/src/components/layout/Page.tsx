@@ -7,6 +7,7 @@ import { type LucideIcon } from 'lucide-react';
 export interface PageProps {
   title: string;
   description?: string;
+  testId?: string;
   children: ReactNode;
   isLoading?: boolean;
   isEmpty?: boolean;
@@ -35,7 +36,7 @@ export function Page({
 }: PageProps) {
   return (
     <Flex direction={'column'} w='full' h='full' gap={2} id='page-container'>
-      <Box position='sticky' top={0} zIndex={10} background={'white'}>
+      <Flex w='full' flex={'0 0 auto'} px={6}>
         <PageHeader
           title={title}
           description={description}
@@ -43,8 +44,25 @@ export function Page({
           breadcrumbs={breadcrumbs}
           tos={tos}
         />
-      </Box>
-      <Box h={'full'} w='full' flex={1} id='page-content'>
+      </Flex>
+      <Box
+        px={6}
+        flex={'1 1 auto'}
+        overflow={'auto'}
+        css={{
+          '&::-webkit-scrollbar': {
+            width: '8px',
+            height: '8px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: 'gray.300',
+            borderRadius: '4px',
+            '&:hover': {
+              background: 'gray.400',
+            },
+          },
+        }}
+      >
         <PageContent
           isLoading={isLoading}
           isEmpty={isEmpty}

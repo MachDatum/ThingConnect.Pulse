@@ -101,19 +101,11 @@ export default function History() {
     'Unknown Endpoint';
 
   return (
-    <Page title="History" testId="history-page">
-      <PageHeader
+    <Page title="History" description="View historical monitoring data and export reports"  testId="history-page">
+      {/* <PageHeader
         title="Historical Data"
         description="View historical monitoring data and export reports"
-        icon={<Clock size={20} />}
-      />
-      
-      <PageContent 
-        loading={isLoading && !historyData}
-        error={error as Error | null}
-        empty={!selectedEndpoint}
-        emptyMessage="Select an endpoint to view historical data"
-      >
+      /> */}
         <PageSection title="Filters">
           <Card.Root>
             <Card.Body>
@@ -228,7 +220,6 @@ export default function History() {
             </Card.Root>
           </>
         )}
-      </PageContent>
     </Page>
   );
 }
