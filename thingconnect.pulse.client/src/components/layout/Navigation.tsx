@@ -1,19 +1,8 @@
-import {
-  Box,
-  VStack,
-  Text,
-  Icon,
-  Image,
-  HStack,
-  Badge,
-  Separator,
-  IconButton,
-} from '@chakra-ui/react';
+import { Box, VStack, Text, Icon, Image, HStack, Badge } from '@chakra-ui/react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
-import { History, Wifi } from 'lucide-react';
+import { Wifi, Activity } from 'lucide-react';
 import thingConnectIcon from '@/assets/thingconnect-icon.svg';
-import { Clock, Wrench, Settings, Info, Dashboard, Moon, Sun } from '@/icons';
-import { useColorMode } from '../ui/color-mode';
+import { Clock, Wrench, Settings, Info, Dashboard } from '@/icons';
 interface NavigationProps {
   onItemClick?: () => void;
 }
@@ -27,7 +16,6 @@ const navigationItems = [
 ];
 
 export function Navigation({ onItemClick }: NavigationProps) {
-  const { colorMode, toggleColorMode } = useColorMode();
   const location = useLocation();
 
   const isActiveRoute = (path: string) =>
@@ -106,42 +94,34 @@ export function Navigation({ onItemClick }: NavigationProps) {
           );
         })}
       </VStack>
-      <Box
-        p={3}
-        borderTop='1px'
-        borderColor='gray.200'
-        _dark={{ borderColor: 'gray.700' }}
-        data-testid='system-status'
-      >
+      <Box p={3} borderTop='1px' borderColor='gray.200' _dark={{ borderColor: 'gray.700' }}>
         <VStack align='stretch' gap={2}>
-          <HStack display={{ base: 'none', md: 'flex' }}>
+          <HStack gap={2} display={{ base: 'none', md: 'flex' }} data-testid='connection-status'>
             <Wifi size={16} aria-label='Connection status' />
-            <Badge bg='gray.200' size='sm' _dark={{ color: 'gray.800' }}>
+            <Badge colorPalette='green' variant='solid' size='sm'>
               Connected
             </Badge>
-          </HStack>
-          <HStack gap={2}>
-            <Icon as={History} boxSize={4} />
-            <Text fontSize='xs' _dark={{ color: 'gray.400' }}>
+            <Text
+              data-testid='last-refresh-time'
+              fontSize='xs'
+              color='gray.500'
+              _dark={{ color: 'gray.400' }}
+              display={{ base: 'none', md: 'block' }}
+            >
               Updated 2s ago
             </Text>
           </HStack>
-          <Separator _dark={{ borderColor: 'gray.600' }} />
-          <HStack justify='space-between'>
-            <Text fontSize='sm' color='gray.700' _dark={{ color: 'gray.400' }}>
-              {colorMode === 'light' ? 'Light Mode' : 'Dark Mode'}
+          <HStack gap={2}>
+            <Icon
+              as={Activity}
+              boxSize={4}
+              color='green.500'
+              aria-label='System status'
+              data-testid='system-status'
+            />
+            <Text fontSize='xs' color='gray.600' _dark={{ color: 'gray.400' }}>
+              System Online
             </Text>
-            <IconButton
-              data-testid='theme-toggle'
-              aria-label='Toggle color mode'
-              variant='ghost'
-              size='sm'
-              onClick={toggleColorMode}
-              color={'gray.700'}
-              _dark={{ color: 'gray.300' }}
-            >
-              {colorMode === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
-            </IconButton>
           </HStack>
         </VStack>
       </Box>
