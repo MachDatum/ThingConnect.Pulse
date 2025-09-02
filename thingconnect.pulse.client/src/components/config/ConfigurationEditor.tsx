@@ -169,8 +169,8 @@ targets:
             </Text>
             {validationResult.errors && (
               <VStack align='start' mt={2} gap={1}>
-                {validationResult.errors.map((error, index) => (
-                  <Text key={index} fontSize='sm'>
+                {validationResult.errors.map((error) => (
+                  <Text key={error} fontSize='sm'>
                     • {error}
                   </Text>
                 ))}
@@ -197,8 +197,8 @@ targets:
                   <Text fontSize='sm' fontWeight='medium'>
                     Changes:
                   </Text>
-                  {applyResult.changes.map((change, index) => (
-                    <Text key={index} fontSize='sm' ml={4}>
+                  {applyResult.changes.map((change) => (
+                    <Text key={change.name} fontSize='sm' ml={4}>
                       • {change.type.toUpperCase()} {change.entity}: {change.name}
                     </Text>
                   ))}
