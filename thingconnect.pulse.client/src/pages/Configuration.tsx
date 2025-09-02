@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, Text } from '@chakra-ui/react';
+import { Text } from '@chakra-ui/react';
 import { TabsRoot, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ConfigurationEditor } from '@/components/config/ConfigurationEditor';
 import { ConfigurationVersions } from '@/components/config/ConfigurationVersions';
@@ -17,8 +17,8 @@ export default function Configuration() {
       description='Manage monitoring endpoints and YAML configuration'
       testId="configuration-page"
     >
-      <TabsRoot defaultValue='editor' variant='enclosed'>
-        <TabsList>
+      <TabsRoot defaultValue='editor' variant='enclosed' h='full' display='flex' flexDirection='column'>
+        <TabsList flexShrink={0}>
           <TabsTrigger value='editor'>
             <Text>YAML Editor</Text>
           </TabsTrigger>
@@ -26,27 +26,13 @@ export default function Configuration() {
             <Text>Version History</Text>
           </TabsTrigger>
         </TabsList>
-
-        <TabsContent value='editor' py={4}>
+        <TabsContent value='editor' py={4} flex={1} overflow='hidden'>
           <ConfigurationEditor onConfigurationApplied={handleConfigurationApplied} />
         </TabsContent>
-
-        <TabsContent value='versions' py={4}>
+        <TabsContent value='versions' py={4} flex={1} overflow='auto'>
           <ConfigurationVersions refreshTrigger={refreshTrigger} />
         </TabsContent>
       </TabsRoot>
-
-      <Box p={3} borderRadius='md' bg='blue.50' _dark={{ bg: 'blue.900' }}>
-        <Text fontSize='sm' color='blue.800' _dark={{ color: 'blue.200' }}>
-          <Text as='span' fontWeight='medium'>
-            Configuration Storage:
-          </Text>
-          <br />
-          Active configuration: C:\ProgramData\ThingConnect.Pulse\config.yaml
-          <br />
-          Version history: C:\ProgramData\ThingConnect.Pulse\versions\
-        </Text>
-      </Box>
     </Page>
   );
 }

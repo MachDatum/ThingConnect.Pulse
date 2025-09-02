@@ -95,7 +95,7 @@ export function PageContent({
 
   // Content with optional loading overlay
   return (
-    <Box flex={1} data-testid='page-content'>
+    <Box flex={1} data-testid='page-content' h="full">
       <VStack align='stretch' gap={2} h='full' className='page-content'>
         {children}
       </VStack>

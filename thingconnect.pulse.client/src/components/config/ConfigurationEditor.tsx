@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { 
   Box, 
   Button, 
@@ -29,9 +29,11 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
   } | null>(null);
   const [applyResult, setApplyResult] = useState<ConfigurationApplyResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [editorHeight, setEditorHeight] = useState(400);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Function to convert YAML path to line position for Monaco markers
   const findYamlPathPosition = (yamlText: string, path: string): { line: number; column: number } => {
@@ -284,9 +286,29 @@ targets:
     loadCurrentConfig();
   }, []);
 
+  // Calculate editor height based on available space
+  const calculateEditorHeight = useCallback(() => {
+    if (containerRef.current) {
+      const containerHeight = containerRef.current.clientHeight;
+      // Reserve space for header (~120px) and bottom section (~150px) 
+      const availableHeight = containerHeight - 270;
+      const minHeight = 300;
+      const maxHeight = 800;
+      const newHeight = Math.max(minHeight, Math.min(maxHeight, availableHeight));
+      setEditorHeight(newHeight);
+    }
+  }, []);
+
+  // Calculate height on mount and resize
+  useEffect(() => {
+    calculateEditorHeight();
+    window.addEventListener('resize', calculateEditorHeight);
+    return () => window.removeEventListener('resize', calculateEditorHeight);
+  }, [calculateEditorHeight]);
+
   return (
-    <VStack gap={6} align='stretch'>
-      <Box>
+    <VStack gap={6} align='stretch' h='full' ref={containerRef}>
+      <Box flexShrink={0}>
         <HStack gap={3} align='center' mb={4}>
           <FileText size={20} />
           <Heading size='md'>YAML Configuration Editor</Heading>
@@ -320,92 +342,94 @@ targets:
             onChange={handleFileUpload}
           />
         </HStack>
-
-        <Box border="1px solid" borderColor={colorMode === 'dark' ? 'gray.600' : 'gray.200'} borderRadius="md" overflow="hidden">
-          <Editor
-            height="400px"
-            language="yaml"
-            theme={colorMode === 'dark' ? 'vs-dark' : 'vs-light'}
-            value={yamlContent}
-            onChange={(value) => {
-              setYamlContent(value || '');
-              setValidationResult(null);
-              setApplyResult(null);
-              setError(null);
-              clearValidationMarkers();
-            }}
-            onMount={(editor, monaco) => {
-              editorRef.current = editor;
-              monacoRef.current = monaco;
-            }}
-            options={{
-              minimap: { enabled: false },
-              scrollBeyondLastLine: false,
-              fontSize: 14,
-              tabSize: 2,
-              insertSpaces: true,
-              wordWrap: 'on',
-              lineNumbers: 'on',
-              folding: true,
-              automaticLayout: true,
-              bracketPairColorization: { enabled: true },
-              formatOnPaste: true,
-              formatOnType: true,
-            }}
-          />
-        </Box>
       </Box>
 
-      {error && (
-        <Alert status='error'>
-          <AlertCircle size={16} />
-          <Text>{error}</Text>
-        </Alert>
-      )}
+      <Box border="1px solid" borderColor={colorMode === 'dark' ? 'gray.600' : 'gray.200'} borderRadius="md" overflow="hidden">
+        <Editor
+          height={`${editorHeight}px`}
+          language="yaml"
+          theme={colorMode === 'dark' ? 'vs-dark' : 'vs-light'}
+          value={yamlContent}
+          onChange={(value) => {
+            setYamlContent(value || '');
+            setValidationResult(null);
+            setApplyResult(null);
+            setError(null);
+            clearValidationMarkers();
+          }}
+          onMount={(editor, monaco) => {
+            editorRef.current = editor;
+            monacoRef.current = monaco;
+          }}
+          options={{
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            fontSize: 14,
+            tabSize: 2,
+            insertSpaces: true,
+            wordWrap: 'on',
+            lineNumbers: 'on',
+            folding: true,
+            automaticLayout: true,
+            bracketPairColorization: { enabled: true },
+            formatOnPaste: true,
+            formatOnType: true,
+          }}
+        />
+      </Box>
 
-      {validationResult && (
-        <Alert status={validationResult.isValid ? 'success' : 'error'} py={2} px={3}>
-          <HStack gap={2} align='center'>
-            {validationResult.isValid && <Check size={14} />}
-            <Text fontWeight='medium' fontSize='sm'>
-              {validationResult.isValid 
-                ? 'Configuration is valid' 
-                : `${validationResult.errors?.length || 0} validation error${(validationResult.errors?.length || 0) !== 1 ? 's' : ''} found - see highlighted lines above`}
-            </Text>
-          </HStack>
-        </Alert>
-      )}
+      <VStack gap={4} align='stretch' flexShrink={0}>
+        {error && (
+          <Alert status='error'>
+            <AlertCircle size={16} />
+            <Text>{error}</Text>
+          </Alert>
+        )}
 
-      {applyResult && (
-        <Alert status='success' py={2} px={3}>
-          <HStack gap={2} align='center'>
-            <Check size={14} />
-            <Text fontWeight='medium' fontSize='sm'>Configuration applied successfully</Text>
-          </HStack>
-        </Alert>
-      )}
+        {validationResult && (
+          <Alert status={validationResult.isValid ? 'success' : 'error'} py={2} px={3}>
+            <HStack gap={2} align='center'>
+              {validationResult.isValid && <Check size={14} />}
+              <Text fontWeight='medium' fontSize='sm'>
+                {validationResult.isValid 
+                  ? 'Configuration is valid' 
+                  : `${validationResult.errors?.length || 0} validation error${(validationResult.errors?.length || 0) !== 1 ? 's' : ''} found - see highlighted lines above`}
+              </Text>
+            </HStack>
+          </Alert>
+        )}
 
-      <HStack gap={3}>
-        <Button
-          variant='outline'
-          onClick={handleValidate}
-          loading={isLoading}
-          disabled={!yamlContent.trim()}
-        >
-          <Check size={16} />
-          Validate
-        </Button>
+        {applyResult && (
+          <Alert status='success' py={2} px={3}>
+            <HStack gap={2} align='center'>
+              <Check size={14} />
+              <Text fontWeight='medium' fontSize='sm'>Configuration applied successfully</Text>
+            </HStack>
+          </Alert>
+        )}
 
-        <Button
-          colorScheme='blue'
-          onClick={handleApply}
-          loading={isLoading}
-          disabled={!yamlContent.trim() || (validationResult?.isValid === false)}
-        >
-          <Upload size={16} />
-          Apply Configuration
-        </Button>
-      </HStack>
+        <HStack gap={3}>
+          <Button
+            variant='outline'
+            onClick={handleValidate}
+            loading={isLoading}
+            disabled={!yamlContent.trim()}
+          >
+            <Check size={16} />
+            Validate
+          </Button>
+
+          <Button
+            colorScheme='blue'
+            onClick={handleApply}
+            loading={isLoading}
+            disabled={!yamlContent.trim() || (validationResult?.isValid === false)}
+          >
+            <Upload size={16} />
+            Apply Configuration
+          </Button>
+        </HStack>
+      </VStack>
     </VStack>
   );
 }
