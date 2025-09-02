@@ -10,13 +10,11 @@ import {
   StatGroup,
   Button,
   Stack,
+  Heading,
 } from '@chakra-ui/react';
 import { useParams, Link as RouterLink, Navigate } from 'react-router-dom';
 import { TrendingUp, AlertCircle, ArrowLeft, Globe, Wifi, Activity, Server } from 'lucide-react';
 import { Page } from '@/components/layout/Page';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { PageContent } from '@/components/layout/PageContent';
-import { PageSection } from '@/components/layout/PageSection';
 import { useQuery } from '@tanstack/react-query';
 import { EndpointService } from '@/api/services/endpoint.service';
 import { formatDistanceToNow } from 'date-fns';
@@ -200,19 +198,19 @@ export default function EndpointDetail() {
 
   if (!endpointDetail && !isLoading && !error) {
     return (
-      <Page title="Endpoint Not Found">
-        <PageHeader
-          title="Endpoint Not Found"
-          description={`The endpoint with ID "${id}" was not found`}
-          actions={
-            <RouterLink to="/">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft size={16} />
-                Back to Dashboard
-              </Button>
-            </RouterLink>
-          }
-        />
+      <Page
+        title='Endpoint Not Found'
+        description={`The endpoint with ID "${id}" was not found`}
+        actions={
+          <RouterLink to='/'>
+            <Button variant='ghost' size='sm'>
+              <ArrowLeft size={16} />
+              Back to Dashboard
+            </Button>
+          </RouterLink>
+        }
+      >
+        <Text>The endpoint with ID "{id}" was not found.</Text>
       </Page>
     );
   }
@@ -237,8 +235,8 @@ export default function EndpointDetail() {
   const currentStatus = latestCheck?.status || 'unknown';
 
   const backButton = (
-    <RouterLink to="/">
-      <Button variant="ghost" size="sm" h="32px">
+    <RouterLink to='/'>
+      <Button variant='ghost' size='sm' h='32px'>
         <ArrowLeft size={16} />
         Back to Dashboard
       </Button>
@@ -246,20 +244,12 @@ export default function EndpointDetail() {
   );
 
   return (
-    <Page title={endpoint.name}>
-      <PageHeader
-        title={endpoint.name}
-        description={`${endpoint.type.toUpperCase()} endpoint monitoring`}
-        icon={getEndpointTypeIcon(endpoint.type)}
-        actions={backButton}
-      />
-      
-      <PageContent
-        loading={isLoading}
-        error={error as Error | null}
-      >
-        <PageSection>
-          <Card.Root>
+    <Page
+      title={endpoint.name}
+      description={`${endpoint.type.toUpperCase()} endpoint monitoring`}
+      actions={backButton}
+    >
+      <Card.Root>
         <Card.Body>
           <VStack gap={4} align='stretch'>
             <HStack justify='space-between' align='start'>
@@ -409,6 +399,6 @@ export default function EndpointDetail() {
           </Stack>
         </Card.Body>
       </Card.Root>
-    </VStack>
+    </Page>
   );
 }
