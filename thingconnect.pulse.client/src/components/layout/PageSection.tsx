@@ -1,4 +1,4 @@
-import { Box, VStack, HStack, Heading, Collapsible } from '@chakra-ui/react';
+import { Box, VStack, HStack, Heading, Collapsible, Button } from '@chakra-ui/react';
 import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -31,28 +31,26 @@ export function PageSection({
   if (collapsible) {
     return (
       <Box data-testid={testId}>
-        <HStack
-          as="button"
+        <Button
           onClick={() => setIsOpen(!isOpen)}
-          justify="start"
-          align="center"
-          gap={1}
-          py={1}
-          w="full"
-          textAlign="left"
-          _hover={{ bg: 'gray.50', _dark: { bg: 'gray.800' } }}
-          rounded="sm"
+          variant='ghost'
+          justifyContent='flex-start'
+          w='full'
+          h='32px'
           px={1}
-          h="32px"
+          py={1}
+          rounded='sm'
+          textAlign='left'
+          _hover={{ bg: 'gray.50', _dark: { bg: 'gray.800' } }}
         >
           {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-          <Heading size="sm" fontSize="sm" fontWeight="medium">
+          <Heading size='sm' fontSize='sm' fontWeight='medium' ml={2}>
             {title}
           </Heading>
-        </HStack>
+        </Button>
         <Collapsible.Root open={isOpen}>
           <Collapsible.Content>
-            <VStack align="stretch" gap={2} pt={1}>
+            <VStack align='stretch' gap={2} pt={1}>
               {children}
             </VStack>
           </Collapsible.Content>

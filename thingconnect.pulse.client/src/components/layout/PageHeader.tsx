@@ -34,15 +34,14 @@ export function PageHeader({ title, description, actions, breadcrumbs, tos }: Pa
           <BreadcrumbList>
             {breadcrumbs?.map((p, index) =>
               p ? (
-                <BreadcrumbItem key={index}>
+                <BreadcrumbItem key={p}>
                   <BreadcrumbLink
                     asChild
                     _focus={{ boxShadow: 'none' }} // 🔹 remove focus border
                     _hover={{ textDecoration: 'underline' }} // 🔹 underline on hover
                     _active={{ textDecoration: 'underline' }} // 🔹 keep underline when clicked
                   >
-                    <RouterLink 
-                      to={'/' + getLink(index)}>{p}</RouterLink>
+                    <RouterLink to={'/' + getLink(index)}>{p}</RouterLink>
                   </BreadcrumbLink>
                   <BreadcrumbSeparator hidden={index === breadcrumbs.length - 1} ml={1}>
                     {' '}
