@@ -168,3 +168,17 @@ export interface ApiError {
   code?: string;
   details?: Record<string, unknown>;
 }
+
+// Validation error types (matching backend DTOs)
+export interface ValidationError {
+  path: string;
+  message: string;
+  value?: unknown;
+  line?: number;
+  column?: number;
+}
+
+export interface ValidationErrorsDto {
+  message: string;
+  errors: ValidationError[];
+}

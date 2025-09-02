@@ -4,12 +4,11 @@ import { TabsRoot, TabsList, TabsTrigger, TabsContent } from '@/components/ui/ta
 import { Wrench } from 'lucide-react';
 import { ConfigurationEditor } from '@/components/config/ConfigurationEditor';
 import { ConfigurationVersions } from '@/components/config/ConfigurationVersions';
-import type { ConfigurationApplyResponse } from '@/api/types';
 
 export default function Configuration() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const handleConfigurationApplied = (response: ConfigurationApplyResponse) => {
+  const handleConfigurationApplied = () => {
     // Trigger refresh of versions list when config is applied
     setRefreshTrigger(prev => prev + 1);
   };

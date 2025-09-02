@@ -1,37 +1,152 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { 
   Box, 
   Button, 
   VStack, 
   HStack,
-  Textarea,
   Text,
   Heading,
   Badge
 } from '@chakra-ui/react';
+import { useColorMode } from '@/components/ui/color-mode';
+import Editor from '@monaco-editor/react';
+import type { editor } from 'monaco-editor';
 import { Alert } from '@/components/ui/alert';
 import { FileText, Upload, Check, AlertCircle, Download } from 'lucide-react';
 import { configurationService } from '@/api/services/configuration.service';
-import type { ConfigurationApplyResponse } from '@/api/types';
+import type { ConfigurationApplyResponse, ValidationError } from '@/api/types';
 
 interface ConfigurationEditorProps {
   onConfigurationApplied?: (response: ConfigurationApplyResponse) => void;
 }
 
 export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEditorProps) {
+  const { colorMode } = useColorMode();
   const [yamlContent, setYamlContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [validationResult, setValidationResult] = useState<{
     isValid: boolean;
-    errors?: string[];
+    errors?: ValidationError[];
   } | null>(null);
   const [applyResult, setApplyResult] = useState<ConfigurationApplyResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const monacoRef = useRef<any>(null);
+
+  // Function to convert YAML path to line position for Monaco markers
+  const findYamlPathPosition = (yamlText: string, path: string): { line: number; column: number } => {
+    const lines = yamlText.split('\n');
+    
+    // Parse path like "targets[0].group" or "groups[1].name"
+    const pathParts = path.split('.');
+    let currentLine = 1;
+    
+    try {
+      for (let i = 0; i < pathParts.length; i++) {
+        const part = pathParts[i];
+        
+        // Handle array notation like "targets[0]"
+        const arrayMatch = part.match(/^([^[]+)\[(\d+)\]$/);
+        if (arrayMatch) {
+          const [, arrayName, indexStr] = arrayMatch;
+          const index = parseInt(indexStr, 10);
+          
+          // Find the array declaration
+          const arrayLineIndex = lines.findIndex((line, idx) => 
+            idx >= currentLine - 1 && line.trim().startsWith(`${arrayName}:`));
+          if (arrayLineIndex === -1) break;
+          
+          // Find the specific array item
+          let itemCount = 0;
+          for (let j = arrayLineIndex + 1; j < lines.length; j++) {
+            const line = lines[j].trim();
+            if (line.startsWith('-')) {
+              if (itemCount === index) {
+                currentLine = j + 1;
+                break;
+              }
+              itemCount++;
+            } else if (line && !line.startsWith(' ') && !line.startsWith('\t')) {
+              break; // End of array
+            }
+          }
+        } else {
+          // Handle simple property like "group" or "name"
+          const propertyLineIndex = lines.findIndex((line, idx) => 
+            idx >= currentLine - 1 && 
+            (line.trim().startsWith(`${part}:`) || line.trim() === `${part}:`));
+          if (propertyLineIndex !== -1) {
+            currentLine = propertyLineIndex + 1;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Error parsing YAML path:', path, e);
+    }
+    
+    return { line: currentLine, column: 1 };
+  };
+
+  // Function to set validation markers in Monaco editor
+  const setValidationMarkers = (errors: any[]) => {
+    if (!editorRef.current || !monacoRef.current) return;
+    
+    const model = editorRef.current.getModel();
+    if (!model) return;
+    
+    const markers: editor.IMarkerData[] = errors.map((error) => {
+      let position = { line: 1, column: 1 };
+      let message = '';
+      
+      if (typeof error === 'string') {
+        // Handle legacy string format
+        const colonIndex = error.indexOf(':');
+        const path = colonIndex > 0 ? error.substring(0, colonIndex).trim() : '';
+        message = colonIndex > 0 ? error.substring(colonIndex + 1).trim() : error;
+        
+        if (path) {
+          position = findYamlPathPosition(yamlContent, path);
+        }
+      } else {
+        // Handle new structured ValidationError format
+        message = error.message || 'Validation error';
+        
+        // Use structured line/column data if available
+        if (error.line && error.column) {
+          position = { line: error.line, column: error.column };
+        } else if (error.path) {
+          // Fall back to path-based positioning for schema validation errors
+          position = findYamlPathPosition(yamlContent, error.path);
+        }
+      }
+      
+      return {
+        severity: monacoRef.current.MarkerSeverity.Error,
+        message: message,
+        startLineNumber: position.line,
+        startColumn: position.column,
+        endLineNumber: position.line,
+        endColumn: position.column + 10, // Highlight a few characters
+      };
+    });
+    
+    monacoRef.current.editor.setModelMarkers(model, 'yaml-validation', markers);
+  };
+
+  // Function to clear validation markers
+  const clearValidationMarkers = () => {
+    if (!editorRef.current || !monacoRef.current) return;
+    
+    const model = editorRef.current.getModel();
+    if (!model) return;
+    
+    monacoRef.current.editor.setModelMarkers(model, 'yaml-validation', []);
+  };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && file.type === 'application/x-yaml' || file.name.endsWith('.yaml') || file.name.endsWith('.yml')) {
+    if (file && (file.type === 'application/x-yaml' || file.name.endsWith('.yaml') || file.name.endsWith('.yml'))) {
       const reader = new FileReader();
       reader.onload = (e) => {
         const content = e.target?.result as string;
@@ -40,7 +155,7 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
         setApplyResult(null);
         setError(null);
       };
-      reader.readAsText(file);
+      reader.readAsText(file!);
     } else {
       setError('Please select a valid YAML file (.yaml or .yml)');
     }
@@ -54,13 +169,20 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
 
     setIsLoading(true);
     setError(null);
+    clearValidationMarkers();
     
     try {
       const result = await configurationService.validateConfiguration(yamlContent);
       setValidationResult(result);
+      if (result.isValid) {
+        clearValidationMarkers();
+      } else if (result.errors) {
+        setValidationMarkers(result.errors);
+      }
     } catch (err) {
       setError((err as Error).message);
       setValidationResult(null);
+      clearValidationMarkers();
     } finally {
       setIsLoading(false);
     }
@@ -91,6 +213,78 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
     fileInputRef.current?.click();
   };
 
+  const handleLoadCurrent = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const content = await configurationService.getCurrentConfiguration();
+      setYamlContent(content);
+      setValidationResult(null);
+      setApplyResult(null);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Auto-load current configuration on component mount
+  useEffect(() => {
+    const loadCurrentConfig = async () => {
+      try {
+        const content = await configurationService.getCurrentConfiguration();
+        setYamlContent(content);
+      } catch (err) {
+        // Set example configuration as fallback
+        const exampleConfig = `# Example YAML configuration
+version: 1
+defaults:
+  interval_seconds: 60
+  timeout_ms: 5000
+  retries: 2
+  http:
+    user_agent: "ThingConnectPulse/1.0"
+    expect_text: ""
+
+groups:
+  - id: "network"
+    name: "Network Infrastructure"
+  - id: "servers"
+    name: "Servers"
+
+targets:
+  - name: "Google DNS"
+    host: "8.8.8.8"
+    type: "icmp"
+    group: "network"
+  
+  - name: "Cloudflare DNS"
+    host: "1.1.1.1"
+    type: "icmp"
+    group: "network"
+    
+  - name: "Web Server"
+    host: "10.18.8.20"
+    type: "http"
+    group: "servers"
+    port: 80
+    http_path: "/health"
+    http_match: "OK"
+    
+  - name: "Database Server"
+    host: "10.18.8.21"
+    type: "tcp"
+    group: "servers"
+    port: 5432`;
+        
+        setYamlContent(exampleConfig);
+        console.warn('Could not load current configuration, using example:', err);
+      }
+    };
+    
+    loadCurrentConfig();
+  }, []);
+
   return (
     <VStack gap={6} align='stretch'>
       <Box>
@@ -103,9 +297,19 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
           <Button
             variant='outline'
             size='sm'
-            leftIcon={<Upload size={16} />}
+            onClick={handleLoadCurrent}
+            loading={isLoading}
+          >
+            <Download size={16} />
+            Load Current Config
+          </Button>
+          
+          <Button
+            variant='outline'
+            size='sm'
             onClick={handleLoadFromFile}
           >
+            <Upload size={16} />
             Load from File
           </Button>
           
@@ -118,49 +322,39 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
           />
         </HStack>
 
-        <Textarea
-          value={yamlContent}
-          onChange={(e) => {
-            setYamlContent(e.target.value);
-            setValidationResult(null);
-            setApplyResult(null);
-            setError(null);
-          }}
-          placeholder={`# Example YAML configuration
-version: 1
-defaults:
-  interval_seconds: 10
-  timeout_ms: 1500
-  retries: 1
-
-groups:
-  - { id: "network", name: "Network Infrastructure" }
-  - { id: "servers", name: "Servers" }
-
-targets:
-  - type: icmp
-    host: 8.8.8.8
-    name: "Google DNS"
-    group: network
-  
-  - type: tcp
-    host: 192.168.1.1
-    port: 80
-    name: "Router Web Interface"
-    group: network
-    
-  - type: http
-    host: example.com
-    http_path: /health
-    http_match: "OK"
-    name: "Example Health Check"
-    group: servers`}
-          minH='300px'
-          fontFamily='monospace'
-          fontSize='sm'
-          whiteSpace='pre'
-          overflowWrap='break-word'
-        />
+        <Box border="1px solid" borderColor={colorMode === 'dark' ? 'gray.600' : 'gray.200'} borderRadius="md" overflow="hidden">
+          <Editor
+            height="400px"
+            language="yaml"
+            theme={colorMode === 'dark' ? 'vs-dark' : 'vs-light'}
+            value={yamlContent}
+            onChange={(value) => {
+              setYamlContent(value || '');
+              setValidationResult(null);
+              setApplyResult(null);
+              setError(null);
+              clearValidationMarkers();
+            }}
+            onMount={(editor, monaco) => {
+              editorRef.current = editor;
+              monacoRef.current = monaco;
+            }}
+            options={{
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
+              fontSize: 14,
+              tabSize: 2,
+              insertSpaces: true,
+              wordWrap: 'on',
+              lineNumbers: 'on',
+              folding: true,
+              automaticLayout: true,
+              bracketPairColorization: { enabled: true },
+              formatOnPaste: true,
+              formatOnType: true,
+            }}
+          />
+        </Box>
       </Box>
 
       {error && (
@@ -171,43 +365,24 @@ targets:
       )}
 
       {validationResult && (
-        <Alert status={validationResult.isValid ? 'success' : 'error'}>
-          {validationResult.isValid ? <Check size={16} /> : <AlertCircle size={16} />}
-          <Box>
-            <Text fontWeight='semibold'>
-              {validationResult.isValid ? 'Configuration is valid' : 'Validation failed'}
+        <Alert status={validationResult.isValid ? 'success' : 'error'} py={2} px={3}>
+          <HStack gap={2} align='center'>
+            {validationResult.isValid && <Check size={14} />}
+            <Text fontWeight='medium' fontSize='sm'>
+              {validationResult.isValid 
+                ? 'Configuration is valid' 
+                : `${validationResult.errors?.length || 0} validation error${(validationResult.errors?.length || 0) !== 1 ? 's' : ''} found - see highlighted lines above`}
             </Text>
-            {validationResult.errors && (
-              <VStack align='start' mt={2} gap={1}>
-                {validationResult.errors.map((error, index) => (
-                  <Text key={index} fontSize='sm'>• {error}</Text>
-                ))}
-              </VStack>
-            )}
-          </Box>
+          </HStack>
         </Alert>
       )}
 
       {applyResult && (
-        <Alert status='success'>
-          <Check size={16} />
-          <Box>
-            <Text fontWeight='semibold'>Configuration applied successfully</Text>
-            <VStack align='start' mt={2} gap={1}>
-              <Text fontSize='sm'>Version ID: <Badge variant='outline'>{applyResult.config_version_id}</Badge></Text>
-              <Text fontSize='sm'>Applied at: {new Date(applyResult.applied_ts).toLocaleString()}</Text>
-              {applyResult.changes.length > 0 && (
-                <Box>
-                  <Text fontSize='sm' fontWeight='medium'>Changes:</Text>
-                  {applyResult.changes.map((change, index) => (
-                    <Text key={index} fontSize='sm' ml={4}>
-                      • {change.type.toUpperCase()} {change.entity}: {change.name}
-                    </Text>
-                  ))}
-                </Box>
-              )}
-            </VStack>
-          </Box>
+        <Alert status='success' py={2} px={3}>
+          <HStack gap={2} align='center'>
+            <Check size={14} />
+            <Text fontWeight='medium' fontSize='sm'>Configuration applied successfully</Text>
+          </HStack>
         </Alert>
       )}
 
@@ -215,20 +390,20 @@ targets:
         <Button
           variant='outline'
           onClick={handleValidate}
-          isLoading={isLoading}
-          leftIcon={<Check size={16} />}
+          loading={isLoading}
           disabled={!yamlContent.trim()}
         >
+          <Check size={16} />
           Validate
         </Button>
         
         <Button
           colorScheme='blue'
           onClick={handleApply}
-          isLoading={isLoading}
-          leftIcon={<Upload size={16} />}
-          disabled={!yamlContent.trim() || (validationResult && !validationResult.isValid)}
+          loading={isLoading}
+          disabled={!yamlContent.trim() || (validationResult?.isValid === false)}
         >
+          <Upload size={16} />
           Apply Configuration
         </Button>
       </HStack>

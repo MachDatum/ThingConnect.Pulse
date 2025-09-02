@@ -97,28 +97,34 @@ export default function About() {
               helping plants optimize their industrial networks and data infrastructure.
             </Text>
             <HStack gap={4}>
-              <Button
-                as={Link}
+              <Link
                 href='https://thingconnect.com'
                 target='_blank'
                 rel='noopener noreferrer'
-                size='sm'
-                variant='outline'
-                leftIcon={<ExternalLink size={16} />}
+                _hover={{ textDecoration: 'none' }}
               >
-                Visit ThingConnect.com
-              </Button>
-              <Button
-                as={Link}
+                <Button
+                  size='sm'
+                  variant='outline'
+                >
+                  <ExternalLink size={16} />
+                  Visit ThingConnect.com
+                </Button>
+              </Link>
+              <Link
                 href='https://github.com/MachDatum/ThingConnect.Pulse'
                 target='_blank'
                 rel='noopener noreferrer'
-                size='sm'
-                variant='outline'
-                leftIcon={<ExternalLink size={16} />}
+                _hover={{ textDecoration: 'none' }}
               >
+                <Button
+                  size='sm'
+                  variant='outline'
+                >
+                <ExternalLink size={16} />
                 View Source Code
               </Button>
+              </Link>
             </HStack>
           </VStack>
         </Box>

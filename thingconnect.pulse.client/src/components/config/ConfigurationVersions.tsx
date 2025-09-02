@@ -98,7 +98,7 @@ export function ConfigurationVersions({ refreshTrigger }: ConfigurationVersionsP
         </Alert>
       ) : (
         <Box overflowX='auto'>
-          <Table.Root variant='simple' size='sm'>
+          <Table.Root size='sm'>
             <Table.Header>
               <Table.Row>
                 <Table.ColumnHeader>Version</Table.ColumnHeader>

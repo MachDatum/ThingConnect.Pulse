@@ -12,6 +12,8 @@ public interface IConfigurationService
     Task<ApplyResultDto> ApplyConfigurationAsync(string yamlContent, string? actor = null, string? note = null);
     Task<List<ConfigurationVersionDto>> GetVersionsAsync();
     Task<string?> GetVersionContentAsync(string versionId);
+    Task<string?> GetCurrentConfigurationAsync();
+    Task<ApplyResultDto> PreviewChangesAsync(string yamlContent);
 }
 
 public sealed class ConfigurationService : IConfigurationService
@@ -32,7 +34,7 @@ public sealed class ConfigurationService : IConfigurationService
         (ConfigurationYaml? configuration, ValidationErrorsDto? validationErrors) = await _parser.ParseAndValidateAsync(yamlContent);
         if (validationErrors != null)
         {
-            throw new InvalidOperationException($"Validation failed: {validationErrors.Message}");
+            throw new ConfigurationValidationException(validationErrors);
         }
 
         if (configuration == null)
@@ -131,6 +133,48 @@ public sealed class ConfigurationService : IConfigurationService
         return await File.ReadAllTextAsync(version.FilePath);
     }
 
+    public async Task<string?> GetCurrentConfigurationAsync()
+    {
+        string configPath = Path.Combine(_pathService.GetConfigDirectory(), "config.yaml");
+        if (!File.Exists(configPath))
+        {
+            return null;
+        }
+
+        return await File.ReadAllTextAsync(configPath);
+    }
+
+    public async Task<ApplyResultDto> PreviewChangesAsync(string yamlContent)
+    {
+        (ConfigurationYaml? configuration, ValidationErrorsDto? validationErrors) = await _parser.ParseAndValidateAsync(yamlContent);
+        if (validationErrors != null)
+        {
+            throw new ConfigurationValidationException(validationErrors);
+        }
+
+        if (configuration == null)
+        {
+            throw new InvalidOperationException("Configuration parsing returned null");
+        }
+
+        (List<Group> groups, List<Data.Endpoint> endpoints) = _parser.ConvertToEntities(configuration!);
+
+        List<Group> existingGroups = await _context.Groups.ToListAsync();
+        List<Data.Endpoint> existingEndpoints = await _context.Endpoints.ToListAsync();
+
+        (int Added, int Updated, int Removed) groupChanges = CalculateGroupChanges(existingGroups, groups);
+        (int Added, int Updated, int Removed) endpointChanges = CalculateEndpointChanges(existingEndpoints, endpoints);
+
+        return new ApplyResultDto
+        {
+            ConfigVersionId = "dry-run-preview",
+            Added = groupChanges.Added + endpointChanges.Added,
+            Updated = groupChanges.Updated + endpointChanges.Updated,
+            Removed = groupChanges.Removed + endpointChanges.Removed,
+            Warnings = new() { "Dry-run mode - no changes applied to database" }
+        };
+    }
+
     private async Task<(int Added, int Updated, int Removed)> ApplyChangesToDatabaseAsync(
         List<Group> newGroups, List<Data.Endpoint> newEndpoints)
     {
@@ -222,6 +266,88 @@ public sealed class ConfigurationService : IConfigurationService
             if (!updatedByKey.ContainsKey(existingKey))
             {
                 _context.Endpoints.Remove(existingByKey[existingKey]);
+                removed++;
+            }
+        }
+
+        return (added, updatedCount, removed);
+    }
+
+    private static (int Added, int Updated, int Removed) CalculateGroupChanges(
+        List<Group> existing, List<Group> updated)
+    {
+        int added = 0;
+        int updatedCount = 0;
+        int removed = 0;
+
+        var existingDict = existing.ToDictionary(g => g.Id);
+        var updatedDict = updated.ToDictionary(g => g.Id);
+
+        foreach (Group group in updated)
+        {
+            if (existingDict.TryGetValue(group.Id, out Group? existingGroup))
+            {
+                if (existingGroup.Name != group.Name ||
+                    existingGroup.ParentId != group.ParentId ||
+                    existingGroup.Color != group.Color ||
+                    existingGroup.SortOrder != group.SortOrder)
+                {
+                    updatedCount++;
+                }
+            }
+            else
+            {
+                added++;
+            }
+        }
+
+        foreach (string existingId in existingDict.Keys)
+        {
+            if (!updatedDict.ContainsKey(existingId))
+            {
+                removed++;
+            }
+        }
+
+        return (added, updatedCount, removed);
+    }
+
+    private static (int Added, int Updated, int Removed) CalculateEndpointChanges(
+        List<Data.Endpoint> existing, List<Data.Endpoint> updated)
+    {
+        int added = 0;
+        int updatedCount = 0;
+        int removed = 0;
+
+        var existingByKey = existing.ToDictionary(e => $"{e.Name}|{e.Host}|{e.Port}");
+        var updatedByKey = updated.ToDictionary(e => $"{e.Name}|{e.Host}|{e.Port}");
+
+        foreach (Data.Endpoint endpoint in updated)
+        {
+            string key = $"{endpoint.Name}|{endpoint.Host}|{endpoint.Port}";
+            if (existingByKey.TryGetValue(key, out Data.Endpoint? existingEndpoint))
+            {
+                if (existingEndpoint.GroupId != endpoint.GroupId ||
+                    existingEndpoint.Type != endpoint.Type ||
+                    existingEndpoint.IntervalSeconds != endpoint.IntervalSeconds ||
+                    existingEndpoint.TimeoutMs != endpoint.TimeoutMs ||
+                    existingEndpoint.Retries != endpoint.Retries ||
+                    existingEndpoint.HttpPath != endpoint.HttpPath ||
+                    existingEndpoint.HttpMatch != endpoint.HttpMatch)
+                {
+                    updatedCount++;
+                }
+            }
+            else
+            {
+                added++;
+            }
+        }
+
+        foreach (string existingKey in existingByKey.Keys)
+        {
+            if (!updatedByKey.ContainsKey(existingKey))
+            {
                 removed++;
             }
         }

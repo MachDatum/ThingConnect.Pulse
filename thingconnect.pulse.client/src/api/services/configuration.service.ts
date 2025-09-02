@@ -1,5 +1,5 @@
 import { apiClient } from '../client';
-import type { ConfigurationVersion, ConfigurationApplyRequest, ConfigurationApplyResponse } from '../types';
+import type { ConfigurationVersion, ConfigurationApplyResponse, ValidationErrorsDto, ValidationError } from '../types';
 
 export class ConfigurationService {
   /**
@@ -37,12 +37,23 @@ export class ConfigurationService {
   }
 
   /**
+   * Get current active configuration as YAML content
+   */
+  async getCurrentConfiguration(): Promise<string> {
+    return apiClient.get<string>('/api/configuration/current', {
+      headers: {
+        'Accept': 'text/plain',
+      },
+    });
+  }
+
+  /**
    * Validate configuration without applying
    */
-  async validateConfiguration(yamlContent: string): Promise<{ isValid: boolean; errors?: string[] }> {
+  async validateConfiguration(yamlContent: string): Promise<{ isValid: boolean; errors?: ValidationError[] }> {
     try {
-      // Use dry-run parameter to validate without applying
-      const response = await apiClient.post<ConfigurationApplyResponse>('/api/configuration/apply?dry-run=true', yamlContent, {
+      // Use dryRun parameter to validate without applying
+      await apiClient.post<ConfigurationApplyResponse>('/api/configuration/apply?dryRun=true', yamlContent, {
         headers: {
           'Content-Type': 'text/plain',
         },
@@ -52,14 +63,36 @@ export class ConfigurationService {
       // Parse validation errors from API response
       try {
         const apiError = JSON.parse((error as Error).message);
+        
+        // The actual ValidationErrorsDto is in apiError.details, not the root
+        const errorData = apiError.details || apiError;
+        
+        // Handle ValidationErrorsDto structure
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          const validationDto = errorData as ValidationErrorsDto;
+          return {
+            isValid: false,
+            errors: validationDto.errors,
+          };
+        }
+        
+        // Create a single error for other cases
         return {
           isValid: false,
-          errors: Array.isArray(apiError.details?.errors) ? apiError.details.errors : [apiError.message],
+          errors: [{
+            path: '',
+            message: errorData.message || apiError.message || 'Validation failed',
+            value: null
+          }],
         };
       } catch {
         return {
           isValid: false,
-          errors: [(error as Error).message],
+          errors: [{
+            path: '',
+            message: (error as Error).message,
+            value: null
+          }],
         };
       }
     }
