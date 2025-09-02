@@ -1,18 +1,16 @@
 import { Box, Text, VStack } from '@chakra-ui/react';
 import { Alert } from '@/components/ui/alert';
-import { Settings as SettingsIcon, Bell, Palette, Database } from 'lucide-react';
+import { Bell, Palette, Database } from 'lucide-react';
 import { Page } from '@/components/layout/Page';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { PageContent } from '@/components/layout/PageContent';
 
 export default function Settings() {
   return (
-    <Page title="Settings" testId="settings-page">
-      <PageHeader
+    <Page title="Settings" testId="settings-page" description="Configure application preferences and system settings">
+      {/* <PageHeader
         title="Application Settings"
         description="Configure application preferences and system settings"
-        icon={<SettingsIcon size={20} />}
-      />
+      /> */}
       
       <PageContent>
         <Alert status="info" py={2}>

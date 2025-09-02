@@ -1,21 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Box,
   Text,
-  VStack,
   HStack,
   Button,
   Card,
   Grid,
   GridItem,
-  Spinner,
-  Alert,
 } from '@chakra-ui/react';
-import { Clock, Download, TrendingUp, AlertCircle } from 'lucide-react';
+import { Download, TrendingUp, AlertCircle } from 'lucide-react';
 import { Page } from '@/components/layout/Page';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { PageContent } from '@/components/layout/PageContent';
 import { PageSection } from '@/components/layout/PageSection';
 
 import { DateRangePicker } from '@/components/DateRangePicker';
@@ -58,7 +52,6 @@ export default function History() {
   const {
     data: historyData,
     isLoading,
-    error,
     refetch,
   } = useQuery({
     queryKey: ['history', selectedEndpoint, dateRange, bucket],
@@ -101,19 +94,11 @@ export default function History() {
     'Unknown Endpoint';
 
   return (
-    <Page title="History" testId="history-page">
-      <PageHeader
+    <Page title="History" description="View historical monitoring data and export reports"  testId="history-page">
+      {/* <PageHeader
         title="Historical Data"
         description="View historical monitoring data and export reports"
-        icon={<Clock size={20} />}
-      />
-      
-      <PageContent 
-        loading={isLoading && !historyData}
-        error={error as Error | null}
-        empty={!selectedEndpoint}
-        emptyMessage="Select an endpoint to view historical data"
-      >
+      /> */}
         <PageSection title="Filters">
           <Card.Root>
             <Card.Body>
@@ -228,7 +213,6 @@ export default function History() {
             </Card.Root>
           </>
         )}
-      </PageContent>
     </Page>
   );
 }

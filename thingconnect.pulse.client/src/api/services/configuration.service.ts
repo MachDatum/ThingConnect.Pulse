@@ -1,5 +1,5 @@
 import { apiClient } from '../client';
-import type { ConfigurationVersion, ConfigurationApplyRequest, ConfigurationApplyResponse } from '../types';
+import type { ConfigurationVersion, ConfigurationApplyResponse } from '../types';
 
 export class ConfigurationService {
   /**
@@ -47,7 +47,7 @@ export class ConfigurationService {
           'Content-Type': 'text/plain',
         },
       });
-      return { isValid: true };
+      return { isValid: true, ...response };
     } catch (error) {
       // Parse validation errors from API response
       try {

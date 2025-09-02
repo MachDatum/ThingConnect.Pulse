@@ -28,20 +28,17 @@ export function PageContent({
   if (isEmpty && !isLoading) {
     return (
       <Box
-        h={'100%'}
+        h={'full'}
         display='flex'
         justifyContent='center'
         alignItems='center'
         data-testid='empty-state'
-        background={'white'}
       >
         <VStack
-          p={5}
           h={'full'}
-          w={'100%'}
+          w={'full'}
           border='1px solid'
           borderColor='gray.200'
-          background={'white'}
           justifyContent='center'
           alignItems='center'
           borderRadius={'sm'}

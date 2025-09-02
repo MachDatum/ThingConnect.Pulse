@@ -15,6 +15,7 @@ export default function Configuration() {
     <Page
       title='Configuration Management'
       description='Manage monitoring endpoints and YAML configuration'
+      testId="configuration-page"
     >
       <TabsRoot defaultValue='editor' variant='enclosed'>
         <TabsList>
