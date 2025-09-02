@@ -72,7 +72,6 @@ export default function Dashboard() {
           _dark={{ bg: 'gray.800' }}
           border='1px solid'
           borderColor='gray.200'
-          _dark={{ borderColor: 'gray.700' }}
         >
           <Grid templateColumns='repeat(auto-fit, minmax(120px, 1fr))' gap={2}>
             <Box display='flex' justifyContent='space-between' alignItems='center' h='32px'>

@@ -1,6 +1,6 @@
 import { Box, Text, VStack } from '@chakra-ui/react';
 import { Alert } from '@/components/ui/alert';
-import { Settings as SettingsIcon, Bell, Palette, Database } from 'lucide-react';
+import { Bell, Palette, Database } from 'lucide-react';
 import { Page } from '@/components/layout/Page';
 import { PageContent } from '@/components/layout/PageContent';
 

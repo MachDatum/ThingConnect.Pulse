@@ -46,13 +46,12 @@ export function StatusFilters({
       top={{ base: '0', md: 'auto' }}
       zIndex={{ base: 10, md: 'auto' }}
       bg={{ base: 'white', md: 'transparent' }}
-      _dark={{ bg: { base: 'gray.800', md: 'transparent' } }}
+      _dark={{ bg: { base: 'gray.800', md: 'transparent' } , borderColor: { base: 'gray.700', md: 'transparent' } }}
       py={{ base: 3, md: 0 }}
       px={{ base: 4, md: 0 }}
       mx={{ base: -4, md: 0 }}
       borderBottom={{ base: '1px', md: 'none' }}
       borderColor={{ base: 'gray.200', md: 'transparent' }}
-      _dark={{ borderColor: { base: 'gray.700', md: 'transparent' } }}
       data-testid='status-filters'
     >
       <HStack

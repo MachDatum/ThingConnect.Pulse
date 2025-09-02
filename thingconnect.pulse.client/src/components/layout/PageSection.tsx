@@ -1,4 +1,4 @@
-import { Box, VStack, HStack, Heading, Collapsible, Button } from '@chakra-ui/react';
+import { Box, VStack, Heading, Collapsible, Button } from '@chakra-ui/react';
 import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { ReactNode } from 'react';

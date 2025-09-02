@@ -37,10 +37,9 @@ export default function About() {
           p={3}
           borderRadius='md'
           bg='gray.50'
-          _dark={{ bg: 'gray.800' }}
+          _dark={{ bg: 'gray.800', borderColor: 'gray.700' }}
           border='1px solid'
           borderColor='gray.200'
-          _dark={{ borderColor: 'gray.700' }}
         >
           <Text fontSize='sm' lineHeight='1.5'>
             ThingConnect Pulse provides YAML-configured monitoring with live dashboard, historical
@@ -155,29 +154,21 @@ export default function About() {
               optimize their industrial networks and data infrastructure.
             </Text>
             <HStack gap={2}>
-              <Button
-                as={Link}
-                href='https://thingconnect.com'
-                target='_blank'
-                rel='noopener noreferrer'
-                size='sm'
-                variant='outline'
-                h='32px'
-              >
-                <ExternalLink size={14} />
-                Visit Site
+              <Button asChild size='sm' variant='outline' h='32px'>
+                <Link href='https://thingconnect.com' target='_blank' rel='noopener noreferrer'>
+                  <ExternalLink size={14} />
+                  Visit Site
+                </Link>
               </Button>
-              <Button
-                as={Link}
-                href='https://github.com/MachDatum/ThingConnect.Pulse'
-                target='_blank'
-                rel='noopener noreferrer'
-                size='sm'
-                variant='outline'
-                h='32px'
-              >
-                <ExternalLink size={14} />
-                Source Code
+              <Button asChild size='sm' variant='outline' h='32px'>
+                <Link
+                  href='https://github.com/MachDatum/ThingConnect.Pulse'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                >
+                  <ExternalLink size={14} />
+                  Source Code
+                </Link>
               </Button>
             </HStack>
           </VStack>
@@ -188,9 +179,8 @@ export default function About() {
         p={3}
         borderRadius='md'
         bg='yellow.100'
-        _dark={{ bg: 'yellow.900' }}
+        _dark={{ bg: 'yellow.900', color: 'yellow.200' }}
         color='yellow.800'
-        _dark={{ color: 'yellow.200' }}
       >
         <Text fontSize='sm'>
           <Text as='span' fontWeight='medium'>

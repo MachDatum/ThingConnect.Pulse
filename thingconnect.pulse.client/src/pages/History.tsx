@@ -1,21 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Box,
   Text,
-  VStack,
   HStack,
   Button,
   Card,
   Grid,
   GridItem,
-  Spinner,
-  Alert,
 } from '@chakra-ui/react';
-import { Clock, Download, TrendingUp, AlertCircle } from 'lucide-react';
+import { Download, TrendingUp, AlertCircle } from 'lucide-react';
 import { Page } from '@/components/layout/Page';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { PageContent } from '@/components/layout/PageContent';
 import { PageSection } from '@/components/layout/PageSection';
 
 import { DateRangePicker } from '@/components/DateRangePicker';
@@ -58,7 +52,6 @@ export default function History() {
   const {
     data: historyData,
     isLoading,
-    error,
     refetch,
   } = useQuery({
     queryKey: ['history', selectedEndpoint, dateRange, bucket],
