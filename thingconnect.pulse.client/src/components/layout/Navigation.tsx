@@ -1,58 +1,41 @@
-import { Box, VStack, Link, Icon, Text, Image, HStack } from '@chakra-ui/react';
+import {
+  Box,
+  VStack,
+  Text,
+  Icon,
+  Image,
+  HStack,
+  Badge,
+  Flex,
+  Separator,
+  Button,
+} from '@chakra-ui/react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
-import { Home, Clock, Settings, Wrench, Activity, Info } from 'lucide-react';
+import { History, Wifi } from 'lucide-react';
 import thingConnectIcon from '@/assets/thingconnect-icon.svg';
-
+import { Clock, Wrench, Settings, Info, Dashboard } from '@/icons';
+import { useColorMode } from '../ui/color-mode';
 interface NavigationProps {
   onItemClick?: () => void;
 }
 
 const navigationItems = [
-  {
-    label: 'Dashboard',
-    path: '/',
-    icon: Home,
-    description: 'Live status overview',
-  },
-  {
-    label: 'History',
-    path: '/history',
-    icon: Clock,
-    description: 'Historical data & trends',
-  },
-  {
-    label: 'Config',
-    path: '/config',
-    icon: Wrench,
-    description: 'Endpoint configuration',
-  },
-  {
-    label: 'Settings',
-    path: '/settings',
-    icon: Settings,
-    description: 'Application settings',
-  },
-  {
-    label: 'About',
-    path: '/about',
-    icon: Info,
-    description: 'Product information',
-  },
+  { label: 'Dashboard', path: '/', icon: Dashboard },
+  { label: 'History', path: '/history', icon: Clock },
+  { label: 'Config', path: '/config', icon: Wrench },
+  { label: 'Settings', path: '/settings', icon: Settings },
+  { label: 'About', path: '/about', icon: Info },
 ];
 
 export function Navigation({ onItemClick }: NavigationProps) {
+  const { colorMode, toggleColorMode } = useColorMode();
   const location = useLocation();
 
-  const isActiveRoute = (path: string) => {
-    if (path === '/') {
-      return location.pathname === '/';
-    }
-    return location.pathname.startsWith(path);
-  };
+  const isActiveRoute = (path: string) =>
+    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
 
   return (
     <Box h='100%' display='flex' flexDirection='column' data-testid='navigation'>
-      {/* Brand section */}
       <Box
         p={4}
         borderBottom='1px'
@@ -88,60 +71,42 @@ export function Navigation({ onItemClick }: NavigationProps) {
           </Box>
         </HStack>
       </Box>
-
-      {/* Navigation items */}
       <VStack gap={1} p={2} flex='1' align='stretch' data-testid='navigation-items'>
         {navigationItems.map(item => {
           const isActive = isActiveRoute(item.path);
-
           return (
-            <Link
-              key={item.path}
-              asChild
-              onClick={onItemClick}
-              textDecoration='none'
-              _hover={{ textDecoration: 'none' }}
-            >
-              <RouterLink to={item.path}>
-                <Box
-                  data-testid={`nav-item-${item.label.toLowerCase()}`}
-                  p={3}
-                  borderRadius='md'
-                  bg={isActive ? 'blue.50' : 'transparent'}
-                  color={isActive ? 'blue.700' : 'gray.700'}
-                  _hover={{
-                    bg: isActive ? 'blue.100' : 'gray.100',
-                  }}
-                  _dark={{
-                    bg: isActive ? 'blue.900' : 'transparent',
-                    color: isActive ? 'blue.200' : 'gray.200',
-                    _hover: {
-                      bg: isActive ? 'blue.800' : 'gray.700',
-                    },
-                  }}
-                  borderLeft={isActive ? '3px solid' : '3px solid transparent'}
-                  borderLeftColor={isActive ? 'blue.500' : 'transparent'}
-                  aria-label={`Navigate to ${item.label}`}
-                >
-                  <HStack gap={3}>
-                    <Icon as={item.icon} boxSize={5} aria-hidden='true' />
-                    <Box>
-                      <Text fontSize='sm' fontWeight={isActive ? 'semibold' : 'normal'}>
-                        {item.label}
-                      </Text>
-                      <Text fontSize='xs' color='gray.500' _dark={{ color: 'gray.400' }}>
-                        {item.description}
-                      </Text>
-                    </Box>
-                  </HStack>
-                </Box>
-              </RouterLink>
-            </Link>
+            <RouterLink key={item.path} to={item.path} onClick={onItemClick}>
+              <HStack
+                px={2}
+                py={1}
+                borderRadius='md'
+                color={isActive ? 'blue.600' : 'gray.600'}
+                bg={isActive ? 'whiteAlpha.950' : 'transparent'}
+                border={isActive ? '1px solid' : undefined}
+                borderColor={isActive ? 'border' : undefined}
+                _hover={
+                  isActive
+                    ? undefined
+                    : {
+                        bg: 'blackAlpha.50',
+                        _dark: { bg: 'gray.700' },
+                      }
+                }
+                _dark={{
+                  color: isActive ? 'blue.200' : 'gray.200',
+                  bg: isActive ? 'blackAlpha.200' : undefined,
+                  border: isActive ? '1px solid rgba(255,255,255,0.1)' : undefined,
+                }}
+              >
+                <Icon as={item.icon} boxSize={4} />
+                <Text fontSize='sm' fontWeight={'semibold'}>
+                  {item.label}
+                </Text>
+              </HStack>
+            </RouterLink>
           );
         })}
       </VStack>
-
-      {/* Status indicator at bottom */}
       <Box
         p={3}
         borderTop='1px'
@@ -149,12 +114,49 @@ export function Navigation({ onItemClick }: NavigationProps) {
         _dark={{ borderColor: 'gray.700' }}
         data-testid='system-status'
       >
-        <HStack gap={2}>
-          <Icon as={Activity} boxSize={4} color='green.500' aria-label='System status' />
-          <Text fontSize='xs' color='gray.600' _dark={{ color: 'gray.400' }}>
-            System Online
-          </Text>
-        </HStack>
+        <VStack align='stretch' gap={2}>
+          <HStack display={{ base: 'none', md: 'flex' }}>
+            <Wifi size={16} aria-label='Connection status' />
+            <Badge bg='gray.200' size='sm' _dark={{ color: 'gray.800' }}>
+              Connected
+            </Badge>
+          </HStack>
+          <HStack gap={2}>
+            <Icon as={History} boxSize={4} />
+            <Text fontSize='xs' _dark={{ color: 'gray.400' }}>
+              Updated 2s ago
+            </Text>
+          </HStack>
+          <Separator _dark={{ borderColor: 'gray.600' }} />
+          <HStack justify='space-between'>
+            <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
+              {colorMode === 'light' ? 'Light Mode' : 'Dark Mode'}
+            </Text>
+            <Button
+              onClick={toggleColorMode}
+              w='50px'
+              h='24px'
+              borderRadius='full'
+              bg={colorMode === 'light' ? 'gray.200' : 'gray.700'}
+              px='1'
+              display='flex'
+              alignItems='center'
+              justifyContent={colorMode === 'light' ? 'flex-start' : 'flex-end'}
+              transition='all 0.3s ease'
+            >
+              <Flex
+                align='center'
+                justify='center'
+                w='20px'
+                h='20px'
+                borderRadius='full'
+                bg='white'
+                color={'gray.600'}
+                shadow='sm'
+              />
+            </Button>
+          </HStack>
+        </VStack>
       </Box>
     </Box>
   );

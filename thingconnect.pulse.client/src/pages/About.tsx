@@ -1,100 +1,157 @@
-import { 
-  Box, 
-  Heading, 
-  Text, 
-  VStack, 
-  HStack, 
-  Image,
-  Badge,
-  Link,
-  Button
-} from '@chakra-ui/react';
-import { Info, ExternalLink, Heart } from 'lucide-react';
+import { Box, Text, VStack, HStack, Image, Badge, Link, Button } from '@chakra-ui/react';
+import { ExternalLink, Heart } from 'lucide-react';
+import { Page } from '@/components/layout/Page';
+import { PageSection } from '@/components/layout/PageSection';
 import thingConnectLogo from '@/assets/thingconnect-logo.svg';
 
 export default function About() {
   return (
-    <VStack gap={8} align='stretch' maxW='800px' mx='auto' p={6}>
-      <Box textAlign='center'>
-        <HStack justify='center' gap={4} mb={4}>
-          <Image src={thingConnectLogo} alt='ThingConnect' h='48px' />
-          <Box textAlign='left'>
-            <Heading size='xl' color='blue.600' _dark={{ color: 'blue.400' }}>
-              ThingConnect Pulse
-            </Heading>
-            <HStack gap={2} mt={1}>
-              <Badge colorPalette='blue' variant='solid'>v1.0.0</Badge>
-              <Badge variant='outline'>Network Monitor</Badge>
+    <Page
+      title='About'
+      description='Free, on-premises availability monitoring for manufacturing IT/OT'
+    >
+      {/* <PageHeader
+        title="ThingConnect Pulse"
+        description="Free, on-premises availability monitoring for manufacturing IT/OT"
+        icon={<Info size={20} />}
+      />
+       */}
+      <VStack align='center' gap={4} maxW='600px' mx='auto'>
+        <HStack justify='center' gap={3}>
+          <Image src={thingConnectLogo} alt='ThingConnect' h='40px' />
+          <VStack align='start' gap={1}>
+            <HStack gap={2}>
+              <Badge colorPalette='blue' variant='solid' size='sm'>
+                v1.0.0
+              </Badge>
+              <Badge variant='outline' size='sm'>
+                Network Monitor
+              </Badge>
             </HStack>
-          </Box>
+          </VStack>
         </HStack>
-        <Text fontSize='lg' color='gray.600' _dark={{ color: 'gray.400' }}>
-          Free, on-premises availability monitoring for manufacturing IT/OT
-        </Text>
-      </Box>
+      </VStack>
 
-      <VStack gap={6} align='stretch'>
-        <Box p={6} borderRadius='lg' bg='blue.50' _dark={{ bg: 'blue.900' }}>
-          <HStack gap={3} mb={4}>
-            <Info size={20} />
-            <Heading size='md'>Product Overview</Heading>
-          </HStack>
-          <Text lineHeight='tall'>
-            ThingConnect Pulse provides YAML-configured monitoring with live dashboard, 
-            historical rollups, and CSV export. Designed for plant IT/OT admins, production 
-            supervisors, and maintenance engineers who need reliable network device monitoring 
-            with zero external dependencies.
+      <PageSection>
+        <Box
+          p={3}
+          borderRadius='md'
+          bg='gray.50'
+          _dark={{ bg: 'gray.800', borderColor: 'gray.700' }}
+          border='1px solid'
+          borderColor='gray.200'
+        >
+          <Text fontSize='sm' lineHeight='1.5'>
+            ThingConnect Pulse provides YAML-configured monitoring with live dashboard, historical
+            rollups, and CSV export. Designed for plant IT/OT admins, production supervisors, and
+            maintenance engineers who need reliable network device monitoring with zero external
+            dependencies.
           </Text>
         </Box>
+      </PageSection>
 
-        <VStack gap={4} align='stretch'>
-          <Heading size='md'>Key Features</Heading>
-          
-          <VStack gap={3} align='stretch'>
-            <Box p={4} borderRadius='md' border='1px' borderColor='gray.200' _dark={{ borderColor: 'gray.700' }}>
-              <Text fontWeight='semibold' mb={2}>🚀 Lightweight Setup</Text>
-              <Text fontSize='sm'>5-minute installation with single Windows Service installer. No complex dependencies or configuration required.</Text>
-            </Box>
-            
-            <Box p={4} borderRadius='md' border='1px' borderColor='gray.200' _dark={{ borderColor: 'gray.700' }}>
-              <Text fontWeight='semibold' mb={2}>🏠 Local-First Architecture</Text>
-              <Text fontSize='sm'>All data stays on-premises with no cloud dependencies. Perfect for air-gapped manufacturing environments.</Text>
-            </Box>
-            
-            <Box p={4} borderRadius='md' border='1px' borderColor='gray.200' _dark={{ borderColor: 'gray.700' }}>
-              <Text fontWeight='semibold' mb={2}>📝 Readable Configuration</Text>
-              <Text fontSize='sm'>Simple YAML configuration with explicit Apply workflow. Supports CIDR ranges and wildcard discovery.</Text>
-            </Box>
-            
-            <Box p={4} borderRadius='md' border='1px' borderColor='gray.200' _dark={{ borderColor: 'gray.700' }}>
-              <Text fontWeight='semibold' mb={2}>📱 Mobile-Friendly Dashboard</Text>
-              <Text fontSize='sm'>Responsive interface optimized for tablets and phones. Perfect for shift supervisors on the factory floor.</Text>
-            </Box>
-          </VStack>
+      <PageSection title='Key Features'>
+        <VStack gap={2}>
+          <Box
+            p={3}
+            borderRadius='md'
+            border='1px'
+            borderColor='gray.200'
+            _dark={{ borderColor: 'gray.700' }}
+          >
+            <Text fontWeight='medium' fontSize='sm' mb={1}>
+              🚀 Lightweight Setup
+            </Text>
+            <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
+              5-minute installation with single Windows Service installer.
+            </Text>
+          </Box>
+
+          <Box
+            p={3}
+            borderRadius='md'
+            border='1px'
+            borderColor='gray.200'
+            _dark={{ borderColor: 'gray.700' }}
+          >
+            <Text fontWeight='medium' fontSize='sm' mb={1}>
+              🏠 Local-First Architecture
+            </Text>
+            <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
+              All data stays on-premises with no cloud dependencies.
+            </Text>
+          </Box>
+
+          <Box
+            p={3}
+            borderRadius='md'
+            border='1px'
+            borderColor='gray.200'
+            _dark={{ borderColor: 'gray.700' }}
+          >
+            <Text fontWeight='medium' fontSize='sm' mb={1}>
+              📝 Readable Configuration
+            </Text>
+            <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
+              Simple YAML configuration with explicit Apply workflow.
+            </Text>
+          </Box>
+
+          <Box
+            p={3}
+            borderRadius='md'
+            border='1px'
+            borderColor='gray.200'
+            _dark={{ borderColor: 'gray.700' }}
+          >
+            <Text fontWeight='medium' fontSize='sm' mb={1}>
+              📱 Mobile-Friendly Dashboard
+            </Text>
+            <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
+              Responsive interface optimized for tablets and phones.
+            </Text>
+          </Box>
         </VStack>
+      </PageSection>
 
-        <VStack gap={4} align='stretch'>
-          <Heading size='md'>Technology Stack</Heading>
-          <HStack gap={2} flexWrap='wrap'>
-            <Badge variant='outline'>ASP.NET Core 8.0</Badge>
-            <Badge variant='outline'>React 19</Badge>
-            <Badge variant='outline'>TypeScript</Badge>
-            <Badge variant='outline'>Chakra UI</Badge>
-            <Badge variant='outline'>Entity Framework</Badge>
-            <Badge variant='outline'>SQLite</Badge>
-            <Badge variant='outline'>Windows Service</Badge>
-          </HStack>
-        </VStack>
+      <PageSection title='Technology Stack'>
+        <Box display='flex' gap={1} flexWrap='wrap'>
+          <Badge variant='outline' size='sm'>
+            ASP.NET Core 8.0
+          </Badge>
+          <Badge variant='outline' size='sm'>
+            React 19
+          </Badge>
+          <Badge variant='outline' size='sm'>
+            TypeScript
+          </Badge>
+          <Badge variant='outline' size='sm'>
+            Chakra UI
+          </Badge>
+          <Badge variant='outline' size='sm'>
+            Entity Framework
+          </Badge>
+          <Badge variant='outline' size='sm'>
+            SQLite
+          </Badge>
+          <Badge variant='outline' size='sm'>
+            Windows Service
+          </Badge>
+        </Box>
+      </PageSection>
 
-        <Box p={6} borderRadius='lg' bg='gray.50' _dark={{ bg: 'gray.800' }}>
-          <VStack gap={4} align='center'>
-            <HStack gap={2}>
+      <PageSection>
+        <Box p={3} borderRadius='md' bg='gray.50' _dark={{ bg: 'gray.800' }}>
+          <VStack gap={2} align='center'>
+            <HStack gap={1}>
               <Heart size={16} color='red' />
-              <Text fontWeight='semibold'>Powered by ThingConnect</Text>
+              <Text fontWeight='medium' fontSize='sm'>
+                Powered by ThingConnect
+              </Text>
             </HStack>
             <Text fontSize='sm' textAlign='center' color='gray.600' _dark={{ color: 'gray.400' }}>
-              ThingConnect specializes in manufacturing connectivity solutions, 
-              helping plants optimize their industrial networks and data infrastructure.
+              ThingConnect specializes in manufacturing connectivity solutions, helping plants
+              optimize their industrial networks and data infrastructure.
             </Text>
             <HStack gap={4}>
               <Link
@@ -128,14 +185,23 @@ export default function About() {
             </HStack>
           </VStack>
         </Box>
+      </PageSection>
 
-        <Box p={4} borderRadius='md' bg='yellow.50' _dark={{ bg: 'yellow.900' }}>
-          <Text fontSize='sm' color='yellow.800' _dark={{ color: 'yellow.200' }}>
-            <Text fontWeight='semibold'>License:</Text> Free for manufacturing environments. 
-            No licensing fees, no per-device costs, no subscription required.
-          </Text>
-        </Box>
-      </VStack>
-    </VStack>
+      <Box
+        p={3}
+        borderRadius='md'
+        bg='yellow.100'
+        _dark={{ bg: 'yellow.900', color: 'yellow.200' }}
+        color='yellow.800'
+      >
+        <Text fontSize='sm'>
+          <Text as='span' fontWeight='medium'>
+            License:
+          </Text>{' '}
+          Free for manufacturing environments. No licensing fees, no per-device costs, no
+          subscription required.
+        </Text>
+      </Box>
+    </Page>
   );
 }

@@ -5,8 +5,7 @@ import {
   VStack, 
   HStack,
   Text,
-  Heading,
-  Badge
+  Heading
 } from '@chakra-ui/react';
 import { useColorMode } from '@/components/ui/color-mode';
 import Editor from '@monaco-editor/react';
@@ -148,7 +147,7 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
     const file = event.target.files?.[0];
     if (file && (file.type === 'application/x-yaml' || file.name.endsWith('.yaml') || file.name.endsWith('.yml'))) {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = e => {
         const content = e.target?.result as string;
         setYamlContent(content);
         setValidationResult(null);
@@ -196,7 +195,7 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
 
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const response = await configurationService.applyConfiguration(yamlContent);
       setApplyResult(response);
@@ -292,7 +291,7 @@ targets:
           <FileText size={20} />
           <Heading size='md'>YAML Configuration Editor</Heading>
         </HStack>
-        
+
         <HStack gap={2} mb={4}>
           <Button
             variant='outline'
@@ -312,7 +311,7 @@ targets:
             <Upload size={16} />
             Load from File
           </Button>
-          
+
           <input
             ref={fileInputRef}
             type='file'
@@ -396,7 +395,7 @@ targets:
           <Check size={16} />
           Validate
         </Button>
-        
+
         <Button
           colorScheme='blue'
           onClick={handleApply}

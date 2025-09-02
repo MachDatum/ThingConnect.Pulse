@@ -1,7 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import { Box, Flex, useBreakpointValue } from '@chakra-ui/react';
 import { useState } from 'react';
-import { Header } from './Header';
 import { Navigation } from './Navigation';
 import { Footer } from './Footer';
 
@@ -15,11 +14,7 @@ export function AppShell() {
   };
 
   return (
-    <Flex h='100vh' direction='column' data-testid='app-shell'>
-      {/* Header */}
-      <Header onMenuClick={toggleSidebar} />
-
-      {/* Main content area with sidebar */}
+    <Flex h='100dvh' direction='column' data-testid='app-shell'>
       <Flex flex='1' overflow='hidden' data-testid='main-layout'>
         {/* Navigation Sidebar */}
         <Box
@@ -29,7 +24,7 @@ export function AppShell() {
           top={{ base: '60px', md: 0 }}
           w={sidebarWidth}
           h={{ base: 'calc(100vh - 60px)', md: '100%' }}
-          bg='gray.50'
+          bg='gray.100'
           borderRight='1px'
           borderColor='gray.200'
           transition='left 0.3s ease'
@@ -59,16 +54,8 @@ export function AppShell() {
         )}
 
         {/* Main content */}
-        <Box
-          data-testid='page-content'
-          flex='1'
-          overflow='auto'
-          bg='white'
-          _dark={{ bg: 'gray.900' }}
-        >
-          <Box p={6} maxW='full'>
-            <Outlet />
-          </Box>
+        <Box data-testid='page-content' flex='1' _dark={{ bg: 'gray.900' }} h={'full'} w={'full'}>
+          <Outlet />
         </Box>
       </Flex>
 
