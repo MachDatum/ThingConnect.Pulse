@@ -26,10 +26,10 @@ export default function Configuration() {
             <Text>Version History</Text>
           </TabsTrigger>
         </TabsList>
-        <TabsContent value='editor' py={4} flex={1} overflow='hidden'>
+        <TabsContent value='editor' py={1} flex={1} overflow='hidden'>
           <ConfigurationEditor onConfigurationApplied={handleConfigurationApplied} />
         </TabsContent>
-        <TabsContent value='versions' py={4} flex={1} overflow='auto'>
+        <TabsContent value='versions' py={1} flex={1} overflow='auto'>
           <ConfigurationVersions refreshTrigger={refreshTrigger} />
         </TabsContent>
       </TabsRoot>

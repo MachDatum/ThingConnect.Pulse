@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { 
   Box, 
   Button, 
@@ -14,6 +14,7 @@ import { Alert } from '@/components/ui/alert';
 import { FileText, Upload, Check, AlertCircle, Download } from 'lucide-react';
 import { configurationService } from '@/api/services/configuration.service';
 import type { ConfigurationApplyResponse, ValidationError } from '@/api/types';
+import { useResizeObserver } from '@/hooks/useResizeObserver';
 
 interface ConfigurationEditorProps {
   onConfigurationApplied?: (response: ConfigurationApplyResponse) => void;
@@ -29,11 +30,10 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
   } | null>(null);
   const [applyResult, setApplyResult] = useState<ConfigurationApplyResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [editorHeight, setEditorHeight] = useState(400);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<any>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const { ref: containerRef, height } = useResizeObserver<HTMLDivElement>();
 
   // Function to convert YAML path to line position for Monaco markers
   const findYamlPathPosition = (yamlText: string, path: string): { line: number; column: number } => {
@@ -286,35 +286,16 @@ targets:
     loadCurrentConfig();
   }, []);
 
-  // Calculate editor height based on available space
-  const calculateEditorHeight = useCallback(() => {
-    if (containerRef.current) {
-      const containerHeight = containerRef.current.clientHeight;
-      // Reserve space for header (~120px) and bottom section (~150px) 
-      const availableHeight = containerHeight - 270;
-      const minHeight = 300;
-      const maxHeight = 800;
-      const newHeight = Math.max(minHeight, Math.min(maxHeight, availableHeight));
-      setEditorHeight(newHeight);
-    }
-  }, []);
-
-  // Calculate height on mount and resize
-  useEffect(() => {
-    calculateEditorHeight();
-    window.addEventListener('resize', calculateEditorHeight);
-    return () => window.removeEventListener('resize', calculateEditorHeight);
-  }, [calculateEditorHeight]);
 
   return (
-    <VStack gap={6} align='stretch' h='full' ref={containerRef}>
-      <Box flexShrink={0}>
-        <HStack gap={3} align='center' mb={4}>
+    <VStack gap={1} align='stretch' h='full' ref={containerRef}>
+      <HStack mt={1} flexShrink={0} justifyContent={"space-between"}>
+        <HStack gap={3} align='center'>
           <FileText size={20} />
           <Heading size='md'>YAML Configuration Editor</Heading>
         </HStack>
 
-        <HStack gap={2} mb={4}>
+        <HStack gap={2} alignItems={"center"} justifyContent={"flex-end"}>
           <Button
             variant='outline'
             size='sm'
@@ -342,11 +323,11 @@ targets:
             onChange={handleFileUpload}
           />
         </HStack>
-      </Box>
+      </HStack>
 
-      <Box border="1px solid" borderColor={colorMode === 'dark' ? 'gray.600' : 'gray.200'} borderRadius="md" overflow="hidden">
+      <Box flex={"1 1 auto"} border="1px solid" borderColor={colorMode === 'dark' ? 'gray.600' : 'gray.200'} borderRadius="md" overflow="hidden">
         <Editor
-          height={`${editorHeight}px`}
+          height={`${height - 88}px`}
           language="yaml"
           theme={colorMode === 'dark' ? 'vs-dark' : 'vs-light'}
           value={yamlContent}
