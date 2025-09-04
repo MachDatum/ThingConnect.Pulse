@@ -17,7 +17,7 @@ export function AppShell() {
   };
 
   return (
-    <Flex h='100vh' direction='column' data-testid='app-shell'>
+    <Flex h='100dvh' direction='column' data-testid='app-shell'>
       <Flex flex='1' overflow='hidden' data-testid='main-layout'>
         {/* Navigation Sidebar */}
         <Box
@@ -57,16 +57,8 @@ export function AppShell() {
         )}
 
         {/* Main content */}
-        <Box
-          data-testid='page-content'
-          flex='1'
-          overflow='auto'
-          bg='white'
-          _dark={{ bg: 'gray.900' }}
-        >
-          <Box p={6} maxW='full'>
-            <Outlet />
-          </Box>
+        <Box data-testid='page-content' flex='1' _dark={{ bg: 'gray.900' }} h={'full'} w={'full'}>
+          <Outlet />
         </Box>
       </Flex>
 

@@ -1,16 +1,7 @@
 import { useState, useRef } from 'react';
-import { 
-  Box, 
-  Button, 
-  VStack, 
-  HStack,
-  Textarea,
-  Text,
-  Heading,
-  Badge
-} from '@chakra-ui/react';
+import { Box, Button, VStack, HStack, Textarea, Text, Heading, Badge } from '@chakra-ui/react';
 import { Alert } from '@/components/ui/alert';
-import { FileText, Upload, Check, AlertCircle, Download } from 'lucide-react';
+import { FileText, Upload, Check, AlertCircle } from 'lucide-react';
 import { configurationService } from '@/api/services/configuration.service';
 import type { ConfigurationApplyResponse } from '@/api/types';
 
@@ -31,9 +22,13 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && file.type === 'application/x-yaml' || file.name.endsWith('.yaml') || file.name.endsWith('.yml')) {
+    if (
+      (file && file.type === 'application/x-yaml') ||
+      file?.name.endsWith('.yaml') ||
+      file?.name.endsWith('.yml')
+    ) {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = e => {
         const content = e.target?.result as string;
         setYamlContent(content);
         setValidationResult(null);
@@ -54,7 +49,7 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
 
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const result = await configurationService.validateConfiguration(yamlContent);
       setValidationResult(result);
@@ -74,7 +69,7 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
 
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const response = await configurationService.applyConfiguration(yamlContent);
       setApplyResult(response);
@@ -98,17 +93,12 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
           <FileText size={20} />
           <Heading size='md'>YAML Configuration Editor</Heading>
         </HStack>
-        
+
         <HStack gap={2} mb={4}>
-          <Button
-            variant='outline'
-            size='sm'
-            leftIcon={<Upload size={16} />}
-            onClick={handleLoadFromFile}
-          >
-            Load from File
+          <Button variant='outline' size='sm' onClick={handleLoadFromFile}>
+            <Upload size={16} /> Load from File
           </Button>
-          
+
           <input
             ref={fileInputRef}
             type='file'
@@ -120,7 +110,7 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
 
         <Textarea
           value={yamlContent}
-          onChange={(e) => {
+          onChange={e => {
             setYamlContent(e.target.value);
             setValidationResult(null);
             setApplyResult(null);
@@ -179,8 +169,10 @@ targets:
             </Text>
             {validationResult.errors && (
               <VStack align='start' mt={2} gap={1}>
-                {validationResult.errors.map((error, index) => (
-                  <Text key={index} fontSize='sm'>• {error}</Text>
+                {validationResult.errors.map((error) => (
+                  <Text key={error} fontSize='sm'>
+                    • {error}
+                  </Text>
                 ))}
               </VStack>
             )}
@@ -194,13 +186,19 @@ targets:
           <Box>
             <Text fontWeight='semibold'>Configuration applied successfully</Text>
             <VStack align='start' mt={2} gap={1}>
-              <Text fontSize='sm'>Version ID: <Badge variant='outline'>{applyResult.config_version_id}</Badge></Text>
-              <Text fontSize='sm'>Applied at: {new Date(applyResult.applied_ts).toLocaleString()}</Text>
+              <Text fontSize='sm'>
+                Version ID: <Badge variant='outline'>{applyResult.config_version_id}</Badge>
+              </Text>
+              <Text fontSize='sm'>
+                Applied at: {new Date(applyResult.applied_ts).toLocaleString()}
+              </Text>
               {applyResult.changes.length > 0 && (
                 <Box>
-                  <Text fontSize='sm' fontWeight='medium'>Changes:</Text>
-                  {applyResult.changes.map((change, index) => (
-                    <Text key={index} fontSize='sm' ml={4}>
+                  <Text fontSize='sm' fontWeight='medium'>
+                    Changes:
+                  </Text>
+                  {applyResult.changes.map((change) => (
+                    <Text key={change.name} fontSize='sm' ml={4}>
                       • {change.type.toUpperCase()} {change.entity}: {change.name}
                     </Text>
                   ))}
@@ -215,21 +213,19 @@ targets:
         <Button
           variant='outline'
           onClick={handleValidate}
-          isLoading={isLoading}
-          leftIcon={<Check size={16} />}
+          loading={isLoading}
           disabled={!yamlContent.trim()}
         >
-          Validate
+          <Check size={16} /> Validate
         </Button>
-        
+
         <Button
           colorScheme='blue'
           onClick={handleApply}
-          isLoading={isLoading}
-          leftIcon={<Upload size={16} />}
-          disabled={!yamlContent.trim() || (validationResult && !validationResult.isValid)}
+          loading={isLoading}
+          disabled={!yamlContent.trim() || !!(validationResult && !validationResult.isValid)}
         >
-          Apply Configuration
+          <Upload size={16} /> Apply Configuration
         </Button>
       </HStack>
     </VStack>
