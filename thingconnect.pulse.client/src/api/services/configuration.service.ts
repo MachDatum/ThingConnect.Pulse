@@ -20,8 +20,7 @@ export class ConfigurationService {
    * Download configuration version as YAML file
    */
   async downloadVersion(id: string, filename?: string): Promise<void> {
-    const version = await this.getVersion(id);
-    const downloadFilename = filename || `configuration-${version.applied_ts.slice(0, 10)}.yaml`;
+    const downloadFilename = filename || `configuration-${id}.yaml`;
     return apiClient.download(`/api/configuration/versions/${id}`, downloadFilename);
   }
 
