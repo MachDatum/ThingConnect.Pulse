@@ -1,5 +1,5 @@
-import { HStack, Text } from '@chakra-ui/react';
-import { RadioCardItem, RadioCardLabel, RadioCardRoot } from '@/components/ui/radio-card';
+import { HStack } from '@chakra-ui/react';
+import { RadioCardItem, RadioCardRoot } from '@/components/ui/radio-card';
 import { Clock, BarChart3, Calendar } from 'lucide-react';
 import type { BucketType } from '@/types/bucket';
 
@@ -14,19 +14,19 @@ const bucketOptions = [
     value: 'raw' as const,
     label: 'Raw Data',
     description: 'Individual check results',
-    icon: Clock,
+    icon: <Clock size={24} />,
   },
   {
     value: '15m' as const,
     label: '15 Minute',
     description: 'Aggregated every 15 minutes',
-    icon: BarChart3,
+    icon: <BarChart3 size={24} />,
   },
   {
     value: 'daily' as const,
     label: 'Daily',
     description: 'Daily summaries',
-    icon: Calendar,
+    icon: <Calendar size={24} />,
   },
 ];
 
@@ -40,36 +40,18 @@ export function BucketSelector({ value, onChange, disabled = false }: BucketSele
       disabled={disabled}
     >
       <HStack gap={3}>
-        {bucketOptions.map(option => {
-          const Icon = option.icon;
-          return (
-            <RadioCardItem key={option.value} value={option.value} flex='1' minW='0'>
-              <RadioCardLabel
-                display='flex'
-                flexDirection='column'
-                alignItems='center'
-                gap={2}
-                p={3}
-              >
-                <Icon size={20} />
-                <div>
-                  <Text fontWeight='semibold' fontSize='sm' lineHeight='tight'>
-                    {option.label}
-                  </Text>
-                  <Text
-                    fontSize='xs'
-                    color='gray.600'
-                    _dark={{ color: 'gray.400' }}
-                    lineHeight='tight'
-                    textAlign='center'
-                  >
-                    {option.description}
-                  </Text>
-                </div>
-              </RadioCardLabel>
-            </RadioCardItem>
-          );
-        })}
+        {bucketOptions.map(option => (
+          <RadioCardItem
+            key={option.value}
+            value={option.value}
+            flex='1'
+            minW='0'
+            icon={option.icon}
+            label={option.label}
+            description={option.description}
+            indicator={null}
+          />
+        ))}
       </HStack>
     </RadioCardRoot>
   );
