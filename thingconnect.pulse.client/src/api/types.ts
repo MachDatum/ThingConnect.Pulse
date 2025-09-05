@@ -135,9 +135,9 @@ export interface ExportParams {
 // Configuration Management Types
 export interface ConfigurationVersion {
   id: string;
-  applied_ts: string;
-  file_hash: string;
-  file_path?: string | null;
+  appliedTs: string;
+  fileHash: string;
+  filePath?: string | null;
   actor?: string | null;
   note?: string | null;
 }
