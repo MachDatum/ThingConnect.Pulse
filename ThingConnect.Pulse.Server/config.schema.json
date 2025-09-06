@@ -1,5 +1,5 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$schema": "https://json-schema.org/draft-07/schema#",
   "$id": "https://thingconnect.io/pulse/config.schema.json",
   "title": "ThingConnect Pulse Config",
   "type": "object",
@@ -48,10 +48,10 @@
     "targets": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/target" }
+      "items": { "$ref": "#/definitions/target" }
     }
   },
-  "$defs": {
+  "definitions": {
     "hostname": {
       "type": "string",
       "pattern": "^(?=.{1,253}$)(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\\.(?!-)[A-Za-z0-9-]{1,63}(?<!-))*\\.?$"
@@ -79,7 +79,7 @@
       "additionalProperties": false,
       "required": ["type", "group"],
       "properties": {
-        "type": { "$ref": "#/$defs/probeType" },
+        "type": { "$ref": "#/definitions/probeType" },
         "group": { "type": "string" },
         "name": { "type": "string" },
         "interval_seconds": { "type": "integer", "minimum": 1 },
@@ -92,15 +92,15 @@
     },
     "locationHost": {
       "oneOf": [
-        { "properties": { "host": { "oneOf": [ { "$ref": "#/$defs/hostname" }, { "$ref": "#/$defs/ipv4" }, { "$ref": "#/$defs/ipv6" } ] } }, "required": ["host"], "additionalProperties": true },
-        { "properties": { "cidr": { "$ref": "#/$defs/cidr" } }, "required": ["cidr"], "additionalProperties": true },
-        { "properties": { "wildcard": { "$ref": "#/$defs/wildcard" } }, "required": ["wildcard"], "additionalProperties": true }
+        { "properties": { "host": { "oneOf": [ { "$ref": "#/definitions/hostname" }, { "$ref": "#/definitions/ipv4" }, { "$ref": "#/definitions/ipv6" } ] } }, "required": ["host"], "additionalProperties": true },
+        { "properties": { "cidr": { "$ref": "#/definitions/cidr" } }, "required": ["cidr"], "additionalProperties": true },
+        { "properties": { "wildcard": { "$ref": "#/definitions/wildcard" } }, "required": ["wildcard"], "additionalProperties": true }
       ]
     },
     "target": {
       "allOf": [
-        { "$ref": "#/$defs/baseTarget" },
-        { "$ref": "#/$defs/locationHost" },
+        { "$ref": "#/definitions/baseTarget" },
+        { "$ref": "#/definitions/locationHost" },
         {
           "type": "object",
           "properties": {

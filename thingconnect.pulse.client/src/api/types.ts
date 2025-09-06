@@ -135,9 +135,9 @@ export interface ExportParams {
 // Configuration Management Types
 export interface ConfigurationVersion {
   id: string;
-  applied_ts: string;
-  file_hash: string;
-  file_path?: string | null;
+  appliedTs: string;
+  fileHash: string;
+  filePath?: string | null;
   actor?: string | null;
   note?: string | null;
 }
@@ -167,4 +167,18 @@ export interface ApiError {
   message: string;
   code?: string;
   details?: Record<string, unknown>;
+}
+
+// Validation error types (matching backend DTOs)
+export interface ValidationError {
+  path: string;
+  message: string;
+  value?: unknown;
+  line?: number;
+  column?: number;
+}
+
+export interface ValidationErrorsDto {
+  message: string;
+  errors: ValidationError[];
 }

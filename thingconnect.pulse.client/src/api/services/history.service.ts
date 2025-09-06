@@ -155,13 +155,22 @@ export class HistoryService {
   /**
    * Helper to get default date range (last 24 hours)
    */
+  private static formatDateForInput(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
   static getDefaultDateRange(): { from: string; to: string } {
     const now = new Date();
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
     return {
-      from: this.formatDateForAPI(yesterday),
-      to: this.formatDateForAPI(now),
+      from: HistoryService.formatDateForInput(yesterday),
+      to: HistoryService.formatDateForInput(now),
     };
   }
 }

@@ -370,15 +370,23 @@ paths:
   # Configuration Management
   /api/config/apply:
     post:
-      summary: Apply YAML configuration
+      summary: Apply or validate YAML configuration
       description: >
-        Validates and applies a complete YAML configuration. Performs atomic transaction
-        with duplicate detection, diff calculation, and snapshot storage. Returns detailed
-        results showing added/updated/removed entities and any warnings.
+        Validates and optionally applies a complete YAML configuration. When dryRun=true,
+        only validates and previews changes without applying them. When dryRun=false (default),
+        performs atomic transaction with duplicate detection, diff calculation, and snapshot storage.
+        Returns detailed results showing added/updated/removed entities and any warnings.
       operationId: applyConfig
       tags:
         - Configuration
       parameters:
+        - name: dryRun
+          in: query
+          description: If true, only validates and previews changes without applying them
+          schema:
+            type: boolean
+            default: false
+          example: false
         - name: X-Actor
           in: header
           description: Optional actor (user/system) applying the configuration
@@ -433,6 +441,15 @@ paths:
                     removed: 1
                     warnings:
                       - "Group 'legacy' has no targets and may be unused"
+                dry_run_preview:
+                  summary: Dry-run validation preview
+                  value:
+                    config_version_id: "dry-run-preview"
+                    added: 2
+                    updated: 1
+                    removed: 0
+                    warnings:
+                      - "Dry-run mode - no changes applied to database"
                 no_changes:
                   summary: Configuration already applied
                   value:
@@ -541,6 +558,51 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
               example:
                 message: "Configuration version not found"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/config/current:
+    get:
+      summary: Get current active configuration
+      description: >
+        Returns the currently active YAML configuration content from the system.
+        This is the configuration that is currently being used by the monitoring service.
+      operationId: getCurrentConfig
+      tags:
+        - Configuration
+      responses:
+        "200":
+          description: Current configuration retrieved successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: |
+                version: 1
+                defaults:
+                  interval_seconds: 10
+                  timeout_ms: 1500
+                  retries: 1
+                groups:
+                  - id: "production"
+                    name: "Production Systems"
+                    color: "#FF5722"
+                targets:
+                  - name: "Main API"
+                    group: "production" 
+                    type: "https"
+                    host: "api.company.com"
+                    port: 443
+                    path: "/health"
+                    expect_text: "OK"
+        "404":
+          description: No active configuration found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                message: "No active configuration found"
         "500":
           $ref: "#/components/responses/InternalError"
 
