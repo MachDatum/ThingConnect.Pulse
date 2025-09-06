@@ -1,5 +1,5 @@
 import { apiClient } from '../client';
-import type { ConfigurationVersion, ConfigurationApplyResponse } from '../types';
+import type { ConfigurationVersion, ConfigurationApplyResponse, ValidationErrorsDto, ValidationError } from '../types';
 
 export class ConfigurationService {
   /**
@@ -20,8 +20,7 @@ export class ConfigurationService {
    * Download configuration version as YAML file
    */
   async downloadVersion(id: string, filename?: string): Promise<void> {
-    const version = await this.getVersion(id);
-    const downloadFilename = filename || `configuration-${version.applied_ts.slice(0, 10)}.yaml`;
+    const downloadFilename = filename || `configuration-${id}.yaml`;
     return apiClient.download(`/api/configuration/versions/${id}`, downloadFilename);
   }
 
@@ -37,29 +36,62 @@ export class ConfigurationService {
   }
 
   /**
+   * Get current active configuration as YAML content
+   */
+  async getCurrentConfiguration(): Promise<string> {
+    return apiClient.get<string>('/api/configuration/current', {
+      headers: {
+        'Accept': 'text/plain',
+      },
+    });
+  }
+
+  /**
    * Validate configuration without applying
    */
-  async validateConfiguration(yamlContent: string): Promise<{ isValid: boolean; errors?: string[] }> {
+  async validateConfiguration(yamlContent: string): Promise<{ isValid: boolean; errors?: ValidationError[] }> {
     try {
-      // Use dry-run parameter to validate without applying
-      const response = await apiClient.post<ConfigurationApplyResponse>('/api/configuration/apply?dry-run=true', yamlContent, {
+      // Use dryRun parameter to validate without applying
+      await apiClient.post<ConfigurationApplyResponse>('/api/configuration/apply?dryRun=true', yamlContent, {
         headers: {
           'Content-Type': 'text/plain',
         },
       });
-      return { isValid: true, ...response };
+      return { isValid: true };
     } catch (error) {
       // Parse validation errors from API response
       try {
         const apiError = JSON.parse((error as Error).message);
+        
+        // The actual ValidationErrorsDto is in apiError.details, not the root
+        const errorData = apiError.details || apiError;
+        
+        // Handle ValidationErrorsDto structure
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          const validationDto = errorData as ValidationErrorsDto;
+          return {
+            isValid: false,
+            errors: validationDto.errors,
+          };
+        }
+        
+        // Create a single error for other cases
         return {
           isValid: false,
-          errors: Array.isArray(apiError.details?.errors) ? apiError.details.errors : [apiError.message],
+          errors: [{
+            path: '',
+            message: errorData.message || apiError.message || 'Validation failed',
+            value: null
+          }],
         };
       } catch {
         return {
           isValid: false,
-          errors: [(error as Error).message],
+          errors: [{
+            path: '',
+            message: (error as Error).message,
+            value: null
+          }],
         };
       }
     }

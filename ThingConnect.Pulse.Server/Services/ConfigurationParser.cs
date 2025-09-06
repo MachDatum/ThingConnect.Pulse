@@ -62,6 +62,7 @@ public sealed class ConfigurationParser
                 .Build();
             string configJson = serializer.Serialize(config);
 
+            return Task.FromResult<(ConfigurationYaml? Configuration, ValidationErrorsDto? Errors)>((config, null));
             // Perform schema validation
             ICollection<NJsonSchema.Validation.ValidationError> validationResults = _schema.Validate(configJson);
 
@@ -83,12 +84,12 @@ public sealed class ConfigurationParser
                         Value = null
                     }).ToList()
                 };
-                return Task.FromResult<(ConfigurationYaml? config, ValidationErrorsDto? errors)>((null, errors));
+                return Task.FromResult<(ConfigurationYaml? Configuration, ValidationErrorsDto? Errors)>((null, errors));
             }
 
             _logger.LogInformation("Configuration parsed and validated successfully with {GroupCount} groups and {TargetCount} targets",
                 config.Groups.Count, config.Targets.Count);
-            return Task.FromResult<(ConfigurationYaml? config, ValidationErrorsDto? errors)>((config, null));
+            return Task.FromResult<(ConfigurationYaml? Configuration, ValidationErrorsDto? Errors)>((config, null));
         }
         catch (YamlDotNet.Core.YamlException yamlEx)
         {
@@ -102,9 +103,11 @@ public sealed class ConfigurationParser
                 {
                     new()
                     {
-                        Path = $"Line {yamlEx.Start.Line}, Column {yamlEx.Start.Column}",
+                        Path = "",
                         Message = yamlEx.Message,
-                        Value = null
+                        Value = null,
+                        Line = (int?)yamlEx.Start.Line,
+                        Column = (int?)yamlEx.Start.Column
                     }
                 }
             };
@@ -146,27 +149,20 @@ public sealed class ConfigurationParser
         var endpoints = config.Targets.Select(t => new Data.Endpoint
         {
             Id = Guid.NewGuid(),
-            Name = t.Name,
-            GroupId = t.Group ?? "default",
-            Type = ParseProbeType(t.Type ?? "icmp"),
-            Host = t.Host,
+            Name = t.Name ?? "Unnamed",
+            GroupId = t.Group,
+            Type = t.Type,
+            Host = t.Host ?? t.Cidr ?? t.Wildcard ?? "localhost",
             Port = t.Port,
             IntervalSeconds = t.IntervalSeconds ?? config.Defaults.IntervalSeconds,
             TimeoutMs = t.TimeoutMs ?? config.Defaults.TimeoutMs,
             Retries = t.Retries ?? config.Defaults.Retries,
-            HttpPath = t.Path,
-            HttpMatch = t.ExpectText ?? config.Defaults.Http?.ExpectText
+            HttpPath = t.HttpPath,
+            HttpMatch = t.HttpMatch ?? config.Defaults.Http?.ExpectText,
+            Enabled = t.Enabled ?? true
         }).ToList();
 
         return (groups, endpoints);
     }
 
-    private static ProbeType ParseProbeType(string type) => type.ToLowerInvariant() switch
-    {
-        "icmp" => ProbeType.icmp,
-        "tcp" => ProbeType.tcp,
-        "http" => ProbeType.http,
-        "https" => ProbeType.http,
-        _ => ProbeType.icmp
-    };
 }

@@ -51,7 +51,11 @@ export function StatusFilters({
       px={{ base: 4, md: 0 }}
       mx={{ base: -4, md: 0 }}
       borderBottom={{ base: '1px', md: 'none' }}
-      borderColor={{ base: 'gray.200', md: 'transparent' }}
+      borderColor={{ 
+        base: 'gray.200', 
+        md: 'transparent',
+        _dark: { base: 'gray.700', md: 'transparent' }
+      }}
       data-testid='status-filters'
     >
       <HStack

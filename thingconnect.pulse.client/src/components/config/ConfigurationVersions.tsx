@@ -31,7 +31,7 @@ export function ConfigurationVersions({ refreshTrigger }: ConfigurationVersionsP
       const data = await configurationService.getVersions();
       // Sort by applied timestamp descending (most recent first)
       const sortedVersions = data.sort((a, b) => 
-        new Date(b.applied_ts).getTime() - new Date(a.applied_ts).getTime()
+        new Date(b.appliedTs).getTime() - new Date(a.appliedTs).getTime()
       );
       setVersions(sortedVersions);
     } catch (err) {
@@ -98,7 +98,7 @@ export function ConfigurationVersions({ refreshTrigger }: ConfigurationVersionsP
         </Alert>
       ) : (
         <Box overflowX='auto'>
-          <Table.Root variant='line' size='sm'>
+          <Table.Root size='sm'>
             <Table.Header>
               <Table.Row>
                 <Table.ColumnHeader>Version</Table.ColumnHeader>
@@ -128,11 +128,11 @@ export function ConfigurationVersions({ refreshTrigger }: ConfigurationVersionsP
                   
                   <Table.Cell>
                     <VStack align='start' gap={0}>
-                      <Text fontSize='sm'>{formatTimestamp(version.applied_ts)}</Text>
+                      <Text fontSize='sm'>{formatTimestamp(version.appliedTs)}</Text>
                       <HStack gap={1}>
                         <Clock size={12} />
                         <Text fontSize='xs' color='gray.500'>
-                          {new Date(version.applied_ts).toLocaleDateString()}
+                          {new Date(version.appliedTs).toLocaleDateString()}
                         </Text>
                       </HStack>
                     </VStack>
@@ -140,7 +140,7 @@ export function ConfigurationVersions({ refreshTrigger }: ConfigurationVersionsP
                   
                   <Table.Cell>
                     <Text fontSize='xs' fontFamily='monospace' color='gray.600'>
-                      {formatHash(version.file_hash)}
+                      {formatHash(version.fileHash)}
                     </Text>
                   </Table.Cell>
                   

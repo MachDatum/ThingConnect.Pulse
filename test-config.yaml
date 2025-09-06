@@ -1,0 +1,51 @@
+version: 1
+
+defaults:
+  interval_seconds: 10
+  timeout_ms: 1500
+  retries: 1
+  http:
+    user_agent: "ThingConnectPulse/1.0"
+    expect_text: ""
+
+groups:
+  - id: homelab
+    name: "Home Lab"
+    color: "#1565C0"
+    sort_order: 10
+
+targets:
+  # ICMP checks for basic connectivity
+  - type: icmp
+    host: 10.18.8.20
+    group: homelab
+    name: "Milkyway"
+    
+  - type: icmp
+    host: 10.18.8.40
+    group: homelab
+    name: "Proxmox1"
+    
+  - type: icmp
+    host: 10.18.8.60
+    group: homelab
+    name: "Proxmox2"
+
+  # HTTPS port 8006 checks (Proxmox web interface)
+  - type: http
+    host: 10.18.8.20
+    port: 8006
+    group: homelab
+    name: "Milkyway HTTPS:8006"
+    
+  - type: http
+    host: 10.18.8.40
+    port: 8006
+    group: homelab
+    name: "Proxmox1 Web Interface"
+    
+  - type: http
+    host: 10.18.8.60
+    port: 8006
+    group: homelab
+    name: "Proxmox2 Web Interface"

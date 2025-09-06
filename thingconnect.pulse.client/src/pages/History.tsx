@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Text,
@@ -23,7 +24,10 @@ import { StatusService } from '@/api/services/status.service';
 
 export default function History() {
   // State for filters
-  const [selectedEndpoint, setSelectedEndpoint] = useState<string>('');
+  const [searchParams] = useSearchParams();
+  const [selectedEndpoint, setSelectedEndpoint] = useState<string>(
+    searchParams.get('endpoint') || ''
+  );
   const [dateRange, setDateRange] = useState<DateRange>(() => {
     const defaultRange = HistoryService.getDefaultDateRange();
     return {
@@ -41,7 +45,7 @@ export default function History() {
     staleTime: 30000,
   });
 
-  // Set first endpoint as default when loaded
+  // If no endpoint selected, fallback to the first one from liveData
   useEffect(() => {
     if (liveData?.items?.length && !selectedEndpoint) {
       setSelectedEndpoint(liveData.items[0].endpoint.id);

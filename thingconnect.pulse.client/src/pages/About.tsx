@@ -153,23 +153,35 @@ export default function About() {
               ThingConnect specializes in manufacturing connectivity solutions, helping plants
               optimize their industrial networks and data infrastructure.
             </Text>
-            <HStack gap={2}>
-              <Button asChild size='sm' variant='outline' h='32px'>
-                <Link href='https://thingconnect.com' target='_blank' rel='noopener noreferrer'>
-                  <ExternalLink size={14} />
-                  Visit Site
-                </Link>
-              </Button>
-              <Button asChild size='sm' variant='outline' h='32px'>
-                <Link
-                  href='https://github.com/MachDatum/ThingConnect.Pulse'
-                  target='_blank'
-                  rel='noopener noreferrer'
+            <HStack gap={4}>
+              <Link
+                href='https://thingconnect.com'
+                target='_blank'
+                rel='noopener noreferrer'
+                _hover={{ textDecoration: 'none' }}
+              >
+                <Button
+                  size='sm'
+                  variant='outline'
                 >
-                  <ExternalLink size={14} />
-                  Source Code
-                </Link>
+                  <ExternalLink size={16} />
+                  Visit ThingConnect.com
+                </Button>
+              </Link>
+              <Link
+                href='https://github.com/MachDatum/ThingConnect.Pulse'
+                target='_blank'
+                rel='noopener noreferrer'
+                _hover={{ textDecoration: 'none' }}
+              >
+                <Button
+                  size='sm'
+                  variant='outline'
+                >
+                <ExternalLink size={16} />
+                View Source Code
               </Button>
+              </Link>
             </HStack>
           </VStack>
         </Box>

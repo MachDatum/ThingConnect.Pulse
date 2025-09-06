@@ -18,10 +18,10 @@ public sealed class ConfigurationController : ControllerBase
     /// <summary>
     /// Validate and apply YAML configuration
     /// </summary>
-    /// <param name="yamlContent">Full YAML contents</param>
-    /// <returns>Apply result with counts of changes made</returns>
+    /// <param name="dryRun">If true, only validate and preview changes without applying</param>
+    /// <returns>Apply result with counts of changes made or preview of changes</returns>
     [HttpPost("apply")]
-    public async Task<ActionResult<ApplyResultDto>> ApplyAsync()
+    public async Task<ActionResult<ApplyResultDto>> ApplyAsync([FromQuery] bool dryRun = false)
     {
         try
         {
@@ -40,12 +40,24 @@ public sealed class ConfigurationController : ControllerBase
                 });
             }
 
-            ApplyResultDto result = await _configurationService.ApplyConfigurationAsync(
-                yamlContent,
-                Request.Headers["X-Actor"].FirstOrDefault(),
-                Request.Headers["X-Note"].FirstOrDefault());
+            ApplyResultDto result;
+            if (dryRun)
+            {
+                result = await _configurationService.PreviewChangesAsync(yamlContent);
+            }
+            else
+            {
+                result = await _configurationService.ApplyConfigurationAsync(
+                    yamlContent,
+                    Request.Headers["X-Actor"].FirstOrDefault(),
+                    Request.Headers["X-Note"].FirstOrDefault());
+            }
 
             return Ok(result);
+        }
+        catch (ConfigurationValidationException ex)
+        {
+            return BadRequest(ex.ValidationErrors);
         }
         catch (InvalidOperationException ex) when (ex.Message.StartsWith("Validation failed"))
         {
@@ -110,6 +122,29 @@ public sealed class ConfigurationController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, new { message = "Failed to retrieve configuration version", error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Get the current active configuration as YAML
+    /// </summary>
+    /// <returns>Plain YAML content of the active configuration</returns>
+    [HttpGet("current")]
+    public async Task<ActionResult> GetCurrentAsync()
+    {
+        try
+        {
+            string? content = await _configurationService.GetCurrentConfigurationAsync();
+            if (content == null)
+            {
+                return NotFound(new { message = "No active configuration found" });
+            }
+
+            return Content(content, "text/plain");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Failed to retrieve current configuration", error = ex.Message });
         }
     }
 }
