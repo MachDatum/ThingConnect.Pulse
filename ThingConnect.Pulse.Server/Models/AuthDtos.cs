@@ -13,12 +13,6 @@ public sealed class LoginRequestDto
     public string Password { get; set; } = default!;
 }
 
-public sealed class LoginResponseDto
-{
-    public string Token { get; set; } = default!;
-    public DateTime ExpiresAt { get; set; }
-    public UserInfoDto User { get; set; } = default!;
-}
 
 public sealed class RegisterRequestDto
 {

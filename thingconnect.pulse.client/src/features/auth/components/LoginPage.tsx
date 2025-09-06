@@ -10,7 +10,8 @@ import {
   Container,
   Alert,
   Card,
-  Stack
+  Stack,
+  Input
 } from '@chakra-ui/react';
 import { Field } from '@/components/ui/field';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -80,7 +81,7 @@ export default function LoginPage() {
         position="relative"
       >
         <Container maxW="lg" textAlign="center">
-          <VStack spacing={8}>
+          <VStack gap={8}>
             <Box>
               <Heading size="2xl" fontWeight="bold" mb={4}>
                 ThingConnect Pulse
@@ -90,7 +91,7 @@ export default function LoginPage() {
               </Text>
             </Box>
             
-            <VStack spacing={4} align="start" maxW="md">
+            <VStack gap={4} align="start" maxW="md">
               <Flex align="center" gap={3}>
                 <Box w={2} h={2} bg="white" rounded="full" />
                 <Text>Real-time endpoint monitoring</Text>
@@ -132,7 +133,7 @@ export default function LoginPage() {
                 </Text>
               </Box>
 
-              <VStack spacing={6}>
+              <VStack gap={6}>
                 <Box textAlign="center">
                   <Heading size="lg" mb={2}>
                     Sign In
@@ -143,16 +144,16 @@ export default function LoginPage() {
                 </Box>
 
                 {error && (
-                  <Alert status="error" variant="subtle">
-                    <Alert.Icon />
-                    {error}
-                  </Alert>
+                  <Alert.Root status="error" variant="subtle">
+                    <Alert.Indicator />
+                    <Alert.Title>{error}</Alert.Title>
+                  </Alert.Root>
                 )}
 
                 <Box as="form" onSubmit={handleSubmit} w="full">
-                  <Stack spacing={4}>
+                  <Stack gap={4}>
                     <Field label="Username" required>
-                      <input
+                      <Input
                         type="text"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}

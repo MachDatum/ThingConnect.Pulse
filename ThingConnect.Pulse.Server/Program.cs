@@ -78,7 +78,9 @@ public class Program
                     options.ExpireTimeSpan = TimeSpan.FromHours(24);
                     options.SlidingExpiration = true;
                     options.Cookie.HttpOnly = true;
-                    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+                    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() 
+                        ? CookieSecurePolicy.SameAsRequest 
+                        : CookieSecurePolicy.Always;
                     options.Cookie.SameSite = SameSiteMode.Lax;
                     options.Cookie.Name = "ThingConnect.Pulse.Auth";
                     options.Events.OnRedirectToLogin = context =>

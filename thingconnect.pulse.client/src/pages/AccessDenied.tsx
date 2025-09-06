@@ -12,7 +12,7 @@ export default function AccessDenied() {
   return (
     <Flex minH="100vh" bg="gray.50" _dark={{ bg: "gray.900" }} align="center" justify="center">
       <Container maxW="md" textAlign="center">
-        <VStack spacing={8}>
+        <VStack gap={8}>
           <Box>
             <Text fontSize="6xl" fontWeight="bold" color="red.500">
               403
@@ -25,14 +25,14 @@ export default function AccessDenied() {
             </Text>
           </Box>
 
-          <VStack spacing={4}>
+          <VStack gap={4}>
             <Text color="gray.500" _dark={{ color: "gray.500" }}>
               This page requires administrator privileges.
             </Text>
             
             <Flex direction={{ base: 'column', sm: 'row' }} gap={4}>
-              <Button as={Link} to="/" colorScheme="blue" variant="outline">
-                Go to Dashboard
+              <Button asChild colorScheme="blue" variant="outline">
+                <Link to="/">Go to Dashboard</Link>
               </Button>
               <Button onClick={handleLogout} colorScheme="gray">
                 Sign Out

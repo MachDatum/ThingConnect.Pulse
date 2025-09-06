@@ -11,7 +11,8 @@ import {
   Alert,
   Card,
   Stack,
-  Progress
+  Progress,
+  Input
 } from '@chakra-ui/react';
 import { Field } from '@/components/ui/field';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -131,7 +132,7 @@ export default function OnboardingPage() {
   };
 
   const renderStep1 = () => (
-    <VStack spacing={6}>
+    <VStack gap={6}>
       <Box textAlign="center">
         <Heading size="lg" mb={2}>
           Administrator Account
@@ -141,9 +142,9 @@ export default function OnboardingPage() {
         </Text>
       </Box>
 
-      <Stack spacing={4} w="full">
+      <Stack gap={4} w="full">
         <Field label="Username" required>
-          <input
+          <Input
             type="text"
             value={formData.username}
             onChange={(e) => updateFormData('username', e.target.value)}
@@ -153,7 +154,7 @@ export default function OnboardingPage() {
         </Field>
 
         <Field label="Email Address" required>
-          <input
+          <Input
             type="email"
             value={formData.email}
             onChange={(e) => updateFormData('email', e.target.value)}
@@ -176,7 +177,7 @@ export default function OnboardingPage() {
   );
 
   const renderStep2 = () => (
-    <VStack spacing={6}>
+    <VStack gap={6}>
       <Box textAlign="center">
         <Heading size="lg" mb={2}>
           Secure Your Account
@@ -186,7 +187,7 @@ export default function OnboardingPage() {
         </Text>
       </Box>
 
-      <Stack spacing={4} w="full">
+      <Stack gap={4} w="full">
         <Field label="Password" required>
           <PasswordInput
             value={formData.password}
@@ -206,7 +207,7 @@ export default function OnboardingPage() {
         </Field>
       </Stack>
 
-      <Stack direction="row" spacing={4} w="full">
+      <Stack direction="row" gap={4} w="full">
         <Button
           variant="outline"
           size="lg"
@@ -231,7 +232,7 @@ export default function OnboardingPage() {
   );
 
   const renderStep3 = () => (
-    <VStack spacing={6}>
+    <VStack gap={6}>
       <Box textAlign="center">
         <Heading size="lg" mb={2} color="green.600" _dark={{ color: "green.400" }}>
           Setup Complete!
@@ -241,7 +242,7 @@ export default function OnboardingPage() {
         </Text>
       </Box>
 
-      <VStack spacing={4} align="start" maxW="md" w="full">
+      <VStack gap={4} align="start" maxW="md" w="full">
         <Flex align="center" gap={3}>
           <Box w={2} h={2} bg="green.500" rounded="full" />
           <Text>Administrator account created</Text>
@@ -276,7 +277,7 @@ export default function OnboardingPage() {
         position="relative"
       >
         <Container maxW="lg" textAlign="center">
-          <VStack spacing={8}>
+          <VStack gap={8}>
             <Box>
               <Heading size="2xl" fontWeight="bold" mb={4}>
                 ThingConnect Pulse
@@ -286,7 +287,7 @@ export default function OnboardingPage() {
               </Text>
             </Box>
             
-            <VStack spacing={4} align="start" maxW="md">
+            <VStack gap={4} align="start" maxW="md">
               <Flex align="center" gap={3}>
                 <Box w={2} h={2} bg="white" rounded="full" />
                 <Text>Configure administrator access</Text>
@@ -338,14 +339,18 @@ export default function OnboardingPage() {
                     {Math.round((currentStep / 2) * 100)}%
                   </Text>
                 </Flex>
-                <Progress value={(currentStep / 2) * 100} colorScheme="blue" />
+                <Progress.Root value={(currentStep / 2) * 100} colorScheme="blue">
+                  <Progress.Track>
+                    <Progress.Range />
+                  </Progress.Track>
+                </Progress.Root>
               </Box>
 
               {error && (
-                <Alert status="error" variant="subtle" mb={6}>
-                  <Alert.Icon />
-                  {error}
-                </Alert>
+                <Alert.Root status="error" variant="subtle" mb={6}>
+                  <Alert.Indicator />
+                  <Alert.Title>{error}</Alert.Title>
+                </Alert.Root>
               )}
 
               {currentStep === 1 && renderStep1()}
