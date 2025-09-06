@@ -1,4 +1,15 @@
-import { Box, Text, Badge, Grid, useBreakpointValue } from '@chakra-ui/react';
+import {
+  Box,
+  Text,
+  Badge,
+  Grid,
+  useBreakpointValue,
+  VStack,
+  Heading,
+  CardRoot,
+  CardBody,
+  Flex,
+} from '@chakra-ui/react';
 import { useState, useMemo } from 'react';
 import { useStatusQuery } from '@/hooks/useStatusQuery';
 import { StatusFilters } from '@/components/status/StatusFilters';
@@ -8,6 +19,7 @@ import { StatusPagination } from '@/components/status/StatusPagination';
 import { Page } from '@/components/layout/Page';
 import { PageSection } from '@/components/layout/PageSection';
 import type { LiveStatusParams } from '@/api/types';
+import { Activity, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 
 export default function Dashboard() {
   const [filters, setFilters] = useState<LiveStatusParams>({
@@ -53,64 +65,51 @@ export default function Dashboard() {
     setFilters(prev => ({ ...prev, pageSize, page: 1 }));
   };
 
+  const StatCard = ({ icon: Icon, title, value, color }: any) => (
+    <CardRoot>
+      <CardBody>
+        <Flex align='center' justify='space-between'>
+          <VStack align='start' gap='1'>
+            <Text fontSize='sm' color='fg.muted' fontWeight='medium'>
+              {title}
+            </Text>
+            <Text fontSize='3xl' fontWeight='bold' color={`${color}.500`}>
+              {value}
+            </Text>
+          </VStack>
+          <Box p='3' rounded='xl' bg={`${color}.100`}>
+            <Icon size={24} color={color} />
+          </Box>
+        </Flex>
+      </CardBody>
+    </CardRoot>
+  );
+
   return (
     <Page
       title='Dashboard'
       testId='dashboard-page'
       description='Real-time monitoring of network endpoints'
     >
-      {/* <PageHeader
-        title="Network Status Dashboard"
-        description="Real-time monitoring of network endpoints"
-        icon={<Activity size={20} />}
-      /> */}
-      <PageSection title='System Overview'>
-        <Box
-          p={3}
-          borderRadius='md'
-          bg='gray.50'
-          _dark={{ bg: 'gray.800' }}
-          border='1px solid'
-          borderColor='gray.200'
-        >
-          <Grid templateColumns='repeat(auto-fit, minmax(120px, 1fr))' gap={2}>
-            <Box display='flex' justifyContent='space-between' alignItems='center' h='32px'>
-              <Text fontSize='sm'>Total:</Text>
-              <Badge colorPalette='blue' size='sm'>
-                {statusCounts.total}
-              </Badge>
-            </Box>
-            <Box display='flex' justifyContent='space-between' alignItems='center' h='32px'>
-              <Text fontSize='sm'>Online:</Text>
-              <Badge colorPalette='green' size='sm'>
-                {statusCounts.up}
-              </Badge>
-            </Box>
-            <Box display='flex' justifyContent='space-between' alignItems='center' h='32px'>
-              <Text fontSize='sm'>Offline:</Text>
-              <Badge colorPalette='red' size='sm'>
-                {statusCounts.down}
-              </Badge>
-            </Box>
-            <Box display='flex' justifyContent='space-between' alignItems='center' h='32px'>
-              <Text fontSize='sm'>Flapping:</Text>
-              <Badge colorPalette='yellow' size='sm'>
-                {statusCounts.flapping}
-              </Badge>
-            </Box>
-          </Grid>
-          <Text
-            fontSize='sm'
-            color='gray.600'
-            _dark={{ color: 'gray.400' }}
-            textAlign='right'
-            mt={1}
-          >
-            {isLoading ? 'Updating...' : 'Just now'}
-          </Text>
-        </Box>
-      </PageSection>
-
+      <VStack align='stretch' gap='6' mb='8'>
+        <Heading size='xl'>System Overview</Heading>
+        <Grid templateColumns={{ base: '1fr', md: 'repeat(2,1fr)', lg: 'repeat(4,1fr)' }} gap='6'>
+          <StatCard
+            icon={Activity}
+            title='Total Endpoints'
+            value={statusCounts.total}
+            color='blue'
+          />
+          <StatCard icon={CheckCircle} title='Online' value={statusCounts.up} color='green' />
+          <StatCard icon={XCircle} title='Offline' value={statusCounts.down} color='red' />
+          <StatCard
+            icon={AlertTriangle}
+            title='Flapping'
+            value={statusCounts.flapping}
+            color='yellow'
+          />
+        </Grid>
+      </VStack>
       <StatusFilters filters={filters} onFiltersChange={handleFiltersChange} groups={groups} />
 
       {data && (
