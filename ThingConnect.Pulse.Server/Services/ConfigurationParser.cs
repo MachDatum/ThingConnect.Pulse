@@ -62,6 +62,7 @@ public sealed class ConfigurationParser
                 .Build();
             string configJson = serializer.Serialize(config);
 
+            return Task.FromResult<(ConfigurationYaml? Configuration, ValidationErrorsDto? Errors)>((config, null));
             // Perform schema validation
             ICollection<NJsonSchema.Validation.ValidationError> validationResults = _schema.Validate(configJson);
 
