@@ -135,13 +135,26 @@ public sealed class ConfigurationService : IConfigurationService
 
     public async Task<string?> GetCurrentConfigurationAsync()
     {
-        string configPath = Path.Combine(_pathService.GetConfigDirectory(), "config.yaml");
-        if (!File.Exists(configPath))
+        string versionsDir = _pathService.GetVersionsDirectory();
+
+        // Get the latest version YAML file from the versions directory
+        if (Directory.Exists(versionsDir))
         {
-            return null;
+            var latestFile = new DirectoryInfo(versionsDir)
+                .GetFiles("*.yaml")
+                .OrderByDescending(f => f.CreationTimeUtc)
+                .FirstOrDefault();
+            // If a version file exists, load and return its content
+            if (latestFile != null && latestFile.Exists)
+                return await File.ReadAllTextAsync(latestFile.FullName);
         }
 
-        return await File.ReadAllTextAsync(configPath);
+        //Fall back to the default config.yaml in the config directory
+        string configPath = _pathService.GetConfigFilePath();
+        if (File.Exists(configPath))
+            return await File.ReadAllTextAsync(configPath);
+
+        return null;
     }
 
     public async Task<ApplyResultDto> PreviewChangesAsync(string yamlContent)

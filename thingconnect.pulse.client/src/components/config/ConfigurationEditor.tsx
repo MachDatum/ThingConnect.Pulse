@@ -236,49 +236,6 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
         const content = await configurationService.getCurrentConfiguration();
         setYamlContent(content);
       } catch (err) {
-        // Set example configuration as fallback
-        const exampleConfig = `# Example YAML configuration
-version: 1
-defaults:
-  interval_seconds: 60
-  timeout_ms: 5000
-  retries: 2
-  http:
-    user_agent: "ThingConnectPulse/1.0"
-    expect_text: ""
-
-groups:
-  - id: "network"
-    name: "Network Infrastructure"
-  - id: "servers"
-    name: "Servers"
-
-targets:
-  - name: "Google DNS"
-    host: "8.8.8.8"
-    type: "icmp"
-    group: "network"
-  
-  - name: "Cloudflare DNS"
-    host: "1.1.1.1"
-    type: "icmp"
-    group: "network"
-    
-  - name: "Web Server"
-    host: "10.18.8.20"
-    type: "http"
-    group: "servers"
-    port: 80
-    http_path: "/health"
-    http_match: "OK"
-    
-  - name: "Database Server"
-    host: "10.18.8.21"
-    type: "tcp"
-    group: "servers"
-    port: 5432`;
-        
-        setYamlContent(exampleConfig);
         console.warn('Could not load current configuration, using example:', err);
       }
     };
