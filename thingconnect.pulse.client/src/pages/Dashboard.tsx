@@ -6,11 +6,15 @@ import {
   useBreakpointValue,
   VStack,
   Heading,
-  CardRoot,
-  CardBody,
   Flex,
+  HStack,
+  Checkbox,
+  Card,
+  CheckboxGroup,
+  Accordion,
+  Fieldset,
 } from '@chakra-ui/react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useStatusQuery } from '@/hooks/useStatusQuery';
 import { StatusFilters } from '@/components/status/StatusFilters';
 import { StatusTable } from '@/components/status/StatusTable';
@@ -21,13 +25,86 @@ import { PageSection } from '@/components/layout/PageSection';
 import type { LiveStatusParams } from '@/api/types';
 import { Activity, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 
+export interface LiveStatusItem {
+  endpoint: {
+    id: string;
+    group: { name: string };
+  };
+  status: 'flapping' | 'up' | 'down';
+  name: string;
+  host: string;
+}
+
+type GroupedEndpoints = any[] | Record<string, any[]>;
+
 export default function Dashboard() {
   const [filters, setFilters] = useState<LiveStatusParams>({
     page: 1,
     pageSize: 50,
   });
 
-  const { data, isLoading } = useStatusQuery(filters);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const { data, isLoading } = useStatusQuery({
+    ...filters,
+    search: searchTerm,
+  });
+
+  // Grouping options state
+  const [groupByOptions, setGroupByOptions] = useState<string[]>([]);
+
+  // Grouped and filtered endpoints
+  const groupedEndpoints = useMemo(() => {
+    if (!data?.items) return null;
+
+    const result: Record<string, any> = {};
+
+    // First, filter the items based on search term if applicable
+    const filteredItems = searchTerm
+      ? data.items.filter(
+          (e: any) =>
+            e.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            e.host?.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      : data.items;
+
+    // Group by Status first (mandatory)
+    const statusGrouped: Record<'up' | 'down' | 'flapping', GroupedEndpoints> = {
+      up: [],
+      down: [],
+      flapping: [],
+    };
+
+    // First, push items into the status buckets
+    filteredItems.forEach(item => {
+      const bucket = statusGrouped[item.status]; // ✅ now works
+      if (Array.isArray(bucket)) bucket.push(item);
+    });
+
+    // If "group" option is selected, further group by endpoint.group.name
+    if (groupByOptions.includes('group')) {
+      (Object.keys(statusGrouped) as Array<'up' | 'down' | 'flapping'>).forEach(status => {
+        const bucket = statusGrouped[status];
+        if (Array.isArray(bucket)) {
+          const groupedByGroup: Record<string, LiveStatusItem[]> = {};
+          bucket.forEach(item => {
+            const group = item.endpoint.group.name;
+            if (!groupedByGroup[group]) groupedByGroup[group] = [];
+            groupedByGroup[group].push(item);
+          });
+          statusGrouped[status] = groupedByGroup;
+        }
+      });
+    }
+    return statusGrouped;
+  }, [data?.items, groupByOptions, searchTerm]);
+
+  // Handler for group by options
+  const toggleGroupByOption = useCallback((option: string) => {
+    setGroupByOptions(prev =>
+      prev.includes(option) ? prev.filter(o => o !== option) : [...prev, option]
+    );
+  }, []);
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   // Extract unique groups for filter dropdown
@@ -65,9 +142,19 @@ export default function Dashboard() {
     setFilters(prev => ({ ...prev, pageSize, page: 1 }));
   };
 
-  const StatCard = ({ icon: Icon, title, value, color }: any) => (
-    <CardRoot>
-      <CardBody>
+  const StatCard = ({
+    icon: Icon,
+    title,
+    value,
+    color,
+  }: {
+    icon: React.ComponentType<{ size: number; color: string }>;
+    title: string;
+    value: number;
+    color: string;
+  }) => (
+    <Card.Root>
+      <Card.Body>
         <Flex align='center' justify='space-between'>
           <VStack align='start' gap='1'>
             <Text fontSize='sm' color='fg.muted' fontWeight='medium'>
@@ -81,8 +168,8 @@ export default function Dashboard() {
             <Icon size={24} color={color} />
           </Box>
         </Flex>
-      </CardBody>
-    </CardRoot>
+      </Card.Body>
+    </Card.Root>
   );
 
   return (
@@ -110,11 +197,114 @@ export default function Dashboard() {
           />
         </Grid>
       </VStack>
+      {/* Group By Menu */}
+      <VStack align='stretch' gap='4' mb='4'>
+        <Flex direction='row' align='center' gap='4'>
+          <Fieldset.Root>
+            <Fieldset.Legend>
+              <Text fontWeight='semibold'>Group By:</Text>
+            </Fieldset.Legend>
+            <Fieldset.Content>
+              <CheckboxGroup>
+                <Checkbox.Root
+                  checked={groupByOptions.includes('status')}
+                  onCheckedChange={() => toggleGroupByOption('status')}
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control>
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  <Checkbox.Label>Status</Checkbox.Label>
+                </Checkbox.Root>
+                <Checkbox.Root
+                  checked={groupByOptions.includes('group')}
+                  onCheckedChange={() => toggleGroupByOption('group')}
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control>
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  <Checkbox.Label>Group</Checkbox.Label>
+                </Checkbox.Root>
+              </CheckboxGroup>
+            </Fieldset.Content>
+          </Fieldset.Root>
+        </Flex>
+
+        {groupByOptions.length > 0 && (
+          <Text fontSize='sm' color='fg.muted'>
+            Active filters: {groupByOptions.join(', ')}
+          </Text>
+        )}
+      </VStack>
+
       <StatusFilters filters={filters} onFiltersChange={handleFiltersChange} groups={groups} />
 
       {data && (
         <PageSection>
-          {isMobile ? (
+          {groupedEndpoints ? (
+            <Accordion.Root multiple>
+              {/* Status Grouping */}
+              {groupByOptions.includes('status') &&
+                Object.entries(groupedEndpoints).map(([status, groupOrItems]) => (
+                  <Accordion.Item key={status} value={status}>
+                    <Accordion.ItemTrigger>
+                      <HStack>
+                        {status === 'UP' ? (
+                          <CheckCircle size={16} color='green' />
+                        ) : (
+                          <XCircle size={16} color='red' />
+                        )}
+                        <Text>{status} Endpoints</Text>
+                        <Accordion.ItemIndicator />
+                      </HStack>
+                    </Accordion.ItemTrigger>
+
+                    <Accordion.ItemContent>
+                      <Accordion.ItemBody>
+                        {/* If further grouped by group */}
+                        {groupByOptions.includes('group') && typeof groupOrItems === 'object' ? (
+                          <Accordion.Root multiple>
+                            {Object.entries(groupOrItems).map(([group, items]) => (
+                              <Accordion.Item key={group} value={group}>
+                                <Accordion.ItemTrigger>
+                                  <Badge variant='subtle'>{group}</Badge>
+                                  <Accordion.ItemIndicator />
+                                </Accordion.ItemTrigger>
+                                <Accordion.ItemContent>
+                                  <Accordion.ItemBody>
+                                    <Grid
+                                      templateColumns='repeat(auto-fill, minmax(280px, 1fr))'
+                                      gap={2}
+                                    >
+                                      {(items as any[]).map(item => (
+                                        <StatusCard key={item.endpoint.id} item={item} />
+                                      ))}
+                                    </Grid>
+                                  </Accordion.ItemBody>
+                                </Accordion.ItemContent>
+                              </Accordion.Item>
+                            ))}
+                          </Accordion.Root>
+                        ) : (
+                          <Grid templateColumns='repeat(auto-fill, minmax(280px, 1fr))' gap={2}>
+                            {Array.isArray(groupOrItems)
+                              ? groupOrItems.map(item => (
+                                  <StatusCard key={item.endpoint.id} item={item} />
+                                ))
+                              : Object.values(groupOrItems)
+                                  .flat()
+                                  .map((item: any) => (
+                                    <StatusCard key={item.endpoint.id} item={item} />
+                                  ))}
+                          </Grid>
+                        )}
+                      </Accordion.ItemBody>
+                    </Accordion.ItemContent>
+                  </Accordion.Item>
+                ))}
+            </Accordion.Root>
+          ) : isMobile ? (
             <Grid templateColumns='repeat(auto-fill, minmax(280px, 1fr))' gap={2}>
               {data.items.map(item => (
                 <StatusCard key={item.endpoint.id} item={item} />
