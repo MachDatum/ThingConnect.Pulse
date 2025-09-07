@@ -15,9 +15,15 @@ export default function Configuration() {
     <Page
       title='Configuration Management'
       description='Manage monitoring endpoints and YAML configuration'
-      testId="configuration-page"
+      testId='configuration-page'
     >
-      <TabsRoot defaultValue='editor' variant='enclosed' h='full' display='flex' flexDirection='column'>
+      <TabsRoot
+        defaultValue='editor'
+        variant='enclosed'
+        h='full'
+        display='flex'
+        flexDirection='column'
+      >
         <TabsList flexShrink={0}>
           <TabsTrigger value='editor'>
             <Text>YAML Editor</Text>

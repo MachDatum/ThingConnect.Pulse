@@ -1,5 +1,10 @@
 import { apiClient } from '../client';
-import type { ConfigurationVersion, ConfigurationApplyResponse, ValidationErrorsDto, ValidationError } from '../types';
+import type {
+  ConfigurationVersion,
+  ConfigurationApplyResponse,
+  ValidationErrorsDto,
+  ValidationError,
+} from '../types';
 
 export class ConfigurationService {
   /**
@@ -41,7 +46,7 @@ export class ConfigurationService {
   async getCurrentConfiguration(): Promise<string> {
     return apiClient.get<string>('/api/configuration/current', {
       headers: {
-        'Accept': 'text/plain',
+        Accept: 'text/plain',
       },
     });
   }
@@ -49,23 +54,29 @@ export class ConfigurationService {
   /**
    * Validate configuration without applying
    */
-  async validateConfiguration(yamlContent: string): Promise<{ isValid: boolean; errors?: ValidationError[] }> {
+  async validateConfiguration(
+    yamlContent: string
+  ): Promise<{ isValid: boolean; errors?: ValidationError[] }> {
     try {
       // Use dryRun parameter to validate without applying
-      await apiClient.post<ConfigurationApplyResponse>('/api/configuration/apply?dryRun=true', yamlContent, {
-        headers: {
-          'Content-Type': 'text/plain',
-        },
-      });
+      await apiClient.post<ConfigurationApplyResponse>(
+        '/api/configuration/apply?dryRun=true',
+        yamlContent,
+        {
+          headers: {
+            'Content-Type': 'text/plain',
+          },
+        }
+      );
       return { isValid: true };
     } catch (error) {
       // Parse validation errors from API response
       try {
         const apiError = JSON.parse((error as Error).message);
-        
+
         // The actual ValidationErrorsDto is in apiError.details, not the root
         const errorData = apiError.details || apiError;
-        
+
         // Handle ValidationErrorsDto structure
         if (errorData.errors && Array.isArray(errorData.errors)) {
           const validationDto = errorData as ValidationErrorsDto;
@@ -74,24 +85,28 @@ export class ConfigurationService {
             errors: validationDto.errors,
           };
         }
-        
+
         // Create a single error for other cases
         return {
           isValid: false,
-          errors: [{
-            path: '',
-            message: errorData.message || apiError.message || 'Validation failed',
-            value: null
-          }],
+          errors: [
+            {
+              path: '',
+              message: errorData.message || apiError.message || 'Validation failed',
+              value: null,
+            },
+          ],
         };
       } catch {
         return {
           isValid: false,
-          errors: [{
-            path: '',
-            message: (error as Error).message,
-            value: null
-          }],
+          errors: [
+            {
+              path: '',
+              message: (error as Error).message,
+              value: null,
+            },
+          ],
         };
       }
     }
