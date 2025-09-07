@@ -48,7 +48,7 @@ public class Program
             builder.Services.AddDbContext<PulseDbContext>(options =>
                 options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            // Configure Identity
+            // Configure Identity and Authentication
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
                 // Password settings
@@ -64,36 +64,53 @@ public class Program
                 
                 // User settings
                 options.User.RequireUniqueEmail = true;
+
+                // Sign in settings
+                options.SignIn.RequireConfirmedAccount = false;
+                options.SignIn.RequireConfirmedEmail = false;
             })
             .AddEntityFrameworkStores<PulseDbContext>()
             .AddDefaultTokenProviders();
 
-            // Configure Cookie Authentication
-            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie(options =>
+            // Configure cookie authentication to override Identity defaults
+            builder.Services.ConfigureApplicationCookie(options =>
+            {
+                options.LoginPath = "/login";
+                options.LogoutPath = "/api/auth/logout";
+                options.AccessDeniedPath = "/access-denied";
+                options.ExpireTimeSpan = TimeSpan.FromHours(24);
+                options.SlidingExpiration = true;
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() 
+                    ? CookieSecurePolicy.SameAsRequest 
+                    : CookieSecurePolicy.Always;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+                options.Cookie.Name = "ThingConnect.Pulse.Auth";
+                options.Events.OnRedirectToLogin = context =>
                 {
-                    options.LoginPath = "/login";
-                    options.LogoutPath = "/api/auth/logout";
-                    options.AccessDeniedPath = "/access-denied";
-                    options.ExpireTimeSpan = TimeSpan.FromHours(24);
-                    options.SlidingExpiration = true;
-                    options.Cookie.HttpOnly = true;
-                    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() 
-                        ? CookieSecurePolicy.SameAsRequest 
-                        : CookieSecurePolicy.Always;
-                    options.Cookie.SameSite = SameSiteMode.Lax;
-                    options.Cookie.Name = "ThingConnect.Pulse.Auth";
-                    options.Events.OnRedirectToLogin = context =>
+                    // For API requests, return 401 instead of redirect
+                    if (context.Request.Path.StartsWithSegments("/api"))
                     {
                         context.Response.StatusCode = 401;
                         return Task.CompletedTask;
-                    };
-                    options.Events.OnRedirectToAccessDenied = context =>
+                    }
+                    // For regular requests, redirect to frontend login page
+                    context.Response.Redirect("/login");
+                    return Task.CompletedTask;
+                };
+                options.Events.OnRedirectToAccessDenied = context =>
+                {
+                    // For API requests, return 403 instead of redirect
+                    if (context.Request.Path.StartsWithSegments("/api"))
                     {
                         context.Response.StatusCode = 403;
                         return Task.CompletedTask;
-                    };
-                });
+                    }
+                    // For regular requests, redirect to access denied page
+                    context.Response.Redirect("/access-denied");
+                    return Task.CompletedTask;
+                };
+            });
 
             // Configure Authorization
             builder.Services.AddAuthorization(options =>
@@ -148,7 +165,7 @@ public class Program
             {
                 options.AddPolicy("AllowFrontend", policy =>
                 {
-                    policy.WithOrigins("https://localhost:55610", "http://localhost:55610", "https://localhost:5173", "http://localhost:5173", "https://localhost:55605")
+                    policy.WithOrigins("https://localhost:55610", "http://localhost:55610", "https://localhost:5173", "http://localhost:5173", "https://localhost:55605", "https://localhost:55606", "http://localhost:55606")
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials()
