@@ -2,20 +2,19 @@ import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import {
   Box,
-  Button,
   Flex,
   Heading,
   Text,
   VStack,
   Container,
   Alert,
-  Card,
   Stack,
-  Progress,
-  Input
+  Progress
 } from '@chakra-ui/react';
-import { Field } from '@/components/ui/field';
-import { PasswordInput } from '@/components/ui/password-input';
+import { FormField } from '@/components/form/FormField';
+import { PasswordInput } from '@/components/form/PasswordInput';
+import { LoadingButton } from '@/components/form/LoadingButton';
+import { AuthLayout } from '@/components/layout/AuthLayout';
 import { useAuth } from '../context/AuthContext';
 import { PageLoader } from '@/components/PageLoader';
 
@@ -134,99 +133,100 @@ export default function OnboardingPage() {
   const renderStep1 = () => (
     <VStack gap={6}>
       <Box textAlign="center">
-        <Heading size="lg" mb={2}>
+        <Heading size="lg" mb={2} color="gray.800" fontWeight="bold">
           Administrator Account
         </Heading>
-        <Text color="gray.600" _dark={{ color: "gray.400" }}>
+        <Text color="gray.600" fontSize="lg" fontWeight="medium">
           Create your administrator account to get started
         </Text>
       </Box>
 
       <Stack gap={4} w="full">
-        <Field label="Username" required>
-          <Input
-            type="text"
-            value={formData.username}
-            onChange={(e) => updateFormData('username', e.target.value)}
-            placeholder="Choose a username"
-            disabled={isSubmitting}
-          />
-        </Field>
+        <FormField
+          type="text"
+          value={formData.username}
+          onChange={(e) => updateFormData('username', e.target.value)}
+          placeholder="Choose a username"
+          disabled={isSubmitting}
+        />
 
-        <Field label="Email Address" required>
-          <Input
-            type="email"
-            value={formData.email}
-            onChange={(e) => updateFormData('email', e.target.value)}
-            placeholder="Enter your email address"
-            disabled={isSubmitting}
-          />
-        </Field>
+        <FormField
+          type="email"
+          value={formData.email}
+          onChange={(e) => updateFormData('email', e.target.value)}
+          placeholder="Enter your email address"
+          disabled={isSubmitting}
+        />
       </Stack>
 
-      <Button
-        colorScheme="blue"
+      <LoadingButton
         size="lg"
         w="full"
         onClick={handleNext}
-        disabled={isSubmitting}
+        isLoading={isSubmitting}
       >
         Continue
-      </Button>
+      </LoadingButton>
     </VStack>
   );
 
   const renderStep2 = () => (
     <VStack gap={6}>
       <Box textAlign="center">
-        <Heading size="lg" mb={2}>
+        <Heading size="lg" mb={2} color="gray.800" fontWeight="bold">
           Secure Your Account
         </Heading>
-        <Text color="gray.600" _dark={{ color: "gray.400" }}>
+        <Text color="gray.600" fontSize="lg" fontWeight="medium">
           Choose a strong password for your administrator account
         </Text>
       </Box>
 
       <Stack gap={4} w="full">
-        <Field label="Password" required>
-          <PasswordInput
-            value={formData.password}
-            onChange={(e) => updateFormData('password', e.target.value)}
-            placeholder="Enter a strong password"
-            disabled={isSubmitting}
-          />
-        </Field>
+        <PasswordInput
+          value={formData.password}
+          onChange={(e) => updateFormData('password', e.target.value)}
+          placeholder="Enter a strong password"
+          disabled={isSubmitting}
+        />
 
-        <Field label="Confirm Password" required>
-          <PasswordInput
-            value={formData.confirmPassword}
-            onChange={(e) => updateFormData('confirmPassword', e.target.value)}
-            placeholder="Confirm your password"
-            disabled={isSubmitting}
-          />
-        </Field>
+        <PasswordInput
+          value={formData.confirmPassword}
+          onChange={(e) => updateFormData('confirmPassword', e.target.value)}
+          placeholder="Confirm your password"
+          disabled={isSubmitting}
+        />
       </Stack>
 
       <Stack direction="row" gap={4} w="full">
-        <Button
+        <LoadingButton
           variant="outline"
           size="lg"
           flex="1"
           onClick={handleBack}
-          disabled={isSubmitting}
+          isLoading={isSubmitting}
+          bg="transparent"
+          color="#076bb3"
+          borderColor="#076bb3"
+          _hover={{ bg: "#076bb3", color: "white" }}
+          _disabled={{
+            bg: "transparent",
+            color: "gray.400",
+            borderColor: "gray.400",
+            cursor: "not-allowed",
+            _hover: { bg: "transparent", color: "gray.400" }
+          }}
         >
           Back
-        </Button>
-        <Button
-          colorScheme="blue"
+        </LoadingButton>
+        <LoadingButton
           size="lg"
           flex="1"
           onClick={handleSubmit}
-          loading={isSubmitting}
+          isLoading={isSubmitting}
           loadingText="Creating account..."
         >
           Create Account
-        </Button>
+        </LoadingButton>
       </Stack>
     </VStack>
   );
@@ -234,132 +234,77 @@ export default function OnboardingPage() {
   const renderStep3 = () => (
     <VStack gap={6}>
       <Box textAlign="center">
-        <Heading size="lg" mb={2} color="green.600" _dark={{ color: "green.400" }}>
+        <Heading size="lg" mb={2} color="#076bb3" fontWeight="bold">
           Setup Complete!
         </Heading>
-        <Text color="gray.600" _dark={{ color: "gray.400" }}>
+        <Text color="gray.600" fontSize="lg" fontWeight="medium">
           Your ThingConnect Pulse system is ready to use
         </Text>
       </Box>
 
       <VStack gap={4} align="start" maxW="md" w="full">
         <Flex align="center" gap={3}>
-          <Box w={2} h={2} bg="green.500" rounded="full" />
-          <Text>Administrator account created</Text>
+          <Box w={2} h={2} bg="#076bb3" rounded="full" />
+          <Text color="gray.800" fontWeight="medium">Administrator account created</Text>
         </Flex>
         <Flex align="center" gap={3}>
-          <Box w={2} h={2} bg="green.500" rounded="full" />
-          <Text>System authentication configured</Text>
+          <Box w={2} h={2} bg="#076bb3" rounded="full" />
+          <Text color="gray.800" fontWeight="medium">System authentication configured</Text>
         </Flex>
         <Flex align="center" gap={3}>
-          <Box w={2} h={2} bg="green.500" rounded="full" />
-          <Text>Ready to monitor your network</Text>
+          <Box w={2} h={2} bg="#076bb3" rounded="full" />
+          <Text color="gray.800" fontWeight="medium">Ready to monitor your network</Text>
         </Flex>
       </VStack>
 
-      <Text fontSize="sm" color="gray.500" _dark={{ color: "gray.400" }} textAlign="center">
+      <Text fontSize="sm" color="gray.600" fontWeight="medium" textAlign="center">
         You will be automatically logged in and redirected to the dashboard
       </Text>
     </VStack>
   );
 
+  const benefits = [
+    'Configure administrator access',
+    'Secure authentication system',
+    'Quick 2-minute setup',
+    'Start monitoring immediately'
+  ];
+
   return (
-    <Flex minH="100vh" bg="gray.50" _dark={{ bg: "gray.900" }}>
-      {/* Left side - Branding */}
-      <Flex
-        display={{ base: 'none', lg: 'flex' }}
-        flex="1"
-        bg="blue.600"
-        _dark={{ bg: "blue.800" }}
-        align="center"
-        justify="center"
-        color="white"
-        position="relative"
-      >
-        <Container maxW="lg" textAlign="center">
-          <VStack gap={8}>
-            <Box>
-              <Heading size="2xl" fontWeight="bold" mb={4}>
-                ThingConnect Pulse
-              </Heading>
-              <Text fontSize="xl" opacity={0.9}>
-                Initial System Setup
-              </Text>
-            </Box>
-            
-            <VStack gap={4} align="start" maxW="md">
-              <Flex align="center" gap={3}>
-                <Box w={2} h={2} bg="white" rounded="full" />
-                <Text>Configure administrator access</Text>
-              </Flex>
-              <Flex align="center" gap={3}>
-                <Box w={2} h={2} bg="white" rounded="full" />
-                <Text>Secure authentication system</Text>
-              </Flex>
-              <Flex align="center" gap={3}>
-                <Box w={2} h={2} bg="white" rounded="full" />
-                <Text>Quick 2-minute setup</Text>
-              </Flex>
-              <Flex align="center" gap={3}>
-                <Box w={2} h={2} bg="white" rounded="full" />
-                <Text>Start monitoring immediately</Text>
-              </Flex>
-            </VStack>
-          </VStack>
-        </Container>
-      </Flex>
+    <AuthLayout
+      title="ThingConnect Pulse"
+      subtitle="Initial System Setup"
+      benefits={benefits}
+    >
+      <VStack gap={6} w="full">
+        {/* Progress Bar */}
+        <Box w="full">
+          <Flex justify="space-between" align="center" mb={2}>
+            <Text fontSize="sm" color="gray.600" fontWeight="medium">
+              Step {currentStep} of 2
+            </Text>
+            <Text fontSize="sm" color="gray.600" fontWeight="medium">
+              {Math.round((currentStep / 2) * 100)}%
+            </Text>
+          </Flex>
+          <Progress.Root value={(currentStep / 2) * 100} colorPalette="blue">
+            <Progress.Track>
+              <Progress.Range />
+            </Progress.Track>
+          </Progress.Root>
+        </Box>
 
-      {/* Right side - Onboarding Form */}
-      <Flex
-        flex={{ base: '1', lg: '0.6' }}
-        align="center"
-        justify="center"
-        p={8}
-      >
-        <Container maxW="sm" w="full">
-          <Card.Root>
-            <Card.Body p={8}>
-              {/* Mobile Branding */}
-              <Box display={{ base: 'block', lg: 'none' }} mb={8} textAlign="center">
-                <Heading size="xl" color="blue.600" _dark={{ color: "blue.400" }}>
-                  ThingConnect Pulse
-                </Heading>
-                <Text color="gray.600" _dark={{ color: "gray.400" }} mt={2}>
-                  Initial System Setup
-                </Text>
-              </Box>
+        {error && (
+          <Alert.Root status="error" variant="subtle" w="full">
+            <Alert.Indicator />
+            <Alert.Title>{error}</Alert.Title>
+          </Alert.Root>
+        )}
 
-              {/* Progress Bar */}
-              <Box mb={8}>
-                <Flex justify="space-between" align="center" mb={2}>
-                  <Text fontSize="sm" color="gray.600" _dark={{ color: "gray.400" }}>
-                    Step {currentStep} of 2
-                  </Text>
-                  <Text fontSize="sm" color="gray.600" _dark={{ color: "gray.400" }}>
-                    {Math.round((currentStep / 2) * 100)}%
-                  </Text>
-                </Flex>
-                <Progress.Root value={(currentStep / 2) * 100} colorScheme="blue">
-                  <Progress.Track>
-                    <Progress.Range />
-                  </Progress.Track>
-                </Progress.Root>
-              </Box>
-
-              {error && (
-                <Alert.Root status="error" variant="subtle" mb={6}>
-                  <Alert.Indicator />
-                  <Alert.Title>{error}</Alert.Title>
-                </Alert.Root>
-              )}
-
-              {currentStep === 1 && renderStep1()}
-              {currentStep === 2 && renderStep2()}
-              {currentStep === 3 && renderStep3()}
-            </Card.Body>
-          </Card.Root>
-        </Container>
-      </Flex>
-    </Flex>
+        {currentStep === 1 && renderStep1()}
+        {currentStep === 2 && renderStep2()}
+        {currentStep === 3 && renderStep3()}
+      </VStack>
+    </AuthLayout>
   );
 }

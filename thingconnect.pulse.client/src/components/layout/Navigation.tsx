@@ -1,8 +1,9 @@
-import { Box, VStack, Text, Icon, Image, HStack, Badge } from '@chakra-ui/react';
+import { Box, VStack, Text, Icon, Image, HStack, Badge, Button } from '@chakra-ui/react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
-import { Wifi, Activity } from 'lucide-react';
+import { Wifi, Activity, LogOut } from 'lucide-react';
 import thingConnectIcon from '@/assets/thingconnect-icon.svg';
 import { Clock, Wrench, Settings, Info, Dashboard } from '@/icons';
+import { useAuth } from '@/features/auth/context/AuthContext';
 interface NavigationProps {
   onItemClick?: () => void;
 }
@@ -17,9 +18,19 @@ const navigationItems = [
 
 export function Navigation({ onItemClick }: NavigationProps) {
   const location = useLocation();
+  const { logout } = useAuth();
 
   const isActiveRoute = (path: string) =>
     path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // Navigation to login will be handled by the auth context
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
+  };
 
   return (
     <Box h='100%' display='flex' flexDirection='column' data-testid='navigation'>
@@ -95,34 +106,52 @@ export function Navigation({ onItemClick }: NavigationProps) {
         })}
       </VStack>
       <Box p={3} borderTop='1px' borderColor='gray.200' _dark={{ borderColor: 'gray.700' }}>
-        <VStack align='stretch' gap={2}>
-          <HStack gap={2} display={{ base: 'none', md: 'flex' }} data-testid='connection-status'>
-            <Wifi size={16} aria-label='Connection status' />
-            <Badge colorPalette='green' variant='solid' size='sm'>
-              Connected
-            </Badge>
-            <Text
-              data-testid='last-refresh-time'
-              fontSize='xs'
-              color='gray.500'
-              _dark={{ color: 'gray.400' }}
-              display={{ base: 'none', md: 'block' }}
-            >
-              Updated 2s ago
+        <VStack align='stretch' gap={3}>
+          <VStack align='stretch' gap={2}>
+            <HStack gap={2} display={{ base: 'none', md: 'flex' }} data-testid='connection-status'>
+              <Wifi size={16} aria-label='Connection status' />
+              <Badge colorPalette='green' variant='solid' size='sm'>
+                Connected
+              </Badge>
+              <Text
+                data-testid='last-refresh-time'
+                fontSize='xs'
+                color='gray.500'
+                _dark={{ color: 'gray.400' }}
+                display={{ base: 'none', md: 'block' }}
+              >
+                Updated 2s ago
+              </Text>
+            </HStack>
+            <HStack gap={2}>
+              <Icon
+                as={Activity}
+                boxSize={4}
+                color='green.500'
+                aria-label='System status'
+                data-testid='system-status'
+              />
+              <Text fontSize='xs' color='gray.600' _dark={{ color: 'gray.400' }}>
+                System Online
+              </Text>
+            </HStack>
+          </VStack>
+          
+          <Button
+            onClick={handleLogout}
+            size='sm'
+            variant='ghost'
+            colorScheme='gray'
+            justifyContent='flex-start'
+            leftIcon={<LogOut size={16} />}
+            w='full'
+            _hover={{ bg: 'gray.100', _dark: { bg: 'gray.700' } }}
+            data-testid='logout-button'
+          >
+            <Text fontSize='sm' fontWeight='semibold'>
+              Logout
             </Text>
-          </HStack>
-          <HStack gap={2}>
-            <Icon
-              as={Activity}
-              boxSize={4}
-              color='green.500'
-              aria-label='System status'
-              data-testid='system-status'
-            />
-            <Text fontSize='xs' color='gray.600' _dark={{ color: 'gray.400' }}>
-              System Online
-            </Text>
-          </HStack>
+          </Button>
         </VStack>
       </Box>
     </Box>

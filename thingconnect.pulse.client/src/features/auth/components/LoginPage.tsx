@@ -3,18 +3,15 @@ import { Navigate } from 'react-router-dom';
 import {
   Box,
   Button,
-  Flex,
   Heading,
   Text,
   VStack,
-  Container,
   Alert,
-  Card,
-  Stack,
-  Input
 } from '@chakra-ui/react';
-import { Field } from '@/components/ui/field';
-import { PasswordInput } from '@/components/ui/password-input';
+import { FormField } from '@/components/form/FormField';
+import { PasswordInput } from '@/components/form/PasswordInput';
+import { LoadingButton } from '@/components/ui/LoadingButton';
+import { AuthLayout } from '@/components/layout/AuthLayout';
 import { useAuth } from '../context/AuthContext';
 import { PageLoader } from '@/components/PageLoader';
 
@@ -68,131 +65,64 @@ export default function LoginPage() {
   };
 
   return (
-    <Flex minH="100vh" bg="gray.50" _dark={{ bg: "gray.900" }}>
-      {/* Left side - Branding */}
-      <Flex
-        display={{ base: 'none', lg: 'flex' }}
-        flex="1"
-        bg="blue.600"
-        _dark={{ bg: "blue.800" }}
-        align="center"
-        justify="center"
-        color="white"
-        position="relative"
-      >
-        <Container maxW="lg" textAlign="center">
-          <VStack gap={8}>
-            <Box>
-              <Heading size="2xl" fontWeight="bold" mb={4}>
-                ThingConnect Pulse
-              </Heading>
-              <Text fontSize="xl" opacity={0.9}>
-                Network Availability Monitoring System
+    <AuthLayout>
+      <VStack maxW="sm" mx="auto" w="full" gap={6} align="stretch">
+        <VStack gap={2} textAlign="start" w="full">
+          <Heading size="xl" color="gray.800" fontWeight="bold">
+            Welcome Back
+          </Heading>
+          <Text color="gray.600" fontSize="sm" fontWeight="medium">
+            Access your network monitoring dashboard
+          </Text>
+        </VStack>
+
+        {error && (
+          <Alert.Root status="error">
+            <Alert.Indicator />
+            <Alert.Content>
+              <Alert.Description>{error}</Alert.Description>
+            </Alert.Content>
+          </Alert.Root>
+        )}
+
+        <form onSubmit={handleSubmit} style={{ width: '100%' }}>
+          <VStack gap={4}>
+            <FormField
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              disabled={isSubmitting}
+              required
+            />
+
+            <FormField>
+              <PasswordInput
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isSubmitting}
+                required
+              />
+            </FormField>
+
+            <VStack gap={4} w="full" align="start">
+              <LoadingButton
+                type="submit"
+                w="full"
+                loading={isSubmitting}
+                loadingText="Signing in..."
+              >
+                Sign In
+              </LoadingButton>
+
+              <Text textAlign="center" w="full" color="gray.600" fontSize="sm">
+                Need an account? Contact your system administrator.
               </Text>
-            </Box>
-            
-            <VStack gap={4} align="start" maxW="md">
-              <Flex align="center" gap={3}>
-                <Box w={2} h={2} bg="white" rounded="full" />
-                <Text>Real-time endpoint monitoring</Text>
-              </Flex>
-              <Flex align="center" gap={3}>
-                <Box w={2} h={2} bg="white" rounded="full" />
-                <Text>Historical data & analytics</Text>
-              </Flex>
-              <Flex align="center" gap={3}>
-                <Box w={2} h={2} bg="white" rounded="full" />
-                <Text>Automated outage detection</Text>
-              </Flex>
-              <Flex align="center" gap={3}>
-                <Box w={2} h={2} bg="white" rounded="full" />
-                <Text>Manufacturing site reliability</Text>
-              </Flex>
             </VStack>
           </VStack>
-        </Container>
-      </Flex>
-
-      {/* Right side - Login Form */}
-      <Flex
-        flex={{ base: '1', lg: '0.6' }}
-        align="center"
-        justify="center"
-        p={8}
-      >
-        <Container maxW="sm" w="full">
-          <Card.Root>
-            <Card.Body p={8}>
-              {/* Mobile Branding */}
-              <Box display={{ base: 'block', lg: 'none' }} mb={8} textAlign="center">
-                <Heading size="xl" color="blue.600" _dark={{ color: "blue.400" }}>
-                  ThingConnect Pulse
-                </Heading>
-                <Text color="gray.600" _dark={{ color: "gray.400" }} mt={2}>
-                  Network Monitoring System
-                </Text>
-              </Box>
-
-              <VStack gap={6}>
-                <Box textAlign="center">
-                  <Heading size="lg" mb={2}>
-                    Sign In
-                  </Heading>
-                  <Text color="gray.600" _dark={{ color: "gray.400" }}>
-                    Access your monitoring dashboard
-                  </Text>
-                </Box>
-
-                {error && (
-                  <Alert.Root status="error" variant="subtle">
-                    <Alert.Indicator />
-                    <Alert.Title>{error}</Alert.Title>
-                  </Alert.Root>
-                )}
-
-                <Box as="form" onSubmit={handleSubmit} w="full">
-                  <Stack gap={4}>
-                    <Field label="Username" required>
-                      <Input
-                        type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        placeholder="Enter your username"
-                        disabled={isSubmitting}
-                      />
-                    </Field>
-
-                    <Field label="Password" required>
-                      <PasswordInput
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Enter your password"
-                        disabled={isSubmitting}
-                      />
-                    </Field>
-
-                    <Button
-                      type="submit"
-                      colorScheme="blue"
-                      size="lg"
-                      w="full"
-                      loading={isSubmitting}
-                      loadingText="Signing in..."
-                      mt={4}
-                    >
-                      Sign In
-                    </Button>
-                  </Stack>
-                </Box>
-
-                <Text fontSize="sm" color="gray.500" _dark={{ color: "gray.400" }} textAlign="center">
-                  Need an account? Contact your system administrator.
-                </Text>
-              </VStack>
-            </Card.Body>
-          </Card.Root>
-        </Container>
-      </Flex>
-    </Flex>
+        </form>
+      </VStack>
+    </AuthLayout>
   );
 }
