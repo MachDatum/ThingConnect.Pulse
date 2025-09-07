@@ -1,14 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  Box,
-  Heading,
-  Text,
-  VStack,
-  HStack,
-  Button,
-  Badge,
-  Table
-} from '@chakra-ui/react';
+import { Box, Heading, Text, VStack, HStack, Button, Badge, Table } from '@chakra-ui/react';
 import { Alert } from '@/components/ui/alert';
 import { History, Download, FileText, Clock } from 'lucide-react';
 import { configurationService } from '@/api/services/configuration.service';
@@ -30,8 +21,8 @@ export function ConfigurationVersions({ refreshTrigger }: ConfigurationVersionsP
       setError(null);
       const data = await configurationService.getVersions();
       // Sort by applied timestamp descending (most recent first)
-      const sortedVersions = data.sort((a, b) => 
-        new Date(b.appliedTs).getTime() - new Date(a.appliedTs).getTime()
+      const sortedVersions = data.sort(
+        (a, b) => new Date(b.appliedTs).getTime() - new Date(a.appliedTs).getTime()
       );
       setVersions(sortedVersions);
     } catch (err) {
@@ -94,7 +85,9 @@ export function ConfigurationVersions({ refreshTrigger }: ConfigurationVersionsP
       {versions.length === 0 ? (
         <Alert status='info'>
           <FileText size={16} />
-          <Text>No configuration versions found. Apply your first configuration to see version history.</Text>
+          <Text>
+            No configuration versions found. Apply your first configuration to see version history.
+          </Text>
         </Alert>
       ) : (
         <Box overflowX='auto'>
@@ -114,7 +107,7 @@ export function ConfigurationVersions({ refreshTrigger }: ConfigurationVersionsP
                 <Table.Row key={version.id}>
                   <Table.Cell>
                     <HStack gap={2}>
-                      <Badge 
+                      <Badge
                         colorScheme={index === 0 ? 'green' : 'gray'}
                         variant={index === 0 ? 'solid' : 'outline'}
                       >
@@ -125,7 +118,7 @@ export function ConfigurationVersions({ refreshTrigger }: ConfigurationVersionsP
                       </Text>
                     </HStack>
                   </Table.Cell>
-                  
+
                   <Table.Cell>
                     <VStack align='start' gap={0}>
                       <Text fontSize='sm'>{formatTimestamp(version.appliedTs)}</Text>
@@ -137,25 +130,23 @@ export function ConfigurationVersions({ refreshTrigger }: ConfigurationVersionsP
                       </HStack>
                     </VStack>
                   </Table.Cell>
-                  
+
                   <Table.Cell>
                     <Text fontSize='xs' fontFamily='monospace' color='gray.600'>
                       {formatHash(version.fileHash)}
                     </Text>
                   </Table.Cell>
-                  
+
                   <Table.Cell>
-                    <Text fontSize='sm'>
-                      {version.actor || 'System'}
-                    </Text>
+                    <Text fontSize='sm'>{version.actor || 'System'}</Text>
                   </Table.Cell>
-                  
+
                   <Table.Cell>
                     <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
                       {version.note || '—'}
                     </Text>
                   </Table.Cell>
-                  
+
                   <Table.Cell>
                     <HStack gap={2}>
                       <Button
@@ -182,8 +173,8 @@ export function ConfigurationVersions({ refreshTrigger }: ConfigurationVersionsP
           <Text fontSize='sm' color='blue.800' _dark={{ color: 'blue.200' }}>
             <strong>Configuration Storage:</strong>
             <br />
-            Versions are automatically created when configurations are applied.
-            Download any version to restore or compare configurations.
+            Versions are automatically created when configurations are applied. Download any version
+            to restore or compare configurations.
           </Text>
         </Box>
       )}

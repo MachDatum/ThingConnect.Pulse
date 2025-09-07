@@ -160,10 +160,7 @@ export default function About() {
                 rel='noopener noreferrer'
                 _hover={{ textDecoration: 'none' }}
               >
-                <Button
-                  size='sm'
-                  variant='outline'
-                >
+                <Button size='sm' variant='outline'>
                   <ExternalLink size={16} />
                   Visit ThingConnect.com
                 </Button>
@@ -174,13 +171,10 @@ export default function About() {
                 rel='noopener noreferrer'
                 _hover={{ textDecoration: 'none' }}
               >
-                <Button
-                  size='sm'
-                  variant='outline'
-                >
-                <ExternalLink size={16} />
-                View Source Code
-              </Button>
+                <Button size='sm' variant='outline'>
+                  <ExternalLink size={16} />
+                  View Source Code
+                </Button>
               </Link>
             </HStack>
           </VStack>
