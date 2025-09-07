@@ -297,19 +297,19 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
             flexDirection='column'
             flex={1}
           >
-            {/* Header (fixed height) */}
             <HStack
               bg={colorMode === 'dark' ? 'gray.800' : 'gray.100'}
-              h='40px'
+              h={9}
               align='center'
               gap={0}
             >
               <IconButton variant={'ghost'} color={'green.400'}>
                 <Code2 size={16} />
               </IconButton>
-              <Text fontSize={'sm'}>Code</Text>
+              <Text fontSize={'sm'} fontWeight={'semibold'}>
+                Code
+              </Text>
             </HStack>
-            {/* Editor */}
             <Box flex={1} overflow='hidden'>
               <Editor
                 height={`${height - 115}px`}
@@ -357,18 +357,14 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
           flexShrink={0}
           overflow='hidden'
         >
-          <HStack
-            bg={colorMode === 'dark' ? 'gray.800' : 'gray.100'}
-            h='40px'
-            align='center'
-            justify='flex-start'
-          >
+          <HStack bg={colorMode === 'dark' ? 'gray.800' : 'gray.100'} h={9} align='center' gap={0}>
             <IconButton variant={'ghost'} color={'blue.400'}>
               <FileText size={16} />
             </IconButton>
-            <Text fontSize={'sm'}>Description</Text>
+            <Text fontSize={'sm'} fontWeight={'semibold'}>
+              Description
+            </Text>
           </HStack>
-          {/* Content */}
           <Box flex={1} overflowY='auto' p={3}>
             <Accordion.Root multiple collapsible>
               <Accordion.Item value='guide'>
