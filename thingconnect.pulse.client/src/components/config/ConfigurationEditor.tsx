@@ -1,5 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
-import { Box, Button, VStack, HStack, Text, Heading } from '@chakra-ui/react';
+import {
+  Box,
+  Button,
+  VStack,
+  HStack,
+  Text,
+  Heading,
+  Accordion,
+  Span,
+  Separator,
+} from '@chakra-ui/react';
 import { useColorMode } from '@/components/ui/color-mode';
 import Editor from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
@@ -248,7 +258,8 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
   }, []);
 
   return (
-    <VStack gap={1} align='stretch' h='full' ref={containerRef}>
+    <VStack gap={4} align='stretch' h='full' ref={containerRef}>
+      {/* Header*/}
       <HStack mt={1} flexShrink={0} justifyContent={'space-between'}>
         <HStack gap={3} align='center'>
           <FileText size={20} />
@@ -260,7 +271,6 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
             <Download size={16} />
             Load Current Config
           </Button>
-
           <Button variant='outline' size='sm' onClick={handleLoadFromFile}>
             <Upload size={16} />
             Load from File
@@ -275,80 +285,133 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
           />
         </HStack>
       </HStack>
+      <Box display='grid' gridTemplateColumns='2fr 1fr' gap={4} h='full'>
+        {/* LEFT: Editor */}
+        <VStack align='stretch' gap={4}>
+          <Box
+            flex={'1 1 auto'}
+            border='1px solid'
+            borderColor={colorMode === 'dark' ? 'gray.600' : 'gray.200'}
+            borderRadius='md'
+            overflow='hidden'
+          >
+            <Editor
+              height={`${height - 160}px`}
+              language='yaml'
+              theme={colorMode === 'dark' ? 'vs-dark' : 'vs-light'}
+              value={yamlContent}
+              onChange={value => {
+                setYamlContent(value || '');
+                setValidationResult(null);
+                setApplyResult(null);
+                setError(null);
+                clearValidationMarkers();
+              }}
+              onMount={(editor, monaco) => {
+                editorRef.current = editor;
+                monacoRef.current = monaco;
+              }}
+              options={{
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                fontSize: 14,
+                tabSize: 2,
+                insertSpaces: true,
+                wordWrap: 'on',
+                lineNumbers: 'on',
+                folding: true,
+                automaticLayout: true,
+                bracketPairColorization: { enabled: true },
+                formatOnPaste: true,
+                formatOnType: true,
+              }}
+            />
+          </Box>
+        </VStack>
+        {/* RIGHT: Description */}
+        <VStack
+          align='stretch'
+          border='1px solid'
+          borderColor={colorMode === 'dark' ? 'gray.700' : 'gray.200'}
+          rounded='md'
+          p={3}
+          overflowY='auto'
+        >
+          <Accordion.Root multiple defaultValue={['guide']}>
+            <Accordion.Item value='guide'>
+              <Accordion.ItemTrigger>
+                <Span flex='1' fontWeight='semibold'>
+                  Guide
+                </Span>
+                <Accordion.ItemIndicator />
+              </Accordion.ItemTrigger>
+              <Accordion.ItemContent>
+                <Accordion.ItemBody fontSize='sm' color='fg.muted'>
+                  This panel explains how to structure your YAML configuration. Think of it like
+                  LeetCode’s problem description.
+                  <Separator my={3} />
+                  Example fields:
+                  <br />- <b>targets</b>: list of endpoints
+                  <br />- <b>groups</b>: logical grouping
+                  <br />- <b>rules</b>: access control rules
+                </Accordion.ItemBody>
+              </Accordion.ItemContent>
+            </Accordion.Item>
 
-      <Box
-        flex={'1 1 auto'}
-        border='1px solid'
-        borderColor={colorMode === 'dark' ? 'gray.600' : 'gray.200'}
-        borderRadius='md'
-        overflow='hidden'
-      >
-        <Editor
-          height={`${height - 88}px`}
-          language='yaml'
-          theme={colorMode === 'dark' ? 'vs-dark' : 'vs-light'}
-          value={yamlContent}
-          onChange={value => {
-            setYamlContent(value || '');
-            setValidationResult(null);
-            setApplyResult(null);
-            setError(null);
-            clearValidationMarkers();
-          }}
-          onMount={(editor, monaco) => {
-            editorRef.current = editor;
-            monacoRef.current = monaco;
-          }}
-          options={{
-            minimap: { enabled: false },
-            scrollBeyondLastLine: false,
-            fontSize: 14,
-            tabSize: 2,
-            insertSpaces: true,
-            wordWrap: 'on',
-            lineNumbers: 'on',
-            folding: true,
-            automaticLayout: true,
-            bracketPairColorization: { enabled: true },
-            formatOnPaste: true,
-            formatOnType: true,
-          }}
-        />
+            <Accordion.Item value='examples'>
+              <Accordion.ItemTrigger>
+                <Span flex='1' fontWeight='semibold'>
+                  Examples
+                </Span>
+                <Accordion.ItemIndicator />
+              </Accordion.ItemTrigger>
+              <Accordion.ItemContent>
+                <Accordion.ItemBody fontSize='sm' color='fg.muted'>
+                  Add YAML snippets here (valid + invalid).
+                </Accordion.ItemBody>
+              </Accordion.ItemContent>
+            </Accordion.Item>
+          </Accordion.Root>
+        </VStack>
       </Box>
+      {/* Alerts + Actions */}
+      <HStack justify='space-between' align='center' w='full'>
+        {/* LEFT: Alerts */}
+        <HStack gap={3} align='center'>
+          {error && (
+            <Alert status='error'>
+              <AlertCircle size={16} />
+              <Text>{error}</Text>
+            </Alert>
+          )}
 
-      <VStack gap={4} align='stretch' flexShrink={0}>
-        {error && (
-          <Alert status='error'>
-            <AlertCircle size={16} />
-            <Text>{error}</Text>
-          </Alert>
-        )}
+          {validationResult && (
+            <Alert status={validationResult.isValid ? 'success' : 'error'}>
+              <HStack gap={2} align='center'>
+                {validationResult.isValid && <Check size={14} />}
+                <Text fontWeight='medium' fontSize='sm'>
+                  {validationResult.isValid
+                    ? 'Configuration is valid'
+                    : `${validationResult.errors?.length || 0} error(s) found`}
+                </Text>
+              </HStack>
+            </Alert>
+          )}
 
-        {validationResult && (
-          <Alert status={validationResult.isValid ? 'success' : 'error'} py={2} px={3}>
-            <HStack gap={2} align='center'>
-              {validationResult.isValid && <Check size={14} />}
-              <Text fontWeight='medium' fontSize='sm'>
-                {validationResult.isValid
-                  ? 'Configuration is valid'
-                  : `${validationResult.errors?.length || 0} validation error${(validationResult.errors?.length || 0) !== 1 ? 's' : ''} found - see highlighted lines above`}
-              </Text>
-            </HStack>
-          </Alert>
-        )}
+          {applyResult && (
+            <Alert status='success'>
+              <HStack gap={2} align='center'>
+                <Check size={14} />
+                <Text fontWeight='medium' fontSize='sm'>
+                  Configuration applied successfully
+                </Text>
+              </HStack>
+            </Alert>
+          )}
+        </HStack>
 
-        {applyResult && (
-          <Alert status='success' py={2} px={3}>
-            <HStack gap={2} align='center'>
-              <Check size={14} />
-              <Text fontWeight='medium' fontSize='sm'>
-                Configuration applied successfully
-              </Text>
-            </HStack>
-          </Alert>
-        )}
-
-        <HStack gap={3}>
+        {/* RIGHT: Buttons */}
+        <HStack gap={2}>
           <Button
             variant='outline'
             onClick={handleValidate}
@@ -358,18 +421,17 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
             <Check size={16} />
             Validate
           </Button>
-
           <Button
-            colorScheme='blue'
+            colorPalette='blue'
             onClick={handleApply}
             loading={isLoading}
             disabled={!yamlContent.trim() || validationResult?.isValid === false}
           >
             <Upload size={16} />
-            Apply Configuration
+            Apply
           </Button>
         </HStack>
-      </VStack>
+      </HStack>
     </VStack>
   );
 }
