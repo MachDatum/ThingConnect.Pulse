@@ -9,12 +9,13 @@ import {
   Accordion,
   Span,
   Separator,
+  IconButton,
 } from '@chakra-ui/react';
 import { useColorMode } from '@/components/ui/color-mode';
 import Editor from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
 import { Alert } from '@/components/ui/alert';
-import { FileText, Upload, Check, AlertCircle, Download } from 'lucide-react';
+import { FileText, Upload, Check, Download, Code2 } from 'lucide-react';
 import { configurationService } from '@/api/services/configuration.service';
 import type { ConfigurationApplyResponse, ValidationError } from '@/api/types';
 import { useResizeObserver } from '@/hooks/useResizeObserver';
@@ -285,47 +286,63 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
           />
         </HStack>
       </HStack>
-      <Box display='grid' gridTemplateColumns='2fr 1fr' gap={4} h='full'>
+      <Box display='flex' flex='1' overflow='hidden' gap={2}>
         {/* LEFT: Editor */}
-        <VStack align='stretch' gap={4}>
+        <VStack align='stretch' flex={1} overflow='hidden'>
           <Box
-            flex={'1 1 auto'}
             border='1px solid'
             borderColor={colorMode === 'dark' ? 'gray.600' : 'gray.200'}
             borderRadius='md'
-            overflow='hidden'
+            display='flex'
+            flexDirection='column'
+            flex={1}
           >
-            <Editor
-              height={`${height - 115}px`}
-              language='yaml'
-              theme={colorMode === 'dark' ? 'vs-dark' : 'vs-light'}
-              value={yamlContent}
-              onChange={value => {
-                setYamlContent(value || '');
-                setValidationResult(null);
-                setApplyResult(null);
-                setError(null);
-                clearValidationMarkers();
-              }}
-              onMount={(editor, monaco) => {
-                editorRef.current = editor;
-                monacoRef.current = monaco;
-              }}
-              options={{
-                minimap: { enabled: false },
-                scrollBeyondLastLine: false,
-                fontSize: 14,
-                tabSize: 2,
-                insertSpaces: true,
-                wordWrap: 'on',
-                lineNumbers: 'on',
-                folding: true,
-                automaticLayout: true,
-                bracketPairColorization: { enabled: true },
-                formatOnPaste: true,
-                formatOnType: true,
-              }}
-            />
+            {/* Header (fixed height) */}
+            <HStack
+              bg={colorMode === 'dark' ? 'gray.800' : 'gray.100'}
+              h='40px'
+              align='center'
+              gap={0}
+            >
+              <IconButton variant={'ghost'} color={'green.400'}>
+                <Code2 size={16} />
+              </IconButton>
+              <Text fontSize={'sm'}>Code</Text>
+            </HStack>
+            {/* Editor */}
+            <Box flex={1} overflow='hidden'>
+              <Editor
+                height={`${height - 115}px`}
+                language='yaml'
+                theme={colorMode === 'dark' ? 'vs-dark' : 'vs-light'}
+                value={yamlContent}
+                onChange={value => {
+                  setYamlContent(value || '');
+                  setValidationResult(null);
+                  setApplyResult(null);
+                  setError(null);
+                  clearValidationMarkers();
+                }}
+                onMount={(editor, monaco) => {
+                  editorRef.current = editor;
+                  monacoRef.current = monaco;
+                }}
+                options={{
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  fontSize: 14,
+                  tabSize: 2,
+                  insertSpaces: true,
+                  wordWrap: 'on',
+                  lineNumbers: 'on',
+                  folding: true,
+                  automaticLayout: true,
+                  bracketPairColorization: { enabled: true },
+                  formatOnPaste: true,
+                  formatOnType: true,
+                }}
+              />
+            </Box>
           </Box>
         </VStack>
         {/* RIGHT: Description */}
@@ -334,44 +351,59 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
           border='1px solid'
           borderColor={colorMode === 'dark' ? 'gray.700' : 'gray.200'}
           rounded='md'
-          p={3}
-          overflowY='auto'
+          w='350px'
+          minW='280px'
+          maxW='400px'
+          flexShrink={0}
+          overflow='hidden'
         >
-          <Accordion.Root multiple defaultValue={['guide']}>
-            <Accordion.Item value='guide'>
-              <Accordion.ItemTrigger>
-                <Span flex='1' fontWeight='semibold'>
-                  Guide
-                </Span>
-                <Accordion.ItemIndicator />
-              </Accordion.ItemTrigger>
-              <Accordion.ItemContent>
-                <Accordion.ItemBody fontSize='sm' color='fg.muted'>
-                  This panel explains how to structure your YAML configuration. Think of it like
-                  LeetCode’s problem description.
-                  <Separator my={3} />
-                  Example fields:
-                  <br />- <b>targets</b>: list of endpoints
-                  <br />- <b>groups</b>: logical grouping
-                  <br />- <b>rules</b>: access control rules
-                </Accordion.ItemBody>
-              </Accordion.ItemContent>
-            </Accordion.Item>
-
-            <Accordion.Item value='examples'>
-              <Accordion.ItemTrigger>
-                <Span flex='1' fontWeight='semibold'>
-                  Examples
-                </Span>
-                <Accordion.ItemIndicator />
-              </Accordion.ItemTrigger>
-              <Accordion.ItemContent>
-                <Accordion.ItemBody fontSize='sm' color='fg.muted'>
-                  Add YAML snippets here (valid + invalid).
-                </Accordion.ItemBody>
-              </Accordion.ItemContent>
-            </Accordion.Item>
-          </Accordion.Root>
+          <HStack
+            bg={colorMode === 'dark' ? 'gray.800' : 'gray.100'}
+            h='40px'
+            align='center'
+            justify='flex-start'
+          >
+            <IconButton variant={'ghost'} color={'blue.400'}>
+              <FileText size={16} />
+            </IconButton>
+            <Text fontSize={'sm'}>Description</Text>
+          </HStack>
+          {/* Content */}
+          <Box flex={1} overflowY='auto' p={3}>
+            <Accordion.Root multiple collapsible>
+              <Accordion.Item value='guide'>
+                <Accordion.ItemTrigger>
+                  <Text flex='1' fontWeight='semibold'>
+                    Guide
+                  </Text>
+                  <Accordion.ItemIndicator />
+                </Accordion.ItemTrigger>
+                <Accordion.ItemContent>
+                  <Accordion.ItemBody fontSize='sm' color='fg.muted'>
+                    This panel explains how to structure your YAML configuration.
+                    <Separator my={3} />
+                    Example fields:
+                    <br />- <b>targets</b>
+                    <br />- <b>groups</b>
+                    <br />- <b>rules</b>
+                  </Accordion.ItemBody>
+                </Accordion.ItemContent>
+              </Accordion.Item>
+              <Accordion.Item value='examples'>
+                <Accordion.ItemTrigger>
+                  <Span flex='1' fontWeight='semibold'>
+                    Examples
+                  </Span>
+                  <Accordion.ItemIndicator />
+                </Accordion.ItemTrigger>
+                <Accordion.ItemContent>
+                  <Accordion.ItemBody fontSize='sm' color='fg.muted'>
+                    Add YAML snippets here (valid + invalid).
+                  </Accordion.ItemBody>
+                </Accordion.ItemContent>
+              </Accordion.Item>
+            </Accordion.Root>
+          </Box>
         </VStack>
       </Box>
       {/* Alerts + Actions */}
