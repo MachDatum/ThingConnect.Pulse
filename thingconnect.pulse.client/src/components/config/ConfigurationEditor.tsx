@@ -1,12 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { 
-  Box, 
-  Button, 
-  VStack, 
-  HStack,
-  Text,
-  Heading
-} from '@chakra-ui/react';
+import { Box, Button, VStack, HStack, Text, Heading } from '@chakra-ui/react';
 import { useColorMode } from '@/components/ui/color-mode';
 import Editor from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
@@ -36,28 +29,32 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
   const { ref: containerRef, height } = useResizeObserver<HTMLDivElement>();
 
   // Function to convert YAML path to line position for Monaco markers
-  const findYamlPathPosition = (yamlText: string, path: string): { line: number; column: number } => {
+  const findYamlPathPosition = (
+    yamlText: string,
+    path: string
+  ): { line: number; column: number } => {
     const lines = yamlText.split('\n');
-    
+
     // Parse path like "targets[0].group" or "groups[1].name"
     const pathParts = path.split('.');
     let currentLine = 1;
-    
+
     try {
       for (let i = 0; i < pathParts.length; i++) {
         const part = pathParts[i];
-        
+
         // Handle array notation like "targets[0]"
         const arrayMatch = part.match(/^([^[]+)\[(\d+)\]$/);
         if (arrayMatch) {
           const [, arrayName, indexStr] = arrayMatch;
           const index = parseInt(indexStr, 10);
-          
+
           // Find the array declaration
-          const arrayLineIndex = lines.findIndex((line, idx) => 
-            idx >= currentLine - 1 && line.trim().startsWith(`${arrayName}:`));
+          const arrayLineIndex = lines.findIndex(
+            (line, idx) => idx >= currentLine - 1 && line.trim().startsWith(`${arrayName}:`)
+          );
           if (arrayLineIndex === -1) break;
-          
+
           // Find the specific array item
           let itemCount = 0;
           for (let j = arrayLineIndex + 1; j < lines.length; j++) {
@@ -74,9 +71,11 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
           }
         } else {
           // Handle simple property like "group" or "name"
-          const propertyLineIndex = lines.findIndex((line, idx) => 
-            idx >= currentLine - 1 && 
-            (line.trim().startsWith(`${part}:`) || line.trim() === `${part}:`));
+          const propertyLineIndex = lines.findIndex(
+            (line, idx) =>
+              idx >= currentLine - 1 &&
+              (line.trim().startsWith(`${part}:`) || line.trim() === `${part}:`)
+          );
           if (propertyLineIndex !== -1) {
             currentLine = propertyLineIndex + 1;
           }
@@ -85,34 +84,34 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
     } catch (e) {
       console.warn('Error parsing YAML path:', path, e);
     }
-    
+
     return { line: currentLine, column: 1 };
   };
 
   // Function to set validation markers in Monaco editor
   const setValidationMarkers = (errors: any[]) => {
     if (!editorRef.current || !monacoRef.current) return;
-    
+
     const model = editorRef.current.getModel();
     if (!model) return;
-    
-    const markers: editor.IMarkerData[] = errors.map((error) => {
+
+    const markers: editor.IMarkerData[] = errors.map(error => {
       let position = { line: 1, column: 1 };
       let message = '';
-      
+
       if (typeof error === 'string') {
         // Handle legacy string format
         const colonIndex = error.indexOf(':');
         const path = colonIndex > 0 ? error.substring(0, colonIndex).trim() : '';
         message = colonIndex > 0 ? error.substring(colonIndex + 1).trim() : error;
-        
+
         if (path) {
           position = findYamlPathPosition(yamlContent, path);
         }
       } else {
         // Handle new structured ValidationError format
         message = error.message || 'Validation error';
-        
+
         // Use structured line/column data if available
         if (error.line && error.column) {
           position = { line: error.line, column: error.column };
@@ -121,7 +120,7 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
           position = findYamlPathPosition(yamlContent, error.path);
         }
       }
-      
+
       return {
         severity: monacoRef.current.MarkerSeverity.Error,
         message: message,
@@ -131,23 +130,28 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
         endColumn: position.column + 10, // Highlight a few characters
       };
     });
-    
+
     monacoRef.current.editor.setModelMarkers(model, 'yaml-validation', markers);
   };
 
   // Function to clear validation markers
   const clearValidationMarkers = () => {
     if (!editorRef.current || !monacoRef.current) return;
-    
+
     const model = editorRef.current.getModel();
     if (!model) return;
-    
+
     monacoRef.current.editor.setModelMarkers(model, 'yaml-validation', []);
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && (file.type === 'application/x-yaml' || file.name.endsWith('.yaml') || file.name.endsWith('.yml'))) {
+    if (
+      file &&
+      (file.type === 'application/x-yaml' ||
+        file.name.endsWith('.yaml') ||
+        file.name.endsWith('.yml'))
+    ) {
       const reader = new FileReader();
       reader.onload = e => {
         const content = e.target?.result as string;
@@ -171,7 +175,7 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
     setIsLoading(true);
     setError(null);
     clearValidationMarkers();
-    
+
     try {
       const result = await configurationService.validateConfiguration(yamlContent);
       setValidationResult(result);
@@ -239,35 +243,25 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
         console.warn('Could not load current configuration, using example:', err);
       }
     };
-    
+
     loadCurrentConfig();
   }, []);
 
-
   return (
     <VStack gap={1} align='stretch' h='full' ref={containerRef}>
-      <HStack mt={1} flexShrink={0} justifyContent={"space-between"}>
+      <HStack mt={1} flexShrink={0} justifyContent={'space-between'}>
         <HStack gap={3} align='center'>
           <FileText size={20} />
           <Heading size='md'>YAML Configuration Editor</Heading>
         </HStack>
 
-        <HStack gap={2} alignItems={"center"} justifyContent={"flex-end"}>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={handleLoadCurrent}
-            loading={isLoading}
-          >
+        <HStack gap={2} alignItems={'center'} justifyContent={'flex-end'}>
+          <Button variant='outline' size='sm' onClick={handleLoadCurrent} loading={isLoading}>
             <Download size={16} />
             Load Current Config
           </Button>
-          
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={handleLoadFromFile}
-          >
+
+          <Button variant='outline' size='sm' onClick={handleLoadFromFile}>
             <Upload size={16} />
             Load from File
           </Button>
@@ -282,13 +276,19 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
         </HStack>
       </HStack>
 
-      <Box flex={"1 1 auto"} border="1px solid" borderColor={colorMode === 'dark' ? 'gray.600' : 'gray.200'} borderRadius="md" overflow="hidden">
+      <Box
+        flex={'1 1 auto'}
+        border='1px solid'
+        borderColor={colorMode === 'dark' ? 'gray.600' : 'gray.200'}
+        borderRadius='md'
+        overflow='hidden'
+      >
         <Editor
           height={`${height - 88}px`}
-          language="yaml"
+          language='yaml'
           theme={colorMode === 'dark' ? 'vs-dark' : 'vs-light'}
           value={yamlContent}
-          onChange={(value) => {
+          onChange={value => {
             setYamlContent(value || '');
             setValidationResult(null);
             setApplyResult(null);
@@ -329,8 +329,8 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
             <HStack gap={2} align='center'>
               {validationResult.isValid && <Check size={14} />}
               <Text fontWeight='medium' fontSize='sm'>
-                {validationResult.isValid 
-                  ? 'Configuration is valid' 
+                {validationResult.isValid
+                  ? 'Configuration is valid'
                   : `${validationResult.errors?.length || 0} validation error${(validationResult.errors?.length || 0) !== 1 ? 's' : ''} found - see highlighted lines above`}
               </Text>
             </HStack>
@@ -341,7 +341,9 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
           <Alert status='success' py={2} px={3}>
             <HStack gap={2} align='center'>
               <Check size={14} />
-              <Text fontWeight='medium' fontSize='sm'>Configuration applied successfully</Text>
+              <Text fontWeight='medium' fontSize='sm'>
+                Configuration applied successfully
+              </Text>
             </HStack>
           </Alert>
         )}
@@ -361,7 +363,7 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
             colorScheme='blue'
             onClick={handleApply}
             loading={isLoading}
-            disabled={!yamlContent.trim() || (validationResult?.isValid === false)}
+            disabled={!yamlContent.trim() || validationResult?.isValid === false}
           >
             <Upload size={16} />
             Apply Configuration
