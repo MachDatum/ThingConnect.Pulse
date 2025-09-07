@@ -296,7 +296,7 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
             overflow='hidden'
           >
             <Editor
-              height={`${height - 160}px`}
+              height={`${height - 115}px`}
               language='yaml'
               theme={colorMode === 'dark' ? 'vs-dark' : 'vs-light'}
               value={yamlContent}
@@ -375,43 +375,37 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
         </VStack>
       </Box>
       {/* Alerts + Actions */}
-      <HStack justify='space-between' align='center' w='full'>
+      <HStack justify='space-between' align='top' w='full'>
         {/* LEFT: Alerts */}
-        <HStack gap={3} align='center'>
-          {error && (
-            <Alert status='error'>
-              <AlertCircle size={16} />
-              <Text>{error}</Text>
-            </Alert>
-          )}
-
-          {validationResult && (
-            <Alert status={validationResult.isValid ? 'success' : 'error'}>
-              <HStack gap={2} align='center'>
-                {validationResult.isValid && <Check size={14} />}
-                <Text fontWeight='medium' fontSize='sm'>
-                  {validationResult.isValid
-                    ? 'Configuration is valid'
-                    : `${validationResult.errors?.length || 0} error(s) found`}
-                </Text>
-              </HStack>
-            </Alert>
-          )}
-
-          {applyResult && (
-            <Alert status='success'>
-              <HStack gap={2} align='center'>
-                <Check size={14} />
-                <Text fontWeight='medium' fontSize='sm'>
-                  Configuration applied successfully
-                </Text>
-              </HStack>
-            </Alert>
-          )}
-        </HStack>
-
+        {error && (
+          <Alert status='error' alignContent={'top'}>
+            <Text>{error}</Text>
+          </Alert>
+        )}
+        {validationResult && (
+          <Alert status={validationResult.isValid ? 'success' : 'error'}>
+            <HStack gap={2}>
+              {validationResult.isValid && <Check size={14} />}
+              <Text fontWeight='medium' fontSize='sm'>
+                {validationResult.isValid
+                  ? 'Configuration is valid'
+                  : `${validationResult.errors?.length || 0} error(s) found`}
+              </Text>
+            </HStack>
+          </Alert>
+        )}
+        {applyResult && (
+          <Alert status='success'>
+            <HStack gap={2}>
+              <Check size={14} />
+              <Text fontWeight='medium' fontSize='sm'>
+                Configuration applied successfully
+              </Text>
+            </HStack>
+          </Alert>
+        )}
         {/* RIGHT: Buttons */}
-        <HStack gap={2}>
+        <HStack gap={2} ml='auto'>
           <Button
             variant='outline'
             onClick={handleValidate}
