@@ -3,15 +3,11 @@
     "allow": [
       "Bash(dotnet:*)",
       "Bash(npm:*)",
+      "Bash(npx tsc:*)",
       "Bash(curl:*)",
       "Bash(taskkill:*)",
       "mcp__chakra-ui",
-      "Bash(npx tsc:*)",
-      "mcp__serena__check_onboarding_performed",
-      "mcp__serena__activate_project",
-      "mcp__serena__onboarding",
-      "mcp__serena__think_about_collected_information",
-      "mcp__serena__write_memory"
+      "mcp__serena"
     ],
     "deny": [],
     "ask": []
