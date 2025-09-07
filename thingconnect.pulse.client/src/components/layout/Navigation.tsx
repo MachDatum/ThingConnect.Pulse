@@ -11,7 +11,7 @@ interface NavigationProps {
 const navigationItems = [
   { label: 'Dashboard', path: '/', icon: Dashboard },
   { label: 'History', path: '/history', icon: Clock },
-  { label: 'Config', path: '/config', icon: Wrench },
+  { label: 'Configuration', path: '/configuration', icon: Wrench },
   { label: 'Settings', path: '/settings', icon: Settings },
   { label: 'About', path: '/about', icon: Info },
 ];
@@ -136,18 +136,18 @@ export function Navigation({ onItemClick }: NavigationProps) {
               </Text>
             </HStack>
           </VStack>
-          
           <Button
             onClick={handleLogout}
             size='sm'
             variant='ghost'
             colorScheme='gray'
             justifyContent='flex-start'
-            leftIcon={<LogOut size={16} />}
             w='full'
             _hover={{ bg: 'gray.100', _dark: { bg: 'gray.700' } }}
             data-testid='logout-button'
+            px='0'
           >
+            <LogOut size={16} />
             <Text fontSize='sm' fontWeight='semibold'>
               Logout
             </Text>
