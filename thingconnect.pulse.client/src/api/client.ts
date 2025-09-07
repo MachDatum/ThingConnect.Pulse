@@ -9,6 +9,7 @@ class ApiClient {
     this.client = axios.create({
       baseURL: import.meta.env.VITE_API_BASE_URL || '',
       timeout: parseInt(import.meta.env.VITE_API_TIMEOUT) || 30000,
+      withCredentials: true, // Enable cookies for authentication
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
