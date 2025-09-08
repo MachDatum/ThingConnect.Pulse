@@ -10,12 +10,14 @@ import {
   Span,
   Separator,
   IconButton,
+  Flex,
+  Collapsible,
 } from '@chakra-ui/react';
 import { useColorMode } from '@/components/ui/color-mode';
 import Editor from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
 import { Alert } from '@/components/ui/alert';
-import { FileText, Upload, Check, Download, Code2 } from 'lucide-react';
+import { FileText, Upload, Check, Download, Code2, ChevronLeft } from 'lucide-react';
 import { configurationService } from '@/api/services/configuration.service';
 import type { ConfigurationApplyResponse, ValidationError } from '@/api/types';
 import { useResizeObserver } from '@/hooks/useResizeObserver';
@@ -37,7 +39,8 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<any>(null);
-  const { ref: containerRef, height } = useResizeObserver<HTMLDivElement>();
+  const { ref: containerRef } = useResizeObserver<HTMLDivElement>();
+  const [isCollabsable, setIsCollabsable] = useState(true);
 
   // Function to convert YAML path to line position for Monaco markers
   const findYamlPathPosition = (
@@ -259,9 +262,9 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
   }, []);
 
   return (
-    <VStack gap={4} align='stretch' h='full' ref={containerRef}>
+    <VStack gap={3} align='stretch' h='full' w={'full'} ref={containerRef}>
       {/* Header*/}
-      <HStack mt={1} flexShrink={0} justifyContent={'space-between'}>
+      <HStack mt={2} flexShrink={0} justifyContent={'space-between'}>
         <HStack gap={3} align='center'>
           <FileText size={20} />
           <Heading size='md'>YAML Configuration Editor</Heading>
@@ -288,152 +291,175 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
       </HStack>
       <Box display='flex' flex='1' overflow='hidden' gap={2}>
         {/* LEFT: Editor */}
-        <VStack align='stretch' flex={1} overflow='hidden'>
-          <Box
+        <VStack
+          align='stretch'
+          border='1px solid'
+          borderColor={colorMode === 'dark' ? 'gray.600' : 'gray.200'}
+          borderRadius='md'
+          flex={3}
+          minW='0'
+        >
+          <HStack
+            bg={colorMode === 'dark' ? 'gray.800' : 'gray.100'}
+            h={9}
+            align='center'
+            gap={0}
+            flexShrink={0}
+          >
+            <IconButton variant='ghost' color='green.500'>
+              <Code2 size={16} />
+            </IconButton>
+            <Text fontSize='sm' fontWeight='semibold'>
+              Editor
+            </Text>
+          </HStack>
+          <Box flex='1' overflow='hidden'>
+            <Editor
+              height='100%'
+              language='yaml'
+              theme={colorMode === 'dark' ? 'vs-dark' : 'vs-light'}
+              value={yamlContent}
+              onChange={value => {
+                setYamlContent(value || '');
+                setValidationResult(null);
+                setApplyResult(null);
+                setError(null);
+                clearValidationMarkers();
+              }}
+              onMount={(editor, monaco) => {
+                editorRef.current = editor;
+                monacoRef.current = monaco;
+              }}
+              options={{
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                fontSize: 14,
+                tabSize: 2,
+                insertSpaces: true,
+                wordWrap: 'on',
+                lineNumbers: 'on',
+                folding: true,
+                automaticLayout: true,
+                bracketPairColorization: { enabled: true },
+                formatOnPaste: true,
+                formatOnType: true,
+              }}
+            />
+          </Box>
+        </VStack>
+        <Collapsible.Root
+          open={isCollabsable}
+          onOpenChange={() => {
+            setIsCollabsable(!isCollabsable);
+          }}
+          flex={isCollabsable ? '1' : 'none'}
+        >
+          <Collapsible.Content
             border='1px solid'
-            borderColor={colorMode === 'dark' ? 'gray.600' : 'gray.200'}
-            borderRadius='md'
-            display='flex'
-            flexDirection='column'
-            flex={1}
+            borderColor={colorMode === 'dark' ? 'gray.700' : 'gray.200'}
+            rounded='md'
+            h='full'
+            w={'full'}
           >
             <HStack
               bg={colorMode === 'dark' ? 'gray.800' : 'gray.100'}
               h={9}
               align='center'
-              gap={0}
+              justify='space-between'
+              px={2}
             >
-              <IconButton variant={'ghost'} color={'green.400'}>
-                <Code2 size={16} />
-              </IconButton>
-              <Text fontSize={'sm'} fontWeight={'semibold'}>
-                Code
-              </Text>
+              <HStack
+                bg={colorMode === 'dark' ? 'gray.800' : 'gray.100'}
+                h={9}
+                align='center'
+                gap={0}
+              >
+                <IconButton variant={'ghost'} color={'blue.400'}>
+                  <FileText size={16} />
+                </IconButton>
+                <Text fontSize={'sm'} fontWeight={'semibold'}>
+                  Description
+                </Text>
+              </HStack>
+              <Collapsible.Trigger>
+                <ChevronLeft size={16} />
+              </Collapsible.Trigger>
             </HStack>
-            <Box flex={1} overflow='hidden'>
-              <Editor
-                height={`${height - 115}px`}
-                language='yaml'
-                theme={colorMode === 'dark' ? 'vs-dark' : 'vs-light'}
-                value={yamlContent}
-                onChange={value => {
-                  setYamlContent(value || '');
-                  setValidationResult(null);
-                  setApplyResult(null);
-                  setError(null);
-                  clearValidationMarkers();
-                }}
-                onMount={(editor, monaco) => {
-                  editorRef.current = editor;
-                  monacoRef.current = monaco;
-                }}
-                options={{
-                  minimap: { enabled: false },
-                  scrollBeyondLastLine: false,
-                  fontSize: 14,
-                  tabSize: 2,
-                  insertSpaces: true,
-                  wordWrap: 'on',
-                  lineNumbers: 'on',
-                  folding: true,
-                  automaticLayout: true,
-                  bracketPairColorization: { enabled: true },
-                  formatOnPaste: true,
-                  formatOnType: true,
-                }}
-              />
+            <Box flex={1} overflowY='auto' p={3}>
+              <Accordion.Root multiple collapsible>
+                <Accordion.Item value='guide'>
+                  <Accordion.ItemTrigger>
+                    <Text flex='1' fontWeight='semibold'>
+                      Guide
+                    </Text>
+                    <Accordion.ItemIndicator />
+                  </Accordion.ItemTrigger>
+                  <Accordion.ItemContent>
+                    <Accordion.ItemBody fontSize='sm' color='fg.muted'>
+                      This panel explains how to structure your YAML configuration.
+                      <Separator my={3} />
+                      Example fields:
+                      <br />- <b>targets</b>
+                      <br />- <b>groups</b>
+                      <br />- <b>rules</b>
+                    </Accordion.ItemBody>
+                  </Accordion.ItemContent>
+                </Accordion.Item>
+                <Accordion.Item value='examples'>
+                  <Accordion.ItemTrigger>
+                    <Span flex='1' fontWeight='semibold'>
+                      Examples
+                    </Span>
+                    <Accordion.ItemIndicator />
+                  </Accordion.ItemTrigger>
+                  <Accordion.ItemContent>
+                    <Accordion.ItemBody fontSize='sm' color='fg.muted'>
+                      Add YAML snippets here (valid + invalid).
+                    </Accordion.ItemBody>
+                  </Accordion.ItemContent>
+                </Accordion.Item>
+              </Accordion.Root>
             </Box>
-          </Box>
-        </VStack>
-        {/* RIGHT: Description */}
-        <VStack
-          align='stretch'
-          border='1px solid'
-          borderColor={colorMode === 'dark' ? 'gray.700' : 'gray.200'}
-          rounded='md'
-          w='350px'
-          minW='280px'
-          maxW='400px'
-          flexShrink={0}
-          overflow='hidden'
-        >
-          <HStack bg={colorMode === 'dark' ? 'gray.800' : 'gray.100'} h={9} align='center' gap={0}>
-            <IconButton variant={'ghost'} color={'blue.400'}>
-              <FileText size={16} />
-            </IconButton>
-            <Text fontSize={'sm'} fontWeight={'semibold'}>
-              Description
-            </Text>
-          </HStack>
-          <Box flex={1} overflowY='auto' p={3}>
-            <Accordion.Root multiple collapsible>
-              <Accordion.Item value='guide'>
-                <Accordion.ItemTrigger>
-                  <Text flex='1' fontWeight='semibold'>
-                    Guide
-                  </Text>
-                  <Accordion.ItemIndicator />
-                </Accordion.ItemTrigger>
-                <Accordion.ItemContent>
-                  <Accordion.ItemBody fontSize='sm' color='fg.muted'>
-                    This panel explains how to structure your YAML configuration.
-                    <Separator my={3} />
-                    Example fields:
-                    <br />- <b>targets</b>
-                    <br />- <b>groups</b>
-                    <br />- <b>rules</b>
-                  </Accordion.ItemBody>
-                </Accordion.ItemContent>
-              </Accordion.Item>
-              <Accordion.Item value='examples'>
-                <Accordion.ItemTrigger>
-                  <Span flex='1' fontWeight='semibold'>
-                    Examples
-                  </Span>
-                  <Accordion.ItemIndicator />
-                </Accordion.ItemTrigger>
-                <Accordion.ItemContent>
-                  <Accordion.ItemBody fontSize='sm' color='fg.muted'>
-                    Add YAML snippets here (valid + invalid).
-                  </Accordion.ItemBody>
-                </Accordion.ItemContent>
-              </Accordion.Item>
-            </Accordion.Root>
-          </Box>
-        </VStack>
+          </Collapsible.Content>
+          {!isCollabsable && (
+            <Collapsible.Trigger
+              w='28px'
+              h='full'
+              bg={colorMode === 'dark' ? 'gray.800' : 'gray.100'}
+              border='1px solid'
+              borderColor={colorMode === 'dark' ? 'gray.700' : 'gray.200'}
+              rounded='md'
+              cursor='pointer'
+              _hover={{ bg: colorMode === 'dark' ? 'gray.700' : 'gray.200' }}
+            >
+              <Flex transform='rotate(-90deg)'>
+                <Text fontSize='xs' fontWeight='semibold'>
+                  Description
+                </Text>
+              </Flex>
+            </Collapsible.Trigger>
+          )}
+        </Collapsible.Root>
       </Box>
-      {/* Alerts + Actions */}
-      <HStack justify='space-between' align='top' w='full'>
-        {/* LEFT: Alerts */}
-        {error && (
-          <Alert status='error' alignContent={'top'}>
-            <Text>{error}</Text>
-          </Alert>
-        )}
-        {validationResult && (
-          <Alert status={validationResult.isValid ? 'success' : 'error'}>
-            <HStack gap={2}>
-              {validationResult.isValid && <Check size={14} />}
-              <Text fontWeight='medium' fontSize='sm'>
-                {validationResult.isValid
+      <Flex w='full' align='center' gap={4}>
+        <HStack flex='1' gap={4} align='stretch'>
+          {error && <Alert flex='1' status='error' title={error} />}
+          {!applyResult && validationResult && (
+            <Alert
+              flex='1'
+              status={validationResult.isValid ? 'success' : 'error'}
+              title={
+                validationResult.isValid
                   ? 'Configuration is valid'
-                  : `${validationResult.errors?.length || 0} error(s) found`}
-              </Text>
-            </HStack>
-          </Alert>
-        )}
-        {applyResult && (
-          <Alert status='success'>
-            <HStack gap={2}>
-              <Check size={14} />
-              <Text fontWeight='medium' fontSize='sm'>
-                Configuration applied successfully
-              </Text>
-            </HStack>
-          </Alert>
-        )}
-        {/* RIGHT: Buttons */}
-        <HStack gap={2} ml='auto'>
+                  : `${validationResult.errors?.length || 0} error(s) found`
+              }
+            />
+          )}
+          {applyResult && (
+            <Alert flex='1' status='success' title='Configuration applied successfully' />
+          )}
+        </HStack>
+        <HStack gap={2}>
           <Button
             variant='outline'
             onClick={handleValidate}
@@ -453,7 +479,7 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
             Apply
           </Button>
         </HStack>
-      </HStack>
+      </Flex>
     </VStack>
   );
 }
