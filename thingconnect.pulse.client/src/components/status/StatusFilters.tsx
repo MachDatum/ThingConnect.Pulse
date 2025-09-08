@@ -1,5 +1,5 @@
-import { HStack, Input, Button, Box, Flex, Icon, Menu } from '@chakra-ui/react';
-import { X } from 'lucide-react';
+import { HStack, Input, Button, Box, Flex, Icon, Menu, Text } from '@chakra-ui/react';
+import { X, CheckCircle } from 'lucide-react';
 import type { LiveStatusParams } from '@/api/types';
 import { MdSearch, MdExpandMore } from 'react-icons/md';
 
@@ -9,12 +9,16 @@ interface StatusFiltersProps {
   filters: LiveStatusParams;
   onFiltersChange: (filters: LiveStatusParams) => void;
   groups?: string[];
+  onGroupByChange?: (groupBy: string) => void;
+  groupByOptions?: string[];
 }
 
 export function StatusFilters({
   filters,
   onFiltersChange,
+  onGroupByChange,
   groups = DEFAULT_GROUPS,
+  groupByOptions = [],
 }: StatusFiltersProps) {
   const handleGroupChange = (value: string) => {
     onFiltersChange({
@@ -105,14 +109,39 @@ export function StatusFilters({
               variant="outline"
               borderColor="gray.300"
             >
-              Group By
+              {groupByOptions.length > 0 
+                ? groupByOptions.map(opt => 
+                    opt === 'status' ? 'Status' : 
+                    opt === 'group' ? 'Group' : opt
+                  ).join(' + ')
+                : 'Group By'}
               <MdExpandMore />
             </Button>
           </Menu.Trigger>
           <Menu.Positioner>
             <Menu.Content>
-              <Menu.Item value="status">Group by Status</Menu.Item>
-              <Menu.Item value="group">Group by Group</Menu.Item>
+              <Menu.Item 
+                value="status" 
+                onSelect={() => {
+                  onGroupByChange && onGroupByChange('status');
+                }}
+              >
+                <HStack w="full" justify="space-between" align="center">
+                  <Text as="span">Group by Status</Text>
+                  {groupByOptions.includes('status') && <CheckCircle size={16} color="green" />}
+                </HStack>
+              </Menu.Item>
+              <Menu.Item 
+                value="group" 
+                onSelect={() => {
+                  onGroupByChange && onGroupByChange('group');
+                }}
+              >
+                <HStack w="full" justify="space-between" align="center">
+                  <Text as="span">Group by Group</Text>
+                  {groupByOptions.includes('group') && <CheckCircle size={16} color="green" />}
+                </HStack>
+              </Menu.Item>
             </Menu.Content>
           </Menu.Positioner>
         </Menu.Root>
