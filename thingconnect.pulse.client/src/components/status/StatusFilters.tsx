@@ -1,6 +1,7 @@
-import { HStack, Input, Button, Box, NativeSelect } from '@chakra-ui/react';
-import { Search, X } from 'lucide-react';
+import { HStack, Input, Button, Box, Flex, Icon, Menu } from '@chakra-ui/react';
+import { X } from 'lucide-react';
 import type { LiveStatusParams } from '@/api/types';
+import { MdSearch, MdExpandMore } from 'react-icons/md';
 
 const DEFAULT_GROUPS: string[] = [];
 
@@ -46,7 +47,10 @@ export function StatusFilters({
       top={{ base: '0', md: 'auto' }}
       zIndex={{ base: 10, md: 'auto' }}
       bg={{ base: 'white', md: 'transparent' }}
-      _dark={{ bg: { base: 'gray.800', md: 'transparent' } , borderColor: { base: 'gray.700', md: 'transparent' } }}
+      _dark={{
+        bg: { base: 'gray.800', md: 'transparent' },
+        borderColor: { base: 'gray.700', md: 'transparent' },
+      }}
       py={{ base: 3, md: 0 }}
       px={{ base: 4, md: 0 }}
       mx={{ base: -4, md: 0 }}
@@ -58,53 +62,66 @@ export function StatusFilters({
       }}
       data-testid='status-filters'
     >
-      <HStack
-        gap={{ base: 2, md: 4 }}
-        align='center'
-        flexWrap={{ base: 'wrap', md: 'nowrap' }}
-      >
+      <HStack gap={{ base: 2, md: 4 }} align='center' flexWrap={{ base: 'wrap', md: 'nowrap' }}>
         {/* Group Filter */}
-        <Box minW={{ base: '150px', md: '200px' }} flex={{ base: '1', md: 'none' }}>
-          <NativeSelect.Root data-testid='group-filter'>
-            <NativeSelect.Field
-              value={filters.group || ''}
-              onChange={e => handleGroupChange(e.target.value)}
-              placeholder='All Groups'
-              minHeight='44px'
-              fontSize={{ base: 'sm', md: 'md' }}
-            >
-              <option value=''>All Groups</option>
+        <Menu.Root>
+          <Menu.Trigger asChild>
+            <Button variant='outline' borderColor='gray.300'>
+              {filters.group || 'All Groups'}
+              <MdExpandMore />
+            </Button>
+          </Menu.Trigger>
+          <Menu.Positioner>
+            <Menu.Content>
+              <Menu.Item key={'all'} value={''} onSelect={() => handleGroupChange('')}>
+                All Groups
+              </Menu.Item>
               {groups.map(group => (
-                <option key={group} value={group}>
+                <Menu.Item key={group} value={group} onSelect={() => handleGroupChange(group)}>
                   {group}
-                </option>
+                </Menu.Item>
               ))}
-            </NativeSelect.Field>
-          </NativeSelect.Root>
-        </Box>
+            </Menu.Content>
+          </Menu.Positioner>
+        </Menu.Root>
 
         {/* Search Input */}
-        <Box flex='1' maxW={{ base: '100%', md: '400px' }} position='relative' w='100%'>
+        <Flex align='center' position='relative' >
+          <Icon as={MdSearch} position='absolute' left='3' color='gray.400' />
           <Input
             placeholder='Search endpoints by name or host...'
+            ps='10'
+            pe='4'
+            w='80'
+            borderColor='gray.300'
             value={filters.search || ''}
             onChange={e => handleSearchChange(e.target.value)}
             data-testid='search-input'
-            pl='10'
-            minHeight='44px'
-            fontSize={{ base: 'sm', md: 'md' }}
           />
-          <Box position='absolute' left='3' top='50%' transform='translateY(-50%)' color='gray.400'>
-            <Search size={16} />
-          </Box>
-        </Box>
-
+        </Flex>
+        <Menu.Root>
+          <Menu.Trigger asChild>
+            <Button
+              variant="outline"
+              borderColor="gray.300"
+            >
+              Group By
+              <MdExpandMore />
+            </Button>
+          </Menu.Trigger>
+          <Menu.Positioner>
+            <Menu.Content>
+              <Menu.Item value="status">Group by Status</Menu.Item>
+              <Menu.Item value="group">Group by Group</Menu.Item>
+            </Menu.Content>
+          </Menu.Positioner>
+        </Menu.Root>
         {/* Clear Filters */}
         {hasFilters && (
-          <Button 
-            variant='outline' 
+          <Button
+            variant='outline'
             size={{ base: 'sm', md: 'md' }}
-            onClick={clearFilters} 
+            onClick={clearFilters}
             data-testid='clear-filters'
             minHeight='44px'
             flexShrink={0}
