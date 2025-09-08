@@ -7,12 +7,11 @@ import {
   Text,
   Heading,
   Accordion,
-  Span,
-  Separator,
   IconButton,
   Flex,
   Collapsible,
   useBreakpointValue,
+  Code,
 } from '@chakra-ui/react';
 import { useColorMode } from '@/components/ui/color-mode';
 import Editor from '@monaco-editor/react';
@@ -22,6 +21,7 @@ import { FileText, Upload, Check, Download, Code2, ChevronLeft } from 'lucide-re
 import { configurationService } from '@/api/services/configuration.service';
 import type { ConfigurationApplyResponse, ValidationError } from '@/api/types';
 import { useResizeObserver } from '@/hooks/useResizeObserver';
+import { ConfigurationDescription } from './ConfigurationDescription';
 
 interface ConfigurationEditorProps {
   onConfigurationApplied?: (response: ConfigurationApplyResponse) => void;
@@ -41,7 +41,7 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<any>(null);
   const { ref: containerRef } = useResizeObserver<HTMLDivElement>();
-  const defaultCollapsible = useBreakpointValue({ base: false, md: true });
+  const defaultCollapsible = useBreakpointValue({ base: false, lg: true });
   const [isCollabsable, setIsCollabsable] = useState(!!defaultCollapsible);
 
   // Function to convert YAML path to line position for Monaco markers
@@ -353,110 +353,10 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
             />
           </Box>
         </VStack>
-        <Collapsible.Root
-          open={isCollabsable}
-          onOpenChange={() => {
-            setIsCollabsable(!isCollabsable);
-          }}
-          flex={isCollabsable ? '1' : 'none'}
-        >
-          <Collapsible.Content
-            border='1px solid'
-            borderColor={colorMode === 'dark' ? 'gray.700' : 'gray.200'}
-            rounded='md'
-            h='full'
-            w={'full'}
-          >
-            <HStack
-              bg={colorMode === 'dark' ? 'gray.800' : 'gray.100'}
-              h={9}
-              align='center'
-              justify='space-between'
-            >
-              <HStack
-                bg={colorMode === 'dark' ? 'gray.800' : 'gray.100'}
-                h={9}
-                align='center'
-                gap={0}
-                flexShrink={0}
-              >
-                <IconButton variant={'ghost'} color={'blue.400'}>
-                  <FileText size={16} />
-                </IconButton>
-                <Text fontSize={'sm'} fontWeight={'semibold'}>
-                  Description
-                </Text>
-              </HStack>
-              <Collapsible.Trigger
-                p='2'
-                rounded='md'
-                cursor='pointer'
-                display='flex'
-                alignItems='center'
-                justifyContent='center'
-                _hover={{ bg: colorMode === 'dark' ? 'gray.700' : 'gray.200' }}
-              >
-                <ChevronLeft size={16} />
-              </Collapsible.Trigger>
-            </HStack>
-            <Box flex={1} overflowY='auto' px={3}>
-              <Accordion.Root multiple collapsible>
-                <Accordion.Item value='guide'>
-                  <Accordion.ItemTrigger>
-                    <Text flex='1' fontWeight='semibold'>
-                      Guide
-                    </Text>
-                    <Accordion.ItemIndicator />
-                  </Accordion.ItemTrigger>
-                  <Accordion.ItemContent>
-                    <Accordion.ItemBody fontSize='sm' color='fg.muted'>
-                      This panel explains how to structure your YAML configuration.
-                      <Separator my={3} />
-                      Example fields:
-                      <br />- <b>targets</b>
-                      <br />- <b>groups</b>
-                      <br />- <b>rules</b>
-                    </Accordion.ItemBody>
-                  </Accordion.ItemContent>
-                </Accordion.Item>
-                <Accordion.Item value='examples'>
-                  <Accordion.ItemTrigger>
-                    <Span flex='1' fontWeight='semibold'>
-                      Examples
-                    </Span>
-                    <Accordion.ItemIndicator />
-                  </Accordion.ItemTrigger>
-                  <Accordion.ItemContent>
-                    <Accordion.ItemBody fontSize='sm' color='fg.muted'>
-                      Add YAML snippets here (valid + invalid).
-                    </Accordion.ItemBody>
-                  </Accordion.ItemContent>
-                </Accordion.Item>
-              </Accordion.Root>
-            </Box>
-          </Collapsible.Content>
-          {!isCollabsable && (
-            <Collapsible.Trigger
-              w='28px'
-              h='full'
-              bg={colorMode === 'dark' ? 'gray.800' : 'gray.100'}
-              border='1px solid'
-              borderColor={colorMode === 'dark' ? 'gray.700' : 'gray.200'}
-              rounded='md'
-              cursor='pointer'
-              _hover={{ bg: colorMode === 'dark' ? 'gray.700' : 'gray.200' }}
-            >
-              <Flex transform='rotate(-90deg)' gap={2}>
-                <Box color={'blue.400'}>
-                  <FileText size={16} />
-                </Box>
-                <Text fontSize={'sm'} fontWeight={'semibold'}>
-                  Description
-                </Text>
-              </Flex>
-            </Collapsible.Trigger>
-          )}
-        </Collapsible.Root>
+        <ConfigurationDescription
+          isCollabsable={isCollabsable}
+          setIsCollabsable={setIsCollabsable}
+        />
       </Box>
       <Flex w='full' align='center' gap={4}>
         <HStack flex='1' gap={4} align='stretch'>
