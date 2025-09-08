@@ -12,6 +12,7 @@ import {
   IconButton,
   Flex,
   Collapsible,
+  useBreakpointValue,
 } from '@chakra-ui/react';
 import { useColorMode } from '@/components/ui/color-mode';
 import Editor from '@monaco-editor/react';
@@ -40,7 +41,8 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<any>(null);
   const { ref: containerRef } = useResizeObserver<HTMLDivElement>();
-  const [isCollabsable, setIsCollabsable] = useState(true);
+  const defaultCollapsible = useBreakpointValue({ base: false, md: true });
+  const [isCollabsable, setIsCollabsable] = useState(!!defaultCollapsible);
 
   // Function to convert YAML path to line position for Monaco markers
   const findYamlPathPosition = (
@@ -261,6 +263,10 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
     loadCurrentConfig();
   }, []);
 
+  useEffect(() => {
+    setIsCollabsable(!!defaultCollapsible);
+  }, [defaultCollapsible]);
+
   return (
     <VStack gap={3} align='stretch' h='full' w={'full'} ref={containerRef}>
       {/* Header*/}
@@ -366,13 +372,13 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
               h={9}
               align='center'
               justify='space-between'
-              px={2}
             >
               <HStack
                 bg={colorMode === 'dark' ? 'gray.800' : 'gray.100'}
                 h={9}
                 align='center'
                 gap={0}
+                flexShrink={0}
               >
                 <IconButton variant={'ghost'} color={'blue.400'}>
                   <FileText size={16} />
@@ -381,11 +387,19 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
                   Description
                 </Text>
               </HStack>
-              <Collapsible.Trigger>
+              <Collapsible.Trigger
+                p='2'
+                rounded='md'
+                cursor='pointer'
+                display='flex'
+                alignItems='center'
+                justifyContent='center'
+                _hover={{ bg: colorMode === 'dark' ? 'gray.700' : 'gray.200' }}
+              >
                 <ChevronLeft size={16} />
               </Collapsible.Trigger>
             </HStack>
-            <Box flex={1} overflowY='auto' p={3}>
+            <Box flex={1} overflowY='auto' px={3}>
               <Accordion.Root multiple collapsible>
                 <Accordion.Item value='guide'>
                   <Accordion.ItemTrigger>
@@ -432,8 +446,11 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
               cursor='pointer'
               _hover={{ bg: colorMode === 'dark' ? 'gray.700' : 'gray.200' }}
             >
-              <Flex transform='rotate(-90deg)'>
-                <Text fontSize='xs' fontWeight='semibold'>
+              <Flex transform='rotate(-90deg)' gap={2}>
+                <Box color={'blue.400'}>
+                  <FileText size={16} />
+                </Box>
+                <Text fontSize={'sm'} fontWeight={'semibold'}>
                   Description
                 </Text>
               </Flex>
