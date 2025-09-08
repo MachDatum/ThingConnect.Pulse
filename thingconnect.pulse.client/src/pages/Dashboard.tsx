@@ -262,7 +262,7 @@ export default function Dashboard() {
             Array.isArray(groupedEndpoints) ? (
               <StatusTable items={groupedEndpoints} isLoading={isLoading} />
             ) : isGroupedByStatusAndGroup(groupedEndpoints) ? (
-              <Accordion.Root multiple>
+              <Accordion.Root multiple variant='plain'>
                 {Object.entries(groupedEndpoints).map(([status, groupItems]) => {
                   const totalEndpoints = Object.values(groupItems || {}).reduce(
                     (sum, group) => sum + (group?.length || 0),
@@ -280,7 +280,7 @@ export default function Dashboard() {
                   return (
                     <Accordion.Item key={status} value={status}>
                       <Accordion.ItemTrigger
-                        bg={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.50`}
+                        bg={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.100`}
                         _dark={{
                           bg: `${statusColorMap[status as 'up' | 'down' | 'flapping']}.900`,
                         }}
@@ -288,41 +288,69 @@ export default function Dashboard() {
                         borderWidth={1}
                       >
                         <HStack w='full' justify='space-between'>
-                          <HStack>
-                            {status === 'up' ? (
-                              <CheckCircle size={16} color='green' />
-                            ) : status === 'down' ? (
-                              <XCircle size={16} color='red' />
-                            ) : (
-                              <AlertTriangle size={16} color='yellow' />
-                            )}
-                            <Badge
-                              colorPalette={statusColorMap[status as 'up' | 'down' | 'flapping']}
-                              variant='solid'
+                          <HStack px={'10px'}>
+                            <Accordion.ItemIndicator
+                              fontSize={'md'}
+                              fontWeight={'bolder'}
+                              color={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.600`}
+                            />
+                            <Flex
+                              as='span'
+                              bg={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.200`}
                               textTransform='uppercase'
+                              borderRadius='30px'
+                              px={4}
+                              py={1}
+                              fontSize='11px'
+                              alignItems='center'
+                              justifyContent='center'
+                              display='inline-flex'
+                              color={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.600`}
                             >
                               {status}
-                            </Badge>
-                            <Text fontSize='sm' fontWeight='semibold'>
-                              {totalEndpoints} Endpoints
+                            </Flex>
+                            <Text
+                              fontSize='sm'
+                              fontWeight='semibold'
+                              color={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.600`}
+                            >
+                              {totalEndpoints ? `${totalEndpoints} Endpoints` : 'No Endpoints'}
                             </Text>
                           </HStack>
-                          <Accordion.ItemIndicator />
                         </HStack>
                       </Accordion.ItemTrigger>
 
-                      <Accordion.ItemContent>
-                        <Accordion.ItemBody>
-                          <Accordion.Root multiple>
+                      <Accordion.ItemContent >
+                        <Accordion.ItemBody borderWidth={1} >
+                          <Accordion.Root multiple variant='plain' pl={4}>
                             {Object.entries(typedGroupItems).map(([group, items]) => (
                               <Accordion.Item key={group} value={group}>
-                                <Accordion.ItemTrigger>
+                                <Accordion.ItemTrigger >
                                   <HStack w='full' justify='space-between'>
-                                    <HStack>
-                                      <Badge variant='subtle'>{group}</Badge>
-                                      <Text fontSize='sm'>{items?.length || 0} Endpoints</Text>
+                                    <HStack px={'10px'}>
+                                      <Accordion.ItemIndicator
+                                        fontSize={'md'}
+                                        fontWeight={'bolder'}
+                                      />
+                                      <Flex
+                                        as='span'
+                                        textTransform='uppercase'
+                                        borderRadius='30px'
+                                        px={4}
+                                        py={1}
+                                        fontSize='11px'
+                                        alignItems='center'
+                                        justifyContent='center'
+                                        display='inline-flex'
+                                      >
+                                        {group}
+                                      </Flex>
+                                      <Text fontSize='sm' fontWeight='semibold'>
+                                        {items?.length
+                                          ? `${items?.length} Endpoints`
+                                          : 'No Endpoints'}
+                                      </Text>
                                     </HStack>
-                                    <Accordion.ItemIndicator />
                                   </HStack>
                                 </Accordion.ItemTrigger>
 
@@ -353,7 +381,7 @@ export default function Dashboard() {
                 })}
               </Accordion.Root>
             ) : groupByOptions.includes('group') ? (
-              <Accordion.Root multiple>
+              <Accordion.Root multiple variant='plain'>
                 {Object.entries(groupedEndpoints).map(([group, items]) => {
                   const typedItems = items as LiveStatusItem[] | Record<string, LiveStatusItem[]>;
                   const itemsArray = Array.isArray(typedItems)
@@ -361,14 +389,30 @@ export default function Dashboard() {
                     : Object.values(typedItems).flat();
 
                   return (
-                    <Accordion.Item key={group} value={group}>
-                      <Accordion.ItemTrigger>
+                    <Accordion.Item key={group} value={group} my={2}>
+                      <Accordion.ItemTrigger borderWidth={1}>
                         <HStack w='full' justify='space-between'>
-                          <HStack>
-                            <Badge variant='subtle'>{group}</Badge>
-                            <Text fontSize='sm'>{itemsArray.length} Endpoints</Text>
+                          <HStack px={'10px'}>
+                            <Accordion.ItemIndicator fontSize={'md'} fontWeight={'bolder'} />
+                            <Flex
+                              as='span'
+                              textTransform='uppercase'
+                              borderRadius='30px'
+                              px={4}
+                              py={1}
+                              fontSize='11px'
+                              alignItems='center'
+                              justifyContent='center'
+                              display='inline-flex'
+                            >
+                              {group}
+                            </Flex>
+                            <Text fontSize='sm' fontWeight='semibold'>
+                              {itemsArray.length
+                                ? `${itemsArray.length} Endpoints`
+                                : 'No Endpoints'}
+                            </Text>
                           </HStack>
-                          <Accordion.ItemIndicator />
                         </HStack>
                       </Accordion.ItemTrigger>
 
@@ -382,7 +426,7 @@ export default function Dashboard() {
                 })}
               </Accordion.Root>
             ) : groupByOptions.includes('status') ? (
-              <Accordion.Root multiple>
+              <Accordion.Root multiple variant='plain'>
                 {Object.entries(groupedEndpoints).map(([status, items]) => {
                   const typedItems = items as LiveStatusItem[] | Record<string, LiveStatusItem[]>;
                   const itemsArray = Array.isArray(typedItems)
@@ -404,9 +448,8 @@ export default function Dashboard() {
                         }}
                         borderColor={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.200`}
                         borderWidth={1}
-                        h={'60px'}
                       >
-                        <HStack w='full' justify='space-between' >
+                        <HStack w='full' justify='space-between'>
                           <HStack px={'10px'}>
                             <Accordion.ItemIndicator
                               fontSize={'md'}
@@ -415,7 +458,7 @@ export default function Dashboard() {
                             />
                             <Flex
                               as='span'
-                              bg={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.200`} 
+                              bg={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.200`}
                               textTransform='uppercase'
                               borderRadius='30px'
                               px={4}
@@ -443,17 +486,12 @@ export default function Dashboard() {
 
                       <Accordion.ItemContent>
                         <Accordion.ItemBody>
-                          {itemsArray.length > 0 ? (<Box px={'10px'}>
-                            <StatusTable items={itemsArray} isLoading={isLoading} />
-                          </Box>
+                          {itemsArray.length > 0 ? (
+                            <Box px={'10px'}>
+                              <StatusTable items={itemsArray} isLoading={isLoading} />
+                            </Box>
                           ) : (
-                            <Box
-                              textAlign='center'
-                              color='gray.500'
-                              py={8}
-                              bg='gray.50'
-                              borderRadius='md'
-                            >
+                            <Box textAlign='center' color='gray.500' py={8} borderRadius='md'>
                               <Text>No endpoints available</Text>
                             </Box>
                           )}
