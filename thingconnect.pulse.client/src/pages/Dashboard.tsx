@@ -404,40 +404,38 @@ export default function Dashboard() {
                         }}
                         borderColor={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.200`}
                         borderWidth={1}
+                        h={'60px'}
                       >
-                        <HStack w='full' justify='space-between'>
+                        <HStack w='full' justify='space-between' >
                           <HStack px={'10px'}>
-                            <Accordion.ItemIndicator fontSize={'md'} fontWeight={'bolder'} color={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.600`} />
-                            {/* <Badge
-                              colorPalette={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.200`}
-                              // color={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.200`}
+                            <Accordion.ItemIndicator
+                              fontSize={'md'}
+                              fontWeight={'bolder'}
+                              color={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.600`}
+                            />
+                            <Flex
+                              as='span'
+                              bg={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.200`} 
                               textTransform='uppercase'
-                              borderRadius={'lg'}
-                              px={3}
+                              borderRadius='30px'
+                              px={4}
                               py={1}
-                              fontSize={'10px'}
-                              fontWeight={'bold'}
+                              fontSize='11px'
+                              alignItems='center'
+                              justifyContent='center'
+                              display='inline-flex'
+                              color={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.600`}
                             >
                               {status}
-                            </Badge> */}
-                            <Flex
-  as="span"
-  bg={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.200`} // ✅ custom bg color
-  textTransform="uppercase"
-  borderRadius="lg"
-  px={3}
-  py={1}
-  fontSize="10px"
-  fontWeight="bold"
-  alignItems="center"
-  justifyContent="center"
-  display="inline-flex" // ✅ so it stays inline like a Badge
-  color={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.800`}
->
-  {status}
-</Flex>
-                            <Text fontSize='sm' fontWeight='semibold' color={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.800`}>
-                              {itemsArray.length ? `${itemsArray.length} Endpoints` : 'No Endpoints'}
+                            </Flex>
+                            <Text
+                              fontSize='sm'
+                              fontWeight='semibold'
+                              color={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.600`}
+                            >
+                              {itemsArray.length
+                                ? `${itemsArray.length} Endpoints`
+                                : 'No Endpoints'}
                             </Text>
                           </HStack>
                         </HStack>
@@ -445,8 +443,9 @@ export default function Dashboard() {
 
                       <Accordion.ItemContent>
                         <Accordion.ItemBody>
-                          {itemsArray.length > 0 ? (
+                          {itemsArray.length > 0 ? (<Box px={'10px'}>
                             <StatusTable items={itemsArray} isLoading={isLoading} />
+                          </Box>
                           ) : (
                             <Box
                               textAlign='center'
