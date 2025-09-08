@@ -6,18 +6,15 @@ import {
   HStack,
   Text,
   Heading,
-  Accordion,
   IconButton,
   Flex,
-  Collapsible,
   useBreakpointValue,
-  Code,
 } from '@chakra-ui/react';
 import { useColorMode } from '@/components/ui/color-mode';
 import Editor from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
 import { Alert } from '@/components/ui/alert';
-import { FileText, Upload, Check, Download, Code2, ChevronLeft } from 'lucide-react';
+import { FileText, Upload, Check, Download, Code2 } from 'lucide-react';
 import { configurationService } from '@/api/services/configuration.service';
 import type { ConfigurationApplyResponse, ValidationError } from '@/api/types';
 import { useResizeObserver } from '@/hooks/useResizeObserver';

@@ -75,7 +75,14 @@ export function ConfigurationDescription({
                   <Text fontSize='sm' mt={2}>
                     Example:
                   </Text>
-                  <Code p={2} w='full' rounded='md' colorScheme='blue' whiteSpace='pre-wrap'>
+                  <Code
+                    p={2}
+                    w='full'
+                    rounded='md'
+                    colorScheme='blue'
+                    whiteSpace='pre-wrap'
+                    _dark={{ bg: 'gray.800' }}
+                  >
                     {`version: 1
 defaults:
   interval_seconds: 10
@@ -117,7 +124,14 @@ defaults:
                   <Text fontSize='sm' mt={2}>
                     Example:
                   </Text>
-                  <Code p={2} w='full' rounded='md' colorScheme='green' whiteSpace='pre-wrap'>
+                  <Code
+                    p={2}
+                    w='full'
+                    rounded='md'
+                    colorScheme='green'
+                    whiteSpace='pre-wrap'
+                    _dark={{ bg: 'gray.800' }}
+                  >
                     {`- id: production-floor
   name: "Production Floor"
   color: "#2E7D32"
@@ -142,7 +156,14 @@ defaults:
                   <Text fontSize='sm' mt={2}>
                     Example - ICMP target:
                   </Text>
-                  <Code p={2} w='full' rounded='md' colorScheme='orange' whiteSpace='pre-wrap'>
+                  <Code
+                    p={2}
+                    w='full'
+                    rounded='md'
+                    colorScheme='orange'
+                    whiteSpace='pre-wrap'
+                    _dark={{ bg: 'gray.800' }}
+                  >
                     {`- type: icmp
   host: plc-press-01.factory.local
   group: press-shop
