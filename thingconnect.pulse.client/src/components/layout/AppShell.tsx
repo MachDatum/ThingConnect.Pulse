@@ -1,16 +1,14 @@
 import { Outlet } from 'react-router-dom';
-import { Box, Flex, useBreakpointValue, IconButton } from '@chakra-ui/react';
+import { Box, Flex, useBreakpointValue } from '@chakra-ui/react';
 import { useState } from 'react';
 import { Navigation } from './Navigation';
 import { Footer } from './Footer';
-import { Moon, Sun } from 'lucide-react';
-import { useColorMode } from '../ui/color-mode';
+import { FloatingActions } from './FloatingActions';
 
 export function AppShell() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const sidebarWidth = useBreakpointValue({ base: '100%', md: '250px' });
   const isMobile = useBreakpointValue({ base: true, md: false });
-  const { colorMode, toggleColorMode } = useColorMode();
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -65,20 +63,8 @@ export function AppShell() {
       {/* Footer */}
       <Footer />
 
-      {/* Floating Toggle Button */}
-      <IconButton
-        data-testid='theme-toggle'
-        aria-label='Toggle color mode'
-        variant='ghost'
-        size='sm'
-        position='fixed'
-        top='16px'
-        right='16px'
-        zIndex={1100}
-        onClick={toggleColorMode}
-      >
-        {colorMode === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-      </IconButton>
+      {/* Floating Actions (Theme Toggle + Help Button) */}
+      <FloatingActions />
     </Flex>
   );
 }
