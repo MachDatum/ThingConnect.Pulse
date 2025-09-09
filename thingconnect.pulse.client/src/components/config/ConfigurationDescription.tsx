@@ -63,7 +63,7 @@ export function ConfigurationDescription({
             {/* 1. Schema Overview */}
             <Accordion.Item value='schema'>
               <Accordion.ItemTrigger>
-                <Text fontWeight='bold'>1. Schema Overview</Text>
+                <Text>1. Schema Overview</Text>
                 <Accordion.ItemIndicator />
               </Accordion.ItemTrigger>
               <Accordion.ItemContent>
@@ -96,7 +96,7 @@ defaults:
             {/* 2. Groups */}
             <Accordion.Item value='groups'>
               <Accordion.ItemTrigger>
-                <Text fontWeight='bold'>2. Groups</Text>
+                <Text>2. Groups</Text>
                 <Accordion.ItemIndicator />
               </Accordion.ItemTrigger>
               <Accordion.ItemContent>
@@ -144,7 +144,7 @@ defaults:
             {/* 3. Targets */}
             <Accordion.Item value='targets'>
               <Accordion.ItemTrigger>
-                <Text fontWeight='bold'>3. Targets</Text>
+                <Text>3. Targets</Text>
                 <Accordion.ItemIndicator />
               </Accordion.ItemTrigger>
               <Accordion.ItemContent>
@@ -177,7 +177,7 @@ defaults:
             {/* 4. Advanced Options */}
             <Accordion.Item value='advanced'>
               <Accordion.ItemTrigger>
-                <Text fontWeight='bold'>4. Advanced Options</Text>
+                <Text>4. Advanced Options</Text>
                 <Accordion.ItemIndicator />
               </Accordion.ItemTrigger>
               <Accordion.ItemContent>
@@ -203,7 +203,7 @@ defaults:
             {/* 5. Best Practices */}
             <Accordion.Item value='best-practices'>
               <Accordion.ItemTrigger>
-                <Text fontWeight='bold'>5. Best Practices</Text>
+                <Text>5. Best Practices</Text>
                 <Accordion.ItemIndicator />
               </Accordion.ItemTrigger>
               <Accordion.ItemContent>
@@ -226,7 +226,7 @@ defaults:
             {/* 6. Common Pitfalls */}
             <Accordion.Item value='pitfalls'>
               <Accordion.ItemTrigger>
-                <Text fontWeight='bold'>6. Common Pitfalls</Text>
+                <Text>6. Common Pitfalls</Text>
                 <Accordion.ItemIndicator />
               </Accordion.ItemTrigger>
               <Accordion.ItemContent>
