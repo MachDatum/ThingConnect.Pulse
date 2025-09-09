@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Box, Heading, Text, VStack, HStack, Button, Badge, Table } from '@chakra-ui/react';
-import { Box, Heading, Text, VStack, HStack, Button, Badge, Table } from '@chakra-ui/react';
 import { Alert } from '@/components/ui/alert';
 import { History, Download, FileText } from 'lucide-react';
 import { configurationService } from '@/api/services/configuration.service';
@@ -22,8 +21,6 @@ export function ConfigurationVersions({ refreshTrigger }: ConfigurationVersionsP
       setError(null);
       const data = await configurationService.getVersions();
       // Sort by applied timestamp descending (most recent first)
-      const sortedVersions = data.sort(
-        (a, b) => new Date(b.appliedTs).getTime() - new Date(a.appliedTs).getTime()
       const sortedVersions = data.sort(
         (a, b) => new Date(b.appliedTs).getTime() - new Date(a.appliedTs).getTime()
       );
