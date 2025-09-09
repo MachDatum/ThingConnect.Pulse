@@ -7,7 +7,6 @@ import { StatusCard } from '@/components/status/StatusCard';
 import { StatusPagination } from '@/components/status/StatusPagination';
 import { Page } from '@/components/layout/Page';
 import { PageSection } from '@/components/layout/PageSection';
-import { HelpButton } from '@/components/common/HelpButton';
 import type { LiveStatusParams } from '@/api/types';
 
 export default function Dashboard() {
@@ -59,12 +58,6 @@ export default function Dashboard() {
       title='Dashboard'
       testId='dashboard-page'
       description='Real-time monitoring of network endpoints'
-      actions={
-        <HelpButton
-          helpUrl="https://docs.thingconnect.io/pulse/user-guide/dashboard"
-          tooltip="Dashboard Help"
-        />
-      }
     >
       {/* <PageHeader
         title="Network Status Dashboard"

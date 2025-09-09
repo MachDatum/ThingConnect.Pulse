@@ -49,7 +49,7 @@ export const router = createBrowserRouter([
     path: '/',
     element: (
       <ProtectedRoute>
-        <AppShell />/
+        <AppShell />
       </ProtectedRoute>
     ),
     children: [
