@@ -14,6 +14,7 @@ import { AvailabilityChart, AvailabilityStats } from '@/components/AvailabilityC
 import { HistoryTable } from '@/components/HistoryTable';
 import { HistoryService } from '@/api/services/history.service';
 import { StatusService } from '@/api/services/status.service';
+import { HelpButton } from '@/components/common/HelpButton';
 
 export default function History() {
   // State for filters
@@ -95,6 +96,12 @@ export default function History() {
       title='History'
       description='View historical monitoring data and export reports'
       testId='history-page'
+      actions={
+        <HelpButton
+          helpUrl="https://docs.thingconnect.io/pulse/user-guide/viewing-history"
+          tooltip="History Help"
+        />
+      }
     >
       {/* <PageHeader
         title="Historical Data"
