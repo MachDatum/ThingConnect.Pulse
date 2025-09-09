@@ -249,7 +249,9 @@ export default function Dashboard() {
         <PageSection>
           {groupedEndpoints !== null ? (
             Array.isArray(groupedEndpoints) ? (
-              <StatusTable items={groupedEndpoints} isLoading={isLoading} />
+              <Box pb={4}>
+                <StatusTable items={groupedEndpoints} isLoading={isLoading} />
+              </Box>
             ) : isGroupedByStatusAndGroup(groupedEndpoints) ? (
               <Accordion.Root multiple variant='plain'>
                 {Object.entries(groupedEndpoints).map(([status, groupItems]) => {
@@ -287,6 +289,8 @@ export default function Dashboard() {
                             <Flex
                               as='span'
                               bg={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.200`}
+                              color={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.600`}
+                              _dark={{ bg: `${statusColorMap[status as 'up' | 'down' | 'flapping']}.700`, color: `${statusColorMap[status as 'up' | 'down' | 'flapping']}.200` }}
                               textTransform='uppercase'
                               borderRadius='30px'
                               px={4}
@@ -295,7 +299,6 @@ export default function Dashboard() {
                               alignItems='center'
                               justifyContent='center'
                               display='inline-flex'
-                              color={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.600`}
                             >
                               {status}
                             </Flex>
@@ -321,7 +324,7 @@ export default function Dashboard() {
                                         fontSize={'md'}
                                         fontWeight={'bolder'}
                                       />
-                                      <Text fontSize='sm' fontWeight='semibold'>
+                                      <Text fontSize='sm' fontWeight='semibold' pl={4}>
                                         {group}
                                       </Text>
                                       <Text fontSize='12px' color={'gray.400'} px={2}>
@@ -374,32 +377,24 @@ export default function Dashboard() {
                         <HStack w='full' justify='space-between'>
                           <HStack px={'10px'}>
                             <Accordion.ItemIndicator fontSize={'md'} fontWeight={'bolder'} />
-                            <Flex
-                              as='span'
-                              textTransform='uppercase'
-                              borderRadius='30px'
-                              px={4}
-                              py={1}
-                              fontSize='11px'
-                              alignItems='center'
-                              justifyContent='center'
-                              display='inline-flex'
-                            >
+                            <Text fontSize='sm' fontWeight='semibold' pl={4}>
                               {group}
-                            </Flex>
-                            <Text fontSize='sm' fontWeight='semibold'>
-                              {itemsArray?.length
-                                ? itemsArray?.length > 1
-                                  ? `${itemsArray?.length} Endpoints`
+                            </Text>
+                            <Text fontSize='12px' color={'gray.400'} px={2}>
+                              {items?.length
+                                ? items?.length > 1
+                                  ? `${items?.length} Endpoints`
                                   : '1 Endpoint'
                                 : 'No Endpoints'}
                             </Text>
                           </HStack>
                         </HStack>
                       </Accordion.ItemTrigger>
-                      <Accordion.ItemContent>
+                      <Accordion.ItemContent borderWidth={1}>
                         <Accordion.ItemBody>
-                          <StatusTable items={itemsArray} isLoading={isLoading} />
+                          <Box pl={10}>
+                            <StatusTable items={itemsArray} isLoading={isLoading} />
+                          </Box>
                         </Accordion.ItemBody>
                       </Accordion.ItemContent>
                     </Accordion.Item>
@@ -450,6 +445,7 @@ export default function Dashboard() {
                               justifyContent='center'
                               display='inline-flex'
                               color={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.600`}
+                              _dark={{ bg: `${statusColorMap[status as 'up' | 'down' | 'flapping']}.700`, color: `${statusColorMap[status as 'up' | 'down' | 'flapping']}.200` }}
                             >
                               {status}
                             </Flex>
@@ -468,10 +464,10 @@ export default function Dashboard() {
                         </HStack>
                       </Accordion.ItemTrigger>
 
-                      <Accordion.ItemContent>
+                      <Accordion.ItemContent borderWidth={1}>
                         <Accordion.ItemBody>
                           {itemsArray.length > 0 ? (
-                            <Box px={'10px'}>
+                            <Box pl={10}>
                               <StatusTable items={itemsArray} isLoading={isLoading} />
                             </Box>
                           ) : (
@@ -492,11 +488,11 @@ export default function Dashboard() {
             <StatusTable items={data.items} isLoading={isLoading} />
           )}
 
-          <StatusPagination
+          {/* <StatusPagination
             meta={data.meta}
             onPageChange={handlePageChange}
             onPageSizeChange={handlePageSizeChange}
-          />
+          /> */}
         </PageSection>
       )}
     </Page>
