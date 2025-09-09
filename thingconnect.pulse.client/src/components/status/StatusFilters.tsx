@@ -1,5 +1,5 @@
 import { HStack, Input, Button, Box, Flex, Icon, Menu, Text } from '@chakra-ui/react';
-import { X, CheckCircle } from 'lucide-react';
+import { X, CheckCircle, XCircle } from 'lucide-react';
 import type { LiveStatusParams } from '@/api/types';
 import { MdSearch, MdExpandMore } from 'react-icons/md';
 
@@ -11,6 +11,8 @@ interface StatusFiltersProps {
   groups?: string[];
   onGroupByChange?: (groupBy: string) => void;
   groupByOptions?: string[];
+  searchTerm?: string;
+  onSearchChange?: (searchTerm: string) => void;
 }
 
 export function StatusFilters({
@@ -19,6 +21,8 @@ export function StatusFilters({
   onGroupByChange,
   groups = DEFAULT_GROUPS,
   groupByOptions = [],
+  searchTerm = '',
+  onSearchChange,
 }: StatusFiltersProps) {
   const handleGroupChange = (value: string) => {
     onFiltersChange({
@@ -29,14 +33,28 @@ export function StatusFilters({
   };
 
   const handleSearchChange = (value: string) => {
+    // Update search term in parent component
+    onSearchChange && onSearchChange(value);
+    
+    // Optionally reset page when searching
     onFiltersChange({
       ...filters,
       search: value || undefined,
-      page: 1, // Reset to first page when searching
+      page: 1,
+    });
+  };
+
+  const clearSearch = () => {
+    onSearchChange && onSearchChange('');
+    onFiltersChange({
+      ...filters,
+      search: undefined,
+      page: 1,
     });
   };
 
   const clearFilters = () => {
+    onSearchChange && onSearchChange('');
     onFiltersChange({
       page: 1,
       pageSize: filters.pageSize,
@@ -90,18 +108,34 @@ export function StatusFilters({
         </Menu.Root>
 
         {/* Search Input */}
-        <Flex align='center' position='relative' >
-          <Icon as={MdSearch} position='absolute' left='3' color='gray.400' />
+        <Flex align='center' position='relative' w='80'>
+          <Icon as={MdSearch} position='absolute' left='3' top='50%' transform='translateY(-50%)' zIndex={2} color='gray.400' />
           <Input
             placeholder='Search endpoints by name or host...'
             ps='10'
-            pe='4'
-            w='80'
+            pe={searchTerm ? '10' : '4'}
             borderColor='gray.300'
-            value={filters.search || ''}
+            value={searchTerm}
             onChange={e => handleSearchChange(e.target.value)}
             data-testid='search-input'
+            pr={searchTerm ? '10' : '4'}
           />
+          {searchTerm && (
+            <Button
+              position='absolute'
+              right='2'
+              top='50%'
+              transform='translateY(-50%)'
+              variant='ghost'
+              size='sm'
+              p={0}
+              onClick={clearSearch}
+              data-testid='clear-search'
+              zIndex={3}
+            >
+              <XCircle size={16} color='gray.500' />
+            </Button>
+          )}
         </Flex>
         <Menu.Root>
           <Menu.Trigger asChild>

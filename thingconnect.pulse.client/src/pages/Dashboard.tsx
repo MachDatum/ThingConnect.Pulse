@@ -237,6 +237,8 @@ export default function Dashboard() {
         onFiltersChange={handleFiltersChange}
         groups={groups}
         groupByOptions={groupByOptions}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
         onGroupByChange={option => {
           // Toggle the option (add if not present, remove if present)
           setGroupByOptions(prev =>
