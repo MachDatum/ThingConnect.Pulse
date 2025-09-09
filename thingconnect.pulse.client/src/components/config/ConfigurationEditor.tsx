@@ -274,11 +274,11 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
         </HStack>
 
         <HStack gap={2} alignItems={'center'} justifyContent={'flex-end'}>
-          <Button variant='outline' size='sm' onClick={handleLoadCurrent} loading={isLoading}>
+          <Button variant='outline' size='xs' onClick={handleLoadCurrent} loading={isLoading}>
             <Download size={16} />
             Load Current Config
           </Button>
-          <Button variant='outline' size='sm' onClick={handleLoadFromFile}>
+          <Button variant='outline' size='xs' onClick={handleLoadFromFile}>
             <Upload size={16} />
             Load from File
           </Button>
@@ -373,12 +373,13 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
             <Alert flex='1' status='success' title='Configuration applied successfully' />
           )}
         </HStack>
-        <HStack gap={2}>
+        <HStack gap={2} mb='2'>
           <Button
             variant='outline'
             onClick={handleValidate}
             loading={isLoading}
             disabled={!yamlContent.trim()}
+            size='xs'
           >
             <Check size={16} />
             Validate
@@ -388,6 +389,7 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
             onClick={handleApply}
             loading={isLoading}
             disabled={!yamlContent.trim() || validationResult?.isValid === false}
+            size='xs'
           >
             <Upload size={16} />
             Apply
