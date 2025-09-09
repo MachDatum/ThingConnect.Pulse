@@ -104,8 +104,10 @@ export function Navigation({ onItemClick }: NavigationProps) {
           );
 
           return item.external ? (
-            <Box as='a' key={item.path} href={item.path} target='_blank' rel='noopener noreferrer' onClick={onItemClick}>
-              {ItemContent}
+            <Box as='a' key={item.path} asChild onClick={onItemClick}>
+              <a href={item.path} target='_blank' rel='noopener noreferrer'>
+                {ItemContent}
+              </a>
             </Box>
           ) : (
             <RouterLink key={item.path} to={item.path} onClick={onItemClick}>
@@ -150,13 +152,13 @@ export function Navigation({ onItemClick }: NavigationProps) {
             onClick={handleLogout}
             size='sm'
             variant='ghost'
-            colorScheme='gray'
+            colorPalette='gray'
             justifyContent='flex-start'
-            leftIcon={<LogOut size={16} />}
             w='full'
             _hover={{ bg: 'gray.100', _dark: { bg: 'gray.700' } }}
             data-testid='logout-button'
           >
+            <LogOut size={16} />
             <Text fontSize='sm' fontWeight='semibold'>
               Logout
             </Text>

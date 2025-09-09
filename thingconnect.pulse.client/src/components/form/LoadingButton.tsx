@@ -1,4 +1,5 @@
-import { Button, ButtonProps, Spinner } from '@chakra-ui/react';
+import { Button, Spinner } from '@chakra-ui/react';
+import type { ButtonProps } from '@chakra-ui/react';
 import { forwardRef } from 'react';
 
 interface LoadingButtonProps extends ButtonProps {

@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import {
-  Box,
-  Button,
   Heading,
   Text,
   VStack,

@@ -1,5 +1,6 @@
-import { IconButton, Tooltip } from '@chakra-ui/react';
+import { IconButton } from '@chakra-ui/react';
 import { HelpCircle } from 'lucide-react';
+import { Tooltip } from '../ui/tooltip';
 
 interface HelpButtonProps {
   helpUrl: string;
@@ -18,11 +19,12 @@ export function HelpButton({ helpUrl, tooltip = 'View Help', size = 'sm' }: Help
         aria-label={tooltip}
         size={size}
         variant="ghost"
-        colorScheme="blue"
+        colorPalette="blue"
         onClick={handleHelpClick}
-        icon={<HelpCircle size={16} />}
         _hover={{ bg: 'blue.50', _dark: { bg: 'blue.900' } }}
-      />
+      >
+        <HelpCircle size={16} />
+      </IconButton>
     </Tooltip>
   );
 }
