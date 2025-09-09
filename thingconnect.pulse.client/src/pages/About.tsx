@@ -302,14 +302,14 @@ export default function About() {
                 </Text>
                 <HStack gap={4} justify='center'>
                   <Link
-                    href='https://thingconnect.com'
+                    href='https://thingconnect.io'
                     target='_blank'
                     rel='noopener noreferrer'
                     _hover={{ textDecoration: 'none' }}
                   >
                     <Button size='sm' variant='outline'>
                       <ExternalLink size={14} />
-                      Visit ThingConnect.com
+                      Visit ThingConnect.io
                     </Button>
                   </Link>
                 </HStack>

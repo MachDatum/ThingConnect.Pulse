@@ -111,7 +111,7 @@ Before beginning your migration, take time to audit your current PRTG deployment
 
 ### Install ThingConnect Pulse:
 
-1. **Download** from [pulse.thingconnect.com](pulse.thingconnect.com)
+1. **Download** from [pulse.thingconnect.io](pulse.thingconnect.io)
 2. **Install** using administrator privileges
 3. **Access dashboard** at http://localhost:8080
 4. **Complete initial configuration** wizard

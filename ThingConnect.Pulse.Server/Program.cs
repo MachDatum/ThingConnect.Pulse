@@ -70,7 +70,8 @@ public class Program
                 options.SignIn.RequireConfirmedEmail = false;
             })
             .AddEntityFrameworkStores<PulseDbContext>()
-            .AddDefaultTokenProviders();
+            .AddDefaultTokenProviders()
+            .AddClaimsPrincipalFactory<ApplicationUserClaimsPrincipalFactory>();
 
             // Configure cookie authentication to override Identity defaults
             builder.Services.ConfigureApplicationCookie(options =>

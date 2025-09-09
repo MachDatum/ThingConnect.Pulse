@@ -24,7 +24,7 @@ export function Footer() {
           <Text>•</Text>
           <Link
             data-testid='thingconnect-link'
-            href='https://thingconnect.com'
+            href='https://thingconnect.io'
             target='_blank'
             rel='noopener noreferrer'
             color='blue.600'
