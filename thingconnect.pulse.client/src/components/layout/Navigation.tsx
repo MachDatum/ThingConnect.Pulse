@@ -13,6 +13,7 @@ const navigationItems = [
   { label: 'History', path: '/history', icon: Clock },
   { label: 'Configuration', path: '/configuration', icon: Wrench },
   { label: 'Settings', path: '/settings', icon: Settings },
+  { label: 'Help', path: 'https://docs.thingconnect.io/pulse/', icon: Help, external: true },
   { label: 'About', path: '/about', icon: Info },
 ];
 
@@ -45,36 +46,44 @@ export function Navigation({ onItemClick }: NavigationProps) {
       </Box>
       <VStack gap={1} p={2} flex='1' align='stretch' data-testid='navigation-items'>
         {navigationItems.map(item => {
-          const isActive = isActiveRoute(item.path);
-          return (
+          const isActive = !item.external && isActiveRoute(item.path);
+          const ItemContent = (
+            <HStack
+              px={2}
+              py={1}
+              borderRadius='md'
+              color={isActive ? 'blue.600' : 'gray.600'}
+              bg={isActive ? 'whiteAlpha.950' : 'transparent'}
+              border={isActive ? '1px solid' : undefined}
+              borderColor={isActive ? 'border' : undefined}
+              _hover={
+                isActive
+                  ? undefined
+                  : {
+                      bg: 'blackAlpha.50',
+                      _dark: { bg: 'gray.700' },
+                    }
+              }
+              _dark={{
+                color: isActive ? 'blue.200' : 'gray.200',
+                bg: isActive ? 'blackAlpha.200' : undefined,
+                border: isActive ? '1px solid rgba(255,255,255,0.1)' : undefined,
+              }}
+            >
+              <Icon as={item.icon} boxSize={4} />
+              <Text fontSize='sm' fontWeight={'semibold'}>
+                {item.label}
+              </Text>
+            </HStack>
+          );
+
+          return item.external ? (
+            <Box as='a' key={item.path} href={item.path} target='_blank' rel='noopener noreferrer' onClick={onItemClick}>
+              {ItemContent}
+            </Box>
+          ) : (
             <RouterLink key={item.path} to={item.path} onClick={onItemClick}>
-              <HStack
-                px={2}
-                py={1}
-                borderRadius='md'
-                color={isActive ? 'blue.600' : 'gray.600'}
-                bg={isActive ? 'whiteAlpha.950' : 'transparent'}
-                border={isActive ? '1px solid' : undefined}
-                borderColor={isActive ? 'border' : undefined}
-                _hover={
-                  isActive
-                    ? undefined
-                    : {
-                        bg: 'blackAlpha.50',
-                        _dark: { bg: 'gray.700' },
-                      }
-                }
-                _dark={{
-                  color: isActive ? 'blue.200' : 'gray.200',
-                  bg: isActive ? 'blackAlpha.200' : undefined,
-                  border: isActive ? '1px solid rgba(255,255,255,0.1)' : undefined,
-                }}
-              >
-                <Icon as={item.icon} boxSize={4} />
-                <Text fontSize='sm' fontWeight={'semibold'}>
-                  {item.label}
-                </Text>
-              </HStack>
+              {ItemContent}
             </RouterLink>
           );
         })}
