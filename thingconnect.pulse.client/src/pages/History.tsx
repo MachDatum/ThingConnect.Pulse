@@ -157,7 +157,7 @@ export default function History() {
 
             <HStack justify='flex-end' gap={3} mt={4}>
               <Button
-                size='sm'
+                size='xs'
                 variant='outline'
                 onClick={() => {
                   void refetch();
@@ -167,7 +167,7 @@ export default function History() {
                 Refresh
               </Button>
               <Button
-                size='sm'
+                size='xs'
                 colorPalette='blue'
                 onClick={() => {
                   void handleExportCSV();
