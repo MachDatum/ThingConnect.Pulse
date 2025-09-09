@@ -1,5 +1,5 @@
-import { HStack, Input, Button, Box, Flex, Icon, Menu, Text } from '@chakra-ui/react';
-import { X, CheckCircle, XCircle } from 'lucide-react';
+import { HStack, Input, Button, Box, Icon, Menu, Text, Flex } from '@chakra-ui/react';
+import { X, CheckCircle } from 'lucide-react';
 import type { LiveStatusParams } from '@/api/types';
 import { MdSearch, MdExpandMore } from 'react-icons/md';
 
@@ -108,33 +108,40 @@ export function StatusFilters({
         </Menu.Root>
 
         {/* Search Input */}
-        <Flex align='center' position='relative' w='80'>
-          <Icon as={MdSearch} position='absolute' left='3' top='50%' transform='translateY(-50%)' zIndex={2} color='gray.400' />
+        <Flex w='80' position='relative' align='center'>
+          <Icon 
+            as={MdSearch}
+            color='gray.400' 
+            position='absolute' 
+            left='3' 
+            top='50%' 
+            transform='translateY(-50%)' 
+            zIndex={2} 
+            fontSize={'18px'}
+          />
           <Input
             placeholder='Search endpoints by name or host...'
-            ps='10'
-            pe={searchTerm ? '10' : '4'}
+            pl='10'
+            pr={searchTerm ? '10' : '4'}
             borderColor='gray.300'
             value={searchTerm}
             onChange={e => handleSearchChange(e.target.value)}
             data-testid='search-input'
-            pr={searchTerm ? '10' : '4'}
           />
           {searchTerm && (
-            <Button
-              position='absolute'
-              right='2'
-              top='50%'
-              transform='translateY(-50%)'
-              variant='ghost'
-              size='sm'
-              p={0}
+            <Box
+              px={3}
               onClick={clearSearch}
               data-testid='clear-search'
-              zIndex={3}
+              position='absolute'
+              right='0'
+              top='50%'
+              transform='translateY(-50%)'
+              zIndex={10}
+              cursor={'pointer'}
             >
-              <XCircle size={16} color='gray.500' />
-            </Button>
+              <X size={16} />
+            </Box>
           )}
         </Flex>
         <Menu.Root>
