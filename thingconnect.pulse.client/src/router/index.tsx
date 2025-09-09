@@ -48,9 +48,9 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: (
-      <ProtectedRoute>
-        <AppShell />
-      </ProtectedRoute>
+      // <ProtectedRoute>
+      <AppShell />
+      // </ProtectedRoute>
     ),
     children: [
       {
@@ -89,11 +89,11 @@ export const router = createBrowserRouter([
   },
   // Admin-only routes
   {
-    path: '/config',
+    path: '/configuration',
     element: (
-      <ProtectedRoute adminOnly>
-        <AppShell />
-      </ProtectedRoute>
+      // <ProtectedRoute adminOnly>
+      <AppShell />
+      // </ProtectedRoute>
     ),
     children: [
       {
@@ -109,9 +109,9 @@ export const router = createBrowserRouter([
   {
     path: '/settings',
     element: (
-      <ProtectedRoute adminOnly>
-        <AppShell />
-      </ProtectedRoute>
+      // <ProtectedRoute adminOnly>
+      <AppShell />
+      // </ProtectedRoute>
     ),
     children: [
       {
