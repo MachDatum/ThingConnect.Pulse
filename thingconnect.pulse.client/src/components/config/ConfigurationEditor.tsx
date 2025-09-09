@@ -1,13 +1,24 @@
 import { useState, useRef, useEffect } from 'react';
-import { Box, Button, VStack, HStack, Text, Heading } from '@chakra-ui/react';
+import {
+  Box,
+  Button,
+  VStack,
+  HStack,
+  Text,
+  Heading,
+  IconButton,
+  Flex,
+  useBreakpointValue,
+} from '@chakra-ui/react';
 import { useColorMode } from '@/components/ui/color-mode';
 import Editor from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
 import { Alert } from '@/components/ui/alert';
-import { FileText, Upload, Check, AlertCircle, Download } from 'lucide-react';
+import { FileText, Upload, Check, Download, Code2 } from 'lucide-react';
 import { configurationService } from '@/api/services/configuration.service';
 import type { ConfigurationApplyResponse, ValidationError } from '@/api/types';
 import { useResizeObserver } from '@/hooks/useResizeObserver';
+import { ConfigurationDescription } from './ConfigurationDescription';
 
 interface ConfigurationEditorProps {
   onConfigurationApplied?: (response: ConfigurationApplyResponse) => void;
@@ -26,7 +37,9 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<any>(null);
-  const { ref: containerRef, height } = useResizeObserver<HTMLDivElement>();
+  const { ref: containerRef } = useResizeObserver<HTMLDivElement>();
+  const defaultCollapsible = useBreakpointValue({ base: false, lg: true });
+  const [isCollabsable, setIsCollabsable] = useState(!!defaultCollapsible);
 
   // Function to convert YAML path to line position for Monaco markers
   const findYamlPathPosition = (
@@ -247,21 +260,25 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
     loadCurrentConfig();
   }, []);
 
+  useEffect(() => {
+    setIsCollabsable(!!defaultCollapsible);
+  }, [defaultCollapsible]);
+
   return (
-    <VStack gap={1} align='stretch' h='full' ref={containerRef}>
-      <HStack mt={1} flexShrink={0} justifyContent={'space-between'}>
+    <VStack gap={3} align='stretch' h='full' w={'full'} ref={containerRef}>
+      {/* Header*/}
+      <HStack mt={2} flexShrink={0} justifyContent={'space-between'}>
         <HStack gap={3} align='center'>
           <FileText size={20} />
           <Heading size='md'>YAML Configuration Editor</Heading>
         </HStack>
 
         <HStack gap={2} alignItems={'center'} justifyContent={'flex-end'}>
-          <Button variant='outline' size='sm' onClick={handleLoadCurrent} loading={isLoading}>
+          <Button variant='outline' size='xs' onClick={handleLoadCurrent} loading={isLoading}>
             <Download size={16} />
             Load Current Config
           </Button>
-
-          <Button variant='outline' size='sm' onClick={handleLoadFromFile}>
+          <Button variant='outline' size='xs' onClick={handleLoadFromFile}>
             <Upload size={16} />
             Load from File
           </Button>
@@ -275,101 +292,110 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
           />
         </HStack>
       </HStack>
-
-      <Box
-        flex={'1 1 auto'}
-        border='1px solid'
-        borderColor={colorMode === 'dark' ? 'gray.600' : 'gray.200'}
-        borderRadius='md'
-        overflow='hidden'
-      >
-        <Editor
-          height={`${height - 88}px`}
-          language='yaml'
-          theme={colorMode === 'dark' ? 'vs-dark' : 'vs-light'}
-          value={yamlContent}
-          onChange={value => {
-            setYamlContent(value || '');
-            setValidationResult(null);
-            setApplyResult(null);
-            setError(null);
-            clearValidationMarkers();
-          }}
-          onMount={(editor, monaco) => {
-            editorRef.current = editor;
-            monacoRef.current = monaco;
-          }}
-          options={{
-            minimap: { enabled: false },
-            scrollBeyondLastLine: false,
-            fontSize: 14,
-            tabSize: 2,
-            insertSpaces: true,
-            wordWrap: 'on',
-            lineNumbers: 'on',
-            folding: true,
-            automaticLayout: true,
-            bracketPairColorization: { enabled: true },
-            formatOnPaste: true,
-            formatOnType: true,
-          }}
+      <Box display='flex' flex='1' overflow='hidden' gap={2}>
+        {/* LEFT: Editor */}
+        <VStack
+          align='stretch'
+          border='1px solid'
+          borderColor={colorMode === 'dark' ? 'gray.600' : 'gray.200'}
+          borderRadius='md'
+          flex={3}
+          minW='0'
+        >
+          <HStack
+            bg={colorMode === 'dark' ? 'gray.800' : 'gray.100'}
+            h={9}
+            align='center'
+            gap={0}
+            flexShrink={0}
+          >
+            <IconButton variant='ghost' color='green.500'>
+              <Code2 size={16} />
+            </IconButton>
+            <Text fontSize='sm' fontWeight='semibold'>
+              Editor
+            </Text>
+          </HStack>
+          <Box flex='1' overflow='hidden'>
+            <Editor
+              height='100%'
+              language='yaml'
+              theme={colorMode === 'dark' ? 'vs-dark' : 'vs-light'}
+              value={yamlContent}
+              onChange={value => {
+                setYamlContent(value || '');
+                setValidationResult(null);
+                setApplyResult(null);
+                setError(null);
+                clearValidationMarkers();
+              }}
+              onMount={(editor, monaco) => {
+                editorRef.current = editor;
+                monacoRef.current = monaco;
+              }}
+              options={{
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                fontSize: 14,
+                tabSize: 2,
+                insertSpaces: true,
+                wordWrap: 'on',
+                lineNumbers: 'on',
+                folding: true,
+                automaticLayout: true,
+                bracketPairColorization: { enabled: true },
+                formatOnPaste: true,
+                formatOnType: true,
+              }}
+            />
+          </Box>
+        </VStack>
+        <ConfigurationDescription
+          isCollabsable={isCollabsable}
+          setIsCollabsable={setIsCollabsable}
         />
       </Box>
-
-      <VStack gap={4} align='stretch' flexShrink={0}>
-        {error && (
-          <Alert status='error'>
-            <AlertCircle size={16} />
-            <Text>{error}</Text>
-          </Alert>
-        )}
-
-        {validationResult && (
-          <Alert status={validationResult.isValid ? 'success' : 'error'} py={2} px={3}>
-            <HStack gap={2} align='center'>
-              {validationResult.isValid && <Check size={14} />}
-              <Text fontWeight='medium' fontSize='sm'>
-                {validationResult.isValid
+      <Flex w='full' align='center' gap={4}>
+        <HStack flex='1' gap={4} align='stretch'>
+          {error && <Alert flex='1' status='error' title={error} />}
+          {!applyResult && validationResult && (
+            <Alert
+              flex='1'
+              status={validationResult.isValid ? 'success' : 'error'}
+              title={
+                validationResult.isValid
                   ? 'Configuration is valid'
-                  : `${validationResult.errors?.length || 0} validation error${(validationResult.errors?.length || 0) !== 1 ? 's' : ''} found - see highlighted lines above`}
-              </Text>
-            </HStack>
-          </Alert>
-        )}
-
-        {applyResult && (
-          <Alert status='success' py={2} px={3}>
-            <HStack gap={2} align='center'>
-              <Check size={14} />
-              <Text fontWeight='medium' fontSize='sm'>
-                Configuration applied successfully
-              </Text>
-            </HStack>
-          </Alert>
-        )}
-
-        <HStack gap={3}>
+                  : `${validationResult.errors?.length || 0} error(s) found`
+              }
+            />
+          )}
+          {applyResult && (
+            <Alert flex='1' status='success' title='Configuration applied successfully' />
+          )}
+        </HStack>
+        <HStack gap={2} mb='2'>
           <Button
             variant='outline'
             onClick={handleValidate}
             loading={isLoading}
             disabled={!yamlContent.trim()}
+            size='xs'
           >
             <Check size={16} />
             Validate
           </Button>
-
           <Button
-            colorScheme='blue'
+            colorPalette='blue'
             onClick={handleApply}
             loading={isLoading}
             disabled={!yamlContent.trim() || validationResult?.isValid === false}
+            size='xs'
           >
             <Upload size={16} />
-            Apply Configuration
+            Apply
           </Button>
         </HStack>
-      </VStack>
+      </Flex>
     </VStack>
   );
 }

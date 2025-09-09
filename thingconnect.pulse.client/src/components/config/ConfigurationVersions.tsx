@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Box, Heading, Text, VStack, HStack, Button, Badge, Table } from '@chakra-ui/react';
+import { Box, Heading, Text, VStack, HStack, Button, Badge, Table } from '@chakra-ui/react';
 import { Alert } from '@/components/ui/alert';
-import { History, Download, FileText, Clock } from 'lucide-react';
+import { History, Download, FileText } from 'lucide-react';
 import { configurationService } from '@/api/services/configuration.service';
 import type { ConfigurationVersion } from '@/api/types';
 
@@ -21,6 +22,8 @@ export function ConfigurationVersions({ refreshTrigger }: ConfigurationVersionsP
       setError(null);
       const data = await configurationService.getVersions();
       // Sort by applied timestamp descending (most recent first)
+      const sortedVersions = data.sort(
+        (a, b) => new Date(b.appliedTs).getTime() - new Date(a.appliedTs).getTime()
       const sortedVersions = data.sort(
         (a, b) => new Date(b.appliedTs).getTime() - new Date(a.appliedTs).getTime()
       );
@@ -48,7 +51,14 @@ export function ConfigurationVersions({ refreshTrigger }: ConfigurationVersionsP
   }, [refreshTrigger]);
 
   const formatTimestamp = (timestamp: string) => {
-    return new Date(timestamp).toLocaleString();
+    return new Date(timestamp).toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
   };
 
   const formatHash = (hash: string) => {
@@ -64,8 +74,8 @@ export function ConfigurationVersions({ refreshTrigger }: ConfigurationVersionsP
   }
 
   return (
-    <VStack gap={6} align='stretch'>
-      <Box>
+    <VStack gap={3} align='stretch' h='100%'>
+      <Box mt={2}>
         <HStack gap={3} align='center' mb={2}>
           <History size={20} />
           <Heading size='md'>Configuration Versions</Heading>
@@ -74,110 +84,92 @@ export function ConfigurationVersions({ refreshTrigger }: ConfigurationVersionsP
           History of applied YAML configurations with download and restore options
         </Text>
       </Box>
-
-      {error && (
-        <Alert status='error'>
-          <FileText size={16} />
-          <Text>{error}</Text>
-        </Alert>
-      )}
-
-      {versions.length === 0 ? (
-        <Alert status='info'>
-          <FileText size={16} />
-          <Text>
-            No configuration versions found. Apply your first configuration to see version history.
-          </Text>
-        </Alert>
-      ) : (
-        <Box overflowX='auto'>
-          <Table.Root size='sm'>
-            <Table.Header>
-              <Table.Row>
-                <Table.ColumnHeader>Version</Table.ColumnHeader>
-                <Table.ColumnHeader>Applied Date</Table.ColumnHeader>
-                <Table.ColumnHeader>Hash</Table.ColumnHeader>
-                <Table.ColumnHeader>Actor</Table.ColumnHeader>
-                <Table.ColumnHeader>Notes</Table.ColumnHeader>
-                <Table.ColumnHeader>Actions</Table.ColumnHeader>
-              </Table.Row>
-            </Table.Header>
-            <Table.Body>
-              {versions.map((version, index) => (
-                <Table.Row key={version.id}>
-                  <Table.Cell>
-                    <HStack gap={2}>
-                      <Badge
-                        colorScheme={index === 0 ? 'green' : 'gray'}
-                        variant={index === 0 ? 'solid' : 'outline'}
-                      >
-                        {index === 0 ? 'CURRENT' : `v${versions.length - index}`}
-                      </Badge>
-                      <Text fontSize='xs' color='gray.500' fontFamily='monospace'>
-                        {version.id.substring(0, 8)}
-                      </Text>
-                    </HStack>
-                  </Table.Cell>
-
-                  <Table.Cell>
-                    <VStack align='start' gap={0}>
-                      <Text fontSize='sm'>{formatTimestamp(version.appliedTs)}</Text>
-                      <HStack gap={1}>
-                        <Clock size={12} />
-                        <Text fontSize='xs' color='gray.500'>
-                          {new Date(version.appliedTs).toLocaleDateString()}
+      {error && <Alert status='error' title={error} />}
+      <Box flex='1' overflow='auto'>
+        {versions.length === 0 ? (
+          <Alert
+            status='info'
+            icon={<FileText size={16} />}
+            title='No configuration versions found. Apply your first configuration to see version history.'
+          />
+        ) : (
+          <Table.ScrollArea borderWidth='1px' rounded='md' height='100%'>
+            <Table.Root size='sm' stickyHeader>
+              <Table.Header>
+                <Table.Row bg='gray.100' _dark={{ bg: 'gray.800' }}>
+                  <Table.ColumnHeader>Version</Table.ColumnHeader>
+                  <Table.ColumnHeader>Applied Date</Table.ColumnHeader>
+                  <Table.ColumnHeader>Hash</Table.ColumnHeader>
+                  <Table.ColumnHeader>Actor</Table.ColumnHeader>
+                  <Table.ColumnHeader>Notes</Table.ColumnHeader>
+                  <Table.ColumnHeader>Actions</Table.ColumnHeader>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {versions.map((version, index) => (
+                  <Table.Row key={version.id}>
+                    <Table.Cell>
+                      <HStack gap={2}>
+                        <Badge
+                          colorScheme={index === 0 ? 'green' : 'gray'}
+                          variant={index === 0 ? 'solid' : 'outline'}
+                        >
+                          {index === 0 ? 'CURRENT' : `v${versions.length - index}`}
+                        </Badge>
+                        <Text fontSize='xs' color='gray.500' fontFamily='monospace'>
+                          {version.id.substring(0, 8)}
                         </Text>
                       </HStack>
-                    </VStack>
-                  </Table.Cell>
+                    </Table.Cell>
 
-                  <Table.Cell>
-                    <Text fontSize='xs' fontFamily='monospace' color='gray.600'>
-                      {formatHash(version.fileHash)}
-                    </Text>
-                  </Table.Cell>
+                    <Table.Cell>
+                      <Text fontSize='sm'>{formatTimestamp(version.appliedTs)}</Text>
+                    </Table.Cell>
 
-                  <Table.Cell>
-                    <Text fontSize='sm'>{version.actor || 'System'}</Text>
-                  </Table.Cell>
+                    <Table.Cell>
+                      <Text fontSize='xs' fontFamily='monospace' color='gray.600'>
+                        {formatHash(version.fileHash)}
+                      </Text>
+                    </Table.Cell>
 
-                  <Table.Cell>
-                    <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
-                      {version.note || '—'}
-                    </Text>
-                  </Table.Cell>
+                    <Table.Cell>
+                      <Text fontSize='sm'>{version.actor || 'System'}</Text>
+                    </Table.Cell>
 
-                  <Table.Cell>
-                    <HStack gap={2}>
-                      <Button
-                        size='xs'
-                        variant='outline'
-                        onClick={() => handleDownload(version)}
-                        loading={downloadingId === version.id}
-                        title='Download YAML configuration'
-                      >
-                        <Download size={12} />
-                        Download
-                      </Button>
-                    </HStack>
-                  </Table.Cell>
-                </Table.Row>
-              ))}
-            </Table.Body>
-          </Table.Root>
-        </Box>
-      )}
+                    <Table.Cell>
+                      <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
+                        {version.note || '—'}
+                      </Text>
+                    </Table.Cell>
 
-      {versions.length > 0 && (
-        <Box p={4} borderRadius='md' bg='blue.50' _dark={{ bg: 'blue.900' }}>
-          <Text fontSize='sm' color='blue.800' _dark={{ color: 'blue.200' }}>
-            <strong>Configuration Storage:</strong>
-            <br />
-            Versions are automatically created when configurations are applied. Download any version
-            to restore or compare configurations.
-          </Text>
-        </Box>
-      )}
+                    <Table.Cell>
+                      <HStack gap={2}>
+                        <Button
+                          size='xs'
+                          variant='outline'
+                          onClick={() => handleDownload(version)}
+                          loading={downloadingId === version.id}
+                          title='Download YAML configuration'
+                        >
+                          <Download size={12} />
+                          Download
+                        </Button>
+                      </HStack>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table.Root>
+          </Table.ScrollArea>
+        )}
+      </Box>
+      <Box flexShrink={0}>
+        <Alert title='Configuration Storage:'>
+          Versions are automatically created when configurations are applied. Download any version
+          to restore or compare configurations.
+        </Alert>
+      </Box>
     </VStack>
   );
 }
+

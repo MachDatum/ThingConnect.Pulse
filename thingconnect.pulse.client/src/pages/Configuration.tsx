@@ -31,7 +31,7 @@ export default function Configuration() {
         display='flex'
         flexDirection='column'
       >
-        <TabsList flexShrink={0}>
+        <TabsList flexShrink={0} _dark={{ bg: 'gray.700' }}>
           <TabsTrigger value='editor'>
             <Text>YAML Editor</Text>
           </TabsTrigger>
