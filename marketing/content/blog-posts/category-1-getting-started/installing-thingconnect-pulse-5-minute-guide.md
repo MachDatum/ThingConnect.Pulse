@@ -40,7 +40,7 @@ Before we dive into installation, let's ensure your system meets the minimal req
 
 <!-- IMAGE NEEDED: Screenshot of download page highlighting the Windows installer -->
 
-1. Navigate to [pulse.thingconnect.com/download](pulse.thingconnect.com/download)
+1. Navigate to [pulse.thingconnect.io/download](pulse.thingconnect.io/download)
 2. Click "Download for Windows" 
 3. Save the installer file (ThingConnectPulse-Setup.exe) to your Downloads folder
 
@@ -199,9 +199,9 @@ ThingConnect Pulse's 5-minute installation means you can:
 
 ThingConnect Pulse provides enterprise-grade monitoring capabilities without the enterprise price tag. Our 5-minute installation is just the beginning - you now have access to the same network visibility that manufacturing facilities pay thousands of dollars annually to achieve.
 
-**Ready to start monitoring?** Download ThingConnect Pulse free at [pulse.thingconnect.com](pulse.thingconnect.com) and join hundreds of manufacturing facilities who've eliminated network-related production delays.
+**Ready to start monitoring?** Download ThingConnect Pulse free at [pulse.thingconnect.io](pulse.thingconnect.io) and join hundreds of manufacturing facilities who've eliminated network-related production delays.
 
-**Questions about installation or setup?** Our manufacturing network monitoring experts are here to help. Contact us at [support@thingconnect.com](mailto:support@thingconnect.com) or join our community forum for peer-to-peer assistance.
+**Questions about installation or setup?** Our manufacturing network monitoring experts are here to help. Contact us at [support@thingconnect.io](mailto:support@thingconnect.io) or join our community forum for peer-to-peer assistance.
 
 ---
 

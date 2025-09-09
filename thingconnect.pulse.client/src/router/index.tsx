@@ -2,7 +2,6 @@ import { lazy } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
 import { LazyWrapper } from '@/components/LazyWrapper';
-import { ProtectedRoute } from '@/features/auth/components/ProtectedRoute';
 
 // Lazy load page components for code splitting
 const Dashboard = lazy(() => import('@/pages/Dashboard'));

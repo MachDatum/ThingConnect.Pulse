@@ -20,10 +20,7 @@ export function ConfigurationVersions({ refreshTrigger }: ConfigurationVersionsP
       setIsLoading(true);
       setError(null);
       const data = await configurationService.getVersions();
-<<<<<<< HEAD
       // Sort by applied timestamp descending (most recent first)
-=======
->>>>>>> b49747d53f7018884bfa4f265ff832b17e0ae5b1
       const sortedVersions = data.sort(
         (a, b) => new Date(b.appliedTs).getTime() - new Date(a.appliedTs).getTime()
       );
