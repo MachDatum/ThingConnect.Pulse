@@ -1,4 +1,4 @@
-import { Box, Text, Badge, HStack } from '@chakra-ui/react';
+import { Box, Text, Badge, HStack, Center, Spinner } from '@chakra-ui/react';
 import { Table } from '@chakra-ui/react';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
@@ -10,7 +10,7 @@ interface StatusTableProps {
   isLoading?: boolean;
 }
 
-export function StatusTable({ items }: StatusTableProps) {
+export function StatusTable({ items , isLoading }: StatusTableProps) {
   const navigate = useNavigate();
 
   const getStatusColor = (status: string) => {
@@ -42,9 +42,14 @@ export function StatusTable({ items }: StatusTableProps) {
   const handleRowClick = (id: string) => {
     void navigate(`/endpoints/${id}`);
   };
-
+console.log("isLoading in StatusTable:",items);
   return (
     <Box borderRadius="md" overflow="hidden">
+      {isLoading ? (
+        <Center py={10}>
+          <Spinner size="lg"  color="blue.500"/>
+        </Center>
+      ) : (
       <Table.Root size="md" borderWidth={0} width="full">
         <Table.Header>
           <Table.Row fontSize="12px" fontWeight="bold" textTransform="uppercase">
@@ -73,7 +78,7 @@ export function StatusTable({ items }: StatusTableProps) {
         </Table.Header>
 
         <Table.Body>
-          {items.map(item => (
+          {items?.map(item => (
             <Table.Row
               key={item.endpoint.id}
               cursor="pointer"
@@ -133,6 +138,7 @@ export function StatusTable({ items }: StatusTableProps) {
           ))}
         </Table.Body>
       </Table.Root>
+      )}
     </Box>
   );
 }

@@ -3,7 +3,6 @@ import { useState, useMemo } from 'react';
 import { useStatusQuery } from '@/hooks/useStatusQuery';
 import { StatusFilters } from '@/components/status/StatusFilters';
 import { StatusTable } from '@/components/status/StatusTable';
-import { StatusPagination } from '@/components/status/StatusPagination';
 import { Page } from '@/components/layout/Page';
 import { PageSection } from '@/components/layout/PageSection';
 import type { LiveStatusParams } from '@/api/types';
@@ -33,10 +32,7 @@ function isGroupedByStatusAndGroup(
 }
 
 export default function Dashboard() {
-  const [filters, setFilters] = useState<LiveStatusParams>({
-    page: 1,
-    pageSize: 50,
-  });
+  const [filters, setFilters] = useState<LiveStatusParams>({});
 
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -45,6 +41,7 @@ export default function Dashboard() {
     search: searchTerm,
   });
 
+  console.log(data)
   // Grouping options state
   const [groupByOptions, setGroupByOptions] = useState<string[]>([]);
 
@@ -169,18 +166,12 @@ export default function Dashboard() {
     setFilters(newFilters);
   };
 
-  const handlePageChange = (page: number) => {
-    setFilters(prev => ({ ...prev, page }));
-  };
-
-  const handlePageSizeChange = (pageSize: number) => {
-    setFilters(prev => ({ ...prev, pageSize, page: 1 }));
-  };
-
   const handleToggleGroupBy = (option: string, isSelected: boolean) => {
-    setGroupByOptions(prev => 
-      isSelected 
-        ? (prev.includes(option) ? prev : [...prev, option]) 
+    setGroupByOptions(prev =>
+      isSelected
+        ? prev.includes(option)
+          ? prev
+          : [...prev, option]
         : prev.filter(o => o !== option)
     );
   };
@@ -295,7 +286,10 @@ export default function Dashboard() {
                               as='span'
                               bg={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.200`}
                               color={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.600`}
-                              _dark={{ bg: `${statusColorMap[status as 'up' | 'down' | 'flapping']}.700`, color: `${statusColorMap[status as 'up' | 'down' | 'flapping']}.200` }}
+                              _dark={{
+                                bg: `${statusColorMap[status as 'up' | 'down' | 'flapping']}.700`,
+                                color: `${statusColorMap[status as 'up' | 'down' | 'flapping']}.200`,
+                              }}
                               textTransform='uppercase'
                               borderRadius='30px'
                               px={4}
@@ -346,7 +340,7 @@ export default function Dashboard() {
                                 <Accordion.ItemContent borderLeftWidth={1} borderRadius={2} ml={5}>
                                   <Accordion.ItemBody pl={6} py={0}>
                                     {items && items.length > 0 ? (
-                                      <StatusTable items={items} isLoading={isLoading} />
+                                      <StatusTable items={items} isLoading={isLoading } />
                                     ) : (
                                       <Box
                                         textAlign='center'
@@ -450,7 +444,10 @@ export default function Dashboard() {
                               justifyContent='center'
                               display='inline-flex'
                               color={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.600`}
-                              _dark={{ bg: `${statusColorMap[status as 'up' | 'down' | 'flapping']}.700`, color: `${statusColorMap[status as 'up' | 'down' | 'flapping']}.200` }}
+                              _dark={{
+                                bg: `${statusColorMap[status as 'up' | 'down' | 'flapping']}.700`,
+                                color: `${statusColorMap[status as 'up' | 'down' | 'flapping']}.200`,
+                              }}
                             >
                               {status}
                             </Flex>
@@ -487,17 +484,11 @@ export default function Dashboard() {
                 })}
               </Accordion.Root>
             ) : (
-              <StatusTable items={Object.values(groupedEndpoints).flat()} isLoading={isLoading} />
+              <StatusTable items={Object.values(groupedEndpoints).flat()} isLoading={isLoading } />
             )
           ) : (
             <StatusTable items={data.items} isLoading={isLoading} />
           )}
-
-          {/* <StatusPagination
-            meta={data.meta}
-            onPageChange={handlePageChange}
-            onPageSizeChange={handlePageSizeChange}
-          /> */}
         </PageSection>
       )}
     </Page>

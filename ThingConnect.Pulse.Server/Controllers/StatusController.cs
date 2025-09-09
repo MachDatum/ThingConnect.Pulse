@@ -22,36 +22,21 @@ public sealed class StatusController : ControllerBase
     /// </summary>
     /// <param name="group">Optional group ID filter</param>
     /// <param name="search">Optional search string (matches name or host)</param>
-    /// <param name="page">Page number (1-based)</param>
-    /// <param name="pageSize">Number of items per page</param>
     /// <returns>Paged list of endpoint status with sparkline data</returns>
     [HttpGet("live")]
-    public async Task<ActionResult<PagedLiveDto>> GetLiveStatusAsync(
+    public async Task<ActionResult<LiveStatusItemDto>> GetLiveStatusAsync(
         [FromQuery] string? group = null,
-        [FromQuery] string? search = null,
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 50)
+        [FromQuery] string? search = null)
     {
         try
         {
-            // Validate pagination parameters
-            if (page < 1)
-            {
-                return BadRequest(new { message = "Page must be >= 1" });
-            }
-
-            if (pageSize < 1 || pageSize > 500)
-            {
-                return BadRequest(new { message = "PageSize must be between 1 and 500" });
-            }
-
             _logger.LogInformation("Getting live status - group: {Group}, search: {Search}, page: {Page}, pageSize: {PageSize}",
-                group, search, page, pageSize);
+                group, search);
 
-            PagedLiveDto result = await _statusService.GetLiveStatusAsync(group, search, page, pageSize);
-
-            return Ok(result);
-        }
+            var result = await _statusService.GetLiveStatusAsync(group, search);
+    
+        return Ok(new { items = result });
+    }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting live status");
