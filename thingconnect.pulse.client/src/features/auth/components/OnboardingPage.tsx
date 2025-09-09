@@ -6,7 +6,6 @@ import {
   Heading,
   Text,
   VStack,
-  Container,
   Alert,
   Stack,
   Progress
@@ -263,19 +262,9 @@ export default function OnboardingPage() {
     </VStack>
   );
 
-  const benefits = [
-    'Configure administrator access',
-    'Secure authentication system',
-    'Quick 2-minute setup',
-    'Start monitoring immediately'
-  ];
 
   return (
-    <AuthLayout
-      title="ThingConnect Pulse"
-      subtitle="Initial System Setup"
-      benefits={benefits}
-    >
+    <AuthLayout>
       <VStack gap={6} w="full">
         {/* Progress Bar */}
         <Box w="full">

@@ -168,3 +168,4 @@ export function ConfigurationVersions({ refreshTrigger }: ConfigurationVersionsP
     </VStack>
   );
 }
+
