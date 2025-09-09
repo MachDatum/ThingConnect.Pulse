@@ -4,6 +4,7 @@ import { TabsRoot, TabsList, TabsTrigger, TabsContent } from '@/components/ui/ta
 import { ConfigurationEditor } from '@/components/config/ConfigurationEditor';
 import { ConfigurationVersions } from '@/components/config/ConfigurationVersions';
 import { Page } from '@/components/layout/Page';
+import { HelpButton } from '@/components/common/HelpButton';
 
 export default function Configuration() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -15,10 +16,22 @@ export default function Configuration() {
     <Page
       title='Configuration Management'
       description='Manage monitoring endpoints and YAML configuration'
-      testId="configuration-page"
+      testId='configuration-page'
+      actions={
+        <HelpButton
+          helpUrl="https://docs.thingconnect.io/pulse/user-guide/configuration"
+          tooltip="Configuration Help"
+        />
+      }
     >
-      <TabsRoot defaultValue='editor' variant='enclosed' h='full' display='flex' flexDirection='column'>
-        <TabsList flexShrink={0}>
+      <TabsRoot
+        defaultValue='editor'
+        variant='enclosed'
+        h='full'
+        display='flex'
+        flexDirection='column'
+      >
+        <TabsList flexShrink={0} _dark={{ bg: 'gray.700' }}>
           <TabsTrigger value='editor'>
             <Text>YAML Editor</Text>
           </TabsTrigger>

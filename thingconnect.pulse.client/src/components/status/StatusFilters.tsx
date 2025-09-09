@@ -46,23 +46,22 @@ export function StatusFilters({
       top={{ base: '0', md: 'auto' }}
       zIndex={{ base: 10, md: 'auto' }}
       bg={{ base: 'white', md: 'transparent' }}
-      _dark={{ bg: { base: 'gray.800', md: 'transparent' } , borderColor: { base: 'gray.700', md: 'transparent' } }}
+      _dark={{
+        bg: { base: 'gray.800', md: 'transparent' },
+        borderColor: { base: 'gray.700', md: 'transparent' },
+      }}
       py={{ base: 3, md: 0 }}
       px={{ base: 4, md: 0 }}
       mx={{ base: -4, md: 0 }}
       borderBottom={{ base: '1px', md: 'none' }}
-      borderColor={{ 
-        base: 'gray.200', 
+      borderColor={{
+        base: 'gray.200',
         md: 'transparent',
-        _dark: { base: 'gray.700', md: 'transparent' }
+        _dark: { base: 'gray.700', md: 'transparent' },
       }}
       data-testid='status-filters'
     >
-      <HStack
-        gap={{ base: 2, md: 4 }}
-        align='center'
-        flexWrap={{ base: 'wrap', md: 'nowrap' }}
-      >
+      <HStack gap={{ base: 2, md: 4 }} align='center' flexWrap={{ base: 'wrap', md: 'nowrap' }}>
         {/* Group Filter */}
         <Box minW={{ base: '150px', md: '200px' }} flex={{ base: '1', md: 'none' }}>
           <NativeSelect.Root data-testid='group-filter'>
@@ -101,10 +100,10 @@ export function StatusFilters({
 
         {/* Clear Filters */}
         {hasFilters && (
-          <Button 
-            variant='outline' 
+          <Button
+            variant='outline'
             size={{ base: 'sm', md: 'md' }}
-            onClick={clearFilters} 
+            onClick={clearFilters}
             data-testid='clear-filters'
             minHeight='44px'
             flexShrink={0}

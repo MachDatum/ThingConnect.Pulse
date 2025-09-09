@@ -20,8 +20,21 @@
               "icon": "lucide-file",
               "title": "blog-index-all-topics"
             }
+          },
+          {
+            "id": "710575145be63c3e",
+            "type": "leaf",
+            "state": {
+              "type": "release-notes",
+              "state": {
+                "currentVersion": "1.9.12"
+              },
+              "icon": "lucide-book-up",
+              "title": "Release Notes 1.9.12"
+            }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -169,7 +182,7 @@
       "bases:Create new base": false
     }
   },
-  "active": "ffaee7d95a949b68",
+  "active": "710575145be63c3e",
   "lastOpenFiles": [
     "content/blog-posts/category-1-getting-started/yaml-configuration-basics.md",
     "content/blog-posts/category-1-getting-started/windows-service-installation-management.md",

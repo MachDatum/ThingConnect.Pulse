@@ -34,7 +34,7 @@ export function Footer() {
             Powered by ThingConnect
           </Link>
         </HStack>
-        
+
         {/* Mobile footer with branding */}
         <Text display={{ base: 'block', md: 'none' }} data-testid='mobile-branding'>
           Powered by ThingConnect
