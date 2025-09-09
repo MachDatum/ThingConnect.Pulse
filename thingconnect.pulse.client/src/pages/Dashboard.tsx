@@ -177,6 +177,14 @@ export default function Dashboard() {
     setFilters(prev => ({ ...prev, pageSize, page: 1 }));
   };
 
+  const handleToggleGroupBy = (option: string, isSelected: boolean) => {
+    setGroupByOptions(prev => 
+      isSelected 
+        ? (prev.includes(option) ? prev : [...prev, option]) 
+        : prev.filter(o => o !== option)
+    );
+  };
+
   const StatCard = ({
     icon: Icon,
     title,
@@ -239,12 +247,7 @@ export default function Dashboard() {
         groupByOptions={groupByOptions}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
-        onGroupByChange={option => {
-          // Toggle the option (add if not present, remove if present)
-          setGroupByOptions(prev =>
-            prev.includes(option) ? prev.filter(o => o !== option) : [...prev, option]
-          );
-        }}
+        onToggleGroupBy={handleToggleGroupBy}
       />
 
       {data && (

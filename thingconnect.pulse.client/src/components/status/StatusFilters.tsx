@@ -1,5 +1,13 @@
-import { HStack, Input, Button, Box, Icon, Menu, Text, Flex } from '@chakra-ui/react';
-import { X, CheckCircle } from 'lucide-react';
+import { 
+  Box, 
+  Button, 
+  Flex, 
+  HStack, 
+  Icon, 
+  Input, 
+  Text, 
+  Menu
+} from '@chakra-ui/react';import { X } from 'lucide-react';
 import type { LiveStatusParams } from '@/api/types';
 import { MdSearch, MdExpandMore } from 'react-icons/md';
 
@@ -13,6 +21,7 @@ interface StatusFiltersProps {
   groupByOptions?: string[];
   searchTerm?: string;
   onSearchChange?: (searchTerm: string) => void;
+  onToggleGroupBy?: (groupBy: string, isSelected: boolean) => void;
 }
 
 export function StatusFilters({
@@ -23,6 +32,7 @@ export function StatusFilters({
   groupByOptions = [],
   searchTerm = '',
   onSearchChange,
+  onToggleGroupBy,
 }: StatusFiltersProps) {
   const handleGroupChange = (value: string) => {
     onFiltersChange({
@@ -95,7 +105,7 @@ export function StatusFilters({
           </Menu.Trigger>
           <Menu.Positioner>
             <Menu.Content>
-              <Menu.Item key={'all'} value={''} onSelect={() => handleGroupChange('')}>
+              <Menu.Item value={''} onSelect={() => handleGroupChange('')}>
                 All Groups
               </Menu.Item>
               {groups.map(group => (
@@ -110,7 +120,7 @@ export function StatusFilters({
         {/* Search Input */}
         <Flex w='80' position='relative' align='center'>
           <Icon 
-            as={MdSearch}
+            as={MdSearch} 
             color='gray.400' 
             position='absolute' 
             left='3' 
@@ -144,6 +154,8 @@ export function StatusFilters({
             </Box>
           )}
         </Flex>
+
+        {/* Group By Dropdown */}
         <Menu.Root>
           <Menu.Trigger asChild>
             <Button
@@ -159,33 +171,78 @@ export function StatusFilters({
               <MdExpandMore />
             </Button>
           </Menu.Trigger>
-          <Menu.Positioner>
-            <Menu.Content>
-              <Menu.Item 
-                value="status" 
-                onSelect={() => {
-                  onGroupByChange && onGroupByChange('status');
-                }}
-              >
-                <HStack w="full" justify="space-between" align="center">
-                  <Text as="span">Group by Status</Text>
-                  {groupByOptions.includes('status') && <CheckCircle size={16} color="green" />}
+          <Menu.Positioner px={4}>
+            <Menu.Content minWidth="200px" borderColor="gray.300">
+              <Flex justify="flex-end" px={2} py={1} borderBottom="1px solid" borderColor="gray.200">
+                <HStack gap={2}>
+                  <Button 
+                    size="xs" 
+                    variant="ghost"
+                    onClick={() => {
+                      ['status', 'group'].forEach(opt => 
+                        onToggleGroupBy && onToggleGroupBy(opt, true)
+                      );
+                    }}
+                    textDecoration={'underline'}
+                  >
+                    Select All
+                  </Button>
+                  <Button 
+                    size="xs" 
+                    variant="ghost"
+                    onClick={() => {
+                      ['status', 'group'].forEach(opt => 
+                        onToggleGroupBy && onToggleGroupBy(opt, false)
+                      );
+                    }}
+                    textDecoration={'underline'}
+                  >
+                    Clear
+                  </Button>
                 </HStack>
-              </Menu.Item>
-              <Menu.Item 
-                value="group" 
-                onSelect={() => {
-                  onGroupByChange && onGroupByChange('group');
-                }}
-              >
-                <HStack w="full" justify="space-between" align="center">
-                  <Text as="span">Group by Group</Text>
-                  {groupByOptions.includes('group') && <CheckCircle size={16} color="green" />}
-                </HStack>
-              </Menu.Item>
+              </Flex>
+              <Menu.ItemGroup >
+                <Menu.CheckboxItem
+                  cursor={'pointer'}
+                  value="status"
+                  checked={groupByOptions.includes('status')}
+                  onCheckedChange={() => {
+                    onToggleGroupBy && onToggleGroupBy('status', !groupByOptions.includes('status'));
+                  }}
+                >
+                  <Flex 
+                    w="full" 
+                    justify="flex-start" 
+                    align="center" 
+                    gap={3}
+                  >
+                    <Text as="span">Group by Status</Text>
+                    <Menu.ItemIndicator />
+                  </Flex>
+                </Menu.CheckboxItem>
+                <Menu.CheckboxItem
+                  cursor={'pointer'}
+                  value="group"
+                  checked={groupByOptions.includes('group')}
+                  onCheckedChange={() => {
+                    onToggleGroupBy && onToggleGroupBy('group', !groupByOptions.includes('group'));
+                  }}
+                >
+                  <Flex 
+                    w="full" 
+                    justify="flex-start" 
+                    align="center" 
+                    gap={3}
+                  >
+                    <Text as="span">Group by Group</Text>
+                    <Menu.ItemIndicator />
+                  </Flex>
+                </Menu.CheckboxItem>
+              </Menu.ItemGroup>
             </Menu.Content>
           </Menu.Positioner>
         </Menu.Root>
+
         {/* Clear Filters */}
         {hasFilters && (
           <Button
