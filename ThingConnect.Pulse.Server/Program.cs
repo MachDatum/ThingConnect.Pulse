@@ -135,10 +135,11 @@ public class Program
 
 
             // Add configuration services
-            builder.Services.AddSingleton<ConfigurationParser>(serviceProvider =>
+            builder.Services.AddScoped<ConfigurationParser>(serviceProvider =>
             {
                 ILogger<ConfigurationParser> logger = serviceProvider.GetRequiredService<ILogger<ConfigurationParser>>();
-                return ConfigurationParser.CreateAsync(logger).GetAwaiter().GetResult();
+                IDiscoveryService discoveryService = serviceProvider.GetRequiredService<IDiscoveryService>();
+                return ConfigurationParser.CreateAsync(logger, discoveryService).GetAwaiter().GetResult();
             });
             builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
             builder.Services.AddScoped<ISettingsService, SettingsService>();
