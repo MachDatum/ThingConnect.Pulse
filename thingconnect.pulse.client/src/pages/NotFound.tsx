@@ -1,8 +1,8 @@
-import { Box, VStack, Heading, Text, Button, Image, Flex, HStack, Link } from '@chakra-ui/react';
+import { Box, VStack, Heading, Text, Button, Image, Flex, HStack } from '@chakra-ui/react';
 import { Home, ArrowLeft } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 import thingConnectIcon from '@/assets/thingconnect-logo.png';
-import pageNotFound from '@/assets/page-not-found2.png';
+import pageNotFound from '@/assets/page-not-found.png';
 
 export default function NotFound() {
   return (
