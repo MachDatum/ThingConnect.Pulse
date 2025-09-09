@@ -1,8 +1,8 @@
 import { Box, VStack, Text, Icon, Image, HStack, Badge, Button } from '@chakra-ui/react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { Wifi, Activity, LogOut } from 'lucide-react';
-import thingConnectIcon from '@/assets/thingconnect-icon.svg';
-import { Clock, Wrench, Settings, Info, Dashboard, Help } from '@/icons';
+import thingConnectIcon from '@/assets/ThingConnectPulseLogo.svg';
+import { Clock, Wrench, Settings, Info, Dashboard } from '@/icons';
 import { useAuth } from '@/features/auth/context/AuthContext';
 interface NavigationProps {
   onItemClick?: () => void;
@@ -11,7 +11,7 @@ interface NavigationProps {
 const navigationItems = [
   { label: 'Dashboard', path: '/', icon: Dashboard },
   { label: 'History', path: '/history', icon: Clock },
-  { label: 'Config', path: '/config', icon: Wrench },
+  { label: 'Configuration', path: '/configuration', icon: Wrench },
   { label: 'Settings', path: '/settings', icon: Settings },
   { label: 'Help', path: 'https://docs.thingconnect.io/pulse/', icon: Help, external: true },
   { label: 'About', path: '/about', icon: Info },
@@ -42,33 +42,7 @@ export function Navigation({ onItemClick }: NavigationProps) {
         _dark={{ borderColor: 'gray.700' }}
         data-testid='brand-section'
       >
-        <HStack gap={3}>
-          <Image
-            data-testid='thingconnect-icon'
-            src={thingConnectIcon}
-            alt='ThingConnect'
-            boxSize='32px'
-          />
-          <Box>
-            <Text
-              fontSize='sm'
-              fontWeight='bold'
-              color='blue.600'
-              _dark={{ color: 'blue.400' }}
-              data-testid='brand-name'
-            >
-              ThingConnect
-            </Text>
-            <Text
-              fontSize='xs'
-              color='gray.600'
-              _dark={{ color: 'gray.400' }}
-              data-testid='brand-subtitle'
-            >
-              Pulse Monitor
-            </Text>
-          </Box>
-        </HStack>
+        <Image data-testid='thingconnect-icon' src={thingConnectIcon} alt='ThingConnect' w={40} />
       </Box>
       <VStack gap={1} p={2} flex='1' align='stretch' data-testid='navigation-items'>
         {navigationItems.map(item => {
@@ -147,7 +121,6 @@ export function Navigation({ onItemClick }: NavigationProps) {
               </Text>
             </HStack>
           </VStack>
-          
           <Button
             onClick={handleLogout}
             size='sm'
@@ -157,6 +130,7 @@ export function Navigation({ onItemClick }: NavigationProps) {
             w='full'
             _hover={{ bg: 'gray.100', _dark: { bg: 'gray.700' } }}
             data-testid='logout-button'
+            px='0'
           >
             <LogOut size={16} />
             <Text fontSize='sm' fontWeight='semibold'>

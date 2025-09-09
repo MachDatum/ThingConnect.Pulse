@@ -89,7 +89,7 @@ export const router = createBrowserRouter([
   },
   // Admin-only routes
   {
-    path: '/config',
+    path: '/configuration',
     element: (
       // <ProtectedRoute adminOnly>
       <AppShell />
