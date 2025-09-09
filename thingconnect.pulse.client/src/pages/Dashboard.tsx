@@ -1,15 +1,4 @@
-import {
-  Box,
-  Text,
-  Badge,
-  Grid,
-  VStack,
-  Heading,
-  Flex,
-  HStack,
-  Card,
-  Accordion,
-} from '@chakra-ui/react';
+import { Box, Text, Grid, VStack, Heading, Flex, HStack, Card, Accordion } from '@chakra-ui/react';
 import { useState, useMemo } from 'react';
 import { useStatusQuery } from '@/hooks/useStatusQuery';
 import { StatusFilters } from '@/components/status/StatusFilters';
@@ -278,11 +267,12 @@ export default function Dashboard() {
                   const typedGroupItems = groupItems || {};
 
                   return (
-                    <Accordion.Item key={status} value={status}>
+                    <Accordion.Item key={status} value={status} my={2}>
                       <Accordion.ItemTrigger
                         bg={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.100`}
                         _dark={{
                           bg: `${statusColorMap[status as 'up' | 'down' | 'flapping']}.900`,
+                          borderColor: `${statusColorMap[status as 'up' | 'down' | 'flapping']}.800`,
                         }}
                         borderColor={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.200`}
                         borderWidth={1}
@@ -319,43 +309,34 @@ export default function Dashboard() {
                           </HStack>
                         </HStack>
                       </Accordion.ItemTrigger>
-
-                      <Accordion.ItemContent >
-                        <Accordion.ItemBody borderWidth={1} >
+                      <Accordion.ItemContent borderWidth={1} borderRadius={1}>
+                        <Accordion.ItemBody py={0}>
                           <Accordion.Root multiple variant='plain' pl={4}>
                             {Object.entries(typedGroupItems).map(([group, items]) => (
                               <Accordion.Item key={group} value={group}>
-                                <Accordion.ItemTrigger >
+                                <Accordion.ItemTrigger>
                                   <HStack w='full' justify='space-between'>
                                     <HStack px={'10px'}>
                                       <Accordion.ItemIndicator
                                         fontSize={'md'}
                                         fontWeight={'bolder'}
                                       />
-                                      <Flex
-                                        as='span'
-                                        textTransform='uppercase'
-                                        borderRadius='30px'
-                                        px={4}
-                                        py={1}
-                                        fontSize='11px'
-                                        alignItems='center'
-                                        justifyContent='center'
-                                        display='inline-flex'
-                                      >
-                                        {group}
-                                      </Flex>
                                       <Text fontSize='sm' fontWeight='semibold'>
+                                        {group}
+                                      </Text>
+                                      <Text fontSize='12px' color={'gray.400'} px={2}>
                                         {items?.length
-                                          ? `${items?.length} Endpoints`
+                                          ? items?.length > 1
+                                            ? `${items?.length} Endpoints`
+                                            : '1 Endpoint'
                                           : 'No Endpoints'}
                                       </Text>
                                     </HStack>
                                   </HStack>
                                 </Accordion.ItemTrigger>
 
-                                <Accordion.ItemContent>
-                                  <Accordion.ItemBody>
+                                <Accordion.ItemContent borderLeftWidth={1} borderRadius={2} ml={5}>
+                                  <Accordion.ItemBody pl={6} py={0}>
                                     {items && items.length > 0 ? (
                                       <StatusTable items={items} isLoading={isLoading} />
                                     ) : (
@@ -363,7 +344,6 @@ export default function Dashboard() {
                                         textAlign='center'
                                         color='gray.500'
                                         py={8}
-                                        bg='gray.50'
                                         borderRadius='md'
                                       >
                                         <Text>No endpoints available</Text>
@@ -408,14 +388,15 @@ export default function Dashboard() {
                               {group}
                             </Flex>
                             <Text fontSize='sm' fontWeight='semibold'>
-                              {itemsArray.length
-                                ? `${itemsArray.length} Endpoints`
+                              {itemsArray?.length
+                                ? itemsArray?.length > 1
+                                  ? `${itemsArray?.length} Endpoints`
+                                  : '1 Endpoint'
                                 : 'No Endpoints'}
                             </Text>
                           </HStack>
                         </HStack>
                       </Accordion.ItemTrigger>
-
                       <Accordion.ItemContent>
                         <Accordion.ItemBody>
                           <StatusTable items={itemsArray} isLoading={isLoading} />
@@ -445,6 +426,7 @@ export default function Dashboard() {
                         bg={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.100`}
                         _dark={{
                           bg: `${statusColorMap[status as 'up' | 'down' | 'flapping']}.900`,
+                          borderColor: `${statusColorMap[status as 'up' | 'down' | 'flapping']}.800`,
                         }}
                         borderColor={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.200`}
                         borderWidth={1}
@@ -476,8 +458,10 @@ export default function Dashboard() {
                               fontWeight='semibold'
                               color={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.600`}
                             >
-                              {itemsArray.length
-                                ? `${itemsArray.length} Endpoints`
+                              {itemsArray?.length
+                                ? itemsArray?.length > 1
+                                  ? `${itemsArray?.length} Endpoints`
+                                  : '1 Endpoint'
                                 : 'No Endpoints'}
                             </Text>
                           </HStack>
