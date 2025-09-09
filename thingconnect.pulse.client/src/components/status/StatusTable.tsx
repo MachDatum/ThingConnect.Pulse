@@ -54,28 +54,28 @@ export function StatusTable({ items }: StatusTableProps) {
       {Object.entries(groupedItems).map(([status, statusItems]) => (
         <Box key={status}>
           {/* Table */}
-          <Table.Root size='md' borderWidth={0}>
+          <Table.Root size='md' borderWidth={0} layout='fixed' width='full'>
             <Table.Header>
               <Table.Row fontSize='12px' fontWeight='bold' textTransform='uppercase'>
-                <Table.ColumnHeader colSpan={1} color={'gray.500'} _dark={{ color: 'gray.400' }}>
+                <Table.ColumnHeader width='10%' color={'gray.500'} _dark={{ color: 'gray.400' }}>
                   Status
                 </Table.ColumnHeader>
-                <Table.ColumnHeader colSpan={1} color={'gray.500'} _dark={{ color: 'gray.400' }}>
+                <Table.ColumnHeader width='20%' color={'gray.500'} _dark={{ color: 'gray.400' }}>
                   Name
                 </Table.ColumnHeader>
-                <Table.ColumnHeader colSpan={1} color={'gray.500'} _dark={{ color: 'gray.400' }}>
+                <Table.ColumnHeader width='15%' color={'gray.500'} _dark={{ color: 'gray.400' }}>
                   Host
                 </Table.ColumnHeader>
-                <Table.ColumnHeader colSpan={1} color={'gray.500'} _dark={{ color: 'gray.400' }}>
+                <Table.ColumnHeader width='15%' color={'gray.500'} _dark={{ color: 'gray.400' }}>
                   Group
                 </Table.ColumnHeader>
-                <Table.ColumnHeader colSpan={1} color={'gray.500'} _dark={{ color: 'gray.400' }}>
+                <Table.ColumnHeader width='10%' color={'gray.500'} _dark={{ color: 'gray.400' }}>
                   RTT
                 </Table.ColumnHeader>
-                <Table.ColumnHeader colSpan={1} color={'gray.500'} _dark={{ color: 'gray.400' }}>
+                <Table.ColumnHeader width='15%' color={'gray.500'} _dark={{ color: 'gray.400' }}>
                   Last Change
                 </Table.ColumnHeader>
-                <Table.ColumnHeader colSpan={1} color={'gray.500'} _dark={{ color: 'gray.400' }}>
+                <Table.ColumnHeader width='15%' color={'gray.500'} _dark={{ color: 'gray.400' }}>
                   Trend
                 </Table.ColumnHeader>
               </Table.Row>
@@ -89,7 +89,7 @@ export function StatusTable({ items }: StatusTableProps) {
                   _hover={{ bg: 'gray.50', _dark: { bg: 'gray.800' } }}
                   onClick={() => handleRowClick(item.endpoint.id)}
                 >
-                  <Table.Cell colSpan={1}>
+                  <Table.Cell width='10%'>
                     <Badge
                       variant='subtle'
                       px={2}
@@ -103,21 +103,21 @@ export function StatusTable({ items }: StatusTableProps) {
                       {item.status.toUpperCase()}
                     </Badge>
                   </Table.Cell>
-                  <Table.Cell colSpan={1}>
-                    <Text fontWeight='medium'>{item.endpoint.name}</Text>
+                  <Table.Cell width='20%'>
+                    <Text fontWeight='medium' noOfLines={1}>{item.endpoint.name}</Text>
                   </Table.Cell>
-                  <Table.Cell colSpan={1}>
+                  <Table.Cell width='15%'>
                     <HStack gap={2} color={'gray.500'} _dark={{ color: 'gray.400' }}>
-                      <Text fontFamily='monospace' fontSize='sm'>
+                      <Text fontFamily='monospace' fontSize='sm' noOfLines={1}>
                         {item.endpoint.host}
                       </Text>
                       {item.endpoint.port && <Text fontSize='xs'>:{item.endpoint.port}</Text>}
                     </HStack>
                   </Table.Cell>
-                  <Table.Cell colSpan={1}>
-                    <Text fontSize='sm'>{item.endpoint.group.name}</Text>
+                  <Table.Cell width='15%'>
+                    <Text fontSize='sm' noOfLines={1}>{item.endpoint.group.name}</Text>
                   </Table.Cell>
-                  <Table.Cell colSpan={1}>
+                  <Table.Cell width='10%'>
                     <Text
                       fontFamily='monospace'
                       fontSize='sm'
@@ -127,12 +127,12 @@ export function StatusTable({ items }: StatusTableProps) {
                       {formatRTT(item.rttMs)}
                     </Text>
                   </Table.Cell>
-                  <Table.Cell colSpan={1}>
-                    <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
+                  <Table.Cell width='15%'>
+                    <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }} noOfLines={1}>
                       {formatLastChange(item.lastChangeTs)}
                     </Text>
                   </Table.Cell>
-                  <Table.Cell colSpan={1}>
+                  <Table.Cell width='15%'>
                     <TrendBlocks data={item.sparkline} />
                   </Table.Cell>
                 </Table.Row>
