@@ -16,18 +16,9 @@ import {
   VStack,
   Tabs,
   Center,
-  Box,
   EmptyState,
 } from '@chakra-ui/react';
-import {
-  Download,
-  TrendingUp,
-  AlertCircle,
-  RefreshCw,
-  Icon,
-  Database,
-  SearchX,
-} from 'lucide-react';
+import { Download, TrendingUp, AlertCircle, RefreshCw, SearchX } from 'lucide-react';
 import { Page } from '@/components/layout/Page';
 import { PageSection } from '@/components/layout/PageSection';
 
@@ -113,22 +104,23 @@ export default function History() {
     data: historyData,
     isLoading: isHistoryDataLoading,
     refetch,
+    isRefetching: isHistoryDataRefetching,
   } = useQuery({
     queryKey: ['history', selectedEndpoint, dateRange, bucket],
     queryFn: () => {
       if (!selectedEndpoint) return null;
+      const latestTo = new Date().toISOString();
 
       return HistoryService.getEndpointHistory({
         id: selectedEndpoint,
         from: new Date(dateRange.from).toISOString(),
-        to: new Date(dateRange.to).toISOString(),
+        to: latestTo,
         bucket,
       });
     },
     enabled: !!selectedEndpoint,
     retry: 1,
   });
-
   const handleExportCSV = async () => {
     if (!selectedEndpoint) return;
 
@@ -238,8 +230,17 @@ export default function History() {
               <IconButton
                 size='xs'
                 variant='subtle'
-                onClick={() => void refetch()}
-                disabled={isHistoryDataLoading || !selectedEndpoint}
+                onClick={() => {
+                  setDateRange(prev => ({
+                    ...prev,
+                    to: new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000)
+                      .toISOString()
+                      .slice(0, 16),
+                  }));
+                  void refetch();
+                }}
+                loading={isHistoryDataRefetching || isHistoryDataLoading}
+                disabled={!selectedEndpoint}
               >
                 <RefreshCw />
               </IconButton>
@@ -248,8 +249,8 @@ export default function History() {
               size='xs'
               colorPalette='blue'
               onClick={() => void handleExportCSV()}
-              loading={isExporting}
-              disabled={!historyData || isHistoryDataLoading}
+              loading={isExporting || isHistoryDataLoading}
+              disabled={!historyData}
             >
               <Download size={16} />
               Export CSV
