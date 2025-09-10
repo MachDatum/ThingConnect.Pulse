@@ -283,8 +283,8 @@ export default function History() {
               <Tabs.Trigger value='history'>Historical Data</Tabs.Trigger>
             </Tabs.List>
             <Tabs.Content value='chart' flex={1} display='flex' minH={0}>
-              <Card.Root flex={1} display='flex' flexDirection='column'>
-                <Card.Header>
+              <Card.Root flex={1} display='flex' flexDirection='column' size={'sm'}>
+                <Card.Header px={3} pt={3}>
                   <HStack gap={2}>
                     <TrendingUp size={20} />
                     <Text fontWeight='medium' fontSize='sm'>
@@ -292,7 +292,7 @@ export default function History() {
                     </Text>
                   </HStack>
                 </Card.Header>
-                <Card.Body flex={1} minH={0}>
+                <Card.Body flex={1} minH={0} p={3}>
                   <AvailabilityChart
                     data={historyData}
                     bucket={bucket}
@@ -301,10 +301,15 @@ export default function History() {
                 </Card.Body>
               </Card.Root>
             </Tabs.Content>
-
             <Tabs.Content value='history' flex={1} display='flex' minH={0}>
-              <Card.Root flex={1} display='flex' flexDirection='column' overflow='hidden'>
-                <Card.Header>
+              <Card.Root
+                flex={1}
+                display='flex'
+                flexDirection='column'
+                overflow='hidden'
+                size={'sm'}
+              >
+                <Card.Header px={3} pt={3}>
                   <HStack gap={2}>
                     <AlertCircle size={20} />
                     <Text fontWeight='medium' fontSize='sm'>
@@ -315,7 +320,7 @@ export default function History() {
                     </Text>
                   </HStack>
                 </Card.Header>
-                <Card.Body flex={1} display='flex' flexDirection='column' minH={0}>
+                <Card.Body flex={1} display='flex' flexDirection='column' minH={0} p={3}>
                   <HistoryTable
                     data={historyData}
                     bucket={bucket}
