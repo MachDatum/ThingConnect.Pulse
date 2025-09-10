@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useState, useLayoutEffect } from 'react';
 import { Box, Text, VStack, Skeleton } from '@chakra-ui/react';
 import type { RollupBucket, DailyBucket, RawCheck } from '@/api/types';
 import type { BucketType } from '@/types/bucket';
@@ -24,25 +24,6 @@ export function AvailabilityChart({
   height = 300,
   isLoading,
 }: AvailabilityChartProps) {
-  if (isLoading) {
-    return (
-      <Box
-        height='100%'
-        display='flex'
-        alignItems='center'
-        justifyContent='center'
-        borderRadius='md'
-        borderWidth='1px'
-        bg='gray.50'
-        _dark={{ bg: 'gray.800' }}
-      >
-        <VStack w='full' px={6} gap={4}>
-          <Skeleton height='100%' width='100%' />
-        </VStack>
-      </Box>
-    );
-  }
-
   const chartData = useMemo(() => {
     if (!data) return null;
     switch (bucket) {
@@ -101,56 +82,67 @@ export function AvailabilityChart({
     );
   }
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height });
+
+  useLayoutEffect(() => {
+    if (!containerRef.current) return;
+
+    const observer = new ResizeObserver(entries => {
+      const entry = entries[0];
+      setDimensions({
+        width: entry.contentRect.width,
+        height: entry.contentRect.height,
+      });
+    });
+
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   const margin = { top: 20, right: 30, bottom: 40, left: 70 };
+  const chartWidth = Math.max(dimensions.width - margin.left - margin.right, 0);
+  const chartHeight = Math.max(dimensions.height - margin.top - margin.bottom, 0);
 
   return (
-    <Box w='full' h='full' position='relative'>
-      <svg width='100%' height='100%' viewBox={`0 0 1000 ${height}`} preserveAspectRatio='none'>
+    // <Skeleton loading={isLoading} w='full' h='full' position='relative'>
+    <Box ref={containerRef} flex={1} minH={0} w='full' h='full' position='relative'>
+      <svg
+        width='100%'
+        height='100%'
+        viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
+        preserveAspectRatio='none'
+      >
         <g transform={`translate(${margin.left}, ${margin.top})`}>
           {/* Grid + Y-axis labels */}
-          {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map(value => (
-            <g key={value}>
-              <line
-                x1={0}
-                y1={
-                  height -
-                  margin.top -
-                  margin.bottom -
-                  (value / 100) * (height - margin.top - margin.bottom)
-                }
-                x2={1000 - margin.left - margin.right}
-                y2={
-                  height -
-                  margin.top -
-                  margin.bottom -
-                  (value / 100) * (height - margin.top - margin.bottom)
-                }
-                stroke='#e2e8f0'
-                strokeWidth='1'
-                opacity='0.5'
-              />
-              <text
-                x={-10}
-                y={
-                  height -
-                  margin.top -
-                  margin.bottom -
-                  (value / 100) * (height - margin.top - margin.bottom) +
-                  4
-                }
-                fill='#718096'
-                textAnchor='end'
-                style={{ fontSize: '10px' }}
-              >
-                {value}%
-              </text>
-            </g>
-          ))}
+          {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map(value => {
+            const y = chartHeight - (value / 100) * chartHeight;
+            return (
+              <g key={value}>
+                <line
+                  x1={0}
+                  y1={y}
+                  x2={chartWidth}
+                  y2={y}
+                  stroke='#e2e8f0'
+                  strokeWidth='1'
+                  opacity='0.5'
+                />
+                <text
+                  x={-10}
+                  y={y + 4}
+                  fill='#718096'
+                  textAnchor='end'
+                  style={{ fontSize: '10px' }}
+                >
+                  {value}%
+                </text>
+              </g>
+            );
+          })}
 
           {/* Bars */}
           {chartData?.map((point, index) => {
-            const chartWidth = 1000 - margin.left - margin.right;
-            const chartHeight = height - margin.top - margin.bottom;
             const slotWidth = chartWidth / chartData.length;
             const barWidth = slotWidth * 0.6;
             const x = index * slotWidth + (slotWidth - barWidth) / 2;
@@ -172,16 +164,17 @@ export function AvailabilityChart({
           {/* Y-axis label */}
           <text
             x={-35}
-            y={(height - margin.top - margin.bottom) / 2.3}
-            style={{ fontSize: '12' }}
+            y={chartHeight / 2.2}
+            style={{ fontSize: '12px' }}
             fill='#718096'
             textAnchor='middle'
-            transform={`rotate(-90, -35, ${(height - margin.top - margin.bottom) / 2})`}
+            transform={`rotate(-90, -35, ${chartHeight / 2})`}
           >
             Uptime %
           </text>
         </g>
       </svg>
     </Box>
+    // </Skeleton>
   );
 }
