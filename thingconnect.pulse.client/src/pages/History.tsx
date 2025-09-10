@@ -147,7 +147,7 @@ export default function History() {
       testId='history-page'
     >
       <PageSection title='Filters'>
-        <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }} gap={4}>
+        <Grid>
           <GridItem>
             <Text fontSize='sm' fontWeight='medium' mb={2}>
               Endpoint
@@ -155,7 +155,6 @@ export default function History() {
             <Combobox.Root
               size='xs'
               w='full'
-              minW='max-content'
               collection={collection}
               value={selectedEndpoint ? [selectedEndpoint] : []}
               onValueChange={e => {
@@ -212,14 +211,12 @@ export default function History() {
               </Portal>
             </Combobox.Root>
           </GridItem>
-
           <GridItem>
             <Text fontSize='sm' fontWeight='medium' mb={2}>
               Date Range
             </Text>
             <DateRangePicker value={dateRange} onChange={setDateRange} />
           </GridItem>
-
           <GridItem>
             <Text fontSize='sm' fontWeight='medium' mb={2}>
               Data Granularity
