@@ -26,11 +26,12 @@ import { DateRangePicker } from '@/components/DateRangePicker';
 import type { DateRange } from '@/components/DateRangePicker';
 import { BucketSelector } from '@/components/BucketSelector';
 import type { BucketType } from '@/types/bucket';
-import { AvailabilityChart, AvailabilityStats } from '@/components/AvailabilityChart';
+import { AvailabilityChart } from '@/components/AvailabilityChart';
 import { HistoryTable } from '@/components/HistoryTable';
 import { HistoryService } from '@/api/services/history.service';
 import { StatusService } from '@/api/services/status.service';
 import { Tooltip } from '@/components/ui/tooltip';
+import { AvailabilityStats } from '@/components/AvailabilityStats';
 
 export default function History() {
   // State for filters
