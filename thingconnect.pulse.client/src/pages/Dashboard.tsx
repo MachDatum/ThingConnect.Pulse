@@ -33,6 +33,7 @@ function isGroupedByStatusAndGroup(
 
 export default function Dashboard() {
   const [filters, setFilters] = useState<LiveStatusParams>({});
+  const [selectedGroup, setSelectedGroup] = useState<string | undefined>(undefined);
 
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -41,7 +42,6 @@ export default function Dashboard() {
     search: searchTerm,
   });
 
-  console.log(data)
   // Grouping options state
   const [groupByOptions, setGroupByOptions] = useState<string[]>([]);
 
@@ -55,9 +55,8 @@ export default function Dashboard() {
         (!searchTerm ||
           e.endpoint.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           e.endpoint.host.toLowerCase().includes(searchTerm.toLowerCase())) &&
-        (!filters.group || e.endpoint.group.name === filters.group)
+        (!filters.group || e.endpoint.group.id === filters.group)
     );
-
     // If no group by options are selected, return a flat list of filtered items
     if (groupByOptions.length === 0) {
       return filteredItems;
@@ -142,8 +141,16 @@ export default function Dashboard() {
   // Extract unique groups for filter dropdown
   const groups = useMemo(() => {
     if (!data?.items) return [];
-    const groupSet = new Set(data.items.map(item => item.endpoint.group.name));
-    return Array.from(groupSet).sort();
+    const groupMap = new Map<string, { id: string; name: string }>();
+
+    data.items.forEach(item => {
+      const g = item.endpoint.group;
+      if (g?.id) {
+        groupMap.set(g.id, { id: g.id, name: g.name });
+      }
+    });
+
+    return Array.from(groupMap.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [data?.items]);
 
   // Count status totals
@@ -162,8 +169,9 @@ export default function Dashboard() {
     return counts;
   }, [data?.items]);
 
-  const handleFiltersChange = (newFilters: LiveStatusParams) => {
+  const handleFiltersChange = (newFilters: LiveStatusParams & { group?: string }) => {
     setFilters(newFilters);
+    setSelectedGroup(newFilters.group);
   };
 
   const handleToggleGroupBy = (option: string, isSelected: boolean) => {
@@ -231,6 +239,7 @@ export default function Dashboard() {
           />
         </Grid>
       </VStack>
+
       <StatusFilters
         filters={filters}
         onFiltersChange={handleFiltersChange}
@@ -239,6 +248,8 @@ export default function Dashboard() {
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         onToggleGroupBy={handleToggleGroupBy}
+        selectedGroup={selectedGroup}
+        onSelectedGroupChange={setSelectedGroup}
       />
 
       {data && (
@@ -340,7 +351,7 @@ export default function Dashboard() {
                                 <Accordion.ItemContent borderLeftWidth={1} borderRadius={2} ml={5}>
                                   <Accordion.ItemBody pl={6} py={0}>
                                     {items && items.length > 0 ? (
-                                      <StatusTable items={items} isLoading={isLoading } />
+                                      <StatusTable items={items} isLoading={isLoading} />
                                     ) : (
                                       <Box
                                         textAlign='center'
@@ -484,7 +495,7 @@ export default function Dashboard() {
                 })}
               </Accordion.Root>
             ) : (
-              <StatusTable items={Object.values(groupedEndpoints).flat()} isLoading={isLoading } />
+              <StatusTable items={Object.values(groupedEndpoints).flat()} isLoading={isLoading} />
             )
           ) : (
             <StatusTable items={data.items} isLoading={isLoading} />

@@ -1,77 +1,105 @@
-import { 
-  Box, 
-  Button, 
-  Flex, 
-  HStack, 
-  Icon, 
-  Input, 
-  Text, 
-  Menu
-} from '@chakra-ui/react';import { X } from 'lucide-react';
+import {
+  Box,
+  Button,
+  Flex,
+  HStack,
+  Icon,
+  Input,
+  Text,
+  Menu,
+  Combobox,
+  useFilter,
+  useListCollection,
+} from '@chakra-ui/react';
+import { X } from 'lucide-react';
 import type { LiveStatusParams } from '@/api/types';
 import { MdSearch, MdExpandMore } from 'react-icons/md';
-
-const DEFAULT_GROUPS: string[] = [];
+import { useEffect, useState } from 'react';
 
 interface StatusFiltersProps {
   filters: LiveStatusParams;
-  onFiltersChange: (filters: LiveStatusParams) => void;
-  groups?: string[];
+  onFiltersChange: (filters: LiveStatusParams & { group?: string }) => void; // single group
+  groups?: {
+    id: string;
+    name: string;
+  }[];
+  selectedGroup?: string; // single
+  onSelectedGroupChange?: (group: string | undefined) => void; // single
   onGroupByChange?: (groupBy: string) => void;
   groupByOptions?: string[];
   searchTerm?: string;
-  onSearchChange?: (searchTerm: string) => void;
+  onSearchChange?: (search: string) => void;
   onToggleGroupBy?: (groupBy: string, isSelected: boolean) => void;
 }
 
 export function StatusFilters({
   filters,
   onFiltersChange,
-  onGroupByChange,
-  groups = DEFAULT_GROUPS,
+  groups = [],
   groupByOptions = [],
   searchTerm = '',
   onSearchChange,
   onToggleGroupBy,
+  selectedGroup,
+  onSelectedGroupChange,
 }: StatusFiltersProps) {
+  const [cleared, setCleared] = useState(false);
+
+  const { contains } = useFilter({ sensitivity: 'base' });
+  const { collection, filter, set } = useListCollection<{
+    label: string;
+    value: string;
+  }>({
+    initialItems: [], // start empty
+    itemToString: item => item.label,
+    itemToValue: item => item.value,
+    filter: contains,
+  });
+
+  useEffect(() => {
+    const newItems = groups.map(g => ({
+      label: g.name,
+      value: g.id,
+    }));
+
+    set(newItems);
+  }, [groups, set, cleared]);
+
   const handleGroupChange = (value: string) => {
+    const newGroup = value || undefined;
+    onSelectedGroupChange?.(newGroup);
     onFiltersChange({
       ...filters,
-      group: value || undefined,
-      page: 1, // Reset to first page when filtering
+      group: newGroup,
     });
   };
 
   const handleSearchChange = (value: string) => {
     // Update search term in parent component
     onSearchChange && onSearchChange(value);
-    
+
     // Optionally reset page when searching
     onFiltersChange({
       ...filters,
       search: value || undefined,
-      page: 1,
     });
   };
 
   const clearSearch = () => {
-    onSearchChange && onSearchChange('');
+    onSearchChange?.('');
+    // Optional: reset local cleared state
+    setCleared(true);
+  };
+
+  const clearFilter = () => {
     onFiltersChange({
       ...filters,
+      group: undefined,
       search: undefined,
-      page: 1,
     });
+    onSelectedGroupChange?.(undefined);
+    setCleared(true);
   };
-
-  const clearFilters = () => {
-    onSearchChange && onSearchChange('');
-    onFiltersChange({
-      page: 1,
-      pageSize: filters.pageSize,
-    });
-  };
-
-  const hasFilters = filters.group || filters.search;
 
   return (
     <Box
@@ -87,46 +115,70 @@ export function StatusFilters({
       px={{ base: 4, md: 0 }}
       mx={{ base: -4, md: 0 }}
       borderBottom={{ base: '1px', md: 'none' }}
-      borderColor={{ 
-        base: 'gray.200', 
+      borderColor={{
+        base: 'gray.200',
         md: 'transparent',
-        _dark: { base: 'gray.700', md: 'transparent' }
+        _dark: { base: 'gray.700', md: 'transparent' },
       }}
       data-testid='status-filters'
     >
       <HStack gap={{ base: 2, md: 4 }} align='center' flexWrap={{ base: 'wrap', md: 'nowrap' }}>
         {/* Group Filter */}
-        <Menu.Root>
-          <Menu.Trigger asChild>
-            <Button variant='outline' borderColor='gray.300'>
-              {filters.group || 'All Groups'}
-              <MdExpandMore />
-            </Button>
-          </Menu.Trigger>
-          <Menu.Positioner>
-            <Menu.Content>
-              <Menu.Item value={''} onSelect={() => handleGroupChange('')}>
-                All Groups
-              </Menu.Item>
-              {groups.map(group => (
-                <Menu.Item key={group} value={group} onSelect={() => handleGroupChange(group)}>
-                  {group}
-                </Menu.Item>
-              ))}
-            </Menu.Content>
-          </Menu.Positioner>
-        </Menu.Root>
-
+        <Box w={'25%'}>
+          <Combobox.Root
+            size='md'
+            collection={collection}
+            value={selectedGroup ? [selectedGroup] : []}
+            onValueChange={e => {
+              handleGroupChange(e.value[0]);
+              setCleared(false);
+            }}
+            onInputValueChange={e => {
+              filter(e.inputValue);
+            }}
+            onOpenChange={open => {
+              if (open) filter('');
+            }}
+            openOnClick
+          >
+            <Combobox.Control>
+              <Combobox.Input placeholder='Select Group...' />
+              <Combobox.IndicatorGroup>
+                <Combobox.ClearTrigger onClick={clearFilter} />
+                <Combobox.Trigger />
+              </Combobox.IndicatorGroup>
+            </Combobox.Control>
+            <Combobox.Positioner>
+              <Combobox.Content>
+                <Combobox.Empty>No groups found</Combobox.Empty>
+                <Combobox.Item key='allgroups' item={{ label: 'All Groups', value: '' }}>
+                  <HStack justify='space-between' textStyle='sm'>
+                    All Groups
+                  </HStack>
+                </Combobox.Item>
+                {collection.items.map(item => {
+                  return (
+                    <Combobox.Item key={item.value} item={item}>
+                      <HStack justify='space-between' textStyle='sm'>
+                        {item.label}
+                      </HStack>
+                    </Combobox.Item>
+                  );
+                })}
+              </Combobox.Content>
+            </Combobox.Positioner>
+          </Combobox.Root>
+        </Box>
         {/* Search Input */}
         <Flex w='80' position='relative' align='center'>
-          <Icon 
-            as={MdSearch} 
-            color='gray.400' 
-            position='absolute' 
-            left='3' 
-            top='50%' 
-            transform='translateY(-50%)' 
-            zIndex={2} 
+          <Icon
+            as={MdSearch}
+            color='gray.400'
+            position='absolute'
+            left='3'
+            top='50%'
+            transform='translateY(-50%)'
+            zIndex={2}
             fontSize={'18px'}
           />
           <Input
@@ -158,41 +210,43 @@ export function StatusFilters({
         {/* Group By Dropdown */}
         <Menu.Root>
           <Menu.Trigger asChild>
-            <Button
-              variant="outline"
-              borderColor="gray.300"
-            >
-              {groupByOptions.length > 0 
-                ? groupByOptions.map(opt => 
-                    opt === 'status' ? 'Status' : 
-                    opt === 'group' ? 'Group' : opt
-                  ).join(' + ')
+            <Button variant='outline' borderColor='gray.300'>
+              {groupByOptions.length > 0
+                ? groupByOptions
+                    .map(opt => (opt === 'status' ? 'Status' : opt === 'group' ? 'Group' : opt))
+                    .join(' + ')
                 : 'Group By'}
               <MdExpandMore />
             </Button>
           </Menu.Trigger>
           <Menu.Positioner px={4}>
-            <Menu.Content minWidth="200px" borderColor="gray.300">
-              <Flex justify="flex-end" px={2} py={1} borderBottom="1px solid" borderColor="gray.200">
+            <Menu.Content minWidth='200px' borderColor='gray.300'>
+              <Flex
+                justify='flex-end'
+                px={2}
+                py={1}
+                borderBottom='1px solid'
+                borderColor='gray.200'
+              >
                 <HStack gap={2}>
-                  <Button 
-                    size="xs" 
-                    variant="ghost"
+                  <Button
+                    size='xs'
+                    variant='ghost'
                     onClick={() => {
-                      ['status', 'group'].forEach(opt => 
-                        onToggleGroupBy && onToggleGroupBy(opt, true)
+                      ['status', 'group'].forEach(
+                        opt => onToggleGroupBy && onToggleGroupBy(opt, true)
                       );
                     }}
                     textDecoration={'underline'}
                   >
                     Select All
                   </Button>
-                  <Button 
-                    size="xs" 
-                    variant="ghost"
+                  <Button
+                    size='xs'
+                    variant='ghost'
                     onClick={() => {
-                      ['status', 'group'].forEach(opt => 
-                        onToggleGroupBy && onToggleGroupBy(opt, false)
+                      ['status', 'group'].forEach(
+                        opt => onToggleGroupBy && onToggleGroupBy(opt, false)
                       );
                     }}
                     textDecoration={'underline'}
@@ -201,40 +255,31 @@ export function StatusFilters({
                   </Button>
                 </HStack>
               </Flex>
-              <Menu.ItemGroup >
+              <Menu.ItemGroup>
                 <Menu.CheckboxItem
                   cursor={'pointer'}
-                  value="status"
+                  value='status'
                   checked={groupByOptions.includes('status')}
                   onCheckedChange={() => {
-                    onToggleGroupBy && onToggleGroupBy('status', !groupByOptions.includes('status'));
+                    onToggleGroupBy &&
+                      onToggleGroupBy('status', !groupByOptions.includes('status'));
                   }}
                 >
-                  <Flex 
-                    w="full" 
-                    justify="flex-start" 
-                    align="center" 
-                    gap={3}
-                  >
-                    <Text as="span">Group by Status</Text>
+                  <Flex w='full' justify='flex-start' align='center' gap={3}>
+                    <Text as='span'>Group by Status</Text>
                     <Menu.ItemIndicator />
                   </Flex>
                 </Menu.CheckboxItem>
                 <Menu.CheckboxItem
                   cursor={'pointer'}
-                  value="group"
+                  value='group'
                   checked={groupByOptions.includes('group')}
                   onCheckedChange={() => {
                     onToggleGroupBy && onToggleGroupBy('group', !groupByOptions.includes('group'));
                   }}
                 >
-                  <Flex 
-                    w="full" 
-                    justify="flex-start" 
-                    align="center" 
-                    gap={3}
-                  >
-                    <Text as="span">Group by Group</Text>
+                  <Flex w='full' justify='flex-start' align='center' gap={3}>
+                    <Text as='span'>Group by Group</Text>
                     <Menu.ItemIndicator />
                   </Flex>
                 </Menu.CheckboxItem>
@@ -242,21 +287,6 @@ export function StatusFilters({
             </Menu.Content>
           </Menu.Positioner>
         </Menu.Root>
-
-        {/* Clear Filters */}
-        {hasFilters && (
-          <Button
-            variant='outline'
-            size={{ base: 'sm', md: 'md' }}
-            onClick={clearFilters}
-            data-testid='clear-filters'
-            minHeight='44px'
-            flexShrink={0}
-          >
-            <X size={16} />
-            Clear
-          </Button>
-        )}
       </HStack>
     </Box>
   );
