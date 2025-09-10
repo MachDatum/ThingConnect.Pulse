@@ -1,0 +1,24 @@
+version: 1
+
+defaults:
+  interval_seconds: 10
+  timeout_ms: 1500
+  retries: 1
+  http:
+    user_agent: "ThingConnectPulse/1.0"
+    expect_text: ""
+
+groups:
+  - id: homelab
+    name: "Home Lab"
+    color: "#1565C0"
+    sort_order: 10
+
+targets:
+  # Minimal target - missing optional fields
+  - type: icmp
+    cidr: 10.18.8.0/24
+    group: homelab
+    # name is missing - will become null
+    # interval_seconds is missing - will become null 
+    # etc.
