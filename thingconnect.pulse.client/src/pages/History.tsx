@@ -252,19 +252,21 @@ export default function History() {
           <PageSection title='Perfromance Summary' collapsible={true} testId='availability-stats'>
             <AvailabilityStats data={historyData} bucket={bucket} />
           </PageSection>
-          <Tabs.Root defaultValue='chart' size={'sm'} h='full' variant={'enclosed'}>
+          <Tabs.Root
+            defaultValue='chart'
+            size='sm'
+            h='full'
+            display='flex'
+            flexDirection='column'
+            variant='enclosed'
+            flex={1}
+          >
             <Tabs.List display='flex' flexDirection='row' _dark={{ bg: 'gray.700' }}>
-              <Tabs.Trigger value='chart'>
-                {/* <LuBarChart /> */}
-                Availability Chart
-              </Tabs.Trigger>
-              <Tabs.Trigger value='history'>
-                {/* <LuList /> */}
-                Historical Data
-              </Tabs.Trigger>
+              <Tabs.Trigger value='chart'>Availability Chart</Tabs.Trigger>
+              <Tabs.Trigger value='history'>Historical Data</Tabs.Trigger>
             </Tabs.List>
-            <Tabs.Content value='chart'>
-              <Card.Root>
+            <Tabs.Content value='chart' flex={1} display='flex' minH={0}>
+              <Card.Root flex={1} display='flex' flexDirection='column'>
                 <Card.Header>
                   <HStack gap={2}>
                     <TrendingUp size={20} />
@@ -273,13 +275,14 @@ export default function History() {
                     </Text>
                   </HStack>
                 </Card.Header>
-                <Card.Body>
+                <Card.Body flex={1} minH={0}>
                   <AvailabilityChart data={historyData} bucket={bucket} />
                 </Card.Body>
               </Card.Root>
             </Tabs.Content>
-            <Tabs.Content value='history'>
-              <Card.Root>
+
+            <Tabs.Content value='history' flex={1} display='flex' minH={0}>
+              <Card.Root flex={1} display='flex' flexDirection='column' overflow='hidden'>
                 <Card.Header>
                   <HStack gap={2}>
                     <AlertCircle size={20} />
@@ -291,7 +294,7 @@ export default function History() {
                     </Text>
                   </HStack>
                 </Card.Header>
-                <Card.Body>
+                <Card.Body flex={1} display='flex' flexDirection='column' minH={0}>
                   <HistoryTable data={historyData} bucket={bucket} pageSize={20} />
                 </Card.Body>
               </Card.Root>

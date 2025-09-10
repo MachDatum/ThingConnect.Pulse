@@ -135,8 +135,8 @@ export function HistoryTable({ data, bucket, pageSize = 20 }: HistoryTableProps)
   }
 
   return (
-    <VStack gap={2} align='stretch'>
-      <Table.ScrollArea borderWidth='1px' rounded='md' height='100%'>
+    <VStack flex={1} minH={0} align='stretch' gap={2}>
+      <Table.ScrollArea borderWidth='1px' rounded='md' flex={1} minH={0} overflow='auto'>
         <Table.Root size='sm' stickyHeader>
           <Table.Header>
             <Table.Row bg='gray.100' _dark={{ bg: 'gray.800' }}>
@@ -227,44 +227,47 @@ export function HistoryTable({ data, bucket, pageSize = 20 }: HistoryTableProps)
           </Table.Body>
         </Table.Root>
       </Table.ScrollArea>
-
-      {/* Pagination */}
       {totalPages > 1 && (
-        <Pagination.Root
-          count={tableData.length}
-          pageSize={pageSize}
-          page={currentPage}
-          onPageChange={details => setCurrentPage(details.page)}
-        >
-          <ButtonGroup variant='ghost' size='sm' w='full' justifyContent='center'>
-            <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }} flex='1'>
-              Showing {currentPage * pageSize + 1}-
-              {Math.min((currentPage + 1) * pageSize, tableData.length)} of {tableData.length}{' '}
-              entries
-            </Text>
-            <Pagination.PrevTrigger asChild>
-              <IconButton aria-label='Previous page'>
-                <ChevronLeft />
-              </IconButton>
-            </Pagination.PrevTrigger>
-            <Pagination.Items
-              render={page => (
-                <IconButton
-                  key={page.value}
-                  variant={page.value === currentPage ? 'outline' : 'ghost'}
-                  size='sm'
-                >
-                  {page.value}
+        <Box flexShrink={0}>
+          <Pagination.Root
+            count={tableData.length}
+            pageSize={pageSize}
+            page={currentPage}
+            onPageChange={details => setCurrentPage(details.page)}
+          >
+            <ButtonGroup variant='ghost' size='sm' w='full' justifyContent='center'>
+              <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }} flex='1'>
+                {tableData.length > 0
+                  ? `Showing ${(currentPage - 1) * pageSize + 1} - ${Math.min(
+                      currentPage * pageSize,
+                      tableData.length
+                    )} of ${tableData.length} entries`
+                  : `0 of 0`}
+              </Text>
+              <Pagination.PrevTrigger asChild>
+                <IconButton aria-label='Previous page'>
+                  <ChevronLeft />
                 </IconButton>
-              )}
-            />
-            <Pagination.NextTrigger asChild>
-              <IconButton aria-label='Next page'>
-                <ChevronRight />
-              </IconButton>
-            </Pagination.NextTrigger>
-          </ButtonGroup>
-        </Pagination.Root>
+              </Pagination.PrevTrigger>
+              <Pagination.Items
+                render={page => (
+                  <IconButton
+                    key={page.value}
+                    variant={page.value === currentPage ? 'outline' : 'ghost'}
+                    size='sm'
+                  >
+                    {page.value}
+                  </IconButton>
+                )}
+              />
+              <Pagination.NextTrigger asChild>
+                <IconButton aria-label='Next page'>
+                  <ChevronRight />
+                </IconButton>
+              </Pagination.NextTrigger>
+            </ButtonGroup>
+          </Pagination.Root>
+        </Box>
       )}
     </VStack>
   );
