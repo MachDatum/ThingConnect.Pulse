@@ -32,7 +32,7 @@ public sealed class AuthController : ControllerBase
     {
         try
         {
-            var user = await _userManager.FindByNameAsync(request.Username);
+            ApplicationUser? user = await _userManager.FindByNameAsync(request.Username);
             if (user == null)
             {
                 _logger.LogWarning("Login attempt for non-existent user: {Username}", request.Username);
@@ -45,8 +45,8 @@ public sealed class AuthController : ControllerBase
                 return Unauthorized(new { message = "Account is inactive" });
             }
 
-            var result = await _signInManager.PasswordSignInAsync(user, request.Password, isPersistent: true, lockoutOnFailure: true);
-            
+            Microsoft.AspNetCore.Identity.SignInResult result = await _signInManager.PasswordSignInAsync(user, request.Password, isPersistent: true, lockoutOnFailure: true);
+
             if (!result.Succeeded)
             {
                 if (result.IsLockedOut)
@@ -54,7 +54,7 @@ public sealed class AuthController : ControllerBase
                     _logger.LogWarning("Account locked out for user: {Username}", request.Username);
                     return Unauthorized(new { message = "Account is locked due to multiple failed login attempts" });
                 }
-                
+
                 _logger.LogWarning("Invalid login attempt for user: {Username}", request.Username);
                 return Unauthorized(new { message = "Invalid username or password" });
             }
@@ -92,7 +92,7 @@ public sealed class AuthController : ControllerBase
         try
         {
             // Only allow registration if no users exist (initial admin setup)
-            var userCount = _userManager.Users.Count();
+            int userCount = _userManager.Users.Count();
             if (userCount > 0)
             {
                 _logger.LogWarning("Registration attempt when users already exist");
@@ -109,7 +109,7 @@ public sealed class AuthController : ControllerBase
                 IsActive = true
             };
 
-            var result = await _userManager.CreateAsync(user, request.Password);
+            IdentityResult result = await _userManager.CreateAsync(user, request.Password);
 
             if (!result.Succeeded)
             {
@@ -146,7 +146,7 @@ public sealed class AuthController : ControllerBase
     {
         try
         {
-            var userCount = _userManager.Users.Count();
+            int userCount = _userManager.Users.Count();
             return Ok(userCount == 0);
         }
         catch (Exception ex)
@@ -165,7 +165,7 @@ public sealed class AuthController : ControllerBase
     {
         try
         {
-            var user = await _userManager.GetUserAsync(User);
+            ApplicationUser? user = await _userManager.GetUserAsync(User);
             if (user == null || !user.IsActive)
             {
                 return Unauthorized(new { message = "Session invalid or user inactive" });
@@ -198,13 +198,13 @@ public sealed class AuthController : ControllerBase
     {
         try
         {
-            var user = await _userManager.GetUserAsync(User);
+            ApplicationUser? user = await _userManager.GetUserAsync(User);
             if (user == null || !user.IsActive)
             {
                 return Unauthorized(new { message = "Session invalid or user inactive" });
             }
 
-            var result = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+            IdentityResult result = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
             if (!result.Succeeded)
             {
                 var errors = result.Errors.Select(e => e.Description).ToList();
@@ -234,14 +234,14 @@ public sealed class AuthController : ControllerBase
     {
         try
         {
-            var user = await _userManager.GetUserAsync(User);
+            ApplicationUser? user = await _userManager.GetUserAsync(User);
             await _signInManager.SignOutAsync();
-            
+
             if (user != null)
             {
                 _logger.LogInformation("User {Username} (ID: {UserId}) logged out", user.UserName, user.Id);
             }
-            
+
             return Ok(new { message = "Logged out successfully" });
         }
         catch (Exception ex)

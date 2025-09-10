@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -57,11 +56,11 @@ public class Program
                 options.Password.RequireDigit = true;
                 options.Password.RequireUppercase = true;
                 options.Password.RequireLowercase = true;
-                
+
                 // Lockout settings
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(30);
                 options.Lockout.MaxFailedAccessAttempts = 5;
-                
+
                 // User settings
                 options.User.RequireUniqueEmail = true;
 
@@ -82,8 +81,8 @@ public class Program
                 options.ExpireTimeSpan = TimeSpan.FromHours(24);
                 options.SlidingExpiration = true;
                 options.Cookie.HttpOnly = true;
-                options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() 
-                    ? CookieSecurePolicy.SameAsRequest 
+                options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+                    ? CookieSecurePolicy.SameAsRequest
                     : CookieSecurePolicy.Always;
                 options.Cookie.SameSite = SameSiteMode.Lax;
                 options.Cookie.Name = "ThingConnect.Pulse.Auth";
@@ -118,7 +117,7 @@ public class Program
             {
                 options.AddPolicy("AdminOnly", policy =>
                     policy.RequireRole(UserRoles.Administrator));
-                
+
                 options.AddPolicy("AuthenticatedUser", policy =>
                     policy.RequireAuthenticatedUser());
             });

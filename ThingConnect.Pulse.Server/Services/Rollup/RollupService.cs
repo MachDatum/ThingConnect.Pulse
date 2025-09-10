@@ -36,7 +36,7 @@ public sealed class RollupService : IRollupService
             // Get all raw checks in the time window
             // SQLite has issues with DateTimeOffset comparisons in LINQ, so fetch all and filter in memory
             List<CheckResultRaw> allChecks = await _context.CheckResultsRaw.ToListAsync(cancellationToken);
-            List<CheckResultRaw> rawChecks = allChecks
+            var rawChecks = allChecks
                 .Where(c => c.Ts > fromTs && c.Ts <= toTs)
                 .OrderBy(c => c.EndpointId)
                 .ThenBy(c => c.Ts)
@@ -275,7 +275,7 @@ public sealed class RollupService : IRollupService
         // SQLite doesn't support MERGE/UPSERT in EF Core, so we'll do it manually
         foreach (Data.Rollup15m rollup in rollups)
         {
-            var existing = await _context.Rollups15m
+            Rollup15m? existing = await _context.Rollups15m
                 .FirstOrDefaultAsync(r => r.EndpointId == rollup.EndpointId && r.BucketTs == rollup.BucketTs, cancellationToken);
 
             if (existing != null)
@@ -306,7 +306,7 @@ public sealed class RollupService : IRollupService
         // SQLite doesn't support MERGE/UPSERT in EF Core, so we'll do it manually
         foreach (Data.RollupDaily rollup in rollups)
         {
-            var existing = await _context.RollupsDaily
+            RollupDaily? existing = await _context.RollupsDaily
                 .FirstOrDefaultAsync(r => r.EndpointId == rollup.EndpointId && r.BucketDate == rollup.BucketDate, cancellationToken);
 
             if (existing != null)

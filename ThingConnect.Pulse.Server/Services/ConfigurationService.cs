@@ -140,7 +140,7 @@ public sealed class ConfigurationService : IConfigurationService
         // Get the latest version YAML file from the versions directory
         if (Directory.Exists(versionsDir))
         {
-            var latestFile = new DirectoryInfo(versionsDir)
+            FileInfo? latestFile = new DirectoryInfo(versionsDir)
                 .GetFiles("*.yaml")
                 .OrderByDescending(f => f.CreationTimeUtc)
                 .FirstOrDefault();
