@@ -15,8 +15,19 @@ import {
   IconButton,
   VStack,
   Tabs,
+  Center,
+  Box,
+  EmptyState,
 } from '@chakra-ui/react';
-import { Download, TrendingUp, AlertCircle, RefreshCw } from 'lucide-react';
+import {
+  Download,
+  TrendingUp,
+  AlertCircle,
+  RefreshCw,
+  Icon,
+  Database,
+  SearchX,
+} from 'lucide-react';
 import { Page } from '@/components/layout/Page';
 import { PageSection } from '@/components/layout/PageSection';
 
@@ -100,7 +111,7 @@ export default function History() {
   // History data for selected endpoint
   const {
     data: historyData,
-    isLoading,
+    isLoading: isHistoryDataLoading,
     refetch,
   } = useQuery({
     queryKey: ['history', selectedEndpoint, dateRange, bucket],
@@ -228,7 +239,7 @@ export default function History() {
                 size='xs'
                 variant='subtle'
                 onClick={() => void refetch()}
-                disabled={isLoading || !selectedEndpoint}
+                disabled={isHistoryDataLoading || !selectedEndpoint}
               >
                 <RefreshCw />
               </IconButton>
@@ -238,7 +249,7 @@ export default function History() {
               colorPalette='blue'
               onClick={() => void handleExportCSV()}
               loading={isExporting}
-              disabled={!historyData || isLoading}
+              disabled={!historyData || isHistoryDataLoading}
             >
               <Download size={16} />
               Export CSV
@@ -247,10 +258,14 @@ export default function History() {
         </HStack>
       </PageSection>
       {/* History Data */}
-      {historyData && selectedEndpoint && (
+      {selectedEndpoint ? (
         <>
-          <PageSection title='Perfromance Summary' collapsible={true} testId='availability-stats'>
-            <AvailabilityStats data={historyData} bucket={bucket} />
+          <PageSection title='Performance Summary' collapsible={true} testId='availability-stats'>
+            <AvailabilityStats
+              data={historyData}
+              bucket={bucket}
+              isLoading={isHistoryDataLoading}
+            />
           </PageSection>
           <Tabs.Root
             defaultValue='chart'
@@ -276,7 +291,11 @@ export default function History() {
                   </HStack>
                 </Card.Header>
                 <Card.Body flex={1} minH={0}>
-                  <AvailabilityChart data={historyData} bucket={bucket} />
+                  <AvailabilityChart
+                    data={historyData}
+                    bucket={bucket}
+                    isLoading={isHistoryDataLoading}
+                  />
                 </Card.Body>
               </Card.Root>
             </Tabs.Content>
@@ -295,12 +314,27 @@ export default function History() {
                   </HStack>
                 </Card.Header>
                 <Card.Body flex={1} display='flex' flexDirection='column' minH={0}>
-                  <HistoryTable data={historyData} bucket={bucket} pageSize={20} />
+                  <HistoryTable
+                    data={historyData}
+                    bucket={bucket}
+                    pageSize={20}
+                    isLoading={isHistoryDataLoading}
+                  />
                 </Card.Body>
               </Card.Root>
             </Tabs.Content>
           </Tabs.Root>
         </>
+      ) : (
+        <Center py={10}>
+          <EmptyState.Root>
+            <EmptyState.Content>
+              <EmptyState.Indicator children={<SearchX />} />
+              <EmptyState.Title children={'Select an endpoint to display historical data'} />
+              <EmptyState.Description children='Choose an endpoint from the selector above to load availability and history.' />
+            </EmptyState.Content>
+          </EmptyState.Root>
+        </Center>
       )}
     </Page>
   );

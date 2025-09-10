@@ -1,22 +1,62 @@
 import { useMemo } from 'react';
-import { Box, Text, VStack, SimpleGrid, Stat, HStack, Badge, Icon } from '@chakra-ui/react';
+import {
+  Box,
+  Text,
+  VStack,
+  SimpleGrid,
+  Stat,
+  HStack,
+  Badge,
+  Icon,
+  Skeleton,
+} from '@chakra-ui/react';
 import type { RollupBucket, DailyBucket, RawCheck } from '@/api/types';
 import type { BucketType } from '@/types/bucket';
 import { Database } from 'lucide-react';
 
 export interface AvailabilityChartProps {
-  data: {
-    raw: RawCheck[];
-    rollup15m: RollupBucket[];
-    rollupDaily: DailyBucket[];
-  };
+  data:
+    | {
+        raw: RawCheck[];
+        rollup15m: RollupBucket[];
+        rollupDaily: DailyBucket[];
+      }
+    | null
+    | undefined;
   bucket: BucketType;
   height?: number;
   showResponseTime?: boolean;
+  isLoading?: boolean;
 }
 
-export function AvailabilityChart({ data, bucket, height = 300 }: AvailabilityChartProps) {
+export function AvailabilityChart({
+  data,
+  bucket,
+  height = 300,
+  isLoading,
+}: AvailabilityChartProps) {
+  if (isLoading) {
+    return (
+      <Box
+        height={height}
+        display='flex'
+        alignItems='center'
+        justifyContent='center'
+        borderRadius='md'
+        borderWidth='1px'
+        bg='gray.50'
+        _dark={{ bg: 'gray.800' }}
+      >
+        <VStack w='full' px={6} gap={4}>
+          <Skeleton height='24px' width='40%' />
+          <Skeleton height={`${height - 100}px`} width='100%' />
+        </VStack>
+      </Box>
+    );
+  }
+
   const chartData = useMemo(() => {
+    if (!data) return null;
     switch (bucket) {
       case 'raw':
         return data.raw.map(check => ({
@@ -60,7 +100,7 @@ export function AvailabilityChart({ data, bucket, height = 300 }: AvailabilityCh
     }
   }, [data, bucket]);
 
-  if (chartData.length === 0) {
+  if (chartData?.length === 0) {
     return (
       <Box
         height={height}
@@ -89,18 +129,18 @@ export function AvailabilityChart({ data, bucket, height = 300 }: AvailabilityCh
   const chartHeight = height - margin.top - margin.bottom;
 
   // Calculate scales
-  const minTime = Math.min(...chartData.map(d => d.timestamp));
-  const maxTime = Math.max(...chartData.map(d => d.timestamp));
+  const minTime = Math.min(...(chartData?.map(d => d.timestamp) ?? []));
+  const maxTime = Math.max(...(chartData?.map(d => d.timestamp) ?? []));
   const timeRange = maxTime - minTime || 1;
 
-  const maxUptime = Math.max(...chartData.map(d => d.uptime));
-  const minUptime = Math.min(...chartData.map(d => d.uptime));
+  const maxUptime = Math.max(...(chartData?.map(d => d.uptime) ?? []));
+  const minUptime = Math.min(...(chartData?.map(d => d.uptime) ?? []));
   const uptimeRange = maxUptime - minUptime || 1;
 
   // Create path for area chart
   const createPath = () => {
     let path = '';
-    chartData.forEach((point, index) => {
+    chartData?.forEach((point, index) => {
       const x = ((point.timestamp - minTime) / timeRange) * chartWidth;
       const y = chartHeight - ((point.uptime - minUptime) / uptimeRange) * chartHeight;
 
@@ -116,10 +156,11 @@ export function AvailabilityChart({ data, bucket, height = 300 }: AvailabilityCh
   // Create area path (includes bottom line)
   const createAreaPath = () => {
     let path = createPath();
-    if (chartData.length > 0) {
+    if ((chartData?.length ?? 0) > 0) {
       const lastX =
-        ((chartData[chartData.length - 1].timestamp - minTime) / timeRange) * chartWidth;
-      const firstX = ((chartData[0].timestamp - minTime) / timeRange) * chartWidth;
+        (((chartData?.[chartData.length - 1]?.timestamp ?? minTime) - minTime) / timeRange) *
+        chartWidth;
+      const firstX = (((chartData?.[0]?.timestamp ?? minTime) - minTime) / timeRange) * chartWidth;
       path += ` L ${lastX} ${chartHeight} L ${firstX} ${chartHeight} Z`;
     }
     return path;
@@ -190,7 +231,7 @@ export function AvailabilityChart({ data, bucket, height = 300 }: AvailabilityCh
           />
 
           {/* Data points */}
-          {chartData.map((point, index) => {
+          {chartData?.map((point, index) => {
             const x = ((point.timestamp - minTime) / timeRange) * chartWidth;
             const y = chartHeight - ((point.uptime - minUptime) / uptimeRange) * chartHeight;
 
@@ -227,11 +268,15 @@ export function AvailabilityChart({ data, bucket, height = 300 }: AvailabilityCh
 export function AvailabilityStats({
   data,
   bucket,
+  isLoading,
 }: {
-  data: AvailabilityChartProps['data'];
+  data: AvailabilityChartProps['data'] | null | undefined;
   bucket: BucketType;
+  isLoading?: boolean;
 }) {
   const stats = useMemo(() => {
+    if (!data) return null;
+
     let totalPoints = 0;
     let upPoints = 0;
     let totalResponseTime = 0;
@@ -294,6 +339,22 @@ export function AvailabilityStats({
       upPoints,
     };
   }, [data, bucket]);
+
+  if (isLoading) {
+    return (
+      <SimpleGrid columns={{ base: 1, sm: 2, md: 5 }} gap={2}>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Stat.Root key={i} p={3} borderWidth='1px' rounded='md' _dark={{ bg: 'gray.800' }}>
+            <Skeleton height='20px' mb={2} />
+            <Skeleton height='28px' mb={1} />
+            <Skeleton height='16px' />
+          </Stat.Root>
+        ))}
+      </SimpleGrid>
+    );
+  }
+
+  if (!stats) return null;
 
   return (
     <SimpleGrid columns={{ base: 1, sm: 2, md: 5 }} gap={2}>
