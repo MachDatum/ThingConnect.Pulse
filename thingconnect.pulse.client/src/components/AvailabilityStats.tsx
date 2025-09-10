@@ -63,11 +63,11 @@ export function AvailabilityStats({
 
     const availabilityPct = totalPoints > 0 ? (upPoints / totalPoints) * 100 : 0;
     const avgResponseTime = responseTimeCount > 0 ? totalResponseTime / responseTimeCount : null;
-    const downEventPct = totalPoints > 0 ? (totalDownEvents / totalPoints) * 100 : 0;
-    // const downEventPct =
-    //   totalPoints > 0
-    //     ? totalDownEvents / totalPoints // average down events per bucket
-    //     : 0;
+    let downEventPct = 0;
+    if (totalPoints > 0) {
+      if (bucket !== 'daily') downEventPct = (totalDownEvents / totalPoints) * 100;
+      else downEventPct = totalDownEvents / totalPoints;
+    }
 
     return {
       availabilityPct,
