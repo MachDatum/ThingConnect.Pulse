@@ -373,7 +373,7 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
             <Alert flex='1' status='success' title='Configuration applied successfully' />
           )}
         </HStack>
-        <HStack gap={2} mb='2'>
+        <HStack gap={2}>
           <Button
             variant='outline'
             onClick={handleValidate}

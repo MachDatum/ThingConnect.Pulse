@@ -160,7 +160,7 @@ export function ConfigurationVersions({ refreshTrigger }: ConfigurationVersionsP
           </Table.ScrollArea>
         )}
       </Box>
-      <Box flexShrink={0} mb={2}>
+      <Box flexShrink={0}>
         <Alert title='Configuration Storage:'>
           Versions are automatically created when configurations are applied. Download any version
           to restore or compare configurations.
@@ -169,4 +169,3 @@ export function ConfigurationVersions({ refreshTrigger }: ConfigurationVersionsP
     </VStack>
   );
 }
-
