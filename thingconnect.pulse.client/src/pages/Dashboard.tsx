@@ -9,6 +9,7 @@ import type { LiveStatusParams } from '@/api/types';
 import { Activity, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 
 import type { LiveStatusItem } from '@/api/types';
+import { text } from 'stream/consumers';
 
 type GroupedEndpoints =
   | LiveStatusItem[]
@@ -223,20 +224,94 @@ export default function Dashboard() {
       <VStack align='stretch' gap='6' mb='8'>
         <Heading size='xl'>System Overview</Heading>
         <Grid templateColumns={{ base: '1fr', md: 'repeat(2,1fr)', lg: 'repeat(4,1fr)' }} gap='6'>
-          <StatCard
-            icon={Activity}
-            title='Total Endpoints'
-            value={statusCounts.total}
-            color='blue'
-          />
-          <StatCard icon={CheckCircle} title='Online' value={statusCounts.up} color='green' />
-          <StatCard icon={XCircle} title='Offline' value={statusCounts.down} color='red' />
-          <StatCard
-            icon={AlertTriangle}
-            title='Flapping'
-            value={statusCounts.flapping}
-            color='yellow'
-          />
+          {[
+            {
+              icon: Activity,
+              title: 'TOTAL',
+              subtitle: 'Total endpoints configured',
+              value: statusCounts.total,
+              textColor : 'blue.500',
+              color: 'blue.600',
+              bg: 'blue.100',
+              darkColor : 'blue.200',
+              darkBg : 'blue.800'
+            },
+            {
+              icon: CheckCircle,
+              title: 'ONLINE',
+              subtitle: 'Currently operational',
+              value: statusCounts.up,
+              textColor : 'green.500',
+              color: 'green.600',
+              bg: 'green.100',
+              darkColor : 'green.200',
+              darkBg : 'green.800'
+            },
+            {
+              icon: XCircle,
+              title: 'OFFLINE',
+              subtitle: 'Currently down',
+              value: statusCounts.down,
+              textColor : 'red.500',
+              color: 'red.600',
+              bg: 'red.100',
+              darkColor : 'red.200',
+              darkBg : 'red.800'
+            },
+            {
+              icon: AlertTriangle,
+              title: 'FLAPPING',
+              subtitle: 'Unstable state changes',
+              value: statusCounts.flapping,
+              textColor : 'yellow.500',
+              color: 'yellow.600',
+              bg: 'yellow.100',
+              darkColor : 'yellow.200',
+              darkBg : 'yellow.800'
+            },
+          ].map(stat => (
+            <Box
+              key={stat.title}
+              p='6'
+              borderRadius='xl'
+              boxShadow='sm'
+              _hover={{
+                boxShadow: 'md',
+                transform: 'translateY(-2px)',
+                transition: 'all 0.2s',
+              }}
+            >
+              <VStack align='flex-start' gap='4'>
+                  <HStack justifyContent={'space-between'} w={'full'}>
+                    <Text fontSize='sm' fontWeight='semibold' color='gray.500'>
+                      {stat.title}
+                    </Text>
+                    <Box>
+                      <Box
+                        bg={stat.bg}
+                        color={stat.color}
+                        _dark={{bg: stat.darkBg, color: stat.color}}
+                        boxSize='12'
+                        display='flex'
+                        alignItems='center'
+                        justifyContent='center'
+                        borderRadius='full'
+                      >
+                        <stat.icon size={28} />
+                      </Box>
+                    </Box>
+                  </HStack>
+                  <Box>
+                  <Text fontSize='3xl' fontWeight='bold' color={stat.textColor}>
+                    {stat.value}
+                  </Text>
+                  <Text fontSize='sm' color='gray.500'>
+                    {stat.subtitle}
+                  </Text>
+                  </Box>
+              </VStack>
+            </Box>
+          ))}
         </Grid>
       </VStack>
 
