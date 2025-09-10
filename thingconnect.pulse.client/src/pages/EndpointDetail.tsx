@@ -236,7 +236,7 @@ export default function EndpointDetail() {
 
   const backButton = (
     <RouterLink to='/'>
-      <Button variant='ghost' size='sm' h='32px'>
+      <Button variant='ghost' size='sm' h='32px' mx={3}>
         <ArrowLeft size={16} />
         Back to Dashboard
       </Button>

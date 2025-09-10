@@ -7,9 +7,7 @@ import { Page } from '@/components/layout/Page';
 import { PageSection } from '@/components/layout/PageSection';
 import type { LiveStatusParams } from '@/api/types';
 import { Activity, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
-
 import type { LiveStatusItem } from '@/api/types';
-import { text } from 'stream/consumers';
 
 type GroupedEndpoints =
   | LiveStatusItem[]
@@ -38,7 +36,7 @@ export default function Dashboard() {
 
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { data, isLoading } = useStatusQuery({
+  const { data, isLoading, isFetching } = useStatusQuery({
     ...filters,
     search: searchTerm,
   });
@@ -185,36 +183,6 @@ export default function Dashboard() {
     );
   };
 
-  const StatCard = ({
-    icon: Icon,
-    title,
-    value,
-    color,
-  }: {
-    icon: React.ComponentType<{ size: number; color: string }>;
-    title: string;
-    value: number;
-    color: string;
-  }) => (
-    <Card.Root>
-      <Card.Body>
-        <Flex align='center' justify='space-between'>
-          <VStack align='start' gap='1'>
-            <Text fontSize='sm' color='fg.muted' fontWeight='medium'>
-              {title}
-            </Text>
-            <Text fontSize='3xl' fontWeight='bold' color={`${color}.500`}>
-              {value}
-            </Text>
-          </VStack>
-          <Box p='3' rounded='xl' bg={`${color}.100`}>
-            <Icon size={24} color={color} />
-          </Box>
-        </Flex>
-      </Card.Body>
-    </Card.Root>
-  );
-
   return (
     <Page
       title='Dashboard'
@@ -274,12 +242,9 @@ export default function Dashboard() {
               key={stat.title}
               p='6'
               borderRadius='xl'
-              boxShadow='sm'
-              _hover={{
-                boxShadow: 'md',
-                transform: 'translateY(-2px)',
-                transition: 'all 0.2s',
-              }}
+              borderWidth={1}
+              borderColor={'gray.200'}
+              _dark={{borderColor:'gray.200'}}
             >
               <VStack align='flex-start' gap='4'>
                   <HStack justifyContent={'space-between'} w={'full'}>
@@ -402,7 +367,7 @@ export default function Dashboard() {
                           <Accordion.Root multiple variant='plain' pl={4}>
                             {Object.entries(typedGroupItems).map(([group, items]) => (
                               <Accordion.Item key={group} value={group}>
-                                <Accordion.ItemTrigger>
+                                <Accordion.ItemTrigger >
                                   <HStack w='full' justify='space-between'>
                                     <HStack px={'10px'}>
                                       <Accordion.ItemIndicator
@@ -458,7 +423,7 @@ export default function Dashboard() {
 
                   return (
                     <Accordion.Item key={group} value={group} my={2}>
-                      <Accordion.ItemTrigger borderWidth={1}>
+                      <Accordion.ItemTrigger borderWidth={1} _dark={{borderColor: 'gray.200'}}>
                         <HStack w='full' justify='space-between'>
                           <HStack px={'10px'}>
                             <Accordion.ItemIndicator fontSize={'md'} fontWeight={'bolder'} />
@@ -570,7 +535,7 @@ export default function Dashboard() {
                 })}
               </Accordion.Root>
             ) : (
-              <StatusTable items={Object.values(groupedEndpoints).flat()} isLoading={isLoading} />
+              <StatusTable items={Object.values(groupedEndpoints).flat()} isLoading={isLoading || isFetching} />
             )
           ) : (
             <StatusTable items={data.items} isLoading={isLoading} />

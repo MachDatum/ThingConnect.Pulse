@@ -142,23 +142,23 @@ export function StatusFilters({
             openOnClick
           >
             <Combobox.Control>
-              <Combobox.Input placeholder='Select Group...' />
+              <Combobox.Input placeholder='Select Group...'  _dark={{borderColor:'gray.200'}}/>
               <Combobox.IndicatorGroup>
-                <Combobox.ClearTrigger onClick={clearFilter} />
+                <Combobox.ClearTrigger onClick={clearFilter}  cursor={'pointer'}/>
                 <Combobox.Trigger />
               </Combobox.IndicatorGroup>
             </Combobox.Control>
             <Combobox.Positioner>
-              <Combobox.Content>
+              <Combobox.Content _dark={{borderWidth:1, borderColor:'gray.200'}}>
                 <Combobox.Empty>No groups found</Combobox.Empty>
-                <Combobox.Item key='allgroups' item={{ label: 'All Groups', value: '' }}>
+                <Combobox.Item key='allgroups' item={{ label: 'All Groups', value: '' }} _dark={{_hover:{bg:'gray.400'}}}>
                   <HStack justify='space-between' textStyle='sm'>
                     All Groups
                   </HStack>
                 </Combobox.Item>
                 {collection.items.map(item => {
                   return (
-                    <Combobox.Item key={item.value} item={item}>
+                    <Combobox.Item key={item.value} item={item} _dark={{_hover:{bg:'gray.400'}}}>
                       <HStack justify='space-between' textStyle='sm'>
                         {item.label}
                       </HStack>
@@ -220,7 +220,7 @@ export function StatusFilters({
             </Button>
           </Menu.Trigger>
           <Menu.Positioner px={4}>
-            <Menu.Content minWidth='200px' borderColor='gray.300'>
+            <Menu.Content minWidth='200px' borderColor='gray.300' _dark={{borderWidth:1, borderColor:'gray.200'}}>
               <Flex
                 justify='flex-end'
                 px={2}
@@ -264,6 +264,7 @@ export function StatusFilters({
                     onToggleGroupBy &&
                       onToggleGroupBy('status', !groupByOptions.includes('status'));
                   }}
+                  _dark={{_hover:{bg:'gray.400'}}}
                 >
                   <Flex w='full' justify='flex-start' align='center' gap={3}>
                     <Text as='span'>Group by Status</Text>
@@ -277,6 +278,7 @@ export function StatusFilters({
                   onCheckedChange={() => {
                     onToggleGroupBy && onToggleGroupBy('group', !groupByOptions.includes('group'));
                   }}
+                  _dark={{_hover:{bg:'gray.400'}}}
                 >
                   <Flex w='full' justify='flex-start' align='center' gap={3}>
                     <Text as='span'>Group by Group</Text>
