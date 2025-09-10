@@ -14,8 +14,10 @@ import {
   Spinner,
   useFilter,
   useListCollection,
+  IconButton,
+  VStack,
 } from '@chakra-ui/react';
-import { Download, TrendingUp, AlertCircle } from 'lucide-react';
+import { Download, TrendingUp, AlertCircle, RefreshCw } from 'lucide-react';
 import { Page } from '@/components/layout/Page';
 import { PageSection } from '@/components/layout/PageSection';
 
@@ -27,6 +29,7 @@ import { AvailabilityChart, AvailabilityStats } from '@/components/AvailabilityC
 import { HistoryTable } from '@/components/HistoryTable';
 import { HistoryService } from '@/api/services/history.service';
 import { StatusService } from '@/api/services/status.service';
+import { Tooltip } from '@/components/ui/tooltip';
 
 export default function History() {
   // State for filters
@@ -147,14 +150,14 @@ export default function History() {
       testId='history-page'
     >
       <PageSection title='Filters'>
-        <Grid>
-          <GridItem>
-            <Text fontSize='sm' fontWeight='medium' mb={2}>
+        <HStack align='start' gap={2} flexWrap='wrap'>
+          <VStack align='start' gap={1}>
+            <Text fontSize='sm' fontWeight='medium' color={'fg.muted'}>
               Endpoint
             </Text>
             <Combobox.Root
               size='xs'
-              w='full'
+              w='md'
               collection={collection}
               value={selectedEndpoint ? [selectedEndpoint] : []}
               onValueChange={e => {
@@ -163,9 +166,7 @@ export default function History() {
               }}
               onInputValueChange={e => filter(e.inputValue)}
               onOpenChange={open => {
-                if (open) {
-                  filter('');
-                }
+                if (open) filter('');
               }}
               openOnClick
             >
@@ -181,7 +182,6 @@ export default function History() {
                   <Combobox.Trigger />
                 </Combobox.IndicatorGroup>
               </Combobox.Control>
-
               <Portal>
                 <Combobox.Positioner>
                   <Combobox.Content minW='sm'>
@@ -210,44 +210,41 @@ export default function History() {
                 </Combobox.Positioner>
               </Portal>
             </Combobox.Root>
-          </GridItem>
-          <GridItem>
-            <Text fontSize='sm' fontWeight='medium' mb={2}>
+          </VStack>
+          <VStack align='start' gap={1}>
+            <Text fontSize='sm' fontWeight='medium' color={'fg.muted'}>
               Date Range
             </Text>
             <DateRangePicker value={dateRange} onChange={setDateRange} />
-          </GridItem>
-          <GridItem>
-            <Text fontSize='sm' fontWeight='medium' mb={2}>
+          </VStack>
+          <VStack align='start' gap={1}>
+            <Text fontSize='sm' fontWeight='medium' color={'fg.muted'}>
               Data Granularity
             </Text>
             <BucketSelector value={bucket} onChange={setBucket} />
-          </GridItem>
-        </Grid>
-
-        <HStack justify='flex-end' gap={3} mt={4}>
-          <Button
-            size='xs'
-            variant='outline'
-            onClick={() => {
-              void refetch();
-            }}
-            disabled={isLoading || !selectedEndpoint}
-          >
-            Refresh
-          </Button>
-          <Button
-            size='xs'
-            colorPalette='blue'
-            onClick={() => {
-              void handleExportCSV();
-            }}
-            loading={isExporting}
-            disabled={!historyData || isLoading}
-          >
-            <Download size={16} />
-            Export CSV
-          </Button>
+          </VStack>
+          <HStack mt={6} gap={2}>
+            <Tooltip content='Refresh data'>
+              <IconButton
+                size='xs'
+                variant='subtle'
+                onClick={() => void refetch()}
+                disabled={isLoading || !selectedEndpoint}
+              >
+                <RefreshCw />
+              </IconButton>
+            </Tooltip>
+            <Button
+              size='xs'
+              colorPalette='blue'
+              onClick={() => void handleExportCSV()}
+              loading={isExporting}
+              disabled={!historyData || isLoading}
+            >
+              <Download size={16} />
+              Export CSV
+            </Button>
+          </HStack>
         </HStack>
       </PageSection>
 
