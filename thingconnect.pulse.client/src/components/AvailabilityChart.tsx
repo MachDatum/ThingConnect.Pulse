@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
-import { Box, Text, VStack } from '@chakra-ui/react';
+import { Box, Text, VStack, SimpleGrid, Stat, HStack, Badge, Icon } from '@chakra-ui/react';
 import type { RollupBucket, DailyBucket, RawCheck } from '@/api/types';
 import type { BucketType } from '@/types/bucket';
+import { Database } from 'lucide-react';
 
 export interface AvailabilityChartProps {
   data: {
@@ -278,26 +279,38 @@ export function AvailabilityStats({
 
     const availabilityPct = totalPoints > 0 ? (upPoints / totalPoints) * 100 : 0;
     const avgResponseTime = responseTimeCount > 0 ? totalResponseTime / responseTimeCount : null;
+    const downEventPct = totalPoints > 0 ? (totalDownEvents / totalPoints) * 100 : 0;
+    // const downEventPct =
+    //   totalPoints > 0
+    //     ? totalDownEvents / totalPoints // average down events per bucket
+    //     : 0;
 
     return {
       availabilityPct,
       avgResponseTime,
       totalDownEvents,
+      downEventPct,
       totalPoints,
+      upPoints,
     };
   }, [data, bucket]);
 
   return (
-    <Box p={4} bg='gray.50' _dark={{ bg: 'gray.800' }} borderRadius='md'>
-      <Text fontWeight='semibold' mb={3}>
-        Performance Summary
-      </Text>
-      <VStack gap={2} align='stretch'>
-        <Box display='flex' justifyContent='space-between'>
-          <Text fontSize='sm'>Availability:</Text>
-          <Text
-            fontSize='sm'
-            fontWeight='semibold'
+    <SimpleGrid columns={{ base: 1, sm: 2, md: 5 }} gap={2}>
+      {/* Data Points */}
+      <Stat.Root p={3} borderWidth='1px' rounded='md' _dark={{ bg: 'gray.800' }}>
+        <HStack justify='space-between'>
+          <Stat.Label>Data Points</Stat.Label>
+          <Icon as={Database} color='fg.muted' boxSize={4} />
+        </HStack>
+        <Stat.ValueText>{stats.totalPoints}</Stat.ValueText>
+        <Stat.HelpText>Checks included</Stat.HelpText>
+      </Stat.Root>
+      {/* Availability % */}
+      <Stat.Root p={3} borderWidth='1px' rounded='md' _dark={{ bg: 'gray.800' }}>
+        <Stat.Label>Availability</Stat.Label>
+        <HStack>
+          <Stat.ValueText
             color={
               stats.availabilityPct >= 99
                 ? 'green.600'
@@ -307,38 +320,53 @@ export function AvailabilityStats({
             }
           >
             {stats.availabilityPct.toFixed(2)}%
-          </Text>
-        </Box>
-
-        {stats.avgResponseTime && (
-          <Box display='flex' justifyContent='space-between'>
-            <Text fontSize='sm'>Avg Response Time:</Text>
-            <Text fontSize='sm' fontWeight='semibold'>
-              {stats.avgResponseTime.toFixed(1)}ms
-            </Text>
-          </Box>
-        )}
-
-        {bucket !== 'raw' && (
-          <Box display='flex' justifyContent='space-between'>
-            <Text fontSize='sm'>Down Events:</Text>
-            <Text
-              fontSize='sm'
-              fontWeight='semibold'
-              color={stats.totalDownEvents > 0 ? 'red.600' : 'green.600'}
-            >
+          </Stat.ValueText>
+          {stats.availabilityPct >= 99 ? (
+            <Stat.UpIndicator color='green.500' />
+          ) : (
+            <Stat.DownIndicator color={stats.availabilityPct >= 95 ? 'yellow.500' : 'red.500'} />
+          )}
+        </HStack>
+        <Stat.HelpText>Based on {stats.totalPoints} checks</Stat.HelpText>
+      </Stat.Root>
+      {/* Uptime Events */}
+      <Stat.Root p={3} borderWidth='1px' rounded='md' _dark={{ bg: 'gray.800' }}>
+        <Stat.Label>Uptime Events</Stat.Label>
+        <HStack>
+          <Stat.ValueText color='green.600'>{Math.round(stats.upPoints)}</Stat.ValueText>
+          <Badge colorPalette='green' gap='0'>
+            <Stat.UpIndicator />
+            {stats.availabilityPct.toFixed(2)}%
+          </Badge>
+        </HStack>
+        <Stat.HelpText>Successful checks</Stat.HelpText>
+      </Stat.Root>
+      {/* Down Events */}
+      {bucket !== 'raw' && (
+        <Stat.Root p={2} borderWidth='1px' rounded='md' _dark={{ bg: 'gray.800' }}>
+          <Stat.Label>Down Events</Stat.Label>
+          <HStack>
+            <Stat.ValueText color={stats.totalDownEvents > 0 ? 'red.600' : 'green.600'}>
               {stats.totalDownEvents}
-            </Text>
-          </Box>
-        )}
-
-        <Box display='flex' justifyContent='space-between'>
-          <Text fontSize='sm'>Data Points:</Text>
-          <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
-            {stats.totalPoints}
-          </Text>
-        </Box>
-      </VStack>
-    </Box>
+            </Stat.ValueText>
+            <Badge colorPalette={stats.totalDownEvents > 0 ? 'red' : 'green'} gap='0'>
+              <Stat.DownIndicator color={stats.totalDownEvents > 0 ? 'red' : 'green'} />
+              {stats.downEventPct.toFixed(2)}%
+            </Badge>
+          </HStack>
+          <Stat.HelpText>Recorded in this range</Stat.HelpText>
+        </Stat.Root>
+      )}
+      {/* Response Time */}
+      {stats.avgResponseTime && (
+        <Stat.Root p={2} borderWidth='1px' rounded='md' _dark={{ bg: 'gray.800' }}>
+          <Stat.Label>Avg Response</Stat.Label>
+          <Stat.ValueText alignItems='baseline'>
+            {stats.avgResponseTime.toFixed(2)} <Stat.ValueUnit>ms</Stat.ValueUnit>
+          </Stat.ValueText>
+          <Stat.HelpText>Across successful checks</Stat.HelpText>
+        </Stat.Root>
+      )}
+    </SimpleGrid>
   );
 }

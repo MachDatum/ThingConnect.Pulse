@@ -257,7 +257,11 @@ export default function History() {
       {/* History Data */}
       {historyData && selectedEndpoint && (
         <>
+          <PageSection title='Perfromance Summary' collapsible={true} testId='availability-stats'>
+            <AvailabilityStats data={historyData} bucket={bucket} />
+          </PageSection>
           <Grid templateColumns={{ base: '1fr', lg: '2fr 1fr' }} gap={4}>
+            {/* History BarChart */}
             <GridItem>
               <Card.Root>
                 <Card.Header>
@@ -273,12 +277,8 @@ export default function History() {
                 </Card.Body>
               </Card.Root>
             </GridItem>
-
-            <GridItem>
-              <AvailabilityStats data={historyData} bucket={bucket} />
-            </GridItem>
           </Grid>
-
+          {/* History Table */}
           <Card.Root>
             <Card.Header>
               <HStack gap={2}>
