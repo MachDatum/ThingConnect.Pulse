@@ -1,5 +1,15 @@
 import { useState, useMemo } from 'react';
-import { Box, Table, Text, Badge, HStack, Button, IconButton, VStack } from '@chakra-ui/react';
+import {
+  Box,
+  Table,
+  Text,
+  Badge,
+  HStack,
+  VStack,
+  IconButton,
+  Pagination,
+  ButtonGroup,
+} from '@chakra-ui/react';
 import { ChevronLeft, ChevronRight, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import type { RollupBucket, DailyBucket, RawCheck } from '@/api/types';
 import type { BucketType } from '@/types/bucket';
@@ -15,7 +25,7 @@ export interface HistoryTableProps {
 }
 
 export function HistoryTable({ data, bucket, pageSize = 20 }: HistoryTableProps) {
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const tableData = useMemo(() => {
     switch (bucket) {
@@ -64,24 +74,21 @@ export function HistoryTable({ data, bucket, pageSize = 20 }: HistoryTableProps)
     }
   }, [data, bucket]);
 
+  const totalPages = Math.ceil(tableData.length / pageSize);
+
   const paginatedData = useMemo(() => {
-    const startIndex = currentPage * pageSize;
+    const startIndex = (currentPage - 1) * pageSize;
     return tableData.slice(startIndex, startIndex + pageSize);
   }, [tableData, currentPage, pageSize]);
 
-  const totalPages = Math.ceil(tableData.length / pageSize);
-
   const getStatusBadge = (status?: string) => {
     if (!status) return null;
-
-    const statusConfig = {
+    const config = {
       up: { color: 'green', icon: CheckCircle },
       down: { color: 'red', icon: AlertCircle },
-    };
+    }[status as 'up' | 'down'];
 
-    const config = statusConfig[status as keyof typeof statusConfig];
     if (!config) return <Badge>{status}</Badge>;
-
     const Icon = config.icon;
     return (
       <Badge colorPalette={config.color} size='sm'>
@@ -128,11 +135,11 @@ export function HistoryTable({ data, bucket, pageSize = 20 }: HistoryTableProps)
   }
 
   return (
-    <VStack gap={4} align='stretch'>
-      <Box overflowX='auto'>
-        <Table.Root size='sm'>
+    <VStack gap={2} align='stretch'>
+      <Table.ScrollArea borderWidth='1px' rounded='md' height='100%'>
+        <Table.Root size='sm' stickyHeader>
           <Table.Header>
-            <Table.Row>
+            <Table.Row bg='gray.100' _dark={{ bg: 'gray.800' }}>
               <Table.ColumnHeader>Timestamp</Table.ColumnHeader>
               {bucket === 'raw' ? (
                 <>
@@ -219,65 +226,45 @@ export function HistoryTable({ data, bucket, pageSize = 20 }: HistoryTableProps)
             ))}
           </Table.Body>
         </Table.Root>
-      </Box>
+      </Table.ScrollArea>
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <HStack justify='space-between' align='center'>
-          <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
-            Showing {currentPage * pageSize + 1}-
-            {Math.min((currentPage + 1) * pageSize, tableData.length)} of {tableData.length} entries
-          </Text>
-
-          <HStack gap={2}>
-            <IconButton
-              size='sm'
-              variant='outline'
-              onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
-              disabled={currentPage === 0}
-              aria-label='Previous page'
-            >
-              <ChevronLeft size={16} />
-            </IconButton>
-
-            <HStack gap={1}>
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNum: number;
-                if (totalPages <= 5) {
-                  pageNum = i;
-                } else if (currentPage <= 2) {
-                  pageNum = i;
-                } else if (currentPage >= totalPages - 3) {
-                  pageNum = totalPages - 5 + i;
-                } else {
-                  pageNum = currentPage - 2 + i;
-                }
-
-                return (
-                  <Button
-                    key={pageNum}
-                    size='sm'
-                    variant={pageNum === currentPage ? 'solid' : 'outline'}
-                    onClick={() => setCurrentPage(pageNum)}
-                    minW='32px'
-                  >
-                    {pageNum + 1}
-                  </Button>
-                );
-              })}
-            </HStack>
-
-            <IconButton
-              size='sm'
-              variant='outline'
-              onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
-              disabled={currentPage >= totalPages - 1}
-              aria-label='Next page'
-            >
-              <ChevronRight size={16} />
-            </IconButton>
-          </HStack>
-        </HStack>
+        <Pagination.Root
+          count={tableData.length}
+          pageSize={pageSize}
+          page={currentPage}
+          onPageChange={details => setCurrentPage(details.page)}
+        >
+          <ButtonGroup variant='ghost' size='sm' w='full' justifyContent='center'>
+            <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }} flex='1'>
+              Showing {currentPage * pageSize + 1}-
+              {Math.min((currentPage + 1) * pageSize, tableData.length)} of {tableData.length}{' '}
+              entries
+            </Text>
+            <Pagination.PrevTrigger asChild>
+              <IconButton aria-label='Previous page'>
+                <ChevronLeft />
+              </IconButton>
+            </Pagination.PrevTrigger>
+            <Pagination.Items
+              render={page => (
+                <IconButton
+                  key={page.value}
+                  variant={page.value === currentPage ? 'outline' : 'ghost'}
+                  size='sm'
+                >
+                  {page.value}
+                </IconButton>
+              )}
+            />
+            <Pagination.NextTrigger asChild>
+              <IconButton aria-label='Next page'>
+                <ChevronRight />
+              </IconButton>
+            </Pagination.NextTrigger>
+          </ButtonGroup>
+        </Pagination.Root>
       )}
     </VStack>
   );

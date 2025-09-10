@@ -6,8 +6,6 @@ import {
   HStack,
   Button,
   Card,
-  Grid,
-  GridItem,
   Combobox,
   Portal,
   Span,
@@ -16,6 +14,7 @@ import {
   useListCollection,
   IconButton,
   VStack,
+  Tabs,
 } from '@chakra-ui/react';
 import { Download, TrendingUp, AlertCircle, RefreshCw } from 'lucide-react';
 import { Page } from '@/components/layout/Page';
@@ -149,10 +148,10 @@ export default function History() {
       description='View historical monitoring data and export reports'
       testId='history-page'
     >
-      <PageSection title='Filters'>
+      <PageSection>
         <HStack align='start' gap={2} flexWrap='wrap'>
           <VStack align='start' gap={1}>
-            <Text fontSize='sm' fontWeight='medium' color={'fg.muted'}>
+            <Text fontSize='sm' fontWeight='medium'>
               Endpoint
             </Text>
             <Combobox.Root
@@ -212,13 +211,13 @@ export default function History() {
             </Combobox.Root>
           </VStack>
           <VStack align='start' gap={1}>
-            <Text fontSize='sm' fontWeight='medium' color={'fg.muted'}>
+            <Text fontSize='sm' fontWeight='medium'>
               Date Range
             </Text>
             <DateRangePicker value={dateRange} onChange={setDateRange} />
           </VStack>
           <VStack align='start' gap={1}>
-            <Text fontSize='sm' fontWeight='medium' color={'fg.muted'}>
+            <Text fontSize='sm' fontWeight='medium'>
               Data Granularity
             </Text>
             <BucketSelector value={bucket} onChange={setBucket} />
@@ -247,16 +246,24 @@ export default function History() {
           </HStack>
         </HStack>
       </PageSection>
-
       {/* History Data */}
       {historyData && selectedEndpoint && (
         <>
           <PageSection title='Perfromance Summary' collapsible={true} testId='availability-stats'>
             <AvailabilityStats data={historyData} bucket={bucket} />
           </PageSection>
-          <Grid templateColumns={{ base: '1fr', lg: '2fr 1fr' }} gap={4}>
-            {/* History BarChart */}
-            <GridItem>
+          <Tabs.Root defaultValue='chart' size={'sm'} h='full' variant={'enclosed'}>
+            <Tabs.List display='flex' flexDirection='row' _dark={{ bg: 'gray.700' }}>
+              <Tabs.Trigger value='chart'>
+                {/* <LuBarChart /> */}
+                Availability Chart
+              </Tabs.Trigger>
+              <Tabs.Trigger value='history'>
+                {/* <LuList /> */}
+                Historical Data
+              </Tabs.Trigger>
+            </Tabs.List>
+            <Tabs.Content value='chart'>
               <Card.Root>
                 <Card.Header>
                   <HStack gap={2}>
@@ -267,28 +274,29 @@ export default function History() {
                   </HStack>
                 </Card.Header>
                 <Card.Body>
-                  <AvailabilityChart data={historyData} bucket={bucket} height={300} />
+                  <AvailabilityChart data={historyData} bucket={bucket} />
                 </Card.Body>
               </Card.Root>
-            </GridItem>
-          </Grid>
-          {/* History Table */}
-          <Card.Root>
-            <Card.Header>
-              <HStack gap={2}>
-                <AlertCircle size={20} />
-                <Text fontWeight='medium' fontSize='sm'>
-                  Historical Data
-                </Text>
-                <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
-                  ({selectedEndpointName})
-                </Text>
-              </HStack>
-            </Card.Header>
-            <Card.Body>
-              <HistoryTable data={historyData} bucket={bucket} pageSize={20} />
-            </Card.Body>
-          </Card.Root>
+            </Tabs.Content>
+            <Tabs.Content value='history'>
+              <Card.Root>
+                <Card.Header>
+                  <HStack gap={2}>
+                    <AlertCircle size={20} />
+                    <Text fontWeight='medium' fontSize='sm'>
+                      Historical Data
+                    </Text>
+                    <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
+                      ({selectedEndpointName})
+                    </Text>
+                  </HStack>
+                </Card.Header>
+                <Card.Body>
+                  <HistoryTable data={historyData} bucket={bucket} pageSize={20} />
+                </Card.Body>
+              </Card.Root>
+            </Tabs.Content>
+          </Tabs.Root>
         </>
       )}
     </Page>
