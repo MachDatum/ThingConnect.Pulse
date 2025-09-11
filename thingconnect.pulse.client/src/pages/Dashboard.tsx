@@ -267,7 +267,7 @@ export default function Dashboard() {
                     </Box>
                   </HStack>
                   <Box>
-                  <Text fontSize='3xl' fontWeight='bold' color={stat.textColor}>
+                  <Text fontSize='4xl' fontWeight='bold' color={stat.textColor}>
                     {stat.value}
                   </Text>
                   <Text fontSize='sm' color='gray.500'>
