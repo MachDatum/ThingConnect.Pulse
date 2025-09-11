@@ -1,4 +1,4 @@
-import { Box, Text, Grid, VStack, Heading, Flex, HStack, Card, Accordion } from '@chakra-ui/react';
+import { Box, Text, Grid, VStack, Heading, Flex, HStack, Accordion } from '@chakra-ui/react';
 import { useState, useMemo } from 'react';
 import { useStatusQuery } from '@/hooks/useStatusQuery';
 import { StatusFilters } from '@/components/status/StatusFilters';
@@ -189,7 +189,7 @@ export default function Dashboard() {
       testId='dashboard-page'
       description='Real-time monitoring of network endpoints'
     >
-      <VStack align='stretch' gap='6' mb='8'>
+      <VStack align='stretch' gap='2' mb='2'>
         <Heading size='xl'>System Overview</Heading>
         <Grid templateColumns={{ base: '1fr', md: 'repeat(2,1fr)', lg: 'repeat(4,1fr)' }} gap='6'>
           {[
@@ -240,15 +240,14 @@ export default function Dashboard() {
           ].map(stat => (
             <Box
               key={stat.title}
-              p='6'
+              p='4'
               borderRadius='xl'
               borderWidth={1}
-              borderColor={'gray.200'}
-              _dark={{borderColor:'gray.200'}}
+              _dark={{ bg: 'gray.800' }}
             >
-              <VStack align='flex-start' gap='4'>
+              <VStack align='flex-start' >
                   <HStack justifyContent={'space-between'} w={'full'}>
-                    <Text fontSize='sm' fontWeight='semibold' color='gray.500'>
+                    <Text fontSize='lg' fontWeight='semibold' color='gray.500'>
                       {stat.title}
                     </Text>
                     <Box>
