@@ -56,9 +56,9 @@ export default function About() {
           }}
         >
           {/* Hero Section */}
-          <Box bg='gray.50' _dark={{ bg: 'gray.900' }} py={16}>
+          <Box bg='gray.50' _dark={{ bg: 'gray.900' }} py={8}>
             <Container maxW='5xl'>
-              <VStack gap={6} textAlign='center'>
+              <VStack gap={4} textAlign='center'>
                 <Heading size='3xl' color='gray.800' _dark={{ color: 'white' }}>
                   The Heart of Manufacturing Connection
                 </Heading>
@@ -78,7 +78,7 @@ export default function About() {
                   </HStack>
                 </HStack>
                 <Box
-                  p={6}
+                  p={4}
                   borderRadius='lg'
                   bg='gray.50'
                   _dark={{ bg: 'gray.800', borderColor: 'gray.700' }}
@@ -102,9 +102,9 @@ export default function About() {
           </Box>
 
           {/* Mission Section */}
-          <Box py={20} _dark={{ bg: 'gray.800' }}>
+          <Box py={12} _dark={{ bg: 'gray.800' }}>
             <Container maxW='5xl'>
-              <VStack gap={6} textAlign='center'>
+              <VStack gap={4} textAlign='center'>
                 <Heading size='2xl' color='gray.800' _dark={{ color: 'white' }}>
                   Our Mission
                 </Heading>
@@ -117,13 +117,13 @@ export default function About() {
           </Box>
 
           {/* Features Section */}
-          <Box bg='blue.50' _dark={{ bg: 'blue.900' }} py={20}>
+          <Box bg='blue.50' _dark={{ bg: 'blue.900' }} py={12}>
             <Container maxW='6xl'>
-              <VStack gap={12}>
+              <VStack gap={8}>
                 <Heading size='2xl' textAlign='center' color='gray.800' _dark={{ color: 'white' }}>
                   Key Features
                 </Heading>
-                <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={8}>
+                <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={6}>
                   {[
                     {
                       icon: <Zap size={20} color='#3182ce' />,
@@ -149,7 +149,7 @@ export default function About() {
                     <GridItem key={i}>
                       <VStack
                         align='start'
-                        p={6}
+                        p={4}
                         borderRadius='lg'
                         border='1px solid'
                         borderColor='gray.200'
@@ -177,9 +177,9 @@ export default function About() {
           </Box>
 
           {/* Technology Stack */}
-          <Box bg='gray.50' _dark={{ bg: 'gray.800' }} py={20}>
+          <Box bg='gray.50' _dark={{ bg: 'gray.800' }} py={12}>
             <Container maxW='5xl'>
-              <VStack gap={6} textAlign='center'>
+              <VStack gap={4} textAlign='center'>
                 <Heading size='2xl' color='gray.800' _dark={{ color: 'white' }}>
                   Built with Modern Tech
                 </Heading>
@@ -210,13 +210,13 @@ export default function About() {
           </Box>
 
           {/* Community Section */}
-          <Box py={20}>
+          <Box py={12}>
             <Container maxW='6xl'>
-              <VStack gap={12} textAlign='center'>
+              <VStack gap={8} textAlign='center'>
                 <Heading size='2xl' color='gray.800' _dark={{ color: 'white' }}>
                   Join Our Community
                 </Heading>
-                <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={8}>
+                <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={6}>
                   {[
                     {
                       icon: MessageCircle,
@@ -250,7 +250,7 @@ export default function About() {
                     <Link key={i} href={c.link} target='_blank' _hover={{ textDecoration: 'none' }}>
                       <VStack
                         align='start'
-                        p={6}
+                        p={4}
                         border='1px solid'
                         borderColor='gray.200'
                         _dark={{ borderColor: 'gray.700', bg: 'gray.800' }}
@@ -287,9 +287,9 @@ export default function About() {
           </Box>
 
           {/* Footer Section */}
-          <Box bg='gray.50' _dark={{ bg: 'gray.800' }} py={16}>
+          <Box bg='gray.50' _dark={{ bg: 'gray.800' }} py={10}>
             <Container maxW='4xl'>
-              <VStack gap={4} textAlign='center'>
+              <VStack gap={3} textAlign='center'>
                 <HStack justify='center' gap={2}>
                   <Heart size={18} color='red' />
                   <Text fontWeight='medium' fontSize='sm'>
@@ -319,14 +319,14 @@ export default function About() {
 
           {/* License Footer */}
           <Box
-            py={10}
+            py={6}
             bg='green.50'
             _dark={{ bg: 'green.900', color: 'green.200', borderColor: 'green.700' }}
             borderTop='1px solid'
             borderColor='green.200'
             textAlign='center'
           >
-            <VStack gap={2}>
+            <VStack gap={1}>
               <Heading size='md' color='green.700' _dark={{ color: 'green.300' }}>
                 Free for Manufacturing
               </Heading>
