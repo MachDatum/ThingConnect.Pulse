@@ -17,6 +17,7 @@ import {
   Tabs,
   Center,
   EmptyState,
+  Skeleton,
 } from '@chakra-ui/react';
 import { Download, TrendingUp, AlertCircle, RefreshCw, SearchX } from 'lucide-react';
 import { Page } from '@/components/layout/Page';
@@ -158,61 +159,63 @@ export default function History() {
             <Text fontSize='sm' fontWeight='medium'>
               Endpoint
             </Text>
-            <Combobox.Root
-              size='xs'
-              w='md'
-              collection={collection}
-              value={selectedEndpoint ? [selectedEndpoint] : []}
-              onValueChange={e => {
-                setSelectedEndpoint(e.value[0] ?? '');
-                setCleared(false);
-              }}
-              onInputValueChange={e => filter(e.inputValue)}
-              onOpenChange={open => {
-                if (open) filter('');
-              }}
-              openOnClick
-            >
-              <Combobox.Control>
-                <Combobox.Input placeholder='Select endpoint...' />
-                <Combobox.IndicatorGroup>
-                  <Combobox.ClearTrigger
-                    onClick={() => {
-                      setSelectedEndpoint('');
-                      setCleared(true);
-                    }}
-                  />
-                  <Combobox.Trigger />
-                </Combobox.IndicatorGroup>
-              </Combobox.Control>
-              <Portal>
-                <Combobox.Positioner>
-                  <Combobox.Content minW='sm'>
-                    {isLiveDataLoading ? (
-                      <HStack p='2'>
-                        <Spinner size='xs' borderWidth='1px' />
-                        <Span>Loading endpoints...</Span>
-                      </HStack>
-                    ) : liveDataError ? (
-                      <Span p='2' color='fg.error'>
-                        Failed to load endpoints
-                      </Span>
-                    ) : collection.items.length === 0 ? (
-                      <Combobox.Empty>No endpoints found</Combobox.Empty>
-                    ) : (
-                      collection.items.map(item => (
-                        <Combobox.Item key={item.value} item={item}>
-                          <HStack justify='space-between' textStyle='sm'>
-                            {item.label}
-                          </HStack>
-                          <Combobox.ItemIndicator />
-                        </Combobox.Item>
-                      ))
-                    )}
-                  </Combobox.Content>
-                </Combobox.Positioner>
-              </Portal>
-            </Combobox.Root>
+            <Skeleton loading={isLiveDataLoading} w='md'>
+              <Combobox.Root
+                size='xs'
+                w='md'
+                collection={collection}
+                value={selectedEndpoint ? [selectedEndpoint] : []}
+                onValueChange={e => {
+                  setSelectedEndpoint(e.value[0] ?? '');
+                  setCleared(false);
+                }}
+                onInputValueChange={e => filter(e.inputValue)}
+                onOpenChange={open => {
+                  if (open) filter('');
+                }}
+                openOnClick
+              >
+                <Combobox.Control>
+                  <Combobox.Input placeholder='Select endpoint...' />
+                  <Combobox.IndicatorGroup>
+                    <Combobox.ClearTrigger
+                      onClick={() => {
+                        setSelectedEndpoint('');
+                        setCleared(true);
+                      }}
+                    />
+                    <Combobox.Trigger />
+                  </Combobox.IndicatorGroup>
+                </Combobox.Control>
+                <Portal>
+                  <Combobox.Positioner>
+                    <Combobox.Content minW='sm'>
+                      {isLiveDataLoading ? (
+                        <HStack p='2'>
+                          <Spinner size='xs' borderWidth='1px' />
+                          <Span>Loading endpoints...</Span>
+                        </HStack>
+                      ) : liveDataError ? (
+                        <Span p='2' color='fg.error'>
+                          Failed to load endpoints
+                        </Span>
+                      ) : collection.items.length === 0 ? (
+                        <Combobox.Empty>No endpoints found</Combobox.Empty>
+                      ) : (
+                        collection.items.map(item => (
+                          <Combobox.Item key={item.value} item={item}>
+                            <HStack justify='space-between' textStyle='sm'>
+                              {item.label}
+                            </HStack>
+                            <Combobox.ItemIndicator />
+                          </Combobox.Item>
+                        ))
+                      )}
+                    </Combobox.Content>
+                  </Combobox.Positioner>
+                </Portal>
+              </Combobox.Root>
+            </Skeleton>
           </VStack>
           <VStack align='start' gap={1}>
             <Text fontSize='sm' fontWeight='medium'>
@@ -250,7 +253,7 @@ export default function History() {
               size='xs'
               colorPalette='blue'
               onClick={() => void handleExportCSV()}
-              loading={isExporting || isHistoryDataLoading}
+              loading={isExporting || isHistoryDataLoading || isLiveDataLoading}
               disabled={!historyData}
             >
               <Download size={16} />
@@ -260,89 +263,72 @@ export default function History() {
         </HStack>
       </PageSection>
       {/* History Data */}
-      {selectedEndpoint ? (
-        <>
-          <PageSection title='Performance Summary' testId='availability-stats'>
-            <AvailabilityStats
-              data={historyData}
-              bucket={bucket}
-              isLoading={isHistoryDataLoading}
-            />
-          </PageSection>
-          <Tabs.Root
-            defaultValue='chart'
-            size='sm'
-            h='full'
-            display='flex'
-            flexDirection='column'
-            variant='enclosed'
-            flex={1}
-          >
-            <Tabs.List display='flex' flexDirection='row' _dark={{ bg: 'gray.700' }}>
-              <Tabs.Trigger value='chart'>Availability Chart</Tabs.Trigger>
-              <Tabs.Trigger value='history'>Historical Data</Tabs.Trigger>
-            </Tabs.List>
-            <Tabs.Content value='chart' flex={1} display='flex' minH={0}>
-              <Card.Root flex={1} display='flex' flexDirection='column' size={'sm'}>
-                <Card.Header px={3} pt={3}>
-                  <HStack gap={2}>
-                    <TrendingUp size={20} />
-                    <Text fontWeight='medium' fontSize='sm'>
-                      Availability Trend
-                    </Text>
-                  </HStack>
-                </Card.Header>
-                <Card.Body flex={1} minH={0} p={3}>
-                  <AvailabilityChart
-                    data={historyData}
-                    bucket={bucket}
-                    isLoading={isHistoryDataLoading}
-                  />
-                </Card.Body>
-              </Card.Root>
-            </Tabs.Content>
-            <Tabs.Content value='history' flex={1} display='flex' minH={0}>
-              <Card.Root
-                flex={1}
-                display='flex'
-                flexDirection='column'
-                overflow='hidden'
-                size={'sm'}
-              >
-                <Card.Header px={3} pt={3}>
-                  <HStack gap={2}>
-                    <AlertCircle size={20} />
-                    <Text fontWeight='medium' fontSize='sm'>
-                      Historical Data
-                    </Text>
-                    <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
-                      ({selectedEndpointName})
-                    </Text>
-                  </HStack>
-                </Card.Header>
-                <Card.Body flex={1} display='flex' flexDirection='column' minH={0} p={3}>
-                  <HistoryTable
-                    data={historyData}
-                    bucket={bucket}
-                    pageSize={20}
-                    isLoading={isHistoryDataLoading}
-                  />
-                </Card.Body>
-              </Card.Root>
-            </Tabs.Content>
-          </Tabs.Root>
-        </>
-      ) : (
-        <Center py={10}>
-          <EmptyState.Root>
-            <EmptyState.Content>
-              <EmptyState.Indicator children={<SearchX />} />
-              <EmptyState.Title children={'Select an endpoint to display historical data'} />
-              <EmptyState.Description children='Choose an endpoint from the selector above to load availability and history.' />
-            </EmptyState.Content>
-          </EmptyState.Root>
-        </Center>
-      )}
+      <PageSection title='Performance Summary' testId='availability-stats'>
+        <AvailabilityStats
+          data={historyData}
+          bucket={bucket}
+          isLoading={isHistoryDataLoading || isLiveDataLoading}
+        />
+      </PageSection>
+      <Tabs.Root
+        defaultValue='chart'
+        size='sm'
+        h='full'
+        display='flex'
+        flexDirection='column'
+        variant='enclosed'
+        flex={1}
+      >
+        <Tabs.List display='flex' flexDirection='row' _dark={{ bg: 'gray.700' }}>
+          <Tabs.Trigger value='chart'>Availability Chart</Tabs.Trigger>
+          <Tabs.Trigger value='history'>Historical Data</Tabs.Trigger>
+        </Tabs.List>
+        <Tabs.Content value='chart' flex={1} display='flex' minH={0}>
+          <Card.Root flex={1} display='flex' flexDirection='column' size={'sm'}>
+            <Card.Header px={3} pt={3}>
+              <HStack gap={2}>
+                <TrendingUp size={20} />
+                <Text fontWeight='medium' fontSize='sm'>
+                  Availability Trend
+                </Text>
+                <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
+                  ({selectedEndpointName})
+                </Text>
+              </HStack>
+            </Card.Header>
+            <Card.Body flex={1} minH={0} p={3}>
+              <AvailabilityChart
+                data={historyData}
+                bucket={bucket}
+                isLoading={isHistoryDataLoading || isLiveDataLoading}
+              />
+            </Card.Body>
+          </Card.Root>
+        </Tabs.Content>
+        <Tabs.Content value='history' flex={1} display='flex' minH={0}>
+          <Card.Root flex={1} display='flex' flexDirection='column' overflow='hidden' size={'sm'}>
+            <Card.Header px={3} pt={3}>
+              <HStack gap={2}>
+                <AlertCircle size={20} />
+                <Text fontWeight='medium' fontSize='sm'>
+                  Historical Data
+                </Text>
+                <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
+                  ({selectedEndpointName})
+                </Text>
+              </HStack>
+            </Card.Header>
+            <Card.Body flex={1} display='flex' flexDirection='column' minH={0} p={3}>
+              <HistoryTable
+                data={historyData}
+                bucket={bucket}
+                pageSize={20}
+                isLoading={isHistoryDataLoading || isLiveDataLoading}
+              />
+            </Card.Body>
+          </Card.Root>
+        </Tabs.Content>
+      </Tabs.Root>
     </Page>
   );
 }
