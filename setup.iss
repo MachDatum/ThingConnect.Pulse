@@ -3,8 +3,8 @@
 
 #define AppName "ThingConnect Pulse"
 #define AppVersion "1.0.0"
-#define AppPublisher "MachDatum"
-#define AppURL "https://github.com/MachDatum/ThingConnect.Pulse"
+#define AppPublisher "ThingConnect"
+#define AppURL "https://thingconnect.io/pulse"
 #define AppExeName "ThingConnect.Pulse.Server.exe"
 #define ServiceName "ThingConnectPulseSvc"
 #define ServiceDisplayName "ThingConnect Pulse Server"
@@ -23,7 +23,7 @@ DefaultDirName={autopf}\ThingConnect.Pulse
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
 OutputDir=installer
-OutputBaseFilename=ThingConnect.Pulse.Setup
+OutputBaseFilename=ThingConnect Pulse - Setup {#AppVersion}
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -35,6 +35,12 @@ DisableReadyPage=no
 MinVersion=10.0.17763
 ArchitecturesAllowed=x64
 
+; Enable installation logging
+SetupLogging=yes
+
+; Icon configuration
+SetupIconFile=brand\favicon.ico
+
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
@@ -43,17 +49,23 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Source: "publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\{#AppName}"; Filename: "http://localhost:8080"; IconFilename: "{app}\{#AppExeName}"
-Name: "{group}\Configuration"; Filename: "{commonappdata}\ThingConnect.Pulse\config\config.yaml"
-Name: "{group}\Logs Directory"; Filename: "{commonappdata}\ThingConnect.Pulse\logs"
+Name: "{group}\{#AppName}"; Filename: "http://localhost:8090"; IconFilename: "{app}\wwwroot\favicon.ico"
+Name: "{group}\Logs Directory"; Filename: "{commonappdata}\ThingConnect.Pulse\logs";
+Name: "{group}\Installation Log"; Filename: "{log}"
+Name: "{group}\Documentation"; Filename: "https://docs.thingconnect.io/pulse"
 Name: "{group}\{cm:UninstallProgram,{#AppName}}"; Filename: "{uninstallexe}"
-
+  
 [Run]
-Filename: "http://localhost:8080"; Description: "Open {#AppName} Web Interface"; Flags: nowait postinstall shellexec skipifsilent
+; Install and start the Windows service
+Filename: "{sys}\sc.exe"; Parameters: "create ""{#ServiceName}"" start= auto DisplayName= ""{#ServiceDisplayName}"" binPath= ""{app}\{#AppExeName}"""; Flags: runhidden; StatusMsg: "Creating Windows service..."
+Filename: "{sys}\sc.exe"; Parameters: "description ""{#ServiceName}"" ""{#ServiceDescription}"""; Flags: runhidden; StatusMsg: "Setting service description..."
+Filename: "{sys}\sc.exe"; Parameters: "failure ""{#ServiceName}"" reset= 86400 actions= restart/5000/restart/5000/restart/5000"; Flags: runhidden; StatusMsg: "Configuring service recovery..."
+Filename: "{sys}\sc.exe"; Parameters: "start ""{#ServiceName}"""; Flags: runhidden; StatusMsg: "Starting Windows service..."
+Filename: "http://localhost:8090"; Description: "Open {#AppName} Web Interface"; Flags: nowait postinstall shellexec skipifsilent
 
 [UninstallRun]
-Filename: "sc.exe"; Parameters: "stop ""{#ServiceName}"""; Flags: runhidden
-Filename: "sc.exe"; Parameters: "delete ""{#ServiceName}"""; Flags: runhidden
+Filename: "{sys}\sc.exe"; Parameters: "stop ""{#ServiceName}"""; Flags: runhidden
+Filename: "{sys}\sc.exe"; Parameters: "delete ""{#ServiceName}"""; Flags: runhidden
 
 [Code]
 function IsServiceInstalled(): Boolean;
@@ -83,30 +95,7 @@ begin
     Sleep(1000); // Wait for service removal
 end;
 
-function InstallService(): Boolean;
-var
-  ServicePath: String;
-  ResultCode: Integer;
-begin
-  ServicePath := '"' + ExpandConstant('{app}') + '\{#AppExeName}"';
-  Log('Installing service: {#ServiceName} at ' + ServicePath);
-  
-  Result := Exec('sc.exe', Format('create "{#ServiceName}" binPath= "%s" DisplayName= "{#ServiceDisplayName}" start= auto', [ServicePath]), '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  
-  if Result then
-  begin
-    // Set service description
-    Exec('sc.exe', 'description "{#ServiceName}" "{#ServiceDescription}"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  end;
-end;
-
-function StartService(): Boolean;
-var
-  ResultCode: Integer;
-begin
-  Log('Starting service: {#ServiceName}');
-  Result := Exec('sc.exe', 'start "{#ServiceName}"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-end;
+// Service installation is now handled by [Run] section
 
 procedure CreateDirectoryStructure();
 var
@@ -120,7 +109,6 @@ begin
   VersionsDir := ProgramDataRoot + '\versions';
   LogsDir := ProgramDataRoot + '\logs';
   DataDir := ProgramDataRoot + '\data';
-  ConfigFile := ConfigDir + '\config.yaml';
   
   Log('Creating directory structure at: ' + ProgramDataRoot);
   
@@ -128,35 +116,6 @@ begin
   ForceDirectories(VersionsDir);
   ForceDirectories(LogsDir);
   ForceDirectories(DataDir);
-  
-  // Create default config file if it doesn't exist
-  if not FileExists(ConfigFile) then
-  begin
-    DefaultConfig := 
-      '# ThingConnect Pulse Configuration' + #13#10 +
-      '# This is the main configuration file for network monitoring' + #13#10 +
-      '# ' + #13#10 +
-      '# For configuration syntax and examples, see:' + #13#10 +
-      '# https://github.com/MachDatum/ThingConnect.Pulse/blob/main/docs/config.schema.json' + #13#10 +
-      '' + #13#10 +
-      '# Example configuration:' + #13#10 +
-      '# targets:' + #13#10 +
-      '#   - name: "Router"' + #13#10 +
-      '#     endpoints:' + #13#10 +
-      '#       - host: "192.168.1.1"' + #13#10 +
-      '#         type: "icmp"' + #13#10 +
-      '#   - name: "Web Services"' + #13#10 +
-      '#     endpoints:' + #13#10 +
-      '#       - host: "www.example.com"' + #13#10 +
-      '#         type: "http"' + #13#10 +
-      '#         path: "/health"' + #13#10 +
-      '' + #13#10 +
-      '# Empty configuration - add your monitoring targets above' + #13#10 +
-      'targets: []' + #13#10;
-      
-    SaveStringToFile(ConfigFile, DefaultConfig, False);
-    Log('Created default config file');
-  end;
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
@@ -164,29 +123,36 @@ begin
   case CurStep of
     ssInstall:
       begin
+        Log('=== Installation Step: Preparing installation ===');
+        Log('Installation target directory: ' + ExpandConstant('{app}'));
+        
         // Stop and remove existing service if present
         if IsServiceInstalled() then
         begin
-          StopService();
-          RemoveService();
+          Log('Existing service detected, will be stopped and removed...');
+          if StopService() then
+            Log('Existing service stopped successfully')
+          else
+            Log('WARNING: Failed to stop existing service');
+            
+          if RemoveService() then
+            Log('Existing service removed successfully')
+          else
+            Log('WARNING: Failed to remove existing service');
+        end else
+        begin
+          Log('No existing service found');
         end;
       end;
       
     ssPostInstall:
       begin
-        // Create directory structure
-        CreateDirectoryStructure();
+        Log('=== Post-Install Step: Creating directory structure ===');
         
-        // Install and start the Windows service
-        if InstallService() then
-        begin
-          Log('Service installed successfully');
-          if not StartService() then
-            MsgBox('Service installed but failed to start. You can start it manually from Services.msc', mbInformation, MB_OK);
-        end else
-        begin
-          MsgBox('Failed to install Windows service. You may need to install manually using install-service.ps1', mbError, MB_OK);
-        end;
+        // Create directory structure
+        Log('Creating application data directories...');
+        CreateDirectoryStructure();
+        Log('Directory structure created successfully');
       end;
   end;
 end;

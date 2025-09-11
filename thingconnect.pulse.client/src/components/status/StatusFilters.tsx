@@ -142,31 +142,23 @@ export function StatusFilters({
             openOnClick
           >
             <Combobox.Control>
-              <Combobox.Input placeholder='Select Group...' _dark={{ borderColor: 'gray.200' }} />
+              <Combobox.Input placeholder='Select Group...' />
               <Combobox.IndicatorGroup>
                 <Combobox.ClearTrigger onClick={clearFilter} cursor={'pointer'} />
                 <Combobox.Trigger />
               </Combobox.IndicatorGroup>
             </Combobox.Control>
             <Combobox.Positioner>
-              <Combobox.Content _dark={{ borderWidth: 1, borderColor: 'gray.200' }}>
+              <Combobox.Content>
                 <Combobox.Empty>No groups found</Combobox.Empty>
-                <Combobox.Item
-                  key='allgroups'
-                  item={{ label: 'All Groups', value: '' }}
-                  _dark={{ _hover: { bg: 'gray.400' } }}
-                >
+                <Combobox.Item key='allgroups' item={{ label: 'All Groups', value: '' }}>
                   <HStack justify='space-between' textStyle='sm'>
                     All Groups
                   </HStack>
                 </Combobox.Item>
                 {collection.items.map(item => {
                   return (
-                    <Combobox.Item
-                      key={item.value}
-                      item={item}
-                      _dark={{ _hover: { bg: 'gray.400' } }}
-                    >
+                    <Combobox.Item key={item.value} item={item}>
                       <HStack justify='space-between' textStyle='sm'>
                         {item.label}
                       </HStack>
@@ -193,7 +185,6 @@ export function StatusFilters({
             placeholder='Search endpoints by name or host...'
             pl='10'
             pr={searchTerm ? '10' : '4'}
-            borderColor='gray.300'
             value={searchTerm}
             onChange={e => handleSearchChange(e.target.value)}
             data-testid='search-input'
@@ -218,27 +209,26 @@ export function StatusFilters({
         {/* Group By Dropdown */}
         <Menu.Root>
           <Menu.Trigger asChild>
-            <Button variant='outline' borderColor='gray.300'>
-              {groupByOptions.length > 0
-                ? groupByOptions
-                    .map(opt => (opt === 'status' ? 'Status' : opt === 'group' ? 'Group' : opt))
-                    .join(' + ')
-                : 'Group By'}
+            <Button variant='outline'>
+              <Text fontSize='sm'>
+                {groupByOptions.length > 0
+                  ? groupByOptions
+                      .map(opt => (opt === 'status' ? 'Status' : opt === 'group' ? 'Group' : opt))
+                      .join(' + ')
+                  : 'Group By'}
+              </Text>
               <MdExpandMore />
             </Button>
           </Menu.Trigger>
           <Menu.Positioner px={4}>
-            <Menu.Content
-              minWidth='200px'
-              borderColor='gray.300'
-              _dark={{ borderWidth: 1, borderColor: 'gray.200' }}
-            >
+            <Menu.Content minWidth='200px'>
               <Flex
                 justify='flex-end'
                 px={2}
                 py={1}
                 borderBottom='1px solid'
                 borderColor='gray.200'
+                _dark={{ borderColor: 'gray.600' }}
               >
                 <HStack gap={2}>
                   <Button
@@ -276,7 +266,6 @@ export function StatusFilters({
                     onToggleGroupBy &&
                       onToggleGroupBy('status', !groupByOptions.includes('status'));
                   }}
-                  _dark={{ _hover: { bg: 'gray.400' } }}
                 >
                   <Flex w='full' justify='flex-start' align='center' gap={3}>
                     <Text as='span'>Group by Status</Text>
@@ -290,7 +279,6 @@ export function StatusFilters({
                   onCheckedChange={() => {
                     onToggleGroupBy && onToggleGroupBy('group', !groupByOptions.includes('group'));
                   }}
-                  _dark={{ _hover: { bg: 'gray.400' } }}
                 >
                   <Flex w='full' justify='flex-start' align='center' gap={3}>
                     <Text as='span'>Group by Group</Text>

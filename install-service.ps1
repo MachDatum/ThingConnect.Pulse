@@ -18,7 +18,29 @@ $DataDir = "$ProgramDataRoot\data"
 
 # Get the current script directory
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$BinaryPath = Join-Path $ScriptDir "ThingConnect.Pulse.Server\bin\Debug\net8.0\ThingConnect.Pulse.Server.exe"
+
+# Determine binary path - check if we're in an installed location or development
+$InstalledBinaryPath = Join-Path $ScriptDir "ThingConnect.Pulse.Server.exe"
+$DevBinaryPath = Join-Path $ScriptDir "ThingConnect.Pulse.Server\bin\Release\net8.0\ThingConnect.Pulse.Server.exe"
+$DevDebugBinaryPath = Join-Path $ScriptDir "ThingConnect.Pulse.Server\bin\Debug\net8.0\ThingConnect.Pulse.Server.exe"
+
+if (Test-Path $InstalledBinaryPath) {
+    $BinaryPath = $InstalledBinaryPath
+    Write-Host "Using installed binary: $BinaryPath" -ForegroundColor Cyan
+} elseif (Test-Path $DevBinaryPath) {
+    $BinaryPath = $DevBinaryPath
+    Write-Host "Using development Release binary: $BinaryPath" -ForegroundColor Cyan
+} elseif (Test-Path $DevDebugBinaryPath) {
+    $BinaryPath = $DevDebugBinaryPath
+    Write-Host "Using development Debug binary: $BinaryPath" -ForegroundColor Cyan
+} else {
+    Write-Error "Could not find ThingConnect.Pulse.Server.exe in any expected location"
+    Write-Host "Searched locations:" -ForegroundColor Yellow
+    Write-Host "  - $InstalledBinaryPath" -ForegroundColor Gray
+    Write-Host "  - $DevBinaryPath" -ForegroundColor Gray
+    Write-Host "  - $DevDebugBinaryPath" -ForegroundColor Gray
+    exit 1
+}
 
 # Ensure we have admin privileges
 if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
@@ -78,16 +100,17 @@ switch ($Action.ToLower()) {
         # Create directory structure
         Initialize-DirectoryStructure
         
-        # Build the application first
-        Write-Host "Building application..." -ForegroundColor Yellow
-        dotnet build ThingConnect.Pulse.Server --configuration Release
-        if ($LASTEXITCODE -ne 0) {
-            Write-Error "Build failed!"
-            exit 1
+        # Only build if we're in development mode (not using installed binary)
+        if ($BinaryPath -ne $InstalledBinaryPath) {
+            Write-Host "Building application..." -ForegroundColor Yellow
+            dotnet build ThingConnect.Pulse.Server --configuration Release
+            if ($LASTEXITCODE -ne 0) {
+                Write-Error "Build failed!"
+                exit 1
+            }
+        } else {
+            Write-Host "Using pre-built installed binary" -ForegroundColor Cyan
         }
-        
-        # Update binary path for Release build
-        $BinaryPath = Join-Path $ScriptDir "ThingConnect.Pulse.Server\bin\Release\net8.0\ThingConnect.Pulse.Server.exe"
         
         # Stop service if it exists
         $service = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
@@ -109,7 +132,7 @@ switch ($Action.ToLower()) {
         Write-Host "Configuration: $ConfigDir\config.yaml" -ForegroundColor Cyan
         Write-Host "Database: $DataDir\pulse.db" -ForegroundColor Cyan
         Write-Host "Logs: $LogsDir\" -ForegroundColor Cyan
-        Write-Host "Web interface: http://localhost:8080" -ForegroundColor Cyan
+        Write-Host "Web interface: http://localhost:8090" -ForegroundColor Cyan
     }
     
     "uninstall" {
