@@ -58,7 +58,7 @@ public sealed class ConfigurationService : IConfigurationService
             };
         }
 
-        (List<Group> groups, List<Data.Endpoint> endpoints) = _parser.ConvertToEntities(configuration!);
+        (List<Group> groups, List<Data.Endpoint> endpoints) = await _parser.ConvertToEntitiesAsync(configuration!);
 
         using Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -140,7 +140,7 @@ public sealed class ConfigurationService : IConfigurationService
         // Get the latest version YAML file from the versions directory
         if (Directory.Exists(versionsDir))
         {
-            var latestFile = new DirectoryInfo(versionsDir)
+            FileInfo? latestFile = new DirectoryInfo(versionsDir)
                 .GetFiles("*.yaml")
                 .OrderByDescending(f => f.CreationTimeUtc)
                 .FirstOrDefault();
@@ -170,7 +170,7 @@ public sealed class ConfigurationService : IConfigurationService
             throw new InvalidOperationException("Configuration parsing returned null");
         }
 
-        (List<Group> groups, List<Data.Endpoint> endpoints) = _parser.ConvertToEntities(configuration!);
+        (List<Group> groups, List<Data.Endpoint> endpoints) = await _parser.ConvertToEntitiesAsync(configuration!);
 
         List<Group> existingGroups = await _context.Groups.ToListAsync();
         List<Data.Endpoint> existingEndpoints = await _context.Endpoints.ToListAsync();

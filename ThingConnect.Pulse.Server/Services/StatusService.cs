@@ -118,20 +118,20 @@ public sealed class StatusService : IStatusService
     public async Task<List<Data.Group>> GetGroupsCachedAsync()
     {
         const string cacheKey = "all_groups";
-        
+
         if (_cache.TryGetValue(cacheKey, out List<Data.Group>? cachedGroups) && cachedGroups != null)
         {
             return cachedGroups;
         }
 
-        var groups = await _context.Groups
+        List<Group> groups = await _context.Groups
             .AsNoTracking()
             .OrderBy(g => g.Name)
             .ToListAsync();
 
         // Cache for 5 minutes since groups don't change frequently
         _cache.Set(cacheKey, groups, TimeSpan.FromMinutes(5));
-        
+
         _logger.LogDebug("Cached {Count} groups", groups.Count);
         return groups;
     }

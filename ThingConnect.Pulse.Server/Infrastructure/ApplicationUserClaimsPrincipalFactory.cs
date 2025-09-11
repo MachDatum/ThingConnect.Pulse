@@ -20,8 +20,8 @@ public sealed class ApplicationUserClaimsPrincipalFactory : UserClaimsPrincipalF
 
     protected override async Task<ClaimsIdentity> GenerateClaimsAsync(ApplicationUser user)
     {
-        var identity = await base.GenerateClaimsAsync(user);
-        
+        ClaimsIdentity identity = await base.GenerateClaimsAsync(user);
+
         // Add the role claim from the custom Role property
         if (!string.IsNullOrEmpty(user.Role))
         {

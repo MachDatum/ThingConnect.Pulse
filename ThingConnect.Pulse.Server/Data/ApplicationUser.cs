@@ -15,6 +15,6 @@ public static class UserRoles
 {
     public const string Administrator = "Administrator";
     public const string User = "User";
-    
+
     public static readonly string[] AllRoles = { Administrator, User };
 }

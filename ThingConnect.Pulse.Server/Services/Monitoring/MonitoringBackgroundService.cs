@@ -82,8 +82,8 @@ public sealed class MonitoringBackgroundService : BackgroundService
             .Where(e => e.Enabled)
             .ToListAsync(cancellationToken);
 
-        HashSet<Guid> currentEndpointIds = endpoints.Select(e => e.Id).ToHashSet();
-        HashSet<Guid> existingEndpointIds = _endpointTimers.Keys.ToHashSet();
+        var currentEndpointIds = endpoints.Select(e => e.Id).ToHashSet();
+        var existingEndpointIds = _endpointTimers.Keys.ToHashSet();
 
         // Remove timers for endpoints that no longer exist or are disabled
         IEnumerable<Guid> endpointsToRemove = existingEndpointIds.Except(currentEndpointIds);
@@ -109,7 +109,7 @@ public sealed class MonitoringBackgroundService : BackgroundService
             else
             {
                 // Create new timer for new endpoint
-                Timer timer = new Timer(
+                var timer = new Timer(
                     callback: async _ => await ProbeEndpointAsync(endpoint.Id),
                     state: null,
                     dueTime: TimeSpan.Zero, // Start immediately
