@@ -92,12 +92,7 @@ console.log("isLoading in StatusTable:",items);
                   py={1}
                   borderRadius="md"
                   fontSize="10px"
-                  bg={`${getStatusColor(item.status)}.200`}
-                  color={`${getStatusColor(item.status)}.600`}
-                  _dark={{
-                    bg: `${getStatusColor(item.status)}.700`,
-                    color: `${getStatusColor(item.status)}.200`,
-                  }}
+                  colorPalette={getStatusColor(item.status)}
                 >
                   {item.status.toUpperCase()}
                 </Badge>

@@ -9,11 +9,28 @@ import {
   Stat,
   StatGroup,
   Button,
-  Stack,
   Heading,
+  Icon,
+  Table,
 } from '@chakra-ui/react';
 import { useParams, Link as RouterLink, Navigate } from 'react-router-dom';
-import { TrendingUp, AlertCircle, ArrowLeft, Globe, Wifi, Activity, Server } from 'lucide-react';
+import {
+  ArrowLeft,
+  Globe,
+  Wifi,
+  Activity,
+  Server,
+  History,
+  ArrowUp,
+  ArrowDown,
+  AlertTriangle,
+  Circle,
+  Timer,
+  Gauge,
+  CircleCheckBig,
+  CircleAlert,
+  CloudOff,
+} from 'lucide-react';
 import { Page } from '@/components/layout/Page';
 import { useQuery } from '@tanstack/react-query';
 import { EndpointService } from '@/api/services/endpoint.service';
@@ -33,16 +50,42 @@ function getStatusColor(status: string) {
   }
 }
 
+function getStatusIcon(status: string) {
+  switch (status.toLowerCase()) {
+    case 'up':
+      return ArrowUp;
+    case 'down':
+      return ArrowDown;
+    case 'flapping':
+      return AlertTriangle;
+    default:
+      return Circle;
+  }
+}
+
 function getEndpointTypeIcon(type: string) {
   switch (type) {
     case 'icmp':
-      return <Wifi size={16} />;
+      return Wifi;
     case 'tcp':
-      return <Activity size={16} />;
+      return Activity;
     case 'http':
-      return <Globe size={16} />;
+      return Globe;
     default:
-      return <Server size={16} />;
+      return Server;
+  }
+}
+
+function getEndpointTypeColor(type: string) {
+  switch (type) {
+    case 'icmp':
+      return 'blue';
+    case 'tcp':
+      return 'purple';
+    case 'http':
+      return 'orange';
+    default:
+      return 'gray';
   }
 }
 
@@ -72,49 +115,42 @@ function RecentChecksTable({ checks }: RecentChecksTableProps) {
 
   return (
     <VStack gap={2} align='stretch'>
-      <HStack
-        justify='space-between'
-        px={2}
-        py={1}
-        bg='gray.50'
-        _dark={{ bg: 'gray.800' }}
-        rounded='md'
-        fontSize='sm'
-        fontWeight='medium'
-      >
-        <Text flex='1'>Time</Text>
-        <Text w='16'>Status</Text>
-        <Text w='20' textAlign='right'>
-          RTT
-        </Text>
-        <Text flex='1' textAlign='right'>
-          Error
-        </Text>
-      </HStack>
-      {checks.slice(0, 10).map((check, index) => (
-        <HStack
-          key={`${check.ts}-${index}`}
-          justify='space-between'
-          px={2}
-          py={2}
-          borderBottom='1px'
-          borderColor='gray.100'
-          _dark={{ borderColor: 'gray.700' }}
-        >
-          <Text flex='1' fontSize='sm'>
-            {formatDistanceToNow(new Date(check.ts), { addSuffix: true })}
-          </Text>
-          <Badge colorPalette={check.status === 'up' ? 'green' : 'red'} size='sm'>
-            {check.status.toUpperCase()}
-          </Badge>
-          <Text w='20' textAlign='right' fontSize='sm'>
-            {check.rttMs ? `${check.rttMs}ms` : '-'}
-          </Text>
-          <Text flex='1' textAlign='right' fontSize='sm' color='gray.500' lineClamp={1}>
-            {check.error || '-'}
-          </Text>
-        </HStack>
-      ))}
+      <Table.Root size='sm'>
+        <Table.Header>
+          <Table.Row>
+            <Table.ColumnHeader w={'30%'}>Time</Table.ColumnHeader>
+            <Table.ColumnHeader  w={'20%'}>Status</Table.ColumnHeader>
+            <Table.ColumnHeader  w={'25%'}>RTT</Table.ColumnHeader>
+            <Table.ColumnHeader  w={'25%'}>Error</Table.ColumnHeader>
+          </Table.Row>
+        </Table.Header>
+        <Table.Body>
+          {checks.slice(0, 10).map((check, index) => (
+            <Table.Row key={`${check.ts}-${index}`}>
+              <Table.Cell  w={'30%'}>
+                <Text flex='1' fontSize='sm'>
+                  {formatDistanceToNow(new Date(check.ts), { addSuffix: true })}
+                </Text>
+              </Table.Cell>
+              <Table.Cell  w={'20%'}>
+                <Badge colorPalette={check.status === 'up' ? 'green' : 'red'} size='sm'>
+                  {check.status.toUpperCase()}
+                </Badge>
+              </Table.Cell>
+              <Table.Cell  w={'25%'}>
+                <Text fontSize='sm'>
+                  {check.rttMs ? `${check.rttMs}ms` : '-'}
+                </Text>
+              </Table.Cell>
+              <Table.Cell  w={'25%'}>
+                <Text flex='1' fontSize='sm' color='gray.500' lineClamp={1}>
+                  {check.error || '-'}
+                </Text>
+              </Table.Cell>
+            </Table.Row>
+          ))}
+        </Table.Body>
+      </Table.Root>
       {checks.length > 10 && (
         <Text fontSize='sm' color='gray.500' textAlign='center' pt={2}>
           Showing last 10 of {checks.length} checks
@@ -131,9 +167,12 @@ interface OutagesListProps {
 function OutagesList({ outages }: OutagesListProps) {
   if (outages.length === 0) {
     return (
-      <Text color='gray.500' textAlign='center' py={8}>
-        No recent outages
-      </Text>
+      <VStack color='gray.300' textAlign='center' gap={1} py={5}>
+        <CloudOff size={'40px'}/>
+        <Text textAlign='center' color='gray.500'>
+          No recent outages
+        </Text>
+      </VStack>
     );
   }
 
@@ -236,7 +275,7 @@ export default function EndpointDetail() {
 
   const backButton = (
     <RouterLink to='/'>
-      <Button variant='ghost' size='sm' h='32px' mx={3}>
+      <Button variant='ghost' size='sm' h='32px' mt={-4} mr={7}>
         <ArrowLeft size={16} />
         Back to Dashboard
       </Button>
@@ -250,28 +289,58 @@ export default function EndpointDetail() {
       actions={backButton}
     >
       <Card.Root>
-        <Card.Body>
+        <Card.Body p={4}>
           <VStack gap={4} align='stretch'>
-            <HStack justify='space-between' align='start'>
+            <HStack justify='space-between' align='start' borderBottomWidth={1} pb={3}>
               <HStack gap={3} align='center'>
-                {getEndpointTypeIcon(endpoint.type)}
+                <Box
+                  bg={`${getEndpointTypeColor(endpoint.type)}.100`}
+                  _dark={{
+                    bg: `${getEndpointTypeColor(endpoint.type)}.800`,
+                  }}
+                  boxSize='12'
+                  display='flex'
+                  alignItems='center'
+                  justifyContent='center'
+                  borderRadius='full'
+                >
+                  <Icon
+                    as={getEndpointTypeIcon(endpoint.type)}
+                    color={`${getEndpointTypeColor(endpoint.type)}.600`}
+                    _dark={{
+                      color: `${getEndpointTypeColor(endpoint.type)}.200`,
+                    }}
+                    size={'2xl'}
+                  />
+                </Box>
                 <Box>
                   <Heading size='lg'>{endpoint.name}</Heading>
-                  <Text color='gray.600' _dark={{ color: 'gray.400' }}>
+                  <Text color='gray.600' _dark={{ color: 'gray.400' }} fontSize={'sm'}>
                     {endpoint.host}
                     {endpoint.port ? `:${endpoint.port}` : ''}
                     {endpoint.httpPath ? endpoint.httpPath : ''}
                   </Text>
                 </Box>
               </HStack>
-              <Badge colorPalette={getStatusColor(currentStatus)} size='lg'>
-                {currentStatus.toUpperCase()}
-              </Badge>
+              <Box display={'flex'} gap={4} alignItems={'center'}>
+                <Badge colorPalette={getStatusColor(currentStatus)} size='lg' rounded={7}>
+                  <Icon as={getStatusIcon(currentStatus)} size={'sm'} />
+                  {currentStatus.toUpperCase()}
+                </Badge>
+                <Box>
+                  <RouterLink to={`/history?endpoint=${id}`}>
+                    <Button variant='outline'>
+                      <History size={16} />
+                      View Full History
+                    </Button>
+                  </RouterLink>
+                </Box>
+              </Box>
             </HStack>
 
             {/* Configuration details */}
-            <SimpleGrid columns={{ base: 2, md: 4 }} gap={4}>
-              <Box>
+            <HStack justifyContent={'space-between'} px={14}>
+              <Box pl={1}>
                 <Text fontSize='sm' color='gray.500'>
                   Type
                 </Text>
@@ -295,110 +364,163 @@ export default function EndpointDetail() {
                 </Text>
                 <Text fontWeight='medium'>{endpoint.retries}</Text>
               </Box>
-            </SimpleGrid>
-
-            {/* Group information */}
-            <Box>
-              <Text fontSize='sm' color='gray.500'>
-                Group
-              </Text>
-              <HStack gap={2}>
-                <Text fontWeight='medium'>{endpoint.group.name}</Text>
-                {endpoint.group.color && (
-                  <Box w={3} h={3} rounded='full' bg={endpoint.group.color} />
-                )}
-              </HStack>
-            </Box>
+              <Box>
+                <Text fontSize='sm' color='gray.500'>
+                  Group
+                </Text>
+                <HStack gap={2} alignItems={'center'} justifyContent={'center'}>
+                  {endpoint.group.color && (<>
+                    <Text fontWeight='medium' color={endpoint.group.color}>{endpoint.group.name}</Text>
+                    <Box w={3} h={3} mt={1} rounded='full' bg={endpoint.group.color} />
+                  </>)}
+                </HStack>
+              </Box>
+            </HStack>
           </VStack>
         </Card.Body>
       </Card.Root>
 
       {/* Statistics */}
-      <Card.Root>
-        <Card.Body>
-          <Heading size='md' mb={4}>
-            Recent Performance
-          </Heading>
-          <StatGroup>
-            <Stat.Root>
-              <Stat.Label>Uptime (Last Hour)</Stat.Label>
-              <Stat.ValueText>{uptimePercentage}%</Stat.ValueText>
-              <Stat.HelpText>{recent.length} checks performed</Stat.HelpText>
-            </Stat.Root>
+      <VStack w={'full'} align={'self-start'}>
+        <Heading size='md'>Recent Performance</Heading>
+        <StatGroup w={'full'} gap={2}>
+          <Stat.Root borderWidth='1px' p='4' rounded='md' h={'full'} w={'25%'}>
+            <HStack w={'full'} gap={3}>
+              <Box
+                bg={`green.100`}
+                _dark={{
+                  bg: `green.800`,
+                }}
+                boxSize='12'
+                display='flex'
+                alignItems='center'
+                justifyContent='center'
+                borderRadius='full'
+              >
+                <Icon color='green' _dark={{ color: 'green.400' }}>
+                  <Timer />
+                </Icon>
+              </Box>
+              <VStack align={'self-start'}>
+                <Stat.Label>Uptime (Last Hour)</Stat.Label>
+                <Stat.ValueText>{uptimePercentage}%</Stat.ValueText>
+                <Stat.HelpText>{recent.length} checks performed</Stat.HelpText>
+              </VStack>
+            </HStack>
+          </Stat.Root>
 
-            <Stat.Root>
-              <Stat.Label>Avg Response Time</Stat.Label>
-              <Stat.ValueText>{avgRtt ? `${avgRtt}ms` : 'N/A'}</Stat.ValueText>
-              <Stat.HelpText>{rttValues.length} successful checks</Stat.HelpText>
-            </Stat.Root>
+          <Stat.Root borderWidth='1px' p='4' rounded='md' h={'full'} w={'25%'}>
+            <HStack w={'full'} gap={3}>
+              <Box
+                bg={`blue.100`}
+                _dark={{
+                  bg: `blue.800`,
+                }}
+                boxSize='12'
+                display='flex'
+                alignItems='center'
+                justifyContent='center'
+                borderRadius='full'
+              >
+                <Icon color='blue' _dark={{ color: 'blue.400' }}>
+                  <Gauge />
+                </Icon>
+              </Box>
+              <VStack align={'self-start'}>
+                <Stat.Label>Avg Response Time</Stat.Label>
+                <Stat.ValueText>{avgRtt ? `${avgRtt}ms` : 'N/A'}</Stat.ValueText>
+                <Stat.HelpText>{rttValues.length} successful checks</Stat.HelpText>
+              </VStack>
+            </HStack>
+          </Stat.Root>
 
-            <Stat.Root>
-              <Stat.Label>Active Outages</Stat.Label>
-              <Stat.ValueText>{outages.filter(o => !o.endedTs).length}</Stat.ValueText>
-              <Stat.HelpText>{outages.length} total outages</Stat.HelpText>
-            </Stat.Root>
+          <Stat.Root borderWidth='1px' p='4' rounded='md' h={'full'} w={'25%'}>
+            <HStack w={'full'} gap={3}>
+              <Box
+                bg={`yellow.100`}
+                _dark={{
+                  bg: `yellow.800`,
+                }}
+                boxSize='12'
+                display='flex'
+                alignItems='center'
+                justifyContent='center'
+                borderRadius='full'
+              >
+                <Icon color='yellow.400' _dark={{ color: 'yellow.400' }}>
+                  <CircleAlert />
+                </Icon>
+              </Box>
+              <VStack align={'self-start'}>
+                <Stat.Label>Active Outages</Stat.Label>
+                <Stat.ValueText>{outages.filter(o => !o.endedTs).length}</Stat.ValueText>
+                <Stat.HelpText>{outages.length} total outages</Stat.HelpText>
+              </VStack>
+            </HStack>
+          </Stat.Root>
 
-            <Stat.Root>
-              <Stat.Label>Last Check</Stat.Label>
-              <Stat.ValueText fontSize='sm'>
-                {latestCheck
-                  ? formatDistanceToNow(new Date(latestCheck.ts), { addSuffix: true })
-                  : 'N/A'}
-              </Stat.ValueText>
-              <Stat.HelpText>
-                {latestCheck ? (latestCheck.rttMs ? `${latestCheck.rttMs}ms` : 'Failed') : ''}
-              </Stat.HelpText>
-            </Stat.Root>
-          </StatGroup>
-        </Card.Body>
-      </Card.Root>
+          <Stat.Root borderWidth='1px' p='4' rounded='md' h={'full'} w={'25%'}>
+            <HStack w={'full'} gap={3}>
+              <Box
+                bg={`purple.100`}
+                _dark={{
+                  bg: `purple.800`,
+                }}
+                boxSize='12'
+                display='flex'
+                alignItems='center'
+                justifyContent='center'
+                borderRadius='full'
+              >
+                <Icon color='purple' _dark={{ color: 'purple.400' }}>
+                  <CircleCheckBig />
+                </Icon>
+              </Box>
+              <VStack align={'self-start'}>
+                <Stat.Label>Last Check</Stat.Label>
+                <Stat.ValueText fontSize='sm'>
+                  {latestCheck
+                    ? formatDistanceToNow(new Date(latestCheck.ts), { addSuffix: true })
+                    : 'N/A'}
+                </Stat.ValueText>
+                <Stat.HelpText>
+                  {latestCheck ? (latestCheck.rttMs ? `${latestCheck.rttMs}ms` : 'Failed') : ''}
+                </Stat.HelpText>
+              </VStack>
+            </HStack>
+          </Stat.Root>
+        </StatGroup>
+      </VStack>
 
       {/* Recent Checks and Outages */}
-      <SimpleGrid columns={{ base: 1, lg: 2 }} gap={6}>
+      <SimpleGrid columns={{ base: 1, lg: 2 }} gap={2}>
         {/* Recent Checks */}
         <Card.Root>
-          <Card.Body>
+          <Card.Header borderBottomWidth={1}>
             <HStack justify='space-between' align='center' mb={4}>
               <Heading size='md'>Recent Checks</Heading>
               <Badge colorPalette='blue' variant='outline'>
                 Last 60 minutes
               </Badge>
             </HStack>
+          </Card.Header>
+          <Card.Body>
             <RecentChecksTable checks={recent} />
           </Card.Body>
         </Card.Root>
 
         {/* Recent Outages */}
         <Card.Root>
-          <Card.Body>
+          <Card.Header borderBottomWidth={1}>
             <Heading size='md' mb={4}>
               Recent Outages
             </Heading>
+          </Card.Header>
+          <Card.Body>
             <OutagesList outages={outages} />
           </Card.Body>
         </Card.Root>
       </SimpleGrid>
-
-      {/* Actions */}
-      <Card.Root>
-        <Card.Body>
-          <Heading size='md' mb={4}>
-            Actions
-          </Heading>
-          <Stack direction={{ base: 'column', md: 'row' }} gap={3}>
-            <RouterLink to={`/history?endpoint=${id}`}>
-              <Button variant='outline'>
-                <TrendingUp size={16} />
-                View Full History
-              </Button>
-            </RouterLink>
-            <Button variant='outline' disabled>
-              <AlertCircle size={16} />
-              Download Report
-            </Button>
-          </Stack>
-        </Card.Body>
-      </Card.Root>
     </Page>
   );
 }
