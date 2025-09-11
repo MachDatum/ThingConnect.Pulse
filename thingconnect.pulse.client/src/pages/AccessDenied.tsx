@@ -10,7 +10,7 @@ export default function AccessDenied() {
   };
 
   return (
-    <Flex minH="100vh" bg="gray.50" _dark={{ bg: "gray.900" }} align="center" justify="center">
+    <Flex h="100vh" bg="gray.50" _dark={{ bg: "gray.900" }} align="center" justify="center" overflow="hidden">
       <Container maxW="md" textAlign="center">
         <VStack gap={8}>
           <Box>
