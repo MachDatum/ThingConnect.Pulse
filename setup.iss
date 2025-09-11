@@ -3,8 +3,8 @@
 
 #define AppName "ThingConnect Pulse"
 #define AppVersion "1.0.0"
-#define AppPublisher "MachDatum"
-#define AppURL "https://github.com/MachDatum/ThingConnect.Pulse"
+#define AppPublisher "ThingConnect"
+#define AppURL "https://thingconnect.io/pulse"
 #define AppExeName "ThingConnect.Pulse.Server.exe"
 #define ServiceName "ThingConnectPulseSvc"
 #define ServiceDisplayName "ThingConnect Pulse Server"
@@ -39,8 +39,7 @@ ArchitecturesAllowed=x64
 SetupLogging=yes
 
 ; Icon configuration
-; SetupIconFile=thingconnect-logo.ico
-; UninstallDisplayIcon={app}\thingconnect-logo.ico
+SetupIconFile=brand\favicon.ico
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -48,19 +47,14 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Files]
 ; Application binaries from publish output
 Source: "publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-; Include ThingConnect logo icon (commented out - file missing)
-; Source: "thingconnect-logo.ico"; DestDir: "{app}"; Flags: ignoreversion
-; Include manual service installation script for troubleshooting
-Source: "install-service.ps1"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\{#AppName}"; Filename: "http://localhost:8090"
-Name: "{group}\Configuration"; Filename: "{commonappdata}\ThingConnect.Pulse\config\config.yaml"
-Name: "{group}\Logs Directory"; Filename: "{commonappdata}\ThingConnect.Pulse\logs"
+Name: "{group}\{#AppName}"; Filename: "http://localhost:8090"; IconFilename: "{app}\wwwroot\favicon.ico"
+Name: "{group}\Logs Directory"; Filename: "{commonappdata}\ThingConnect.Pulse\logs";
 Name: "{group}\Installation Log"; Filename: "{log}"
-Name: "{group}\Manual Service Install"; Filename: "{app}\install-service.ps1"; Comment: "Run if service installation fails"
+Name: "{group}\Documentation"; Filename: "https://docs.thingconnect.io/pulse"
 Name: "{group}\{cm:UninstallProgram,{#AppName}}"; Filename: "{uninstallexe}"
-
+  
 [Run]
 ; Install and start the Windows service
 Filename: "{sys}\sc.exe"; Parameters: "create ""{#ServiceName}"" start= auto DisplayName= ""{#ServiceDisplayName}"" binPath= ""{app}\{#AppExeName}"""; Flags: runhidden; StatusMsg: "Creating Windows service..."
@@ -115,7 +109,6 @@ begin
   VersionsDir := ProgramDataRoot + '\versions';
   LogsDir := ProgramDataRoot + '\logs';
   DataDir := ProgramDataRoot + '\data';
-  ConfigFile := ConfigDir + '\config.yaml';
   
   Log('Creating directory structure at: ' + ProgramDataRoot);
   
@@ -123,35 +116,6 @@ begin
   ForceDirectories(VersionsDir);
   ForceDirectories(LogsDir);
   ForceDirectories(DataDir);
-  
-  // Create default config file if it doesn't exist
-  if not FileExists(ConfigFile) then
-  begin
-    DefaultConfig := 
-      '# ThingConnect Pulse Configuration' + #13#10 +
-      '# This is the main configuration file for network monitoring' + #13#10 +
-      '# ' + #13#10 +
-      '# For configuration syntax and examples, see:' + #13#10 +
-      '# https://github.com/MachDatum/ThingConnect.Pulse/blob/main/docs/config.schema.json' + #13#10 +
-      '' + #13#10 +
-      '# Example configuration:' + #13#10 +
-      '# targets:' + #13#10 +
-      '#   - name: "Router"' + #13#10 +
-      '#     endpoints:' + #13#10 +
-      '#       - host: "192.168.1.1"' + #13#10 +
-      '#         type: "icmp"' + #13#10 +
-      '#   - name: "Web Services"' + #13#10 +
-      '#     endpoints:' + #13#10 +
-      '#       - host: "www.example.com"' + #13#10 +
-      '#         type: "http"' + #13#10 +
-      '#         path: "/health"' + #13#10 +
-      '' + #13#10 +
-      '# Empty configuration - add your monitoring targets above' + #13#10 +
-      'targets: []' + #13#10;
-      
-    SaveStringToFile(ConfigFile, DefaultConfig, False);
-    Log('Created default config file');
-  end;
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
@@ -189,14 +153,6 @@ begin
         Log('Creating application data directories...');
         CreateDirectoryStructure();
         Log('Directory structure created successfully');
-        
-        // Log the service installation commands that will be executed by [Run] section
-        Log('Service installation commands to be executed:');
-        Log('1. sc.exe create "ThingConnectPulseSvc" start= auto DisplayName= "ThingConnect Pulse Server" binPath= "' + ExpandConstant('{app}') + '\ThingConnect.Pulse.Server.exe"');
-        Log('2. sc.exe description "ThingConnectPulseSvc" "Network availability monitoring system for manufacturing sites"');
-        Log('3. sc.exe failure "ThingConnectPulseSvc" reset= 86400 actions= restart/5000/restart/5000/restart/5000');
-        Log('4. sc.exe start "ThingConnectPulseSvc"');
-        Log('Service installation will be handled by [Run] section');
       end;
   end;
 end;
