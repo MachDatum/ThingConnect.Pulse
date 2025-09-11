@@ -262,7 +262,7 @@ export default function History() {
       {/* History Data */}
       {selectedEndpoint ? (
         <>
-          <PageSection title='Performance Summary' collapsible={true} testId='availability-stats'>
+          <PageSection title='Performance Summary' testId='availability-stats'>
             <AvailabilityStats
               data={historyData}
               bucket={bucket}

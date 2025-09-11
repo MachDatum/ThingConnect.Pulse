@@ -24,6 +24,25 @@ export function AvailabilityChart({
   height = 300,
   isLoading,
 }: AvailabilityChartProps) {
+  if (isLoading) {
+    return (
+      <Box
+        height='100%'
+        display='flex'
+        alignItems='center'
+        justifyContent='center'
+        borderRadius='md'
+        borderWidth='1px'
+        bg='gray.50'
+        _dark={{ bg: 'gray.800' }}
+      >
+        <VStack w='full' px={6} gap={4}>
+          <Skeleton height='100%' width='100%' />
+        </VStack>
+      </Box>
+    );
+  }
+
   const chartData = useMemo(() => {
     if (!data) return null;
     switch (bucket) {
@@ -105,7 +124,6 @@ export function AvailabilityChart({
   const chartHeight = Math.max(dimensions.height - margin.top - margin.bottom, 0);
 
   return (
-    // <Skeleton loading={isLoading} w='full' h='full' position='relative'>
     <Box ref={containerRef} flex={1} minH={0} w='full' h='full' position='relative'>
       <svg
         width='100%'
@@ -175,6 +193,5 @@ export function AvailabilityChart({
         </g>
       </svg>
     </Box>
-    // </Skeleton>
   );
 }
