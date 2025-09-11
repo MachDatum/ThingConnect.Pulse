@@ -1,7 +1,6 @@
-using Microsoft.Extensions.Logging;
-using NUnit.Framework;
 using System.Net;
 using System.Text.RegularExpressions;
+using NUnit.Framework;
 
 namespace ThingConnect.Pulse.Tests;
 
@@ -60,33 +59,33 @@ public class CidrExpansionTests
     {
         // Arrange
         string cidr = "10.18.8.0/24";
-        
+
         // Act
         var expandedIPs = ExpandCidr(cidr).ToList();
-        
+
         // Assert
         Console.WriteLine($"Testing CIDR expansion for: {cidr}");
         Console.WriteLine($"Expected: 254 IP addresses from 10.18.8.1 to 10.18.8.254");
         Console.WriteLine($"Actual count: {expandedIPs.Count}");
-        
+
         Assert.That(expandedIPs.Count, Is.EqualTo(254), $"CIDR /24 should expand to 254 IPs but got {expandedIPs.Count}");
-        
+
         if (expandedIPs.Count > 0)
         {
             Console.WriteLine($"First IP: {expandedIPs.First()}");
             Console.WriteLine($"Last IP: {expandedIPs.Last()}");
-            
+
             Assert.That(expandedIPs.First(), Is.EqualTo("10.18.8.1"), "First IP should be .1");
             Assert.That(expandedIPs.Last(), Is.EqualTo("10.18.8.254"), "Last IP should be .254");
-            
+
             // Print first and last 5 IPs for debugging
             Console.WriteLine("First 5 IPs:");
-            foreach (var ip in expandedIPs.Take(5))
+            foreach (string? ip in expandedIPs.Take(5))
             {
                 Console.WriteLine($"  {ip}");
             }
             Console.WriteLine("Last 5 IPs:");
-            foreach (var ip in expandedIPs.TakeLast(5))
+            foreach (string? ip in expandedIPs.TakeLast(5))
             {
                 Console.WriteLine($"  {ip}");
             }
@@ -98,20 +97,20 @@ public class CidrExpansionTests
     {
         // Arrange
         string cidr = "192.168.1.0/30";
-        
+
         // Act
         var expandedIPs = ExpandCidr(cidr).ToList();
-        
+
         // Assert
         Console.WriteLine($"Testing CIDR expansion for: {cidr}");
         Console.WriteLine($"Actual count: {expandedIPs.Count}");
-        
+
         Assert.That(expandedIPs.Count, Is.EqualTo(2), "CIDR /30 should expand to 2 IPs");
         Assert.That(expandedIPs[0], Is.EqualTo("192.168.1.1"));
         Assert.That(expandedIPs[1], Is.EqualTo("192.168.1.2"));
-        
+
         Console.WriteLine("All IPs:");
-        foreach (var ip in expandedIPs)
+        foreach (string? ip in expandedIPs)
         {
             Console.WriteLine($"  {ip}");
         }
@@ -122,14 +121,14 @@ public class CidrExpansionTests
     {
         // Arrange
         string invalidCidr = "invalid-cidr";
-        
+
         // Act
         var expandedIPs = ExpandCidr(invalidCidr).ToList();
-        
+
         // Assert
         Console.WriteLine($"Testing invalid CIDR: {invalidCidr}");
         Console.WriteLine($"Actual count: {expandedIPs.Count}");
-        
+
         Assert.That(expandedIPs.Count, Is.EqualTo(0), "Invalid CIDR should return empty list");
     }
 
@@ -138,33 +137,33 @@ public class CidrExpansionTests
     {
         // Arrange - This is the exact CIDR from the user's config
         string cidr = "10.18.8.0/24";
-        
+
         // Act
         var expandedIPs = ExpandCidr(cidr).ToList();
-        
+
         // Assert
         Console.WriteLine($"Testing USER'S CIDR: {cidr}");
         Console.WriteLine($"Expected: 254 IP addresses from 10.18.8.1 to 10.18.8.254");
         Console.WriteLine($"Actual count: {expandedIPs.Count}");
-        
+
         Assert.That(expandedIPs.Count, Is.EqualTo(254), $"User's CIDR {cidr} should expand to 254 IPs but got {expandedIPs.Count}");
-        
+
         if (expandedIPs.Count > 0)
         {
             Console.WriteLine($"First IP: {expandedIPs.First()}");
             Console.WriteLine($"Last IP: {expandedIPs.Last()}");
-            
+
             Assert.That(expandedIPs.First(), Is.EqualTo("10.18.8.1"), "First IP should be .1");
             Assert.That(expandedIPs.Last(), Is.EqualTo("10.18.8.254"), "Last IP should be .254");
-            
+
             // Print first and last 3 IPs for debugging
             Console.WriteLine("First 3 IPs:");
-            foreach (var ip in expandedIPs.Take(3))
+            foreach (string? ip in expandedIPs.Take(3))
             {
                 Console.WriteLine($"  {ip}");
             }
             Console.WriteLine("Last 3 IPs:");
-            foreach (var ip in expandedIPs.TakeLast(3))
+            foreach (string? ip in expandedIPs.TakeLast(3))
             {
                 Console.WriteLine($"  {ip}");
             }

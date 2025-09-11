@@ -1,8 +1,5 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
-using NUnit.Framework;
 using NJsonSchema;
+using NUnit.Framework;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -21,15 +18,15 @@ public class ConfigurationValidationTests
         // Load schema once for all tests
         string schemaPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "config.schema.json");
         Assert.That(File.Exists(schemaPath), Is.True, $"Schema file not found at: {schemaPath}");
-        
+
         string schemaJson = await File.ReadAllTextAsync(schemaPath);
         _schema = await JsonSchema.FromJsonAsync(schemaJson);
-        
+
         // Setup YAML processors
         _yamlDeserializer = new DeserializerBuilder()
             .WithNamingConvention(UnderscoredNamingConvention.Instance)
             .Build();
-            
+
         _yamlSerializer = new SerializerBuilder()
             .WithNamingConvention(UnderscoredNamingConvention.Instance)
             .JsonCompatible()
@@ -42,16 +39,16 @@ public class ConfigurationValidationTests
         // Arrange
         string yamlPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "test-config.yaml");
         Assert.That(File.Exists(yamlPath), Is.True, $"Test YAML file not found at: {yamlPath}");
-        
+
         string yamlContent = await File.ReadAllTextAsync(yamlPath);
-        
+
         // Act
-        var config = _yamlDeserializer.Deserialize<object>(yamlContent);
+        object config = _yamlDeserializer.Deserialize<object>(yamlContent);
         string configJson = _yamlSerializer.Serialize(config);
-        var validationResults = _schema!.Validate(configJson);
-        
+        ICollection<NJsonSchema.Validation.ValidationError> validationResults = _schema!.Validate(configJson);
+
         // Assert
-        Assert.That(validationResults.Count, Is.EqualTo(0), 
+        Assert.That(validationResults.Count, Is.EqualTo(0),
             $"Validation should pass but found {validationResults.Count} errors: {string.Join(", ", validationResults)}");
     }
 
@@ -60,10 +57,10 @@ public class ConfigurationValidationTests
     {
         // Arrange
         string cidr = "10.18.8.0/24";
-        
+
         // Act
-        var expandedIPs = ExpandCidrForTesting(cidr);
-        
+        List<string> expandedIPs = ExpandCidrForTesting(cidr);
+
         // Assert
         Assert.That(expandedIPs.Count, Is.EqualTo(254), "CIDR /24 should expand to 254 IPs (skip .0 and .255)");
         Assert.That(expandedIPs[0], Is.EqualTo("10.18.8.1"), "First IP should be .1");
@@ -75,10 +72,10 @@ public class ConfigurationValidationTests
     {
         // Arrange
         string cidr = "192.168.1.0/30";
-        
+
         // Act
-        var expandedIPs = ExpandCidrForTesting(cidr);
-        
+        List<string> expandedIPs = ExpandCidrForTesting(cidr);
+
         // Assert
         Assert.That(expandedIPs.Count, Is.EqualTo(2), "CIDR /30 should expand to 2 IPs");
         Assert.That(expandedIPs[0], Is.EqualTo("192.168.1.1"));
@@ -90,9 +87,9 @@ public class ConfigurationValidationTests
     {
         // Arrange
         string invalidCidr = "invalid-cidr";
-        
+
         // Act & Assert
-        var expandedIPs = ExpandCidrForTesting(invalidCidr);
+        List<string> expandedIPs = ExpandCidrForTesting(invalidCidr);
         Assert.That(expandedIPs.Count, Is.EqualTo(0), "Invalid CIDR should return empty list");
     }
 
@@ -103,21 +100,21 @@ public class ConfigurationValidationTests
         // Arrange
         string yamlPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "test-config-minimal.yaml");
         Assert.That(File.Exists(yamlPath), Is.True, $"Minimal test YAML file not found at: {yamlPath}");
-        
+
         string yamlContent = await File.ReadAllTextAsync(yamlPath);
-        
+
         // Act
-        var config = _yamlDeserializer.Deserialize<object>(yamlContent);
+        object config = _yamlDeserializer.Deserialize<object>(yamlContent);
         string configJson = _yamlSerializer.Serialize(config);
-        
+
         // Show what the JSON looks like with null values
         TestContext.WriteLine($"Generated JSON with nulls: {configJson}");
-        
-        var validationResults = _schema!.Validate(configJson);
-        
+
+        ICollection<NJsonSchema.Validation.ValidationError> validationResults = _schema!.Validate(configJson);
+
         // Assert - With the current fixed schema, this should now pass
         // But originally this would have failed due to null values
-        Assert.That(validationResults.Count, Is.EqualTo(0), 
+        Assert.That(validationResults.Count, Is.EqualTo(0),
             "With fixed schema, even minimal config with nulls should validate");
     }
 
@@ -128,30 +125,30 @@ public class ConfigurationValidationTests
     private List<string> ExpandCidrForTesting(string cidr)
     {
         var result = new List<string>();
-        
+
         try
         {
-            var parts = cidr.Split('/');
+            string[] parts = cidr.Split('/');
             if (parts.Length != 2) return result;
-            
+
             string baseIp = parts[0];
             if (!int.TryParse(parts[1], out int prefixLength)) return result;
-            
+
             if (prefixLength < 0 || prefixLength > 32) return result;
-            
-            if (!System.Net.IPAddress.TryParse(baseIp, out var ipAddress)) return result;
-            
+
+            if (!System.Net.IPAddress.TryParse(baseIp, out System.Net.IPAddress? ipAddress)) return result;
+
             byte[] addressBytes = ipAddress.GetAddressBytes();
             uint addressInt = BitConverter.ToUInt32(addressBytes.Reverse().ToArray(), 0);
-            
+
             int hostBits = 32 - prefixLength;
             uint hostCount = (uint)(1 << hostBits);
             uint networkAddress = addressInt & (0xFFFFFFFF << hostBits);
-            
+
             // Skip network and broadcast addresses for practical use
             uint startAddress = networkAddress + 1;
             uint endAddress = networkAddress + hostCount - 1;
-            
+
             for (uint address = startAddress; address < endAddress && address > networkAddress; address++)
             {
                 byte[] bytes = BitConverter.GetBytes(address).Reverse().ToArray();
@@ -163,7 +160,7 @@ public class ConfigurationValidationTests
         {
             // Return empty list on any error
         }
-        
+
         return result;
     }
 }
