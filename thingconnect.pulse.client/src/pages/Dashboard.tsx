@@ -1,4 +1,4 @@
-import { Box, Text, Grid, VStack, Heading, Flex, HStack, Card, Accordion } from '@chakra-ui/react';
+import { Box, Text, Grid, VStack, Heading, Flex, HStack, Accordion } from '@chakra-ui/react';
 import { useState, useMemo } from 'react';
 import { useStatusQuery } from '@/hooks/useStatusQuery';
 import { StatusFilters } from '@/components/status/StatusFilters';

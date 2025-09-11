@@ -10,7 +10,10 @@
       "mcp__serena",
       "Bash(sqlite3:*)",
       "Bash(dir:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(rg:*)",
+      "Bash(.build-installer.ps1 -SkipBuild)",
+      "WebFetch(domain:stackoverflow.com)"
     ],
     "deny": [],
     "ask": []

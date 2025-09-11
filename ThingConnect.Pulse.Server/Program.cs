@@ -192,12 +192,21 @@ public class Program
                 Log.Information("Directory structure verified at {RootPath}", pathSvc.GetRootDirectory());
             }
 
-            // Initialize database with seed data in development
-            if (app.Environment.IsDevelopment())
+            // Initialize database and apply migrations
+            using (IServiceScope scope = app.Services.CreateScope())
             {
-                using IServiceScope scope = app.Services.CreateScope();
                 PulseDbContext context = scope.ServiceProvider.GetRequiredService<PulseDbContext>();
-                SeedData.Initialize(context);
+                
+                // Apply migrations to ensure database schema is up to date
+                await context.Database.MigrateAsync();
+                Log.Information("Database migrations applied successfully");
+                
+                // Seed data only in development
+                if (app.Environment.IsDevelopment())
+                {
+                    SeedData.Initialize(context);
+                    Log.Information("Development seed data initialized");
+                }
             }
 
             app.UseDefaultFiles();

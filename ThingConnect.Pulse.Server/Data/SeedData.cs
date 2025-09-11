@@ -7,9 +7,6 @@ public static class SeedData
 {
     public static void Initialize(PulseDbContext context)
     {
-        // Ensure database is created
-        context.Database.EnsureCreated();
-
         // Check if data already exists
         if (context.Groups.Any())
         {

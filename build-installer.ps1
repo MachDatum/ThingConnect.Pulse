@@ -93,9 +93,10 @@ if (-not $SkipBuild) {
         "publish", $ProjectDir,
         "-c", $Configuration,
         "-o", $PublishDir,
-        "--self-contained", "false",
+        "--self-contained", "true",
         "--runtime", "win-x64",
-        "/p:PublishSingleFile=false"
+        "/p:PublishSingleFile=true",
+        "/p:PublishTrimmed=false"
     )
     
     & dotnet @PublishArgs
@@ -178,7 +179,7 @@ Write-Host ""
 Write-Host "To install ThingConnect Pulse:" -ForegroundColor Cyan
 Write-Host "1. Run the installer as Administrator" -ForegroundColor White
 Write-Host "2. Follow the installation wizard" -ForegroundColor White
-Write-Host "3. Access the web interface at http://localhost:8080" -ForegroundColor White
+Write-Host "3. Access the web interface at http://localhost:8090" -ForegroundColor White
 Write-Host ""
 Write-Host "The installer will:" -ForegroundColor Cyan
 Write-Host "- Install binaries to Program Files\ThingConnect.Pulse" -ForegroundColor White

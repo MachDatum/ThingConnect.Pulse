@@ -192,11 +192,12 @@ export default function Settings() {
               variant='outline'
               colorPalette='blue'
               size='sm'
-              as='a'
-              href='/about'
-              rightIcon={<ArrowRight size={16} />}
+              asChild
             >
-              Learn More About ThingConnect Pulse
+              <a href='/about'>
+                Learn More About ThingConnect Pulse
+                <ArrowRight size={16} />
+              </a>
             </Button>
           </VStack>
         </Container>
