@@ -119,30 +119,28 @@ function RecentChecksTable({ checks }: RecentChecksTableProps) {
         <Table.Header>
           <Table.Row>
             <Table.ColumnHeader w={'30%'}>Time</Table.ColumnHeader>
-            <Table.ColumnHeader  w={'20%'}>Status</Table.ColumnHeader>
-            <Table.ColumnHeader  w={'25%'}>RTT</Table.ColumnHeader>
-            <Table.ColumnHeader  w={'25%'}>Error</Table.ColumnHeader>
+            <Table.ColumnHeader w={'20%'}>Status</Table.ColumnHeader>
+            <Table.ColumnHeader w={'25%'}>RTT</Table.ColumnHeader>
+            <Table.ColumnHeader w={'25%'}>Error</Table.ColumnHeader>
           </Table.Row>
         </Table.Header>
         <Table.Body>
           {checks.slice(0, 10).map((check, index) => (
             <Table.Row key={`${check.ts}-${index}`}>
-              <Table.Cell  w={'30%'}>
+              <Table.Cell w={'30%'}>
                 <Text flex='1' fontSize='sm'>
                   {formatDistanceToNow(new Date(check.ts), { addSuffix: true })}
                 </Text>
               </Table.Cell>
-              <Table.Cell  w={'20%'}>
+              <Table.Cell w={'20%'}>
                 <Badge colorPalette={check.status === 'up' ? 'green' : 'red'} size='sm'>
                   {check.status.toUpperCase()}
                 </Badge>
               </Table.Cell>
-              <Table.Cell  w={'25%'}>
-                <Text fontSize='sm'>
-                  {check.rttMs ? `${check.rttMs}ms` : '-'}
-                </Text>
+              <Table.Cell w={'25%'}>
+                <Text fontSize='sm'>{check.rttMs ? `${check.rttMs}ms` : '-'}</Text>
               </Table.Cell>
-              <Table.Cell  w={'25%'}>
+              <Table.Cell w={'25%'}>
                 <Text flex='1' fontSize='sm' color='gray.500' lineClamp={1}>
                   {check.error || '-'}
                 </Text>
@@ -168,7 +166,7 @@ function OutagesList({ outages }: OutagesListProps) {
   if (outages.length === 0) {
     return (
       <VStack color='gray.300' textAlign='center' gap={1} py={5}>
-        <CloudOff size={'40px'}/>
+        <CloudOff size={'40px'} />
         <Text textAlign='center' color='gray.500'>
           No recent outages
         </Text>
@@ -369,10 +367,19 @@ export default function EndpointDetail() {
                   Group
                 </Text>
                 <HStack gap={2} alignItems={'center'} justifyContent={'center'}>
-                  {endpoint.group.color && (<>
-                    <Text fontWeight='medium' color={endpoint.group.color}>{endpoint.group.name}</Text>
-                    <Box w={3} h={3} mt={1} rounded='full' bg={endpoint.group.color} />
-                  </>)}
+                  <Text fontWeight='medium' color={'blue.600'} _dark={{ color: 'blue.400' }}>
+                    {endpoint.group.name}
+                  </Text>
+                  <Box
+                    w={3}
+                    h={3}
+                    mt={1}
+                    rounded='full'
+                    bg={endpoint.group.color ? `${endpoint.group.color}.600` : 'blue.600'}
+                    _dark={{
+                      bg: endpoint.group.color ? `${endpoint.group.color}.400` : 'blue.400',
+                    }}
+                  />
                 </HStack>
               </Box>
             </HStack>
@@ -496,27 +503,25 @@ export default function EndpointDetail() {
       <SimpleGrid columns={{ base: 1, lg: 2 }} gap={2}>
         {/* Recent Checks */}
         <Card.Root>
-          <Card.Header borderBottomWidth={1}>
-            <HStack justify='space-between' align='center' mb={4}>
+          <Card.Header p={4} pb={0}>
+            <HStack justify='space-between' align='center'>
               <Heading size='md'>Recent Checks</Heading>
-              <Badge colorPalette='blue' variant='outline'>
+              <Text color='blue' fontSize={'xs'}>
                 Last 60 minutes
-              </Badge>
+              </Text>
             </HStack>
           </Card.Header>
-          <Card.Body>
+          <Card.Body p={4}>
             <RecentChecksTable checks={recent} />
           </Card.Body>
         </Card.Root>
 
         {/* Recent Outages */}
         <Card.Root>
-          <Card.Header borderBottomWidth={1}>
-            <Heading size='md' mb={4}>
-              Recent Outages
-            </Heading>
+          <Card.Header p={4} pb={0}>
+            <Heading size='md'>Recent Outages</Heading>
           </Card.Header>
-          <Card.Body>
+          <Card.Body p={4}>
             <OutagesList outages={outages} />
           </Card.Body>
         </Card.Root>

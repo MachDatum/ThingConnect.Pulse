@@ -14,6 +14,7 @@ const TrendBlocks = ({ data }: { data: SparklinePoint[] }) => {
           h="5"
           borderRadius="sm"
           bg={point.s === "d" ? "red.500" : "green.500"}
+          _dark={{bg: point.s === "d" ? "red.600" : "green.600"}}
         />
       ))}
     </HStack>
