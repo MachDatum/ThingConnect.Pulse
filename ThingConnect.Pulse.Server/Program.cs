@@ -200,6 +200,14 @@ public class Program
                 SeedData.Initialize(context);
             }
 
+            // Initialize sample configuration if no configuration exists
+            using (IServiceScope scope = app.Services.CreateScope())
+            {
+                IConfigurationService configService = scope.ServiceProvider.GetRequiredService<IConfigurationService>();
+                await configService.InitializeSampleConfigurationAsync();
+                Log.Information("Sample configuration initialization completed");
+            }
+
             app.UseDefaultFiles();
             app.UseStaticFiles();
 

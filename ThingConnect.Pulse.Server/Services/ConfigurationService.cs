@@ -14,6 +14,7 @@ public interface IConfigurationService
     Task<string?> GetVersionContentAsync(string versionId);
     Task<string?> GetCurrentConfigurationAsync();
     Task<ApplyResultDto> PreviewChangesAsync(string yamlContent);
+    Task InitializeSampleConfigurationAsync();
 }
 
 public sealed class ConfigurationService : IConfigurationService
@@ -186,6 +187,31 @@ public sealed class ConfigurationService : IConfigurationService
             Removed = groupChanges.Removed + endpointChanges.Removed,
             Warnings = new() { "Dry-run mode - no changes applied to database" }
         };
+    }
+
+    /// <summary>
+    /// Initialize the system with sample configuration if no configuration versions exist
+    /// </summary>
+    public async Task InitializeSampleConfigurationAsync()
+    {
+        // Check if any configuration versions already exist
+        var existingVersions = await _context.ConfigVersions.AnyAsync();
+        if (existingVersions)
+        {
+            return; // Configuration already exists, skip initialization
+        }
+
+        // Load sample configuration
+        string sampleConfigPath = Path.Combine(AppContext.BaseDirectory, "sample-config.yaml");
+        if (!File.Exists(sampleConfigPath))
+        {
+            return; // Sample config not available, skip initialization
+        }
+
+        string sampleContent = await File.ReadAllTextAsync(sampleConfigPath);
+        
+        // Apply sample configuration automatically
+        await ApplyConfigurationAsync(sampleContent, "system", "Initial sample configuration applied automatically");
     }
 
     private async Task<(int Added, int Updated, int Removed)> ApplyChangesToDatabaseAsync(

@@ -1,280 +1,126 @@
-# ThingConnect.Pulse Configuration Sample
-# This file demonstrates all available configuration features
-# Refer to config.schema.json for validation rules
+# ThingConnect.Pulse - Simple Initial Configuration
+# This configuration monitors essential public endpoints for testing
+# Perfect for initial setup and validation
 
 # Schema version - must be 1
 version: 1
 
-# Global defaults applied to all targets unless overridden
+# Global defaults for all monitoring targets
 defaults:
-  # How often to check each target (seconds)
-  interval_seconds: 10
+  # Check every 30 seconds
+  interval_seconds: 30
   
-  # Maximum time to wait for a response (milliseconds)  
-  timeout_ms: 1500
+  # 3 second timeout for internet endpoints
+  timeout_ms: 3000
   
-  # Number of retry attempts on failure
+  # 1 retry attempt
   retries: 1
   
-  # HTTP-specific default settings
+  # HTTP-specific settings
   http:
-    # User agent string sent with HTTP requests
     user_agent: "ThingConnectPulse/1.0"
-    
-    # Expected text in response body (empty = any response is OK)
     expect_text: ""
 
-# Organization groups for logical grouping of targets
+# Logical groups for organizing endpoints
 groups:
-  # Production floor equipment
-  - id: production-floor
-    name: "Production Floor"
-    color: "#2E7D32"    # Green for production
+  # Essential internet services
+  - id: internet-services
+    name: "Internet Services"
+    color: "#4285F4"    # Blue
     sort_order: 10
     
-  # Press shop equipment (child of production floor)
-  - id: press-shop
-    name: "Press Shop"
-    parent_id: production-floor
-    color: "#1565C0"    # Blue for press shop
-    sort_order: 11
-    
-  # Quality lab equipment  
-  - id: quality-lab
-    name: "Quality Lab"
-    color: "#7B1FA2"    # Purple for quality
+  # DNS providers
+  - id: dns-providers
+    name: "DNS Providers" 
+    color: "#34C759"    # Green
     sort_order: 20
     
-  # IT infrastructure
-  - id: it-infrastructure
-    name: "IT Infrastructure"
-    color: "#E65100"    # Orange for IT
+  # Development tools
+  - id: dev-tools
+    name: "Developer Tools"
+    color: "#007AFF"    # Blue
     sort_order: 30
-    
-  # Network devices (child of IT infrastructure)
-  - id: network-devices
-    name: "Network Devices"
-    parent_id: it-infrastructure
-    color: "#BF360C"    # Dark orange for network
-    sort_order: 31
 
-# Monitoring targets - demonstrates all probe types and configuration options
+# Essential monitoring targets
 targets:
 
   # ========================================
-  # ICMP (Ping) Targets
+  # DNS Services (ICMP Ping Tests)
   # ========================================
   
-  # Basic ICMP check with hostname
+  # Google Public DNS
   - type: icmp
-    host: plc-press-01.factory.local
-    group: press-shop
-    name: "PLC Press 01"
-    notes: "Main press line PLC - critical for production"
-    
-  # ICMP with custom settings and expected RTT
-  - type: icmp
-    host: hmi-station-02.factory.local
-    group: press-shop
-    name: "HMI Station 02"
-    interval_seconds: 5     # Check every 5 seconds (override default)
-    timeout_ms: 1000        # 1 second timeout (override default)
-    retries: 2              # 2 retries (override default)
-    expected_rtt_ms: 10     # Expected RTT under 10ms
-    enabled: true           # Explicitly enabled
-    
-  # ICMP with IPv4 address
-  - type: icmp
-    host: 192.168.1.100
-    group: quality-lab
-    name: "Quality Management System"
+    host: 8.8.8.8
+    group: dns-providers
+    name: "Google DNS"
     expected_rtt_ms: 25
+    notes: "Google's public DNS server"
     
-  # ICMP with IPv6 address
-  - type: icmp  
-    host: 2001:db8::1
-    group: it-infrastructure
-    name: "IPv6 Test Server"
-    enabled: false          # Temporarily disabled
-    notes: "IPv6 connectivity testing - currently disabled"
+  # Cloudflare DNS
+  - type: icmp
+    host: 1.1.1.1
+    group: dns-providers
+    name: "Cloudflare DNS"
+    expected_rtt_ms: 20
+    notes: "Cloudflare's fast public DNS"
 
   # ========================================
-  # CIDR Range Targets
+  # Web Services (HTTP Tests)
   # ========================================
   
-  # ICMP ping sweep of entire subnet
-  - type: icmp
-    cidr: 192.168.10.0/24
-    group: production-floor
-    name: "Production Subnet Sweep"
-    interval_seconds: 30    # Less frequent for large ranges
-    timeout_ms: 500         # Faster timeout for range scans
-    notes: "Monitors entire production subnet for device availability"
+  # Google Search
+  - type: http
+    host: www.google.com
+    port: 443
+    http_path: "/"
+    http_match: "Google"
+    group: internet-services
+    name: "Google"
+    notes: "Google search engine"
     
-  # IPv6 CIDR range
-  - type: icmp
-    cidr: 2001:db8::/64
-    group: it-infrastructure  
-    name: "IPv6 Network Range"
-    interval_seconds: 60    # Even less frequent for IPv6 ranges
+  # GitHub
+  - type: http
+    host: github.com
+    port: 443
+    http_path: "/"
+    http_match: "GitHub"
+    group: dev-tools
+    name: "GitHub"
+    notes: "GitHub platform"
+    
+  # Cloudflare
+  - type: http
+    host: www.cloudflare.com
+    port: 443
+    http_path: "/"
+    http_match: "Cloudflare"
+    group: internet-services
+    name: "Cloudflare"
+    notes: "Cloudflare website"
 
   # ========================================
-  # Wildcard IP Targets  
+  # HTTP Testing Service
   # ========================================
   
-  # Wildcard range (expands to .1-.254)
+  # Microsoft for testing
+  - type: http
+    host: www.microsoft.com
+    port: 443
+    http_path: "/"
+    http_match: "Microsoft"
+    group: internet-services
+    name: "Microsoft"
+    notes: "Microsoft corporate website"
+    
+  # ========================================
+  # High-Frequency Example
+  # ========================================
+  
+  # Frequent monitoring example
   - type: icmp
-    wildcard: 10.10.1.*
-    group: press-shop
-    name: "Press Shop Network"
+    host: 8.8.8.8
+    group: dns-providers
+    name: "Google DNS (Frequent)"
     interval_seconds: 15
-    notes: "Auto-discovers devices in press shop subnet"
-
-  # ========================================
-  # TCP Port Checks
-  # ========================================
-  
-  # Database server connectivity
-  - type: tcp
-    host: db-server.factory.local
-    port: 1433              # SQL Server port
-    group: it-infrastructure
-    name: "Database Server"
-    expected_rtt_ms: 5      # Database should be fast
-    
-  # VNC access to HMI systems
-  - type: tcp
-    wildcard: 10.10.2.*     # All HMI stations
-    port: 5900              # VNC port
-    group: press-shop
-    name: "HMI VNC Access"
-    timeout_ms: 2000        # VNC can be slower to respond
-    
-  # SSH access to Linux systems
-  - type: tcp
-    host: linux-server.factory.local
-    port: 22                # SSH port  
-    group: it-infrastructure
-    name: "Linux Server SSH"
-    
-  # Custom application port
-  - type: tcp
-    host: 192.168.20.50
-    port: 8080              # Custom app port
-    group: quality-lab
-    name: "Lab Data Collector"
-    interval_seconds: 20
-    retries: 3
-    
-  # TCP check on CIDR range
-  - type: tcp
-    cidr: 192.168.30.0/28   # Small range for specific service
-    port: 502               # Modbus TCP port
-    group: production-floor  
-    name: "Modbus Devices"
-    timeout_ms: 3000        # Industrial protocols can be slow
-    notes: "Modbus TCP connectivity to production devices"
-
-  # ========================================
-  # HTTP/HTTPS Web Checks
-  # ========================================
-  
-  # Basic HTTP health check
-  - type: http
-    host: web-app.factory.local
-    group: it-infrastructure
-    name: "Factory Web Application"
-    # port: 80 is default for HTTP
-    
-  # HTTPS with custom port and path
-  - type: http  
-    host: secure-app.factory.local
-    port: 443               # HTTPS port
-    http_path: "/health"    # Custom health endpoint
-    group: quality-lab
-    name: "QMS Health Check"
-    
-  # HTTP with content matching
-  - type: http
-    host: api.factory.local
-    port: 8080
-    http_path: "/api/status"
-    http_match: "OK"        # Must contain "OK" in response
-    group: it-infrastructure
-    name: "Factory API Status"
-    interval_seconds: 30
-    
-  # HTTP check with complex response validation
-  - type: http
-    host: dashboard.factory.local  
-    http_path: "/dashboard/health"
-    http_match: '"status":"healthy"'  # JSON response check
-    group: production-floor
-    name: "Production Dashboard"
-    timeout_ms: 5000        # Web apps can be slower
-    retries: 1              # Don't retry too aggressively for web
-    notes: "Main production monitoring dashboard"
-    
-  # HTTP range check with wildcard
-  - type: http
-    wildcard: 192.168.100.*
-    http_path: "/status"
-    http_match: "alive"
-    group: quality-lab
-    name: "Lab Equipment Web Status"
-    interval_seconds: 45    # Less frequent for equipment
-    
-  # HTTP check on CIDR range
-  - type: http
-    cidr: 10.0.50.0/29      # Small range of web services
-    port: 8080
-    http_path: "/health"
-    group: it-infrastructure
-    name: "Microservices Health"
-    timeout_ms: 10000       # Allow time for microservice startup
-    
-  # Custom HTTP check with all options
-  - type: http
-    host: critical-system.factory.local
-    port: 9443              # Custom HTTPS port
-    http_path: "/api/v1/health"
-    http_match: '"service":"running","database":"connected"'
-    group: production-floor
-    name: "Critical Production System"
-    interval_seconds: 5     # Very frequent for critical system
-    timeout_ms: 2000
-    retries: 3              # Multiple retries for critical system
-    expected_rtt_ms: 100    # Should respond quickly
-    enabled: true
-    notes: "Mission critical system - requires immediate attention if down"
-
-# ========================================
-# Advanced Configuration Examples
-# ========================================
-
-  # Minimal configuration (using all defaults)
-  - type: icmp
-    host: simple-device.factory.local
-    group: production-floor
-    
-  # Disabled target for maintenance
-  - type: tcp
-    host: maintenance-server.factory.local
-    port: 80
-    group: it-infrastructure
-    name: "Maintenance Server (Offline)"
-    enabled: false
-    notes: "Temporarily offline for maintenance - re-enable after 2024-09-15"
-    
-  # High-frequency monitoring for critical path
-  - type: http
-    host: critical-path.factory.local
-    http_path: "/critical/status"
-    http_match: "operational"
-    group: production-floor
-    name: "Critical Path Monitor"
-    interval_seconds: 1     # Check every second!
-    timeout_ms: 500         # Must be fast
-    retries: 0              # No retries - immediate alerts
-    expected_rtt_ms: 50     # Very fast response expected
-    notes: "Critical manufacturing process - zero tolerance for downtime"
+    expected_rtt_ms: 25
+    notes: "High-frequency monitoring example"

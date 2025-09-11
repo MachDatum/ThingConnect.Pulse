@@ -64,7 +64,7 @@ export default function LoginPage() {
 
   return (
     <AuthLayout>
-      <VStack maxW="sm" mx="auto" w="full" gap={6} align="stretch">
+      <VStack maxW="sm" mx="auto" w="full" gap={6} align="stretch" maxH="100%" overflow="auto">
         <VStack gap={2} textAlign="start" w="full">
           <Heading size="xl" color="gray.800" fontWeight="bold">
             Welcome Back

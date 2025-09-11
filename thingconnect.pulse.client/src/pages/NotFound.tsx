@@ -6,7 +6,7 @@ import pageNotFound from '@/assets/page-not-found.png';
 
 export default function NotFound() {
   return (
-    <Flex align='center' justify='center' minH='100dvh' px={{ base: 6, md: 12 }}>
+    <Flex align='center' justify='center' h='100vh' px={{ base: 6, md: 12 }} overflow='hidden'>
       <Flex
         w='full'
         maxW='7xl'
