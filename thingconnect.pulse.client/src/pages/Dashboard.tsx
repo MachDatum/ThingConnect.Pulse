@@ -1,4 +1,4 @@
-import { Box, Text, Grid, VStack, Heading, Flex, HStack, Card, Accordion } from '@chakra-ui/react';
+import { Box, Text, Grid, VStack, Heading, Flex, HStack, Accordion } from '@chakra-ui/react';
 import { useState, useMemo } from 'react';
 import { useStatusQuery } from '@/hooks/useStatusQuery';
 import { StatusFilters } from '@/components/status/StatusFilters';
@@ -198,44 +198,44 @@ export default function Dashboard() {
               title: 'TOTAL',
               subtitle: 'Total endpoints configured',
               value: statusCounts.total,
-              textColor : 'blue.500',
+              textColor: 'blue.500',
               color: 'blue.600',
               bg: 'blue.100',
-              darkColor : 'blue.200',
-              darkBg : 'blue.800'
+              darkColor: 'blue.200',
+              darkBg: 'blue.800',
             },
             {
               icon: CheckCircle,
               title: 'ONLINE',
               subtitle: 'Currently operational',
               value: statusCounts.up,
-              textColor : 'green.500',
+              textColor: 'green.500',
               color: 'green.600',
               bg: 'green.100',
-              darkColor : 'green.200',
-              darkBg : 'green.800'
+              darkColor: 'green.200',
+              darkBg: 'green.800',
             },
             {
               icon: XCircle,
               title: 'OFFLINE',
               subtitle: 'Currently down',
               value: statusCounts.down,
-              textColor : 'red.500',
+              textColor: 'red.500',
               color: 'red.600',
               bg: 'red.100',
-              darkColor : 'red.200',
-              darkBg : 'red.800'
+              darkColor: 'red.200',
+              darkBg: 'red.800',
             },
             {
               icon: AlertTriangle,
               title: 'FLAPPING',
               subtitle: 'Unstable state changes',
               value: statusCounts.flapping,
-              textColor : 'yellow.500',
+              textColor: 'yellow.500',
               color: 'yellow.600',
               bg: 'yellow.100',
-              darkColor : 'yellow.200',
-              darkBg : 'yellow.800'
+              darkColor: 'yellow.200',
+              darkBg: 'yellow.800',
             },
           ].map(stat => (
             <Box
@@ -244,36 +244,36 @@ export default function Dashboard() {
               borderRadius='xl'
               borderWidth={1}
               borderColor={'gray.200'}
-              _dark={{borderColor:'gray.200'}}
+              _dark={{ borderColor: 'gray.200' }}
             >
               <VStack align='flex-start' gap='4'>
-                  <HStack justifyContent={'space-between'} w={'full'}>
-                    <Text fontSize='sm' fontWeight='semibold' color='gray.500'>
-                      {stat.title}
-                    </Text>
-                    <Box>
-                      <Box
-                        bg={stat.bg}
-                        color={stat.color}
-                        _dark={{bg: stat.darkBg, color: stat.color}}
-                        boxSize='12'
-                        display='flex'
-                        alignItems='center'
-                        justifyContent='center'
-                        borderRadius='full'
-                      >
-                        <stat.icon size={28} />
-                      </Box>
-                    </Box>
-                  </HStack>
+                <HStack justifyContent={'space-between'} w={'full'}>
+                  <Text fontSize='sm' fontWeight='semibold' color='gray.500'>
+                    {stat.title}
+                  </Text>
                   <Box>
+                    <Box
+                      bg={stat.bg}
+                      color={stat.color}
+                      _dark={{ bg: stat.darkBg, color: stat.color }}
+                      boxSize='12'
+                      display='flex'
+                      alignItems='center'
+                      justifyContent='center'
+                      borderRadius='full'
+                    >
+                      <stat.icon size={28} />
+                    </Box>
+                  </Box>
+                </HStack>
+                <Box>
                   <Text fontSize='4xl' fontWeight='bold' color={stat.textColor}>
                     {stat.value}
                   </Text>
                   <Text fontSize='sm' color='gray.500'>
                     {stat.subtitle}
                   </Text>
-                  </Box>
+                </Box>
               </VStack>
             </Box>
           ))}
@@ -367,7 +367,7 @@ export default function Dashboard() {
                           <Accordion.Root multiple variant='plain' pl={4}>
                             {Object.entries(typedGroupItems).map(([group, items]) => (
                               <Accordion.Item key={group} value={group}>
-                                <Accordion.ItemTrigger >
+                                <Accordion.ItemTrigger>
                                   <HStack w='full' justify='space-between'>
                                     <HStack px={'10px'}>
                                       <Accordion.ItemIndicator
@@ -423,7 +423,7 @@ export default function Dashboard() {
 
                   return (
                     <Accordion.Item key={group} value={group} my={2}>
-                      <Accordion.ItemTrigger borderWidth={1} _dark={{borderColor: 'gray.200'}}>
+                      <Accordion.ItemTrigger borderWidth={1} _dark={{ borderColor: 'gray.200' }}>
                         <HStack w='full' justify='space-between'>
                           <HStack px={'10px'}>
                             <Accordion.ItemIndicator fontSize={'md'} fontWeight={'bolder'} />
@@ -535,7 +535,10 @@ export default function Dashboard() {
                 })}
               </Accordion.Root>
             ) : (
-              <StatusTable items={Object.values(groupedEndpoints).flat()} isLoading={isLoading || isFetching} />
+              <StatusTable
+                items={Object.values(groupedEndpoints).flat()}
+                isLoading={isLoading || isFetching}
+              />
             )
           ) : (
             <StatusTable items={data.items} isLoading={isLoading} />

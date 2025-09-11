@@ -15,11 +15,9 @@ import {
   IconButton,
   VStack,
   Tabs,
-  Center,
-  EmptyState,
   Skeleton,
 } from '@chakra-ui/react';
-import { Download, TrendingUp, AlertCircle, RefreshCw, SearchX } from 'lucide-react';
+import { Download, TrendingUp, AlertCircle, RefreshCw } from 'lucide-react';
 import { Page } from '@/components/layout/Page';
 import { PageSection } from '@/components/layout/PageSection';
 

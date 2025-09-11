@@ -370,14 +370,14 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
             />
           )}
           {applyResult && (
-            <Alert 
-              flex='1' 
-              status='success' 
+            <Alert
+              flex='1'
+              status='success'
               title={
-                applyResult.warnings?.length ? 
-                  applyResult.warnings[0] : 
-                  `Configuration applied: ${applyResult.added} added, ${applyResult.updated} updated, ${applyResult.removed} removed`
-              } 
+                applyResult.warnings?.length
+                  ? applyResult.warnings[0]
+                  : `Configuration applied: ${applyResult.added} added, ${applyResult.updated} updated, ${applyResult.removed} removed`
+              }
             />
           )}
         </HStack>
