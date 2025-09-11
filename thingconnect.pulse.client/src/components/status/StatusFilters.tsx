@@ -1,44 +1,105 @@
-import { HStack, Input, Button, Box, NativeSelect } from '@chakra-ui/react';
-import { Search, X } from 'lucide-react';
+import {
+  Box,
+  Button,
+  Flex,
+  HStack,
+  Icon,
+  Input,
+  Text,
+  Menu,
+  Combobox,
+  useFilter,
+  useListCollection,
+} from '@chakra-ui/react';
+import { X } from 'lucide-react';
 import type { LiveStatusParams } from '@/api/types';
-
-const DEFAULT_GROUPS: string[] = [];
+import { MdSearch, MdExpandMore } from 'react-icons/md';
+import { useEffect, useState } from 'react';
 
 interface StatusFiltersProps {
   filters: LiveStatusParams;
-  onFiltersChange: (filters: LiveStatusParams) => void;
-  groups?: string[];
+  onFiltersChange: (filters: LiveStatusParams & { group?: string }) => void; // single group
+  groups?: {
+    id: string;
+    name: string;
+  }[];
+  selectedGroup?: string; // single
+  onSelectedGroupChange?: (group: string | undefined) => void; // single
+  onGroupByChange?: (groupBy: string) => void;
+  groupByOptions?: string[];
+  searchTerm?: string;
+  onSearchChange?: (search: string) => void;
+  onToggleGroupBy?: (groupBy: string, isSelected: boolean) => void;
 }
 
 export function StatusFilters({
   filters,
   onFiltersChange,
-  groups = DEFAULT_GROUPS,
+  groups = [],
+  groupByOptions = [],
+  searchTerm = '',
+  onSearchChange,
+  onToggleGroupBy,
+  selectedGroup,
+  onSelectedGroupChange,
 }: StatusFiltersProps) {
+  const [cleared, setCleared] = useState(false);
+
+  const { contains } = useFilter({ sensitivity: 'base' });
+  const { collection, filter, set } = useListCollection<{
+    label: string;
+    value: string;
+  }>({
+    initialItems: [], // start empty
+    itemToString: item => item.label,
+    itemToValue: item => item.value,
+    filter: contains,
+  });
+
+  useEffect(() => {
+    const newItems = groups.map(g => ({
+      label: g.name,
+      value: g.id,
+    }));
+
+    set(newItems);
+  }, [groups, set, cleared]);
+
   const handleGroupChange = (value: string) => {
+    const newGroup = value || undefined;
+    onSelectedGroupChange?.(newGroup);
     onFiltersChange({
       ...filters,
-      group: value || undefined,
-      page: 1, // Reset to first page when filtering
+      group: newGroup,
     });
   };
 
   const handleSearchChange = (value: string) => {
+    // Update search term in parent component
+    onSearchChange && onSearchChange(value);
+
+    // Optionally reset page when searching
     onFiltersChange({
       ...filters,
       search: value || undefined,
-      page: 1, // Reset to first page when searching
     });
   };
 
-  const clearFilters = () => {
+  const clearSearch = () => {
+    onSearchChange?.('');
+    // Optional: reset local cleared state
+    setCleared(true);
+  };
+
+  const clearFilter = () => {
     onFiltersChange({
-      page: 1,
-      pageSize: filters.pageSize,
+      ...filters,
+      group: undefined,
+      search: undefined,
     });
+    onSelectedGroupChange?.(undefined);
+    setCleared(true);
   };
-
-  const hasFilters = filters.group || filters.search;
 
   return (
     <Box
@@ -63,55 +124,171 @@ export function StatusFilters({
     >
       <HStack gap={{ base: 2, md: 4 }} align='center' flexWrap={{ base: 'wrap', md: 'nowrap' }}>
         {/* Group Filter */}
-        <Box minW={{ base: '150px', md: '200px' }} flex={{ base: '1', md: 'none' }}>
-          <NativeSelect.Root data-testid='group-filter'>
-            <NativeSelect.Field
-              value={filters.group || ''}
-              onChange={e => handleGroupChange(e.target.value)}
-              placeholder='All Groups'
-              minHeight='44px'
-              fontSize={{ base: 'sm', md: 'md' }}
-            >
-              <option value=''>All Groups</option>
-              {groups.map(group => (
-                <option key={group} value={group}>
-                  {group}
-                </option>
-              ))}
-            </NativeSelect.Field>
-          </NativeSelect.Root>
+        <Box w={'25%'}>
+          <Combobox.Root
+            size='md'
+            collection={collection}
+            value={selectedGroup ? [selectedGroup] : []}
+            onValueChange={e => {
+              handleGroupChange(e.value[0]);
+              setCleared(false);
+            }}
+            onInputValueChange={e => {
+              filter(e.inputValue);
+            }}
+            onOpenChange={open => {
+              if (open) filter('');
+            }}
+            openOnClick
+          >
+            <Combobox.Control>
+              <Combobox.Input placeholder='Select Group...'  _dark={{borderColor:'gray.200'}}/>
+              <Combobox.IndicatorGroup>
+                <Combobox.ClearTrigger onClick={clearFilter}  cursor={'pointer'}/>
+                <Combobox.Trigger />
+              </Combobox.IndicatorGroup>
+            </Combobox.Control>
+            <Combobox.Positioner>
+              <Combobox.Content _dark={{borderWidth:1, borderColor:'gray.200'}}>
+                <Combobox.Empty>No groups found</Combobox.Empty>
+                <Combobox.Item key='allgroups' item={{ label: 'All Groups', value: '' }} _dark={{_hover:{bg:'gray.400'}}}>
+                  <HStack justify='space-between' textStyle='sm'>
+                    All Groups
+                  </HStack>
+                </Combobox.Item>
+                {collection.items.map(item => {
+                  return (
+                    <Combobox.Item key={item.value} item={item} _dark={{_hover:{bg:'gray.400'}}}>
+                      <HStack justify='space-between' textStyle='sm'>
+                        {item.label}
+                      </HStack>
+                    </Combobox.Item>
+                  );
+                })}
+              </Combobox.Content>
+            </Combobox.Positioner>
+          </Combobox.Root>
         </Box>
-
         {/* Search Input */}
-        <Box flex='1' maxW={{ base: '100%', md: '400px' }} position='relative' w='100%'>
+        <Flex w='80' position='relative' align='center'>
+          <Icon
+            as={MdSearch}
+            color='gray.400'
+            position='absolute'
+            left='3'
+            top='50%'
+            transform='translateY(-50%)'
+            zIndex={2}
+            fontSize={'18px'}
+          />
           <Input
             placeholder='Search endpoints by name or host...'
-            value={filters.search || ''}
+            pl='10'
+            pr={searchTerm ? '10' : '4'}
+            borderColor='gray.300'
+            value={searchTerm}
             onChange={e => handleSearchChange(e.target.value)}
             data-testid='search-input'
-            pl='10'
-            minHeight='44px'
-            fontSize={{ base: 'sm', md: 'md' }}
           />
-          <Box position='absolute' left='3' top='50%' transform='translateY(-50%)' color='gray.400'>
-            <Search size={16} />
-          </Box>
-        </Box>
+          {searchTerm && (
+            <Box
+              px={3}
+              onClick={clearSearch}
+              data-testid='clear-search'
+              position='absolute'
+              right='0'
+              top='50%'
+              transform='translateY(-50%)'
+              zIndex={10}
+              cursor={'pointer'}
+            >
+              <X size={16} />
+            </Box>
+          )}
+        </Flex>
 
-        {/* Clear Filters */}
-        {hasFilters && (
-          <Button
-            variant='outline'
-            size={{ base: 'sm', md: 'md' }}
-            onClick={clearFilters}
-            data-testid='clear-filters'
-            minHeight='44px'
-            flexShrink={0}
-          >
-            <X size={16} />
-            Clear
-          </Button>
-        )}
+        {/* Group By Dropdown */}
+        <Menu.Root>
+          <Menu.Trigger asChild>
+            <Button variant='outline' borderColor='gray.300'>
+              {groupByOptions.length > 0
+                ? groupByOptions
+                    .map(opt => (opt === 'status' ? 'Status' : opt === 'group' ? 'Group' : opt))
+                    .join(' + ')
+                : 'Group By'}
+              <MdExpandMore />
+            </Button>
+          </Menu.Trigger>
+          <Menu.Positioner px={4}>
+            <Menu.Content minWidth='200px' borderColor='gray.300' _dark={{borderWidth:1, borderColor:'gray.200'}}>
+              <Flex
+                justify='flex-end'
+                px={2}
+                py={1}
+                borderBottom='1px solid'
+                borderColor='gray.200'
+              >
+                <HStack gap={2}>
+                  <Button
+                    size='xs'
+                    variant='ghost'
+                    onClick={() => {
+                      ['status', 'group'].forEach(
+                        opt => onToggleGroupBy && onToggleGroupBy(opt, true)
+                      );
+                    }}
+                    textDecoration={'underline'}
+                  >
+                    Select All
+                  </Button>
+                  <Button
+                    size='xs'
+                    variant='ghost'
+                    onClick={() => {
+                      ['status', 'group'].forEach(
+                        opt => onToggleGroupBy && onToggleGroupBy(opt, false)
+                      );
+                    }}
+                    textDecoration={'underline'}
+                  >
+                    Clear
+                  </Button>
+                </HStack>
+              </Flex>
+              <Menu.ItemGroup>
+                <Menu.CheckboxItem
+                  cursor={'pointer'}
+                  value='status'
+                  checked={groupByOptions.includes('status')}
+                  onCheckedChange={() => {
+                    onToggleGroupBy &&
+                      onToggleGroupBy('status', !groupByOptions.includes('status'));
+                  }}
+                  _dark={{_hover:{bg:'gray.400'}}}
+                >
+                  <Flex w='full' justify='flex-start' align='center' gap={3}>
+                    <Text as='span'>Group by Status</Text>
+                    <Menu.ItemIndicator />
+                  </Flex>
+                </Menu.CheckboxItem>
+                <Menu.CheckboxItem
+                  cursor={'pointer'}
+                  value='group'
+                  checked={groupByOptions.includes('group')}
+                  onCheckedChange={() => {
+                    onToggleGroupBy && onToggleGroupBy('group', !groupByOptions.includes('group'));
+                  }}
+                  _dark={{_hover:{bg:'gray.400'}}}
+                >
+                  <Flex w='full' justify='flex-start' align='center' gap={3}>
+                    <Text as='span'>Group by Group</Text>
+                    <Menu.ItemIndicator />
+                  </Flex>
+                </Menu.CheckboxItem>
+              </Menu.ItemGroup>
+            </Menu.Content>
+          </Menu.Positioner>
+        </Menu.Root>
       </HStack>
     </Box>
   );

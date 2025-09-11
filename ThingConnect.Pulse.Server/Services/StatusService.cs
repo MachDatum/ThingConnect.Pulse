@@ -8,7 +8,7 @@ namespace ThingConnect.Pulse.Server.Services;
 
 public interface IStatusService
 {
-    Task<PagedLiveDto> GetLiveStatusAsync(string? group, string? search, int page, int pageSize);
+    Task<List<LiveStatusItemDto>> GetLiveStatusAsync(string? group, string? search);
 }
 
 public sealed class StatusService : IStatusService
@@ -24,10 +24,9 @@ public sealed class StatusService : IStatusService
         _cache = cache;
     }
 
-    public async Task<PagedLiveDto> GetLiveStatusAsync(string? group, string? search, int page, int pageSize)
+    public async Task<List<LiveStatusItemDto>> GetLiveStatusAsync(string? group, string? search)
     {
-        _logger.LogDebug("Getting live status with filters: group={Group}, search={Search}, page={Page}, pageSize={PageSize}",
-            group, search, page, pageSize);
+        _logger.LogDebug("Getting live status with filters: group={Group}, search={Search}", group, search);
 
         // Build base query for enabled endpoints
         IQueryable<Data.Endpoint> query = _context.Endpoints
@@ -56,11 +55,10 @@ public sealed class StatusService : IStatusService
 
         // Apply pagination
         List<Data.Endpoint> endpoints = await query
-            .OrderBy(e => e.GroupId)
-            .ThenBy(e => e.Name)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
+        .OrderBy(e => e.GroupId)
+        .ThenBy(e => e.Name)
+        .ToListAsync();
+
 
         // Get live status for each endpoint
         var items = new List<LiveStatusItemDto>();
@@ -100,16 +98,7 @@ public sealed class StatusService : IStatusService
             });
         }
 
-        return new PagedLiveDto
-        {
-            Meta = new PageMetaDto
-            {
-                Page = page,
-                PageSize = pageSize,
-                Total = totalCount
-            },
-            Items = items
-        };
+        return items;
     }
 
     /// <summary>

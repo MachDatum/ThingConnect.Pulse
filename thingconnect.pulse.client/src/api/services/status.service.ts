@@ -13,14 +13,6 @@ export class StatusService {
       searchParams.append('search', params.search);
     }
 
-    if (params.page) {
-      searchParams.append('page', params.page.toString());
-    }
-
-    if (params.pageSize) {
-      searchParams.append('pageSize', params.pageSize.toString());
-    }
-
     const queryString = searchParams.toString();
     const url = `/api/status/live${queryString ? `?${queryString}` : ''}`;
 
