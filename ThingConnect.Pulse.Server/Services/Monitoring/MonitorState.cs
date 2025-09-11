@@ -1,5 +1,4 @@
 using ThingConnect.Pulse.Server.Data;
-using ThingConnect.Pulse.Server.Helpers;
 
 namespace ThingConnect.Pulse.Server.Services.Monitoring;
 
@@ -44,7 +43,7 @@ public sealed class MonitorState
         // If never initialized, transition immediately on first failure
         if (LastPublicStatus == null && FailStreak >= 1)
             return true;
-        
+
         // Otherwise require threshold for state change from UP to DOWN
         return LastPublicStatus != UpDown.down && FailStreak >= threshold;
     }
@@ -59,7 +58,7 @@ public sealed class MonitorState
         // If never initialized, transition immediately on first success
         if (LastPublicStatus == null && SuccessStreak >= 1)
             return true;
-        
+
         // Otherwise require threshold for state change from DOWN to UP
         return LastPublicStatus != UpDown.up && SuccessStreak >= threshold;
     }

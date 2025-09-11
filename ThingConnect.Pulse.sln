@@ -1,28 +1,58 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36327.8 d17.14
+VisualStudioVersion = 17.14.36327.8
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "thingconnect.pulse.client", "thingconnect.pulse.client\thingconnect.pulse.client.esproj", "{AA93BDEA-1ED7-C607-F934-CDBCF463D04E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThingConnect.Pulse.Server", "ThingConnect.Pulse.Server\ThingConnect.Pulse.Server.csproj", "{1CE2F3A6-7BC3-44B6-A3EE-FB969EB0F228}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThingConnect.Pulse.Tests", "ThingConnect.Pulse.Tests\ThingConnect.Pulse.Tests.csproj", "{D90DC0F5-0676-478F-BDF8-94C4BCA06568}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{AA93BDEA-1ED7-C607-F934-CDBCF463D04E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{AA93BDEA-1ED7-C607-F934-CDBCF463D04E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AA93BDEA-1ED7-C607-F934-CDBCF463D04E}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{AA93BDEA-1ED7-C607-F934-CDBCF463D04E}.Debug|x64.ActiveCfg = Debug|x64
+		{AA93BDEA-1ED7-C607-F934-CDBCF463D04E}.Debug|x86.ActiveCfg = Debug|x86
 		{AA93BDEA-1ED7-C607-F934-CDBCF463D04E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AA93BDEA-1ED7-C607-F934-CDBCF463D04E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{AA93BDEA-1ED7-C607-F934-CDBCF463D04E}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{AA93BDEA-1ED7-C607-F934-CDBCF463D04E}.Release|x64.ActiveCfg = Release|x64
+		{AA93BDEA-1ED7-C607-F934-CDBCF463D04E}.Release|x86.ActiveCfg = Release|x86
 		{1CE2F3A6-7BC3-44B6-A3EE-FB969EB0F228}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1CE2F3A6-7BC3-44B6-A3EE-FB969EB0F228}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1CE2F3A6-7BC3-44B6-A3EE-FB969EB0F228}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1CE2F3A6-7BC3-44B6-A3EE-FB969EB0F228}.Debug|x64.Build.0 = Debug|Any CPU
+		{1CE2F3A6-7BC3-44B6-A3EE-FB969EB0F228}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1CE2F3A6-7BC3-44B6-A3EE-FB969EB0F228}.Debug|x86.Build.0 = Debug|Any CPU
 		{1CE2F3A6-7BC3-44B6-A3EE-FB969EB0F228}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1CE2F3A6-7BC3-44B6-A3EE-FB969EB0F228}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1CE2F3A6-7BC3-44B6-A3EE-FB969EB0F228}.Release|x64.ActiveCfg = Release|Any CPU
+		{1CE2F3A6-7BC3-44B6-A3EE-FB969EB0F228}.Release|x64.Build.0 = Release|Any CPU
+		{1CE2F3A6-7BC3-44B6-A3EE-FB969EB0F228}.Release|x86.ActiveCfg = Release|Any CPU
+		{1CE2F3A6-7BC3-44B6-A3EE-FB969EB0F228}.Release|x86.Build.0 = Release|Any CPU
+		{D90DC0F5-0676-478F-BDF8-94C4BCA06568}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D90DC0F5-0676-478F-BDF8-94C4BCA06568}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D90DC0F5-0676-478F-BDF8-94C4BCA06568}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D90DC0F5-0676-478F-BDF8-94C4BCA06568}.Debug|x64.Build.0 = Debug|Any CPU
+		{D90DC0F5-0676-478F-BDF8-94C4BCA06568}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D90DC0F5-0676-478F-BDF8-94C4BCA06568}.Debug|x86.Build.0 = Debug|Any CPU
+		{D90DC0F5-0676-478F-BDF8-94C4BCA06568}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D90DC0F5-0676-478F-BDF8-94C4BCA06568}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D90DC0F5-0676-478F-BDF8-94C4BCA06568}.Release|x64.ActiveCfg = Release|Any CPU
+		{D90DC0F5-0676-478F-BDF8-94C4BCA06568}.Release|x64.Build.0 = Release|Any CPU
+		{D90DC0F5-0676-478F-BDF8-94C4BCA06568}.Release|x86.ActiveCfg = Release|Any CPU
+		{D90DC0F5-0676-478F-BDF8-94C4BCA06568}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

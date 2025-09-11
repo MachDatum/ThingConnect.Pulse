@@ -7,7 +7,10 @@
       "Bash(curl:*)",
       "Bash(taskkill:*)",
       "mcp__chakra-ui",
-      "mcp__serena"
+      "mcp__serena",
+      "Bash(sqlite3:*)",
+      "Bash(dir:*)",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "ask": []

@@ -2,7 +2,7 @@ namespace ThingConnect.Pulse.Server.Helpers;
 
 public static class UnixTimestamp
 {
-    private static readonly DateTimeOffset UnixEpoch = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
+    private static readonly DateTimeOffset UnixEpoch = new(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
     public static long Now() => DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
@@ -26,7 +26,7 @@ public static class UnixTimestamp
 
     public static long? ToUnixSeconds(DateTimeOffset? dateTime) => dateTime?.ToUnixTimeSeconds();
 
-    public static DateTimeOffset? FromUnixSeconds(long? unixSeconds) => 
+    public static DateTimeOffset? FromUnixSeconds(long? unixSeconds) =>
         unixSeconds.HasValue ? DateTimeOffset.FromUnixTimeSeconds(unixSeconds.Value) : null;
 
     public static long StartOfDay(long unixSeconds)

@@ -1,7 +1,6 @@
 // ThingConnect Pulse - EF Core DbContext (v1)
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ThingConnect.Pulse.Server.Data;
 
@@ -22,7 +21,7 @@ public sealed class PulseDbContext : IdentityDbContext<ApplicationUser>
     protected override void OnModelCreating(ModelBuilder b)
     {
         base.OnModelCreating(b);
-        
+
         bool isSqlite = Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true;
 
         b.Entity<ApplicationUser>(e =>

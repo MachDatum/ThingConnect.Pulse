@@ -36,22 +36,28 @@ export function Navigation({ onItemClick }: NavigationProps) {
   return (
     <Box h='100%' display='flex' flexDirection='column' data-testid='navigation'>
       <Box
-        p={4}
+        p={6}
         borderBottom='1px'
         borderColor='gray.200'
         _dark={{ borderColor: 'gray.700' }}
         data-testid='brand-section'
       >
-        <Image data-testid='thingconnect-icon' src={thingConnectIcon} alt='ThingConnect' w={40} />
+        <Image 
+          data-testid='thingconnect-icon' 
+          src={thingConnectIcon} 
+          alt='ThingConnect' 
+          w={44} 
+          h='auto'
+        />
       </Box>
-      <VStack gap={1} p={2} flex='1' align='stretch' data-testid='navigation-items'>
+      <VStack gap={2} p={4} flex='1' align='stretch' data-testid='navigation-items'>
         {navigationItems.map(item => {
           const isActive = !item.external && isActiveRoute(item.path);
           const ItemContent = (
             <HStack
-              px={2}
-              py={1}
-              borderRadius='md'
+              px={3}
+              py={2.5}
+              borderRadius='lg'
               color={isActive ? 'blue.600' : 'gray.600'}
               bg={isActive ? 'whiteAlpha.950' : 'transparent'}
               border={isActive ? '1px solid' : undefined}
@@ -71,7 +77,12 @@ export function Navigation({ onItemClick }: NavigationProps) {
               }}
             >
               <Icon as={item.icon} boxSize={4} />
-              <Text fontSize='sm' fontWeight={'semibold'}>
+              <Text 
+                fontSize='sm' 
+                fontWeight='medium'
+                letterSpacing='0.025em'
+                lineHeight='1.2'
+              >
                 {item.label}
               </Text>
             </HStack>
@@ -90,9 +101,9 @@ export function Navigation({ onItemClick }: NavigationProps) {
           );
         })}
       </VStack>
-      <Box p={3} borderTop='1px' borderColor='gray.200' _dark={{ borderColor: 'gray.700' }}>
-        <VStack align='stretch' gap={3}>
-          <VStack align='stretch' gap={2}>
+      <Box p={4} borderTop='1px' borderColor='gray.200' _dark={{ borderColor: 'gray.700' }}>
+        <VStack align='stretch' gap={4}>
+          <VStack align='stretch' gap={3}>
             <HStack gap={2} display={{ base: 'none', md: 'flex' }} data-testid='connection-status'>
               <Wifi size={16} aria-label='Connection status' />
               <Badge colorPalette='green' variant='solid' size='sm'>
@@ -101,6 +112,8 @@ export function Navigation({ onItemClick }: NavigationProps) {
               <Text
                 data-testid='last-refresh-time'
                 fontSize='xs'
+                fontWeight='medium'
+                letterSpacing='0.025em'
                 color='gray.500'
                 _dark={{ color: 'gray.400' }}
                 display={{ base: 'none', md: 'block' }}
@@ -116,7 +129,13 @@ export function Navigation({ onItemClick }: NavigationProps) {
                 aria-label='System status'
                 data-testid='system-status'
               />
-              <Text fontSize='xs' color='gray.600' _dark={{ color: 'gray.400' }}>
+              <Text 
+                fontSize='xs' 
+                fontWeight='medium'
+                letterSpacing='0.025em'
+                color='gray.600' 
+                _dark={{ color: 'gray.400' }}
+              >
                 System Online
               </Text>
             </HStack>
@@ -133,7 +152,12 @@ export function Navigation({ onItemClick }: NavigationProps) {
             px='0'
           >
             <LogOut size={16} />
-            <Text fontSize='sm' fontWeight='semibold'>
+            <Text 
+              fontSize='sm' 
+              fontWeight='medium'
+              letterSpacing='0.025em'
+              lineHeight='1.2'
+            >
               Logout
             </Text>
           </Button>

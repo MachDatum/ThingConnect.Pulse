@@ -39,14 +39,14 @@ public sealed class UserManagementController : ControllerBase
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 100) pageSize = 20;
 
-            var query = _userManager.Users.AsQueryable();
+            IQueryable<ApplicationUser> query = _userManager.Users.AsQueryable();
 
             // Apply filters
             if (!string.IsNullOrWhiteSpace(search))
             {
-                var searchLower = search.ToLower();
-                query = query.Where(u => 
-                    u.UserName!.ToLower().Contains(searchLower) || 
+                string searchLower = search.ToLower();
+                query = query.Where(u =>
+                    u.UserName!.ToLower().Contains(searchLower) ||
                     u.Email!.ToLower().Contains(searchLower));
             }
 
@@ -60,9 +60,9 @@ public sealed class UserManagementController : ControllerBase
                 query = query.Where(u => u.IsActive == isActive.Value);
             }
 
-            var totalCount = await query.CountAsync();
-            
-            var users = await query
+            int totalCount = await query.CountAsync();
+
+            List<UserInfoDto> users = await query
                 .OrderBy(u => u.UserName)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -104,7 +104,7 @@ public sealed class UserManagementController : ControllerBase
     {
         try
         {
-            var user = await _userManager.FindByIdAsync(id);
+            ApplicationUser? user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
                 return NotFound(new { message = "User not found" });
@@ -143,7 +143,7 @@ public sealed class UserManagementController : ControllerBase
             }
 
             // Check if username or email already exists
-            var existingUser = await _userManager.FindByNameAsync(request.Username);
+            ApplicationUser? existingUser = await _userManager.FindByNameAsync(request.Username);
             if (existingUser != null)
             {
                 return BadRequest(new { message = "Username already exists" });
@@ -165,7 +165,7 @@ public sealed class UserManagementController : ControllerBase
                 IsActive = true
             };
 
-            var result = await _userManager.CreateAsync(user, request.Password);
+            IdentityResult result = await _userManager.CreateAsync(user, request.Password);
             if (!result.Succeeded)
             {
                 var errors = result.Errors.Select(e => e.Description).ToList();
@@ -173,8 +173,8 @@ public sealed class UserManagementController : ControllerBase
                 return BadRequest(new { message = "User creation failed", errors });
             }
 
-            var currentUser = await _userManager.GetUserAsync(User);
-            _logger.LogInformation("User created: {Username} (ID: {UserId}) by admin {AdminId}", 
+            ApplicationUser? currentUser = await _userManager.GetUserAsync(User);
+            _logger.LogInformation("User created: {Username} (ID: {UserId}) by admin {AdminId}",
                 user.UserName, user.Id, currentUser?.Id);
 
             return CreatedAtAction(nameof(GetUserByIdAsync), new { id = user.Id }, new UserInfoDto
@@ -203,14 +203,14 @@ public sealed class UserManagementController : ControllerBase
     {
         try
         {
-            var user = await _userManager.FindByIdAsync(id);
+            ApplicationUser? user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
                 return NotFound(new { message = "User not found" });
             }
 
             // Prevent admin from deactivating themselves
-            var currentUser = await _userManager.GetUserAsync(User);
+            ApplicationUser? currentUser = await _userManager.GetUserAsync(User);
             if (currentUser != null && id == currentUser.Id && request.IsActive == false)
             {
                 return BadRequest(new { message = "Cannot deactivate your own account" });
@@ -221,12 +221,12 @@ public sealed class UserManagementController : ControllerBase
             if (!string.IsNullOrWhiteSpace(request.Username) && request.Username != user.UserName)
             {
                 // Check if new username already exists
-                var existingUser = await _userManager.FindByNameAsync(request.Username);
+                ApplicationUser? existingUser = await _userManager.FindByNameAsync(request.Username);
                 if (existingUser != null && existingUser.Id != id)
                 {
                     return BadRequest(new { message = "Username already exists" });
                 }
-                
+
                 changes.Add($"Username: {user.UserName} -> {request.Username}");
                 user.UserName = request.Username;
             }
@@ -234,12 +234,12 @@ public sealed class UserManagementController : ControllerBase
             if (!string.IsNullOrWhiteSpace(request.Email) && request.Email != user.Email)
             {
                 // Check if new email already exists
-                var existingUser = await _userManager.FindByEmailAsync(request.Email);
+                ApplicationUser? existingUser = await _userManager.FindByEmailAsync(request.Email);
                 if (existingUser != null && existingUser.Id != id)
                 {
                     return BadRequest(new { message = "Email already exists" });
                 }
-                
+
                 changes.Add($"Email: {user.Email} -> {request.Email}");
                 user.Email = request.Email;
             }
@@ -253,8 +253,8 @@ public sealed class UserManagementController : ControllerBase
             if (changes.Any())
             {
                 user.UpdatedAt = DateTimeOffset.UtcNow;
-                var result = await _userManager.UpdateAsync(user);
-                
+                IdentityResult result = await _userManager.UpdateAsync(user);
+
                 if (!result.Succeeded)
                 {
                     var errors = result.Errors.Select(e => e.Description).ToList();
@@ -262,7 +262,7 @@ public sealed class UserManagementController : ControllerBase
                     return BadRequest(new { message = "User update failed", errors });
                 }
 
-                _logger.LogInformation("User {UserId} updated by admin {AdminId}. Changes: {Changes}", 
+                _logger.LogInformation("User {UserId} updated by admin {AdminId}. Changes: {Changes}",
                     id, currentUser?.Id, string.Join("; ", changes));
             }
 
@@ -297,28 +297,28 @@ public sealed class UserManagementController : ControllerBase
                 return BadRequest(new { message = $"Invalid role. Allowed roles: {string.Join(", ", UserRoles.AllRoles)}" });
             }
 
-            var user = await _userManager.FindByIdAsync(id);
+            ApplicationUser? user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
                 return NotFound(new { message = "User not found" });
             }
 
             // Prevent admin from changing their own role if they're the only admin
-            var currentUser = await _userManager.GetUserAsync(User);
+            ApplicationUser? currentUser = await _userManager.GetUserAsync(User);
             if (currentUser != null && id == currentUser.Id && user.Role == UserRoles.Administrator && request.Role != UserRoles.Administrator)
             {
-                var adminCount = await _userManager.Users.CountAsync(u => u.Role == UserRoles.Administrator && u.IsActive);
+                int adminCount = await _userManager.Users.CountAsync(u => u.Role == UserRoles.Administrator && u.IsActive);
                 if (adminCount <= 1)
                 {
                     return BadRequest(new { message = "Cannot change role - you are the only active administrator" });
                 }
             }
 
-            var oldRole = user.Role;
+            string oldRole = user.Role;
             user.Role = request.Role;
             user.UpdatedAt = DateTimeOffset.UtcNow;
 
-            var result = await _userManager.UpdateAsync(user);
+            IdentityResult result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)
             {
                 var errors = result.Errors.Select(e => e.Description).ToList();
@@ -326,7 +326,7 @@ public sealed class UserManagementController : ControllerBase
                 return BadRequest(new { message = "Role change failed", errors });
             }
 
-            _logger.LogInformation("User {UserId} role changed from {OldRole} to {NewRole} by admin {AdminId}", 
+            _logger.LogInformation("User {UserId} role changed from {OldRole} to {NewRole} by admin {AdminId}",
                 id, oldRole, request.Role, currentUser?.Id);
 
             return Ok(new UserInfoDto
@@ -355,16 +355,16 @@ public sealed class UserManagementController : ControllerBase
     {
         try
         {
-            var user = await _userManager.FindByIdAsync(id);
+            ApplicationUser? user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
                 return NotFound(new { message = "User not found" });
             }
 
             // Remove current password and set new one
-            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var result = await _userManager.ResetPasswordAsync(user, token, request.NewPassword);
-            
+            string token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            IdentityResult result = await _userManager.ResetPasswordAsync(user, token, request.NewPassword);
+
             if (!result.Succeeded)
             {
                 var errors = result.Errors.Select(e => e.Description).ToList();
@@ -375,8 +375,8 @@ public sealed class UserManagementController : ControllerBase
             user.UpdatedAt = DateTimeOffset.UtcNow;
             await _userManager.UpdateAsync(user);
 
-            var currentUser = await _userManager.GetUserAsync(User);
-            _logger.LogInformation("Password reset for user {UserId} by admin {AdminId}", 
+            ApplicationUser? currentUser = await _userManager.GetUserAsync(User);
+            _logger.LogInformation("Password reset for user {UserId} by admin {AdminId}",
                 id, currentUser?.Id);
 
             return Ok(new { message = "Password reset successfully" });
@@ -396,14 +396,14 @@ public sealed class UserManagementController : ControllerBase
     {
         try
         {
-            var user = await _userManager.FindByIdAsync(id);
+            ApplicationUser? user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
                 return NotFound(new { message = "User not found" });
             }
 
             // Prevent admin from deleting themselves
-            var currentUser = await _userManager.GetUserAsync(User);
+            ApplicationUser? currentUser = await _userManager.GetUserAsync(User);
             if (currentUser != null && id == currentUser.Id)
             {
                 return BadRequest(new { message = "Cannot delete your own account" });
@@ -412,7 +412,7 @@ public sealed class UserManagementController : ControllerBase
             // Check if this is the only active admin
             if (user.Role == UserRoles.Administrator && user.IsActive)
             {
-                var adminCount = await _userManager.Users.CountAsync(u => u.Role == UserRoles.Administrator && u.IsActive);
+                int adminCount = await _userManager.Users.CountAsync(u => u.Role == UserRoles.Administrator && u.IsActive);
                 if (adminCount <= 1)
                 {
                     return BadRequest(new { message = "Cannot delete the only active administrator" });
@@ -423,7 +423,7 @@ public sealed class UserManagementController : ControllerBase
             user.IsActive = false;
             user.UpdatedAt = DateTimeOffset.UtcNow;
 
-            var result = await _userManager.UpdateAsync(user);
+            IdentityResult result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)
             {
                 var errors = result.Errors.Select(e => e.Description).ToList();
@@ -431,7 +431,7 @@ public sealed class UserManagementController : ControllerBase
                 return BadRequest(new { message = "User deletion failed", errors });
             }
 
-            _logger.LogInformation("User {UserId} ({Username}) deactivated by admin {AdminId}", 
+            _logger.LogInformation("User {UserId} ({Username}) deactivated by admin {AdminId}",
                 id, user.UserName, currentUser?.Id);
 
             return Ok(new { message = "User deactivated successfully" });
