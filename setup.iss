@@ -35,25 +35,43 @@ DisableReadyPage=no
 MinVersion=10.0.17763
 ArchitecturesAllowed=x64
 
+; Enable installation logging
+SetupLogging=yes
+
+; Icon configuration
+; SetupIconFile=thingconnect-logo.ico
+; UninstallDisplayIcon={app}\thingconnect-logo.ico
+
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
 ; Application binaries from publish output
 Source: "publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Include ThingConnect logo icon (commented out - file missing)
+; Source: "thingconnect-logo.ico"; DestDir: "{app}"; Flags: ignoreversion
+; Include manual service installation script for troubleshooting
+Source: "install-service.ps1"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\{#AppName}"; Filename: "http://localhost:8080"; IconFilename: "{app}\{#AppExeName}"
+Name: "{group}\{#AppName}"; Filename: "http://localhost:8090"
 Name: "{group}\Configuration"; Filename: "{commonappdata}\ThingConnect.Pulse\config\config.yaml"
 Name: "{group}\Logs Directory"; Filename: "{commonappdata}\ThingConnect.Pulse\logs"
+Name: "{group}\Installation Log"; Filename: "{log}"
+Name: "{group}\Manual Service Install"; Filename: "{app}\install-service.ps1"; Comment: "Run if service installation fails"
 Name: "{group}\{cm:UninstallProgram,{#AppName}}"; Filename: "{uninstallexe}"
 
 [Run]
-Filename: "http://localhost:8080"; Description: "Open {#AppName} Web Interface"; Flags: nowait postinstall shellexec skipifsilent
+; Install and start the Windows service
+Filename: "{sys}\sc.exe"; Parameters: "create ""{#ServiceName}"" start= auto DisplayName= ""{#ServiceDisplayName}"" binPath= ""{app}\{#AppExeName}"""; Flags: runhidden; StatusMsg: "Creating Windows service..."
+Filename: "{sys}\sc.exe"; Parameters: "description ""{#ServiceName}"" ""{#ServiceDescription}"""; Flags: runhidden; StatusMsg: "Setting service description..."
+Filename: "{sys}\sc.exe"; Parameters: "failure ""{#ServiceName}"" reset= 86400 actions= restart/5000/restart/5000/restart/5000"; Flags: runhidden; StatusMsg: "Configuring service recovery..."
+Filename: "{sys}\sc.exe"; Parameters: "start ""{#ServiceName}"""; Flags: runhidden; StatusMsg: "Starting Windows service..."
+Filename: "http://localhost:8090"; Description: "Open {#AppName} Web Interface"; Flags: nowait postinstall shellexec skipifsilent
 
 [UninstallRun]
-Filename: "sc.exe"; Parameters: "stop ""{#ServiceName}"""; Flags: runhidden
-Filename: "sc.exe"; Parameters: "delete ""{#ServiceName}"""; Flags: runhidden
+Filename: "{sys}\sc.exe"; Parameters: "stop ""{#ServiceName}"""; Flags: runhidden
+Filename: "{sys}\sc.exe"; Parameters: "delete ""{#ServiceName}"""; Flags: runhidden
 
 [Code]
 function IsServiceInstalled(): Boolean;
@@ -83,30 +101,7 @@ begin
     Sleep(1000); // Wait for service removal
 end;
 
-function InstallService(): Boolean;
-var
-  ServicePath: String;
-  ResultCode: Integer;
-begin
-  ServicePath := '"' + ExpandConstant('{app}') + '\{#AppExeName}"';
-  Log('Installing service: {#ServiceName} at ' + ServicePath);
-  
-  Result := Exec('sc.exe', Format('create "{#ServiceName}" binPath= "%s" DisplayName= "{#ServiceDisplayName}" start= auto', [ServicePath]), '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  
-  if Result then
-  begin
-    // Set service description
-    Exec('sc.exe', 'description "{#ServiceName}" "{#ServiceDescription}"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  end;
-end;
-
-function StartService(): Boolean;
-var
-  ResultCode: Integer;
-begin
-  Log('Starting service: {#ServiceName}');
-  Result := Exec('sc.exe', 'start "{#ServiceName}"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-end;
+// Service installation is now handled by [Run] section
 
 procedure CreateDirectoryStructure();
 var
@@ -164,29 +159,44 @@ begin
   case CurStep of
     ssInstall:
       begin
+        Log('=== Installation Step: Preparing installation ===');
+        Log('Installation target directory: ' + ExpandConstant('{app}'));
+        
         // Stop and remove existing service if present
         if IsServiceInstalled() then
         begin
-          StopService();
-          RemoveService();
+          Log('Existing service detected, will be stopped and removed...');
+          if StopService() then
+            Log('Existing service stopped successfully')
+          else
+            Log('WARNING: Failed to stop existing service');
+            
+          if RemoveService() then
+            Log('Existing service removed successfully')
+          else
+            Log('WARNING: Failed to remove existing service');
+        end else
+        begin
+          Log('No existing service found');
         end;
       end;
       
     ssPostInstall:
       begin
-        // Create directory structure
-        CreateDirectoryStructure();
+        Log('=== Post-Install Step: Creating directory structure ===');
         
-        // Install and start the Windows service
-        if InstallService() then
-        begin
-          Log('Service installed successfully');
-          if not StartService() then
-            MsgBox('Service installed but failed to start. You can start it manually from Services.msc', mbInformation, MB_OK);
-        end else
-        begin
-          MsgBox('Failed to install Windows service. You may need to install manually using install-service.ps1', mbError, MB_OK);
-        end;
+        // Create directory structure
+        Log('Creating application data directories...');
+        CreateDirectoryStructure();
+        Log('Directory structure created successfully');
+        
+        // Log the service installation commands that will be executed by [Run] section
+        Log('Service installation commands to be executed:');
+        Log('1. sc.exe create "ThingConnectPulseSvc" start= auto DisplayName= "ThingConnect Pulse Server" binPath= "' + ExpandConstant('{app}') + '\ThingConnect.Pulse.Server.exe"');
+        Log('2. sc.exe description "ThingConnectPulseSvc" "Network availability monitoring system for manufacturing sites"');
+        Log('3. sc.exe failure "ThingConnectPulseSvc" reset= 86400 actions= restart/5000/restart/5000/restart/5000');
+        Log('4. sc.exe start "ThingConnectPulseSvc"');
+        Log('Service installation will be handled by [Run] section');
       end;
   end;
 end;
