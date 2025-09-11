@@ -42,7 +42,7 @@ public sealed class PruneService : IPruneService
             {
                 // Count records that would be deleted
                 // Load all data and filter in-memory for SQLite compatibility
-                var allRecords = await _db.CheckResultsRaw
+                List<long> allRecords = await _db.CheckResultsRaw
                     .Select(c => c.Ts)
                     .ToListAsync(cancellationToken);
 

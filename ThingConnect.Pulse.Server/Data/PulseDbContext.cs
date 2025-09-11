@@ -1,10 +1,10 @@
 // ThingConnect Pulse - EF Core DbContext (v1)
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ThingConnect.Pulse.Server.Data;
 
-public sealed class PulseDbContext : DbContext
+public sealed class PulseDbContext : IdentityDbContext<ApplicationUser>
 {
     public DbSet<Group> Groups => Set<Group>();
     public DbSet<Endpoint> Endpoints => Set<Endpoint>();
@@ -20,7 +20,17 @@ public sealed class PulseDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder b)
     {
+        base.OnModelCreating(b);
+
         bool isSqlite = Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true;
+
+        b.Entity<ApplicationUser>(e =>
+        {
+            e.Property(x => x.Role).IsRequired().HasMaxLength(50);
+            e.Property(x => x.IsActive).HasDefaultValue(true);
+            e.HasIndex(x => x.Role);
+            e.HasIndex(x => x.IsActive);
+        });
 
         b.Entity<Group>(e =>
         {

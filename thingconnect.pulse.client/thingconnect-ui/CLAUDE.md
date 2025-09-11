@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ThingConnect UI is a component library for the ThingConnect platform, built with Chakra UI v3. It enforces design system consistency across all ThingConnect web applications.
 
 **Stack:**
+
 - React 19 + TypeScript
 - Chakra UI v3 (design system foundation)
 - Vite (build tool)
@@ -17,6 +18,7 @@ ThingConnect UI is a component library for the ThingConnect platform, built with
 ## Design System Architecture
 
 The system follows a hierarchical structure:
+
 - **Tokens** → Design tokens (colors, spacing, typography)
 - **Primitives** → Basic UI components from `@chakra-ui/react` (Box, Text, Button, etc.)
 - **Recipes/Composites** → Pre-built patterns in `src/components/ui/` using compound components
@@ -51,6 +53,7 @@ npm run test         # Run Vitest tests (when configured)
 ## Component Architecture
 
 ### Chakra UI v3 Primitives (Available from `@chakra-ui/react`)
+
 **IMPORTANT**: All fundamental primitive components are provided by Chakra UI v3. DO NOT create separate files for these:
 
 - **Layout**: Box, Flex, Stack, HStack, VStack, Grid, SimpleGrid, Container, Center, Spacer, Wrap, AspectRatio
@@ -64,6 +67,7 @@ npm run test         # Run Vitest tests (when configured)
 - **Utilities**: VisuallyHidden, Show, Separator, ClientOnly
 
 ### Recipe/Composite Components (`src/components/ui/`)
+
 These are pre-built, opinionated implementations using Chakra UI v3's compound component patterns:
 
 - **provider.tsx**: Main ChakraProvider setup with defaultSystem
@@ -79,7 +83,7 @@ These are pre-built, opinionated implementations using Chakra UI v3's compound c
 When creating or modifying components:
 
 1. **Use primitives directly**: Import Box, Text, Button, etc. directly from `@chakra-ui/react` - never create files for these
-2. **Use Chakra UI v3 MCP**: Always refer to the Chakra UI MCP for current v3 API patterns  
+2. **Use Chakra UI v3 MCP**: Always refer to the Chakra UI MCP for current v3 API patterns
 3. **Follow existing patterns**: Check similar components in `src/components/ui/` for recipe patterns
 4. **Maintain density**: Ensure components follow compact density guidelines (32/36/40px heights)
 5. **Support color modes**: Components must work in both light and dark modes

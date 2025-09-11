@@ -1,47 +1,52 @@
 ---
 sidebar_position: 1
+slug: /
 ---
 
-# Tutorial Intro
+# ThingConnect Pulse Documentation
 
-Let's discover **Docusaurus in less than 5 minutes**.
+Welcome to **ThingConnect Pulse** - the comprehensive network availability monitoring solution designed for manufacturing sites.
+
+## What is ThingConnect Pulse?
+
+ThingConnect Pulse is an enterprise-grade network monitoring system that provides real-time visibility into your critical infrastructure endpoints. Built specifically for manufacturing environments, it offers:
+
+- **Real-Time Monitoring**: Continuous ICMP, TCP, and HTTP endpoint monitoring with instant alerts
+- **Historical Analytics**: Automated data rollups and comprehensive reporting dashboards
+- **Manufacturing Reliability**: Enterprise-grade uptime monitoring designed for mission-critical operations
+- **Intelligent Alerting**: Automated outage detection with intelligent flap damping and configurable retry logic
+
+## Key Features
+
+- 🔍 **Multi-Protocol Monitoring**: ICMP ping, TCP port checks, and HTTP(S) endpoint monitoring
+- 📊 **Data Retention**: Raw monitoring data with 15-minute and daily rollups, 60-day retention
+- 🎯 **Manufacturing Focus**: Designed for industrial environments with robust alerting
+- 🔐 **Secure**: Cookie-based authentication with role-based access control
+- 📱 **Modern UI**: Responsive React-based interface with real-time updates
+- 🔧 **YAML Configuration**: Flexible, version-controlled endpoint configuration
 
 ## Getting Started
 
-Get started by **creating a new site**.
+To get started with ThingConnect Pulse:
 
-Or **try Docusaurus immediately** with **[docusaurus.new](https://docusaurus.new)**.
+1. **[Installation](getting-started/installation)** - Learn how to install and deploy ThingConnect Pulse
+2. **[Initial Setup](getting-started/initial-setup)** - Configure your first monitoring endpoints
+3. **[First Login](getting-started/first-login)** - Access your monitoring dashboard
 
-### What you'll need
+## Architecture Overview
 
-- [Node.js](https://nodejs.org/en/download/) version 18.0 or above:
-  - When installing Node.js, you are recommended to check all checkboxes related to dependencies.
+ThingConnect Pulse consists of:
 
-## Generate a new site
+- **Backend Server**: ASP.NET Core application with monitoring engine
+- **Frontend Client**: React-based web interface  
+- **Database**: SQLite for local data storage
+- **Configuration**: YAML-based endpoint definitions
 
-Generate a new Docusaurus site using the **classic template**.
+## Support
 
-The classic template will automatically be added to your project after you run the command:
+Need help? Check out our:
 
-```bash
-npm init docusaurus@latest my-website classic
-```
-
-You can type this command into Command Prompt, Powershell, Terminal, or any other integrated terminal of your code editor.
-
-The command also installs all necessary dependencies you need to run Docusaurus.
-
-## Start your site
-
-Run the development server:
-
-```bash
-cd my-website
-npm run start
-```
-
-The `cd` command changes the directory you're working with. In order to work with your newly created Docusaurus site, you'll need to navigate the terminal there.
-
-The `npm run start` command builds your website locally and serves it through a development server, ready for you to view at http://localhost:3000/.
-
-Open `docs/intro.md` (this page) and edit some lines: the site **reloads automatically** and displays your changes.
+- [User Guide](user-guide/dashboard) - Step-by-step instructions for common tasks
+- [Administration Guide](admin/system-settings) - Advanced configuration and management
+- [API Reference](api/overview) - Integration and automation documentation
+- [GitHub Issues](https://github.com/MachDatum/ThingConnect.Pulse/issues) - Bug reports and feature requests

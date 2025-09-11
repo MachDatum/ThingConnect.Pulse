@@ -61,13 +61,13 @@ public sealed class Outage
     public long? EndedTs { get; set; }
     public int? DurationSeconds { get; set; }
     public string? LastError { get; set; }
-    
+
     /// <summary>
     /// Timestamp when monitoring was lost during this outage (service downtime).
     /// If not null, indicates outage duration may be inaccurate due to monitoring gap.
     /// </summary>
     public long? MonitoringStoppedTs { get; set; }
-    
+
     /// <summary>
     /// True if this outage spans a period when monitoring service was unavailable.
     /// Indicates uncertainty in the actual endpoint availability during that time.

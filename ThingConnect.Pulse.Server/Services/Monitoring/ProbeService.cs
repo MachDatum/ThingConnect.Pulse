@@ -52,7 +52,7 @@ public sealed class ProbeService : IProbeService
         try
         {
             using var ping = new Ping();
-            Stopwatch stopwatch = Stopwatch.StartNew();
+            var stopwatch = Stopwatch.StartNew();
 
             PingReply reply = await ping.SendPingAsync(host, timeoutMs);
             stopwatch.Stop();
@@ -78,11 +78,11 @@ public sealed class ProbeService : IProbeService
 
         try
         {
-            using TcpClient tcpClient = new TcpClient();
-            Stopwatch stopwatch = Stopwatch.StartNew();
+            using var tcpClient = new TcpClient();
+            var stopwatch = Stopwatch.StartNew();
 
             // Create a timeout task
-            Task timeoutTask = Task.Delay(timeoutMs, cancellationToken);
+            var timeoutTask = Task.Delay(timeoutMs, cancellationToken);
             Task connectTask = tcpClient.ConnectAsync(host, port);
 
             Task completedTask = await Task.WhenAny(connectTask, timeoutTask);

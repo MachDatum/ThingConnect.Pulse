@@ -1,23 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dotnet format:*)",
-      "Bash(dotnet build)",
-      "Bash(dotnet add package:*)",
+      "Bash(dotnet:*)",
+      "Bash(npm:*)",
+      "Bash(npx tsc:*)",
       "Bash(curl:*)",
       "Bash(taskkill:*)",
-      "Bash(dotnet clean:*)",
-<<<<<<< HEAD
-      "mcp__chakra-ui__get_component_example",
-      "Bash(npm run build:*)",
-      "Bash(npm run lint)",
-      "mcp__chakra-ui__list_components"
-=======
-      "Bash(dotnet run:*)",
-      "Bash(powershell:*)",
-      "Bash(dotnet build:*)",
-      "Bash(powershell:*)"
->>>>>>> eca8109102259deb41bba4cf33476a6cf6005f65
+      "mcp__chakra-ui",
+      "mcp__serena",
+      "Bash(sqlite3:*)",
+      "Bash(dir:*)",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "ask": []

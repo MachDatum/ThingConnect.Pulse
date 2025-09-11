@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ThingConnect.Pulse.Server.Data;
 using ThingConnect.Pulse.Server.Models;
 using ThingConnect.Pulse.Server.Services;
 
@@ -21,11 +23,12 @@ public sealed class ConfigurationController : ControllerBase
     /// <param name="dryRun">If true, only validate and preview changes without applying</param>
     /// <returns>Apply result with counts of changes made or preview of changes</returns>
     [HttpPost("apply")]
+    [Authorize(Roles = UserRoles.Administrator)]
     public async Task<ActionResult<ApplyResultDto>> ApplyAsync([FromQuery] bool dryRun = false)
     {
         try
         {
-            using StreamReader reader = new StreamReader(Request.Body);
+            using var reader = new StreamReader(Request.Body);
             string yamlContent = await reader.ReadToEndAsync();
 
             if (string.IsNullOrWhiteSpace(yamlContent))
@@ -88,6 +91,7 @@ public sealed class ConfigurationController : ControllerBase
     /// </summary>
     /// <returns>List of configuration versions ordered by applied timestamp descending</returns>
     [HttpGet("versions")]
+    [Authorize]
     public async Task<ActionResult<List<ConfigurationVersionDto>>> GetVersionsAsync()
     {
         try
@@ -107,6 +111,7 @@ public sealed class ConfigurationController : ControllerBase
     /// <param name="id">Configuration version ID</param>
     /// <returns>Plain YAML content</returns>
     [HttpGet("versions/{id}")]
+    [Authorize]
     public async Task<ActionResult> GetVersionAsync(string id)
     {
         try
@@ -130,6 +135,7 @@ public sealed class ConfigurationController : ControllerBase
     /// </summary>
     /// <returns>Plain YAML content of the active configuration</returns>
     [HttpGet("current")]
+    [Authorize]
     public async Task<ActionResult> GetCurrentAsync()
     {
         try

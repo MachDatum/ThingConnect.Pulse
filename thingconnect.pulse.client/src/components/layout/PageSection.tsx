@@ -11,21 +11,17 @@ export interface PageSectionProps {
   testId?: string;
 }
 
-export function PageSection({ 
-  title, 
-  collapsible = false, 
-  defaultOpen = true, 
+export function PageSection({
+  title,
+  collapsible = false,
+  defaultOpen = true,
   children,
-  testId
+  testId,
 }: PageSectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   if (!title) {
-    return (
-      <Box data-testid={testId}>
-        {children}
-      </Box>
-    );
+    return <Box data-testid={testId}>{children}</Box>;
   }
 
   if (collapsible) {
@@ -60,13 +56,8 @@ export function PageSection({
   }
 
   return (
-    <VStack align="stretch" gap={2} data-testid={testId}>
-      <Heading
-        size="sm"
-        fontSize="sm"
-        fontWeight="medium"
-        py={1}
-      >
+    <VStack align='stretch' gap={2} data-testid={testId}>
+      <Heading size='sm' fontSize='sm' fontWeight='medium' py={1}>
         {title}
       </Heading>
       {children}

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ThingConnect.Pulse.Server.Models;
 using ThingConnect.Pulse.Server.Services;
@@ -6,6 +7,7 @@ namespace ThingConnect.Pulse.Server.Controllers;
 
 [ApiController]
 [Route("api/history")]
+[Authorize]
 public sealed class HistoryController : ControllerBase
 {
     private readonly IHistoryService _historyService;

@@ -1,6 +1,7 @@
 using NJsonSchema;
 using ThingConnect.Pulse.Server.Data;
 using ThingConnect.Pulse.Server.Models;
+using ThingConnect.Pulse.Server.Services.Monitoring;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -11,17 +12,19 @@ public sealed class ConfigurationParser
     private readonly IDeserializer _yamlDeserializer;
     private readonly JsonSchema _schema;
     private readonly ILogger<ConfigurationParser> _logger;
+    private readonly IDiscoveryService _discoveryService;
 
-    private ConfigurationParser(JsonSchema schema, ILogger<ConfigurationParser> logger)
+    private ConfigurationParser(JsonSchema schema, ILogger<ConfigurationParser> logger, IDiscoveryService discoveryService)
     {
         _yamlDeserializer = new DeserializerBuilder()
             .WithNamingConvention(UnderscoredNamingConvention.Instance)
             .Build();
         _schema = schema;
         _logger = logger;
+        _discoveryService = discoveryService;
     }
 
-    public static async Task<ConfigurationParser> CreateAsync(ILogger<ConfigurationParser> logger)
+    public static async Task<ConfigurationParser> CreateAsync(ILogger<ConfigurationParser> logger, IDiscoveryService discoveryService)
     {
         string assemblyLocation = System.Reflection.Assembly.GetExecutingAssembly().Location;
         string? assemblyDirectory = Path.GetDirectoryName(assemblyLocation);
@@ -43,7 +46,7 @@ public sealed class ConfigurationParser
         string schemaJson = await File.ReadAllTextAsync(schemaPath);
         JsonSchema schema = await JsonSchema.FromJsonAsync(schemaJson);
         logger.LogInformation("Configuration schema loaded successfully");
-        return new ConfigurationParser(schema, logger);
+        return new ConfigurationParser(schema, logger, discoveryService);
     }
 
     public Task<(ConfigurationYaml? Configuration, ValidationErrorsDto? Errors)> ParseAndValidateAsync(string yamlContent)
@@ -62,7 +65,6 @@ public sealed class ConfigurationParser
                 .Build();
             string configJson = serializer.Serialize(config);
 
-            return Task.FromResult<(ConfigurationYaml? Configuration, ValidationErrorsDto? Errors)>((config, null));
             // Perform schema validation
             ICollection<NJsonSchema.Validation.ValidationError> validationResults = _schema.Validate(configJson);
 
@@ -135,7 +137,7 @@ public sealed class ConfigurationParser
         }
     }
 
-    public (List<Group> Groups, List<Data.Endpoint> Endpoints) ConvertToEntities(ConfigurationYaml config)
+    public async Task<(List<Group> Groups, List<Data.Endpoint> Endpoints)> ConvertToEntitiesAsync(ConfigurationYaml config)
     {
         var groups = config.Groups.Select(g => new Group
         {
@@ -146,21 +148,32 @@ public sealed class ConfigurationParser
             SortOrder = g.SortOrder ?? 0
         }).ToList();
 
-        var endpoints = config.Targets.Select(t => new Data.Endpoint
+        // Convert config targets to dynamic objects for DiscoveryService
+        var dynamicTargets = config.Targets.Select(t => new
         {
-            Id = Guid.NewGuid(),
-            Name = t.Name ?? "Unnamed",
-            GroupId = t.Group,
-            Type = t.Type,
-            Host = t.Host ?? t.Cidr ?? t.Wildcard ?? "localhost",
-            Port = t.Port,
-            IntervalSeconds = t.IntervalSeconds ?? config.Defaults.IntervalSeconds,
-            TimeoutMs = t.TimeoutMs ?? config.Defaults.TimeoutMs,
-            Retries = t.Retries ?? config.Defaults.Retries,
-            HttpPath = t.HttpPath,
-            HttpMatch = t.HttpMatch ?? config.Defaults.Http?.ExpectText,
-            Enabled = t.Enabled ?? true
-        }).ToList();
+            type = t.Type.ToString().ToLower(),
+            host = t.Host,
+            cidr = t.Cidr,
+            wildcard = t.Wildcard,
+            port = t.Port,
+            name = t.Name,
+            group = t.Group,
+            interval_seconds = t.IntervalSeconds ?? config.Defaults.IntervalSeconds,
+            timeout_ms = t.TimeoutMs ?? config.Defaults.TimeoutMs,
+            retries = t.Retries ?? config.Defaults.Retries,
+            path = t.HttpPath,
+            expect_text = t.HttpMatch ?? config.Defaults.Http?.ExpectText,
+            enabled = t.Enabled ?? true,
+            notes = t.Notes,
+            expected_rtt_ms = t.ExpectedRttMs
+        }).Cast<dynamic>().ToList();
+
+        // Use DiscoveryService to expand CIDR ranges, wildcards, and hostnames
+        IEnumerable<Data.Endpoint> expandedEndpoints = await _discoveryService.ExpandTargetsAsync(dynamicTargets);
+        var endpoints = expandedEndpoints.ToList();
+
+        _logger.LogInformation("Converted configuration with {GroupCount} groups and {TargetCount} targets into {EndpointCount} endpoints",
+            groups.Count, config.Targets.Count, endpoints.Count);
 
         return (groups, endpoints);
     }

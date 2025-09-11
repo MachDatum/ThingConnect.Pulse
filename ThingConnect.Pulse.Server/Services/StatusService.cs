@@ -113,7 +113,7 @@ public sealed class StatusService : IStatusService
             return cachedGroups;
         }
 
-        var groups = await _context.Groups
+        List<Group> groups = await _context.Groups
             .AsNoTracking()
             .OrderBy(g => g.Name)
             .ToListAsync();

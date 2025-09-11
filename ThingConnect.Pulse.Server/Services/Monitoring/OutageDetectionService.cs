@@ -86,21 +86,21 @@ public sealed class OutageDetectionService : IOutageDetectionService
         try
         {
             long now = UnixTimestamp.Now();
-            
+
             // Check for monitoring gap (when was the last monitoring session)
-            var lastSession = await _context.MonitoringSessions
+            MonitoringSession? lastSession = await _context.MonitoringSessions
                 .OrderByDescending(s => s.StartedTs)
                 .FirstOrDefaultAsync(cancellationToken);
 
             long? lastMonitoringTime = lastSession?.EndedTs ?? lastSession?.StartedTs;
-            bool hasMonitoringGap = lastMonitoringTime.HasValue && 
+            bool hasMonitoringGap = lastMonitoringTime.HasValue &&
                                    (now - lastMonitoringTime.Value) > 300; // 5 minutes in seconds
 
             if (hasMonitoringGap)
             {
                 _logger.LogWarning("Detected monitoring gap since {LastMonitoringTime}. " +
                     "Handling open outages with uncertainty.", UnixTimestamp.FromUnixSeconds(lastMonitoringTime!.Value));
-                
+
                 await HandleMonitoringGapAsync(lastMonitoringTime.Value, now, cancellationToken);
             }
 
@@ -110,23 +110,23 @@ public sealed class OutageDetectionService : IOutageDetectionService
                 StartedTs = now,
                 Version = GetType().Assembly.GetName().Version?.ToString()
             };
-            
+
             _context.MonitoringSessions.Add(newSession);
             await _context.SaveChangesAsync(cancellationToken);
-            
+
             // Load endpoints and current states
-            var endpoints = await _context.Endpoints
+            List<Data.Endpoint> endpoints = await _context.Endpoints
                 .Where(e => e.Enabled)
                 .ToListAsync(cancellationToken);
 
-            var openOutages = await _context.Outages
+            List<Outage> openOutages = await _context.Outages
                 .Where(o => o.EndedTs == null)
                 .ToListAsync(cancellationToken);
 
             var openOutagesByEndpoint = openOutages.ToDictionary(o => o.EndpointId, o => o.Id);
 
             int initializedCount = 0;
-            foreach (var endpoint in endpoints)
+            foreach (Data.Endpoint? endpoint in endpoints)
             {
                 var state = new MonitorState
                 {
@@ -141,7 +141,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
                 }
             }
 
-            _logger.LogInformation("Started monitoring session {SessionId}, initialized {Count} states", 
+            _logger.LogInformation("Started monitoring session {SessionId}, initialized {Count} states",
                 newSession.Id, initializedCount);
         }
         catch (Exception ex)
@@ -150,15 +150,15 @@ public sealed class OutageDetectionService : IOutageDetectionService
         }
     }
 
-    private async Task HandleMonitoringGapAsync(long lastMonitoringTime, 
+    private async Task HandleMonitoringGapAsync(long lastMonitoringTime,
         long now, CancellationToken cancellationToken)
     {
         // Handle open outages that span the monitoring gap
-        var openOutages = await _context.Outages
+        List<Outage> openOutages = await _context.Outages
             .Where(o => o.EndedTs == null && o.StartedTs < lastMonitoringTime)
             .ToListAsync(cancellationToken);
 
-        foreach (var outage in openOutages)
+        foreach (Outage? outage in openOutages)
         {
             // Mark outage as having monitoring gap and close it at last known monitoring time
             outage.EndedTs = lastMonitoringTime;
@@ -172,11 +172,11 @@ public sealed class OutageDetectionService : IOutageDetectionService
         }
 
         // Reset endpoint statuses to null since we don't know their current state
-        var endpoints = await _context.Endpoints
+        List<Data.Endpoint> endpoints = await _context.Endpoints
             .Where(e => e.Enabled)
             .ToListAsync(cancellationToken);
 
-        foreach (var endpoint in endpoints)
+        foreach (Data.Endpoint? endpoint in endpoints)
         {
             endpoint.LastStatus = null; // Unknown status after monitoring gap
             endpoint.LastChangeTs = now;
@@ -195,7 +195,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
             long now = UnixTimestamp.Now();
 
             // Close current monitoring session
-            var currentSession = await _context.MonitoringSessions
+            MonitoringSession? currentSession = await _context.MonitoringSessions
                 .Where(s => s.EndedTs == null)
                 .OrderByDescending(s => s.StartedTs)
                 .FirstOrDefaultAsync(cancellationToken);
@@ -204,16 +204,16 @@ public sealed class OutageDetectionService : IOutageDetectionService
             {
                 currentSession.EndedTs = now;
                 currentSession.ShutdownReason = shutdownReason ?? "Graceful shutdown";
-                
+
                 _logger.LogInformation("Closed monitoring session {SessionId}", currentSession.Id);
             }
 
             // Mark all open outages with monitoring stop time (but don't close them yet)
-            var openOutages = await _context.Outages
+            List<Outage> openOutages = await _context.Outages
                 .Where(o => o.EndedTs == null && o.MonitoringStoppedTs == null)
                 .ToListAsync(cancellationToken);
 
-            foreach (var outage in openOutages)
+            foreach (Outage? outage in openOutages)
             {
                 outage.MonitoringStoppedTs = now;
             }
@@ -232,7 +232,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
         string? error, CancellationToken cancellationToken)
     {
         // Create new outage record
-        Outage outage = new Outage
+        var outage = new Outage
         {
             EndpointId = endpointId,
             StartedTs = timestamp,
@@ -289,7 +289,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
 
     private async Task SaveCheckResultAsync(CheckResult result, CancellationToken cancellationToken)
     {
-        CheckResultRaw rawResult = new CheckResultRaw
+        var rawResult = new CheckResultRaw
         {
             EndpointId = result.EndpointId,
             Ts = UnixTimestamp.ToUnixSeconds(result.Timestamp),
@@ -320,7 +320,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
         {
             _context.CheckResultsRaw.AddRange(rawResults);
             await _context.SaveChangesAsync(cancellationToken);
-            
+
             _logger.LogDebug("Batch saved {Count} check results", rawResults.Count);
         }
     }

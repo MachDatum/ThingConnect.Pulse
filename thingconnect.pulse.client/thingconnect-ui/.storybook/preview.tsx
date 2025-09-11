@@ -1,5 +1,5 @@
-import type { Preview } from '@storybook/react-vite'
-import { Provider } from '../src/components/ui/provider'
+import type { Preview } from '@storybook/react-vite';
+import { Provider } from '../src/components/ui/provider';
 
 const preview: Preview = {
   parameters: {
@@ -24,7 +24,7 @@ const preview: Preview = {
     },
   },
   decorators: [
-    (Story) => (
+    Story => (
       <Provider>
         <div style={{ minHeight: '100vh' }}>
           <Story />
