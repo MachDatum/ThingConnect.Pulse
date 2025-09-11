@@ -62,6 +62,7 @@ export function Page({
             },
           },
         }}
+        mb={2}
       >
         <PageContent
           isLoading={isLoading}

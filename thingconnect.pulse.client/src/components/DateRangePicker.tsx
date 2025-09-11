@@ -69,7 +69,10 @@ export function DateRangePicker({ value, onChange, disabled = false }: DateRange
         variant='outline'
         onClick={() => setIsExpanded(!isExpanded)}
         disabled={disabled}
-        size='sm'
+        size='xs'
+        px={2}
+        py={1}
+        w='full'
       >
         <Calendar size={16} />
         {value.from && value.to
@@ -86,7 +89,7 @@ export function DateRangePicker({ value, onChange, disabled = false }: DateRange
           bg='white'
           border='1px'
           borderColor='gray.200'
-          _dark={{ bg: 'gray.800', borderColor: 'gray.600' }}
+          _dark={{ bg: 'gray.900', borderColor: 'gray.600' }}
           borderRadius='md'
           shadow='lg'
           minW='320px'

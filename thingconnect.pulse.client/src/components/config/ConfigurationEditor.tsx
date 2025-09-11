@@ -381,7 +381,7 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
             />
           )}
         </HStack>
-        <HStack gap={2} mb='2'>
+        <HStack gap={2}>
           <Button
             variant='outline'
             onClick={handleValidate}

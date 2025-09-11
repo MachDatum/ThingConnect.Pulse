@@ -56,7 +56,7 @@ export function PageSection({
   }
 
   return (
-    <VStack align='stretch' gap={2} data-testid={testId}>
+    <VStack align='stretch' gap={1} data-testid={testId}>
       <Heading size='sm' fontSize='sm' fontWeight='medium' py={1}>
         {title}
       </Heading>

@@ -1,26 +1,42 @@
 import { useState, useMemo } from 'react';
-import { Box, Table, Text, Badge, HStack, Button, IconButton, VStack } from '@chakra-ui/react';
+import {
+  Box,
+  Table,
+  Text,
+  Badge,
+  HStack,
+  VStack,
+  IconButton,
+  Pagination,
+  ButtonGroup,
+  Skeleton,
+} from '@chakra-ui/react';
 import { ChevronLeft, ChevronRight, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import type { RollupBucket, DailyBucket, RawCheck } from '@/api/types';
 import type { BucketType } from '@/types/bucket';
 
 export interface HistoryTableProps {
-  data: {
-    raw: RawCheck[];
-    rollup15m: RollupBucket[];
-    rollupDaily: DailyBucket[];
-  };
+  data:
+    | {
+        raw?: RawCheck[] | null;
+        rollup15m?: RollupBucket[] | null;
+        rollupDaily?: DailyBucket[] | null;
+      }
+    | null
+    | undefined;
   bucket: BucketType;
   pageSize?: number;
+  isLoading?: boolean;
 }
 
-export function HistoryTable({ data, bucket, pageSize = 20 }: HistoryTableProps) {
-  const [currentPage, setCurrentPage] = useState(0);
+export function HistoryTable({ data, bucket, pageSize = 20, isLoading }: HistoryTableProps) {
+  const [currentPage, setCurrentPage] = useState(1);
 
   const tableData = useMemo(() => {
+    if (!data) return [];
     switch (bucket) {
       case 'raw':
-        return data.raw
+        return (data.raw ?? [])
           .map(check => ({
             timestamp: check.ts,
             displayTime: new Date(check.ts).toLocaleString(),
@@ -32,7 +48,7 @@ export function HistoryTable({ data, bucket, pageSize = 20 }: HistoryTableProps)
           .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
       case '15m':
-        return data.rollup15m
+        return (data.rollup15m ?? [])
           .map(bucket => ({
             timestamp: bucket.bucketTs,
             displayTime: new Date(bucket.bucketTs).toLocaleString(),
@@ -44,7 +60,7 @@ export function HistoryTable({ data, bucket, pageSize = 20 }: HistoryTableProps)
           .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
       case 'daily':
-        return data.rollupDaily
+        return (data.rollupDaily ?? [])
           .map(bucket => ({
             timestamp: bucket.bucketDate,
             displayTime: new Date(bucket.bucketDate).toLocaleDateString('en-US', {
@@ -64,24 +80,21 @@ export function HistoryTable({ data, bucket, pageSize = 20 }: HistoryTableProps)
     }
   }, [data, bucket]);
 
+  const totalPages = Math.ceil(tableData.length / pageSize);
+
   const paginatedData = useMemo(() => {
-    const startIndex = currentPage * pageSize;
+    const startIndex = (currentPage - 1) * pageSize;
     return tableData.slice(startIndex, startIndex + pageSize);
   }, [tableData, currentPage, pageSize]);
 
-  const totalPages = Math.ceil(tableData.length / pageSize);
-
   const getStatusBadge = (status?: string) => {
     if (!status) return null;
-
-    const statusConfig = {
+    const config = {
       up: { color: 'green', icon: CheckCircle },
       down: { color: 'red', icon: AlertCircle },
-    };
+    }[status as 'up' | 'down'];
 
-    const config = statusConfig[status as keyof typeof statusConfig];
     if (!config) return <Badge>{status}</Badge>;
-
     const Icon = config.icon;
     return (
       <Badge colorPalette={config.color} size='sm'>
@@ -103,7 +116,7 @@ export function HistoryTable({ data, bucket, pageSize = 20 }: HistoryTableProps)
     return `${uptime.toFixed(1)}%`;
   };
 
-  if (tableData.length === 0) {
+  if (!isLoading && tableData.length === 0) {
     return (
       <Box
         p={8}
@@ -128,11 +141,11 @@ export function HistoryTable({ data, bucket, pageSize = 20 }: HistoryTableProps)
   }
 
   return (
-    <VStack gap={4} align='stretch'>
-      <Box overflowX='auto'>
-        <Table.Root size='sm'>
+    <VStack flex={1} minH={0} align='stretch' gap={2}>
+      <Table.ScrollArea borderWidth='1px' rounded='md' flex={1} minH={0} overflow='auto'>
+        <Table.Root size='sm' stickyHeader>
           <Table.Header>
-            <Table.Row>
+            <Table.Row bg='gray.100' _dark={{ bg: 'gray.800' }}>
               <Table.ColumnHeader>Timestamp</Table.ColumnHeader>
               {bucket === 'raw' ? (
                 <>
@@ -151,133 +164,125 @@ export function HistoryTable({ data, bucket, pageSize = 20 }: HistoryTableProps)
           </Table.Header>
 
           <Table.Body>
-            {paginatedData.map(row => (
-              <Table.Row key={`${row.timestamp}-${row.type}`}>
-                <Table.Cell>
-                  <Text fontSize='sm' fontFamily='mono'>
-                    {row.displayTime}
-                  </Text>
-                </Table.Cell>
+            {isLoading
+              ? Array.from({ length: 8 }).map((_, i) => (
+                  <Table.Row key={`skeleton-${i}`}>
+                    {Array.from({ length: bucket === 'raw' ? 4 : 4 }).map((_, j) => (
+                      <Table.Cell key={j}>
+                        <Skeleton height='16px' w='80%' />
+                      </Table.Cell>
+                    ))}
+                  </Table.Row>
+                ))
+              : paginatedData.map(row => (
+                  <Table.Row key={`${row.timestamp}-${row.type}`}>
+                    <Table.Cell>
+                      <Text fontSize='sm' fontFamily='mono'>
+                        {row.displayTime}
+                      </Text>
+                    </Table.Cell>
 
-                {row.type === 'raw' ? (
-                  <>
-                    <Table.Cell>
-                      {getStatusBadge('status' in row ? row.status : undefined)}
-                    </Table.Cell>
-                    <Table.Cell>
-                      <Text fontSize='sm' fontFamily='mono'>
-                        {formatResponseTime(row.responseTime)}
-                      </Text>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <Text
-                        fontSize='sm'
-                        color={'error' in row && row.error ? 'red.600' : 'gray.500'}
-                        _dark={{ color: 'error' in row && row.error ? 'red.400' : 'gray.400' }}
-                        maxW='200px'
-                        overflow='hidden'
-                        textOverflow='ellipsis'
-                        whiteSpace='nowrap'
-                        title={'error' in row ? row.error || undefined : undefined}
-                      >
-                        {'error' in row ? row.error || '-' : '-'}
-                      </Text>
-                    </Table.Cell>
-                  </>
-                ) : (
-                  <>
-                    <Table.Cell>
-                      <Badge
-                        colorPalette={
-                          'uptime' in row && row.uptime >= 99
-                            ? 'green'
-                            : 'uptime' in row && row.uptime >= 95
-                              ? 'yellow'
-                              : 'red'
-                        }
-                        size='sm'
-                      >
-                        {formatUptime('uptime' in row ? row.uptime : undefined)}
-                      </Badge>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <Text fontSize='sm' fontFamily='mono'>
-                        {formatResponseTime(row.responseTime)}
-                      </Text>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <Badge
-                        colorPalette={'downEvents' in row && row.downEvents > 0 ? 'red' : 'green'}
-                        size='sm'
-                      >
-                        {'downEvents' in row ? row.downEvents : 0}
-                      </Badge>
-                    </Table.Cell>
-                  </>
-                )}
-              </Table.Row>
-            ))}
+                    {row.type === 'raw' ? (
+                      <>
+                        <Table.Cell>{getStatusBadge(row.status)}</Table.Cell>
+                        <Table.Cell>
+                          <Text fontSize='sm' fontFamily='mono'>
+                            {formatResponseTime(row.responseTime)}
+                          </Text>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Text
+                            fontSize='sm'
+                            color={row.error ? 'red.600' : 'gray.500'}
+                            _dark={{ color: row.error ? 'red.400' : 'gray.400' }}
+                            maxW='200px'
+                            overflow='hidden'
+                            textOverflow='ellipsis'
+                            whiteSpace='nowrap'
+                            title={row.error || undefined}
+                          >
+                            {row.error || '-'}
+                          </Text>
+                        </Table.Cell>
+                      </>
+                    ) : (
+                      <>
+                        <Table.Cell>
+                          <Badge
+                            colorPalette={
+                              row.uptime && row.uptime >= 99
+                                ? 'green'
+                                : row.uptime && row.uptime >= 95
+                                  ? 'yellow'
+                                  : 'red'
+                            }
+                            size='sm'
+                          >
+                            {formatUptime(row.uptime)}
+                          </Badge>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Text fontSize='sm' fontFamily='mono'>
+                            {formatResponseTime(row.responseTime)}
+                          </Text>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Badge
+                            colorPalette={row.downEvents && row.downEvents > 0 ? 'red' : 'green'}
+                            size='sm'
+                          >
+                            {row.downEvents ?? 0}
+                          </Badge>
+                        </Table.Cell>
+                      </>
+                    )}
+                  </Table.Row>
+                ))}
           </Table.Body>
         </Table.Root>
-      </Box>
+      </Table.ScrollArea>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <HStack justify='space-between' align='center'>
-          <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
-            Showing {currentPage * pageSize + 1}-
-            {Math.min((currentPage + 1) * pageSize, tableData.length)} of {tableData.length} entries
-          </Text>
-
-          <HStack gap={2}>
-            <IconButton
-              size='sm'
-              variant='outline'
-              onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
-              disabled={currentPage === 0}
-              aria-label='Previous page'
-            >
-              <ChevronLeft size={16} />
-            </IconButton>
-
-            <HStack gap={1}>
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNum: number;
-                if (totalPages <= 5) {
-                  pageNum = i;
-                } else if (currentPage <= 2) {
-                  pageNum = i;
-                } else if (currentPage >= totalPages - 3) {
-                  pageNum = totalPages - 5 + i;
-                } else {
-                  pageNum = currentPage - 2 + i;
-                }
-
-                return (
-                  <Button
-                    key={pageNum}
+      {!isLoading && totalPages > 1 && (
+        <Box flexShrink={0}>
+          <Pagination.Root
+            count={tableData.length}
+            pageSize={pageSize}
+            page={currentPage}
+            onPageChange={details => setCurrentPage(details.page)}
+          >
+            <ButtonGroup variant='ghost' size='sm' w='full' justifyContent='center'>
+              <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }} flex='1'>
+                {tableData.length > 0
+                  ? `Showing ${(currentPage - 1) * pageSize + 1} - ${Math.min(
+                      currentPage * pageSize,
+                      tableData.length
+                    )} of ${tableData.length} entries`
+                  : `0 of 0`}
+              </Text>
+              <Pagination.PrevTrigger asChild>
+                <IconButton aria-label='Previous page'>
+                  <ChevronLeft />
+                </IconButton>
+              </Pagination.PrevTrigger>
+              <Pagination.Items
+                render={page => (
+                  <IconButton
+                    key={page.value}
+                    variant={page.value === currentPage ? 'outline' : 'ghost'}
                     size='sm'
-                    variant={pageNum === currentPage ? 'solid' : 'outline'}
-                    onClick={() => setCurrentPage(pageNum)}
-                    minW='32px'
                   >
-                    {pageNum + 1}
-                  </Button>
-                );
-              })}
-            </HStack>
-
-            <IconButton
-              size='sm'
-              variant='outline'
-              onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
-              disabled={currentPage >= totalPages - 1}
-              aria-label='Next page'
-            >
-              <ChevronRight size={16} />
-            </IconButton>
-          </HStack>
-        </HStack>
+                    {page.value}
+                  </IconButton>
+                )}
+              />
+              <Pagination.NextTrigger asChild>
+                <IconButton aria-label='Next page'>
+                  <ChevronRight />
+                </IconButton>
+              </Pagination.NextTrigger>
+            </ButtonGroup>
+          </Pagination.Root>
+        </Box>
       )}
     </VStack>
   );
