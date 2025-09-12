@@ -374,9 +374,9 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
               flex='1'
               status='success'
               title={
-                applyResult.warnings?.length
-                  ? applyResult.warnings[0]
-                  : `Configuration applied: ${applyResult.added} added, ${applyResult.updated} updated, ${applyResult.removed} removed`
+                applyResult.validation_errors?.length
+                  ? applyResult.validation_errors[0]
+                  : `Configuration applied: ${applyResult.changes.filter(c => c.type === 'add').length} added, ${applyResult.changes.filter(c => c.type === 'update').length} updated, ${applyResult.changes.filter(c => c.type === 'remove').length} removed`
               }
             />
           )}
