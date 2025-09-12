@@ -1,5 +1,15 @@
 import { useMemo } from 'react';
-import { SimpleGrid, Stat, HStack, Badge, Icon, Skeleton } from '@chakra-ui/react';
+import {
+  SimpleGrid,
+  Stat,
+  HStack,
+  Badge,
+  Icon,
+  Skeleton,
+  Box,
+  VStack,
+  Text,
+} from '@chakra-ui/react';
 import type { BucketType } from '@/types/bucket';
 import { Database } from 'lucide-react';
 import type { AvailabilityChartProps } from './AvailabilityChart';
@@ -93,7 +103,32 @@ export function AvailabilityStats({
     );
   }
 
-  if (!stats) return null;
+  if (!stats) {
+    return (
+      <SimpleGrid columns={{ base: 1, sm: 2, md: 5 }} gap={2}>
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Box
+            key={i}
+            w='100%'
+            h='100px'
+            borderWidth='1px'
+            rounded='md'
+            display='flex'
+            alignItems='center'
+            justifyContent='center'
+            bg='gray.50'
+            _dark={{ bg: 'gray.800' }}
+          >
+            <VStack gap={1}>
+              <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.300' }}>
+                No historical data available
+              </Text>
+            </VStack>
+          </Box>
+        ))}
+      </SimpleGrid>
+    );
+  }
 
   return (
     <SimpleGrid columns={{ base: 1, sm: 2, md: 5 }} gap={2}>

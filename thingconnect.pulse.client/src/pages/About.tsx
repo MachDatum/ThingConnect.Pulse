@@ -54,6 +54,7 @@ export default function About() {
               },
             },
           }}
+          mb={8}
         >
           {/* Hero Section */}
           <Box bg='gray.50' _dark={{ bg: 'gray.900' }} py={8}>

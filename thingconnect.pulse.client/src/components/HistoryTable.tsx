@@ -126,6 +126,8 @@ export function HistoryTable({ data, bucket, pageSize = 20, isLoading }: History
         border='2px dashed'
         borderColor='gray.300'
         _dark={{ bg: 'gray.800', borderColor: 'gray.600' }}
+        h='full'
+        alignContent={'center'}
       >
         <VStack gap={3}>
           <Clock size={32} color='#9CA3AF' />

@@ -18,17 +18,17 @@ export function ProtectedRoute({ children, adminOnly = false }: ProtectedRoutePr
 
   // If setup is required, redirect to onboarding
   if (setupRequired) {
-    return <Navigate to="/onboarding" replace />;
+    return <Navigate to='/onboarding' replace />;
   }
 
   // If not authenticated, redirect to login
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to='/login' replace />;
   }
 
   // If admin-only route and user is not admin, show access denied
   if (adminOnly && user?.role !== 'Administrator') {
-    return <Navigate to="/access-denied" replace />;
+    return <Navigate to='/access-denied' replace />;
   }
 
   return <>{children}</>;

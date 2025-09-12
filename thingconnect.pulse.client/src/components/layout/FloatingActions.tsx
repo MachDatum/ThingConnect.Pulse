@@ -16,9 +16,9 @@ const ROUTE_HELP_URLS: Record<string, string> = {
 export function FloatingActions() {
   const { colorMode, toggleColorMode } = useColorMode();
   const location = useLocation();
-  
+
   const helpUrl = ROUTE_HELP_URLS[location.pathname];
-  
+
   const handleHelpClick = () => {
     if (helpUrl) {
       window.open(helpUrl, '_blank', 'noopener,noreferrer');
@@ -27,21 +27,21 @@ export function FloatingActions() {
 
   return (
     <HStack
-      position="fixed"
-      top="16px"
-      right="16px"
+      position='fixed'
+      top='16px'
+      right='16px'
       zIndex={1100}
       gap={1}
-      data-testid="floating-actions"
+      data-testid='floating-actions'
     >
       {/* Help Button - only show if help URL exists for current route */}
       {helpUrl && (
-        <Tooltip content="View Help">
+        <Tooltip content='View Help'>
           <IconButton
-            data-testid="help-button"
-            aria-label="View Help"
-            variant="ghost"
-            size="sm"
+            data-testid='help-button'
+            aria-label='View Help'
+            variant='ghost'
+            size='sm'
             onClick={handleHelpClick}
             _hover={{ bg: 'blue.50', _dark: { bg: 'blue.900' } }}
           >
@@ -49,14 +49,14 @@ export function FloatingActions() {
           </IconButton>
         </Tooltip>
       )}
-      
+
       {/* Theme Toggle */}
-      <Tooltip content="Toggle color mode">
+      <Tooltip content='Toggle color mode'>
         <IconButton
-          data-testid="theme-toggle"
-          aria-label="Toggle color mode"
-          variant="ghost"
-          size="sm"
+          data-testid='theme-toggle'
+          aria-label='Toggle color mode'
+          variant='ghost'
+          size='sm'
           onClick={toggleColorMode}
           _hover={{ bg: 'gray.50', _dark: { bg: 'gray.800' } }}
         >

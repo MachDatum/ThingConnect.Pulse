@@ -42,11 +42,11 @@ export function Navigation({ onItemClick }: NavigationProps) {
         _dark={{ borderColor: 'gray.700' }}
         data-testid='brand-section'
       >
-        <Image 
-          data-testid='thingconnect-icon' 
-          src={thingConnectIcon} 
-          alt='ThingConnect' 
-          w={44} 
+        <Image
+          data-testid='thingconnect-icon'
+          src={thingConnectIcon}
+          alt='ThingConnect'
+          w={44}
           h='auto'
         />
       </Box>
@@ -77,12 +77,7 @@ export function Navigation({ onItemClick }: NavigationProps) {
               }}
             >
               <Icon as={item.icon} boxSize={4} />
-              <Text 
-                fontSize='sm' 
-                fontWeight='medium'
-                letterSpacing='0.025em'
-                lineHeight='1.2'
-              >
+              <Text fontSize='sm' fontWeight='medium' letterSpacing='0.025em' lineHeight='1.2'>
                 {item.label}
               </Text>
             </HStack>
@@ -129,11 +124,11 @@ export function Navigation({ onItemClick }: NavigationProps) {
                 aria-label='System status'
                 data-testid='system-status'
               />
-              <Text 
-                fontSize='xs' 
+              <Text
+                fontSize='xs'
                 fontWeight='medium'
                 letterSpacing='0.025em'
-                color='gray.600' 
+                color='gray.600'
                 _dark={{ color: 'gray.400' }}
               >
                 System Online
@@ -152,12 +147,7 @@ export function Navigation({ onItemClick }: NavigationProps) {
             px='0'
           >
             <LogOut size={16} />
-            <Text 
-              fontSize='sm' 
-              fontWeight='medium'
-              letterSpacing='0.025em'
-              lineHeight='1.2'
-            >
+            <Text fontSize='sm' fontWeight='medium' letterSpacing='0.025em' lineHeight='1.2'>
               Logout
             </Text>
           </Button>
