@@ -1,14 +1,30 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Text } from '@chakra-ui/react';
 import { TabsRoot, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ConfigurationEditor } from '@/components/config/ConfigurationEditor';
 import { ConfigurationVersions } from '@/components/config/ConfigurationVersions';
 import { Page } from '@/components/layout/Page';
+import { useAnalytics } from '@/hooks/useAnalytics';
 
 export default function Configuration() {
+  const analytics = useAnalytics();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  
+  useEffect(() => {
+    analytics.trackPageView('Configuration', {
+      view_type: 'yaml_configuration',
+      section: 'monitoring_setup'
+    });
+  }, []);
+
   const handleConfigurationApplied = () => {
     setRefreshTrigger(prev => prev + 1);
+    
+    // Track configuration change
+    analytics.trackConfigurationChange('yaml_config_applied', {
+      source: 'manual_edit',
+      validation_passed: true
+    });
   };
 
   return (

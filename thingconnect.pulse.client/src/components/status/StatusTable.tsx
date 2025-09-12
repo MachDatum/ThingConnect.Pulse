@@ -2,6 +2,7 @@ import { Box, Text, Badge, HStack, Skeleton } from '@chakra-ui/react';
 import { Table } from '@chakra-ui/react';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import type { LiveStatusItem } from '@/api/types';
 import TrendBlocks from './TrendBlocks';
 
@@ -12,6 +13,7 @@ interface StatusTableProps {
 
 export function StatusTable({ items, isLoading }: StatusTableProps) {
   const navigate = useNavigate();
+  const analytics = useAnalytics();
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -40,6 +42,13 @@ export function StatusTable({ items, isLoading }: StatusTableProps) {
   };
 
   const handleRowClick = (id: string) => {
+    // Track endpoint selection
+    analytics.trackDashboardInteraction('endpoint_details_click', {
+      table_type: 'status_overview',
+      endpoint_id: id,
+      source: 'main_dashboard'
+    });
+    
     void navigate(`/endpoints/${id}`);
   };
   console.log('isLoading in StatusTable:', items);

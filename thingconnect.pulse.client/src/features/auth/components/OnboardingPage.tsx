@@ -3,7 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { Box, Flex, Heading, Text, VStack, Alert, Stack, Progress } from '@chakra-ui/react';
 import { FormField } from '@/components/form/FormField';
 import { PasswordInput } from '@/components/form/PasswordInput';
-import { LoadingButton } from '@/components/form/LoadingButton';
+import { LoadingButton } from '@/components/ui/LoadingButton';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 import { useAuth } from '../context/AuthContext';
 import { PageLoader } from '@/components/PageLoader';
@@ -216,7 +216,7 @@ export default function OnboardingPage() {
         size="lg"
         w="full"
         onClick={handleNext}
-        isLoading={isSubmitting}
+        loading={isSubmitting}
       >
         Continue
       </LoadingButton>
@@ -256,7 +256,7 @@ export default function OnboardingPage() {
           size='lg'
           flex='1'
           onClick={handleBack}
-          isLoading={isSubmitting}
+          loading={isSubmitting}
           bg='transparent'
           color='#076bb3'
           borderColor='#076bb3'
@@ -275,7 +275,7 @@ export default function OnboardingPage() {
           size='lg'
           flex='1'
           onClick={handleSubmit}
-          isLoading={isSubmitting}
+          loading={isSubmitting}
           loadingText='Creating account...'
         >
           Create Account

@@ -26,14 +26,16 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import { Page } from '@/components/layout/Page';
 import { PageContent } from '@/components/layout/PageContent';
 import { Switch } from '@/components/ui/switch';
-import { LoadingButton } from '@/components/form/LoadingButton';
+import { LoadingButton } from '@/components/ui/LoadingButton';
 import { useTelemetryConsent } from '@/features/auth/hooks/useTelemetryConsent';
 import { Link as RouterLink } from 'react-router-dom';
 
 export default function Settings() {
+  const analytics = useAnalytics();
   const { saveTelemetryConsent, getTelemetryConsent } = useTelemetryConsent();
   const [telemetryConsent, setTelemetryConsent] = useState({
     errorDiagnostics: false,
@@ -47,6 +49,14 @@ export default function Settings() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const [error, setError] = useState('');
+
+  // Track page view
+  useEffect(() => {
+    analytics.trackPageView('Settings', {
+      view_type: 'telemetry_settings',
+      section: 'privacy_controls'
+    });
+  }, []);
 
   // Load current consent settings on component mount
   useEffect(() => {
@@ -237,7 +247,7 @@ export default function Settings() {
                   <LoadingButton
                     size='sm'
                     onClick={handleSaveConsent}
-                    isLoading={isSaving}
+                    loading={isSaving}
                     loadingText='Saving...'
                     colorPalette='blue'
                     disabled={!hasChanges}
