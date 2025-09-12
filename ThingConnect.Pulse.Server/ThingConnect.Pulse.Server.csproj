@@ -53,6 +53,10 @@
     <None Include="config.schema.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="..\sample-config.yaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>sample-config.yaml</Link>
+    </None>
   </ItemGroup>
   
   <!-- Prevent auto-generation of web.config during publish -->

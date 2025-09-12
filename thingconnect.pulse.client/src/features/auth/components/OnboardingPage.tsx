@@ -256,7 +256,7 @@ export default function OnboardingPage() {
 
   return (
     <AuthLayout>
-      <VStack gap={6} w='full'>
+      <VStack gap={6} w='full' maxH='100%' overflow='auto'>
         {/* Progress Bar */}
         <Box w='full'>
           <Flex justify='space-between' align='center' mb={2}>

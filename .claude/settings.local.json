@@ -10,7 +10,9 @@
       "mcp__serena",
       "Bash(sqlite3:*)",
       "Bash(dir:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(ping:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

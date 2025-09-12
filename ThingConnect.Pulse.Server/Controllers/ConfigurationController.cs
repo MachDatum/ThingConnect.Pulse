@@ -143,7 +143,7 @@ public sealed class ConfigurationController : ControllerBase
             string? content = await _configurationService.GetCurrentConfigurationAsync();
             if (content == null)
             {
-                return NotFound(new { message = "No active configuration found" });
+                return NotFound(new { message = "No configuration found and no sample configuration available" });
             }
 
             return Content(content, "text/plain");
