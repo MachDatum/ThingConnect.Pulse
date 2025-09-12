@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using ThingConnect.Pulse.Server.Data;
 using ThingConnect.Pulse.Server.Models;
+using ThingConnect.Pulse.Server.Services;
 
 namespace ThingConnect.Pulse.Server.Controllers;
 
@@ -13,15 +14,18 @@ public sealed class AuthController : ControllerBase
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly ILogger<AuthController> _logger;
+    private readonly ISettingsService _settingsService;
 
     public AuthController(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
-        ILogger<AuthController> logger)
+        ILogger<AuthController> logger,
+        ISettingsService settingsService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _logger = logger;
+        _settingsService = settingsService;
     }
 
     /// <summary>
@@ -118,7 +122,14 @@ public sealed class AuthController : ControllerBase
                 return BadRequest(new { message = "Registration failed", errors });
             }
 
-            _logger.LogInformation("Initial admin user created: {Username} (ID: {UserId})", user.UserName, user.Id);
+            // Sign in the user immediately after successful registration
+            await _signInManager.SignInAsync(user, isPersistent: true);
+            
+            // Update last login time since we just signed them in
+            user.LastLoginAt = DateTimeOffset.UtcNow;
+            await _userManager.UpdateAsync(user);
+
+            _logger.LogInformation("Initial admin user created and signed in: {Username} (ID: {UserId})", user.UserName, user.Id);
 
             return Ok(new UserInfoDto
             {
@@ -247,6 +258,55 @@ public sealed class AuthController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during logout");
+            return StatusCode(500, new { message = "Internal server error" });
+        }
+    }
+
+    /// <summary>
+    /// Save telemetry consent settings during onboarding
+    /// </summary>
+    [HttpPost("telemetry-consent")]
+    public async Task<IActionResult> SaveTelemetryConsentAsync([FromBody] TelemetryConsentDto request)
+    {
+        try
+        {
+            // Save telemetry consent settings
+            await _settingsService.SetAsync("telemetry_error_diagnostics", request.ErrorDiagnostics.ToString().ToLowerInvariant());
+            await _settingsService.SetAsync("telemetry_usage_analytics", request.UsageAnalytics.ToString().ToLowerInvariant());
+            await _settingsService.SetAsync("telemetry_consent_timestamp", DateTimeOffset.UtcNow);
+
+            _logger.LogInformation("Telemetry consent saved: ErrorDiagnostics={ErrorDiagnostics}, UsageAnalytics={UsageAnalytics}",
+                request.ErrorDiagnostics, request.UsageAnalytics);
+
+            return Ok(new { message = "Telemetry consent saved successfully" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error saving telemetry consent");
+            return StatusCode(500, new { message = "Internal server error" });
+        }
+    }
+
+    /// <summary>
+    /// Get current telemetry consent settings
+    /// </summary>
+    [HttpGet("telemetry-consent")]
+    public async Task<ActionResult<TelemetryConsentDto>> GetTelemetryConsentAsync()
+    {
+        try
+        {
+            string? errorDiagnostics = await _settingsService.GetAsync("telemetry_error_diagnostics");
+            string? usageAnalytics = await _settingsService.GetAsync("telemetry_usage_analytics");
+
+            return Ok(new TelemetryConsentDto
+            {
+                ErrorDiagnostics = bool.TryParse(errorDiagnostics, out bool errorValue) && errorValue,
+                UsageAnalytics = bool.TryParse(usageAnalytics, out bool usageValue) && usageValue
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting telemetry consent");
             return StatusCode(500, new { message = "Internal server error" });
         }
     }
