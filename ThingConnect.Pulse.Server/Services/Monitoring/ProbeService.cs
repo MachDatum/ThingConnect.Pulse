@@ -61,7 +61,7 @@ public sealed class ProbeService : IProbeService
             try
             {
                 // Use overload that accepts cancellation token
-                PingReply reply = await ping.SendPingAsync(host, timeoutMs, null, null, combinedCts.Token);
+                PingReply reply = await ping.SendPingAsync(host, TimeSpan.FromMilliseconds(timeoutMs), cancellationToken: combinedCts.Token);
                 stopwatch.Stop();
 
                 if (reply.Status == IPStatus.Success)
@@ -106,7 +106,7 @@ public sealed class ProbeService : IProbeService
             using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
 
             // Use the combined cancellation token for the connection
-            Task connectTask = tcpClient.ConnectAsync(host, port, combinedCts.Token);
+            Task connectTask = tcpClient.ConnectAsync(host, port, combinedCts.Token).AsTask();
 
             try
             {
