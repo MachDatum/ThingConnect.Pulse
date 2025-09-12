@@ -149,6 +149,7 @@ public class Program
             builder.Services.AddScoped<IDiscoveryService, DiscoveryService>();
             builder.Services.AddScoped<IStatusService, StatusService>();
             builder.Services.AddScoped<IHistoryService, HistoryService>();
+            builder.Services.AddScoped<IEndpointService, EndpointService>();
             builder.Services.AddHostedService<MonitoringBackgroundService>();
 
             // Add rollup services
