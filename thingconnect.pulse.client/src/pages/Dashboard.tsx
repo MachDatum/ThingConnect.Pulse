@@ -1,10 +1,11 @@
 import { Box, Text, Grid, VStack, Heading, Flex, HStack, Accordion } from '@chakra-ui/react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useStatusQuery } from '@/hooks/useStatusQuery';
 import { StatusFilters } from '@/components/status/StatusFilters';
 import { StatusTable } from '@/components/status/StatusTable';
 import { Page } from '@/components/layout/Page';
 import { PageSection } from '@/components/layout/PageSection';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import type { LiveStatusParams } from '@/api/types';
 import { Activity, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import type { LiveStatusItem } from '@/api/types';
@@ -31,6 +32,7 @@ function isGroupedByStatusAndGroup(
 }
 
 export default function Dashboard() {
+  const analytics = useAnalytics();
   const [filters, setFilters] = useState<LiveStatusParams>({});
   const [selectedGroup, setSelectedGroup] = useState<string | undefined>(undefined);
 
@@ -40,6 +42,48 @@ export default function Dashboard() {
     ...filters,
     search: searchTerm,
   });
+
+  // Track page view and system metrics
+  useEffect(() => {
+    const startTime = performance.now();
+    
+    analytics.trackPageView('Dashboard', {
+      view_type: 'main_dashboard',
+      has_filters: Object.keys(filters).length > 0,
+      has_search: searchTerm.length > 0,
+      selected_group: selectedGroup
+    });
+
+    return () => {
+      const endTime = performance.now();
+      analytics.trackPerformanceMetrics('Dashboard', {
+        loadTime: endTime - startTime,
+        dataFetchTime: isLoading ? endTime - startTime : 0
+      });
+    };
+  }, []);
+
+  // Track system metrics when data loads
+  useEffect(() => {
+    if (data?.items) {
+      const statusCounts = data.items.reduce(
+        (acc, item) => {
+          acc.total++;
+          acc[item.status]++;
+          return acc;
+        },
+        { total: 0, up: 0, down: 0, flapping: 0 }
+      );
+
+      analytics.trackSystemMetrics({
+        totalEndpoints: statusCounts.total,
+        activeAlerts: statusCounts.down + statusCounts.flapping,
+        overallAvailability: statusCounts.total > 0 ? (statusCounts.up / statusCounts.total) * 100 : 0,
+        monitoredServices: new Set(data.items.map(item => item.endpoint.host)).size,
+        uptimePercentage: statusCounts.total > 0 ? (statusCounts.up / statusCounts.total) * 100 : 0
+      });
+    }
+  }, [data, analytics]);
 
   // Grouping options state
   const [groupByOptions, setGroupByOptions] = useState<string[]>([]);
