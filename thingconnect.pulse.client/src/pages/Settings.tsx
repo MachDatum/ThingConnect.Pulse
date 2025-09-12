@@ -30,7 +30,7 @@ import { useAnalytics } from '@/hooks/useAnalytics';
 import { Page } from '@/components/layout/Page';
 import { PageContent } from '@/components/layout/PageContent';
 import { Switch } from '@/components/ui/switch';
-import { LoadingButton } from '@/components/form/LoadingButton';
+import { LoadingButton } from '@/components/ui/LoadingButton';
 import { useTelemetryConsent } from '@/features/auth/hooks/useTelemetryConsent';
 import { Link as RouterLink } from 'react-router-dom';
 
@@ -247,7 +247,7 @@ export default function Settings() {
                   <LoadingButton
                     size='sm'
                     onClick={handleSaveConsent}
-                    isLoading={isSaving}
+                    loading={isSaving}
                     loadingText='Saving...'
                     colorPalette='blue'
                     disabled={!hasChanges}

@@ -10,7 +10,7 @@ import {
   Code
 } from '@chakra-ui/react';
 import { Switch } from '@/components/ui/switch';
-import { LoadingButton } from '@/components/form/LoadingButton';
+import { LoadingButton } from '@/components/ui/LoadingButton';
 
 interface TelemetryConsentStepProps {
   onBack: () => void;
@@ -175,7 +175,7 @@ export function TelemetryConsentStep({ onBack, onSubmit, isSubmitting }: Telemet
           size="lg"
           flex="1"
           onClick={onBack}
-          isLoading={isSubmitting}
+          loading={isSubmitting}
           bg="transparent"
           color="#076bb3"
           borderColor="#076bb3"
@@ -194,7 +194,7 @@ export function TelemetryConsentStep({ onBack, onSubmit, isSubmitting }: Telemet
           size="lg"
           flex="1"
           onClick={handleSubmit}
-          isLoading={isSubmitting}
+          loading={isSubmitting}
           loadingText="Saving preferences..."
         >
           Continue
