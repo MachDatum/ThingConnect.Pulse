@@ -40,6 +40,9 @@ public class Program
             // Use Serilog as the logging provider
             builder.Host.UseSerilog();
 
+            // NOTE: Sentry initialization removed - will be initialized conditionally
+            // based on user consent in the ConsentAwareSentryService
+
             // Configure Windows Service hosting
             builder.Host.UseWindowsService();
 
@@ -132,6 +135,9 @@ public class Program
             // Add path service
             builder.Services.AddSingleton<IPathService, PathService>();
 
+            // Add consent-aware Sentry service
+            builder.Services.AddSingleton<IConsentAwareSentryService, ConsentAwareSentryService>();
+
 
             // Add configuration services
             builder.Services.AddScoped<ConfigurationParser>(serviceProvider =>
@@ -206,6 +212,14 @@ public class Program
                 IConfigurationService configService = scope.ServiceProvider.GetRequiredService<IConfigurationService>();
                 await configService.InitializeSampleConfigurationAsync();
                 Log.Information("Sample configuration initialization completed");
+            }
+
+            // Initialize Sentry based on user consent
+            using (IServiceScope scope = app.Services.CreateScope())
+            {
+                IConsentAwareSentryService sentryService = scope.ServiceProvider.GetRequiredService<IConsentAwareSentryService>();
+                await sentryService.InitializeIfConsentedAsync();
+                Log.Information("Consent-aware Sentry initialization completed");
             }
 
             app.UseDefaultFiles();

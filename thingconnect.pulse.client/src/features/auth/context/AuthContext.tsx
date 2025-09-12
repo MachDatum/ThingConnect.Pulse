@@ -6,6 +6,7 @@ import {
   type LoginRequest,
   type RegisterRequest,
 } from '../services/authService';
+import { useSentryConsentInit } from '../../../hooks/useSentryConsentInit';
 
 interface AuthContextType {
   user: UserInfo | null;
@@ -30,6 +31,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [setupRequired, setSetupRequired] = useState(false);
 
   const isAuthenticated = user !== null;
+
+  // Initialize Sentry based on user consent when authenticated
+  useSentryConsentInit(isAuthenticated);
 
   const checkSession = async () => {
     try {
