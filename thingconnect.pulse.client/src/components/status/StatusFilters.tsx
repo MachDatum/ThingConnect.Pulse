@@ -144,14 +144,14 @@ export function StatusFilters({
             <Combobox.Control>
               <Combobox.Input placeholder='Select Group...' />
               <Combobox.IndicatorGroup>
-                <Combobox.ClearTrigger onClick={clearFilter}  cursor={'pointer'}/>
+                <Combobox.ClearTrigger onClick={clearFilter} cursor={'pointer'} />
                 <Combobox.Trigger />
               </Combobox.IndicatorGroup>
             </Combobox.Control>
             <Combobox.Positioner>
-              <Combobox.Content >
+              <Combobox.Content>
                 <Combobox.Empty>No groups found</Combobox.Empty>
-                <Combobox.Item key='allgroups' item={{ label: 'All Groups', value: '' }} >
+                <Combobox.Item key='allgroups' item={{ label: 'All Groups', value: '' }}>
                   <HStack justify='space-between' textStyle='sm'>
                     All Groups
                   </HStack>
@@ -209,14 +209,14 @@ export function StatusFilters({
         {/* Group By Dropdown */}
         <Menu.Root>
           <Menu.Trigger asChild>
-            <Button variant='outline' >
+            <Button variant='outline'>
               <Text fontSize='sm'>
                 {groupByOptions.length > 0
                   ? groupByOptions
                       .map(opt => (opt === 'status' ? 'Status' : opt === 'group' ? 'Group' : opt))
                       .join(' + ')
                   : 'Group By'}
-            </Text>
+              </Text>
               <MdExpandMore />
             </Button>
           </Menu.Trigger>
@@ -228,7 +228,7 @@ export function StatusFilters({
                 py={1}
                 borderBottom='1px solid'
                 borderColor='gray.200'
-                _dark={{borderColor: 'gray.600'}}
+                _dark={{ borderColor: 'gray.600' }}
               >
                 <HStack gap={2}>
                   <Button

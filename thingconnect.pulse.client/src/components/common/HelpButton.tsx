@@ -18,8 +18,8 @@ export function HelpButton({ helpUrl, tooltip = 'View Help', size = 'sm' }: Help
       <IconButton
         aria-label={tooltip}
         size={size}
-        variant="ghost"
-        colorPalette="blue"
+        variant='ghost'
+        colorPalette='blue'
         onClick={handleHelpClick}
         _hover={{ bg: 'blue.50', _dark: { bg: 'blue.900' } }}
       >

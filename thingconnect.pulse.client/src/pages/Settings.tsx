@@ -1,27 +1,28 @@
-import { 
-  Box, 
-  Text, 
-  VStack, 
-  HStack, 
-  Heading, 
+import {
+  Box,
+  Text,
+  VStack,
+  HStack,
+  Heading,
   Container,
   Icon,
   Badge,
   Grid,
   GridItem,
-  Button
+  Button,
 } from '@chakra-ui/react';
-import { 
-  Bell, 
-  Palette, 
-  Database, 
+import {
+  Bell,
+  Palette,
+  Database,
   Settings as SettingsIcon,
   Clock,
   Sparkles,
-  ArrowRight
+  ArrowRight,
 } from 'lucide-react';
 import { Page } from '@/components/layout/Page';
 import { PageContent } from '@/components/layout/PageContent';
+import { Link as RouterLink } from 'react-router-dom';
 
 export default function Settings() {
   const upcomingFeatures = [
@@ -30,22 +31,22 @@ export default function Settings() {
       title: 'Smart Notifications',
       description: 'Intelligent alerts with customizable thresholds and notification channels',
       priority: 'High Priority',
-      color: 'blue'
+      color: 'blue',
     },
     {
       icon: Palette,
       title: 'Dashboard Customization',
       description: 'Personalize your monitoring experience with custom themes and layouts',
-      priority: 'Medium Priority', 
-      color: 'purple'
+      priority: 'Medium Priority',
+      color: 'purple',
     },
     {
       icon: Database,
       title: 'System Management',
       description: 'Advanced system diagnostics and performance optimization tools',
       priority: 'Medium Priority',
-      color: 'green'
-    }
+      color: 'green',
+    },
   ];
 
   return (
@@ -58,40 +59,29 @@ export default function Settings() {
         <Container maxW='4xl' py={8}>
           {/* Hero Section */}
           <VStack gap={6} textAlign='center' mb={12}>
-            <Box
-              p={4}
-              borderRadius='full'
-              bg='blue.50'
-              _dark={{ bg: 'blue.900' }}
-            >
+            <Box p={4} borderRadius='full' bg='blue.50' _dark={{ bg: 'blue.900' }}>
               <Icon as={SettingsIcon} boxSize={12} color='blue.500' />
             </Box>
-            
+
             <VStack gap={3}>
               <Heading size='2xl' color='gray.800' _dark={{ color: 'white' }}>
                 Advanced Settings
               </Heading>
-              <Text 
-                fontSize='lg' 
-                color='gray.600' 
+              <Text
+                fontSize='lg'
+                color='gray.600'
                 _dark={{ color: 'gray.300' }}
                 maxW='2xl'
                 lineHeight='1.6'
               >
-                We're crafting powerful configuration tools to give you complete control 
-                over your monitoring experience
+                We're crafting powerful configuration tools to give you complete control over your
+                monitoring experience
               </Text>
             </VStack>
 
             <HStack gap={2}>
               <Icon as={Sparkles} boxSize={5} color='blue.500' />
-              <Badge 
-                colorPalette='blue' 
-                variant='subtle' 
-                size='lg'
-                px={3}
-                py={1}
-              >
+              <Badge colorPalette='blue' variant='subtle' size='lg' px={3} py={1}>
                 Coming Soon
               </Badge>
             </HStack>
@@ -116,9 +106,9 @@ export default function Settings() {
                     borderRadius='xl'
                     border='1px solid'
                     borderColor='gray.200'
-                    _dark={{ 
+                    _dark={{
                       borderColor: 'gray.700',
-                      bg: 'gray.800'
+                      bg: 'gray.800',
                     }}
                     bg='white'
                     shadow='sm'
@@ -127,7 +117,7 @@ export default function Settings() {
                       shadow: 'md',
                       transform: 'translateY(-2px)',
                       borderColor: 'blue.300',
-                      _dark: { borderColor: 'blue.600' }
+                      _dark: { borderColor: 'blue.600' },
                     }}
                   >
                     <HStack gap={4} align='start'>
@@ -137,32 +127,20 @@ export default function Settings() {
                         bg={`${feature.color}.50`}
                         _dark={{ bg: `${feature.color}.900` }}
                       >
-                        <Icon 
-                          as={feature.icon} 
-                          boxSize={6} 
-                          color={`${feature.color}.500`}
-                        />
+                        <Icon as={feature.icon} boxSize={6} color={`${feature.color}.500`} />
                       </Box>
-                      
+
                       <VStack align='start' flex='1' gap={2}>
                         <HStack justify='space-between' w='100%'>
                           <Heading size='md' color='gray.800' _dark={{ color: 'white' }}>
                             {feature.title}
                           </Heading>
-                          <Badge 
-                            colorPalette={feature.color}
-                            variant='subtle'
-                            size='sm'
-                          >
+                          <Badge colorPalette={feature.color} variant='subtle' size='sm'>
                             {feature.priority}
                           </Badge>
                         </HStack>
-                        
-                        <Text 
-                          color='gray.600' 
-                          _dark={{ color: 'gray.300' }}
-                          lineHeight='1.5'
-                        >
+
+                        <Text color='gray.600' _dark={{ color: 'gray.300' }} lineHeight='1.5'>
                           {feature.description}
                         </Text>
                       </VStack>
@@ -174,7 +152,15 @@ export default function Settings() {
           </VStack>
 
           {/* Call to Action */}
-          <VStack gap={4} textAlign='center' mt={12} pt={8} borderTop='1px solid' borderColor='gray.200' _dark={{ borderColor: 'gray.700' }}>
+          <VStack
+            gap={4}
+            textAlign='center'
+            mt={12}
+            pt={8}
+            borderTop='1px solid'
+            borderColor='gray.200'
+            _dark={{ borderColor: 'gray.700' }}
+          >
             <VStack gap={2}>
               <HStack gap={2} color='gray.500' _dark={{ color: 'gray.400' }}>
                 <Icon as={Clock} boxSize={4} />
@@ -182,22 +168,18 @@ export default function Settings() {
                   Updates coming in future releases
                 </Text>
               </HStack>
-              
+
               <Text fontSize='sm' color='gray.500' _dark={{ color: 'gray.400' }}>
-                Continue monitoring with the current powerful features while we build these enhancements
+                Continue monitoring with the current powerful features while we build these
+                enhancements
               </Text>
             </VStack>
-
-            <Button
-              variant='outline'
-              colorPalette='blue'
-              size='sm'
-              as='a'
-              href='/about'
-              rightIcon={<ArrowRight size={16} />}
-            >
-              Learn More About ThingConnect Pulse
-            </Button>
+            <RouterLink to={`/about`}>
+              <Button variant='outline' colorPalette='blue' size='sm' as='a'>
+                <ArrowRight size={16} />
+                Learn More About ThingConnect Pulse
+              </Button>
+            </RouterLink>
           </VStack>
         </Container>
       </PageContent>

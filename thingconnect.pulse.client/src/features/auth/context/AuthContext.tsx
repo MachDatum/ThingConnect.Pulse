@@ -1,6 +1,11 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { authService, type UserInfo, type LoginRequest, type RegisterRequest } from '../services/authService';
+import {
+  authService,
+  type UserInfo,
+  type LoginRequest,
+  type RegisterRequest,
+} from '../services/authService';
 
 interface AuthContextType {
   user: UserInfo | null;
@@ -31,7 +36,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setIsLoading(true);
       const sessionUser = await authService.getSession();
       setUser(sessionUser);
-      
+
       // If no user, check if setup is required
       if (!sessionUser) {
         const needsSetup = await authService.isSetupRequired();
@@ -111,14 +116,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     login,
     register,
     logout,
-    refreshSession
+    refreshSession,
   };
 
-  return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth(): AuthContextType {
