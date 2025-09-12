@@ -1,211 +1,225 @@
 # ThingConnect.Pulse - Complete Architecture Diagram
 
-## Project Architecture Overview
+## High-Level System Overview
 
 ```mermaid
 graph TB
-    %% Frontend Layer
-    subgraph "Frontend (React + Chakra UI)"
-        subgraph "Pages"
-            Dashboard[Dashboard.tsx]
-            History[History.tsx]
-            Configuration[Configuration.tsx]
-            Settings[Settings.tsx]
-            Login[LoginPage.tsx]
-            Onboarding[OnboardingPage.tsx]
-            EndpointDetail[EndpointDetail.tsx]
-        end
-        
-        subgraph "Components"
-            StatusTable[StatusTable.tsx]
-            StatusFilters[StatusFilters.tsx]
-            AvailabilityChart[AvailabilityChart.tsx]
-            ConfigEditor[ConfigurationEditor.tsx]
-            HistoryTable[HistoryTable.tsx]
-            Navigation[Navigation.tsx]
-        end
-        
-        subgraph "API Services"
-            StatusService[StatusService.ts]
-            HistoryService[HistoryService.ts]
-            ConfigService[ConfigurationService.ts]
-            AuthService[AuthService.ts]
-            ApiClient[ApiClient.ts]
-        end
-        
-        subgraph "Hooks & Utils"
-            useStatusQuery[useStatusQuery.ts]
-            useAnalytics[useAnalytics.ts]
-            AuthContext[AuthContext.tsx]
-            Analytics[manufacturingAnalytics.ts]
-        end
+    subgraph "Frontend Layer"
+        FE[React Frontend<br/>Chakra UI]
     end
     
-    %% API Layer
-    subgraph "API Endpoints (REST)"
-        Auth["/api/auth/*"]
-        Status["/api/status/*"]
-        Config["/api/configuration/*"]
-        HistoryAPI["/api/history/*"]
-        UserMgmt["/api/usermanagement/*"]
+    subgraph "API Layer"
+        API[REST API<br/>ASP.NET Core]
     end
     
-    %% Backend Layer
-    subgraph "Backend (ASP.NET Core)"
-        subgraph "Controllers"
-            AuthController[AuthController.cs]
-            StatusController[StatusController.cs]
-            ConfigController[ConfigurationController.cs]
-            HistoryController[HistoryController.cs]
-            UserController[UserManagementController.cs]
-        end
-        
-        subgraph "Business Services"
-            ConfigServiceBE[ConfigurationService.cs]
-            StatusServiceBE[StatusService.cs]
-            HistoryServiceBE[HistoryService.cs]
-            ProbeService[ProbeService.cs]
-            OutageDetection[OutageDetectionService.cs]
-            Discovery[DiscoveryService.cs]
-        end
-        
-        subgraph "Background Services"
-            MonitoringBG[MonitoringBackgroundService.cs]
-            RollupBG[RollupBackgroundService.cs]
-            LogCleanup[LogCleanupBackgroundService.cs]
-        end
-        
-        subgraph "Data Services"
-            RollupService[RollupService.cs]
-            PruneService[PruneService.cs]
-            SettingsService[SettingsService.cs]
-            PathService[PathService.cs]
-        end
-        
-        subgraph "Infrastructure"
-            SentryService[ConsentAwareSentryService.cs]
-            ConfigParser[ConfigurationParser.cs]
-            PlainTextFormatter[PlainTextInputFormatter.cs]
-        end
+    subgraph "Backend Layer"
+        BE[Business Services<br/>Background Services]
     end
     
-    %% Data Layer
-    subgraph "Data Layer (SQLite + EF Core)"
-        subgraph "Entities"
-            Group[Group.cs]
-            Endpoint[Endpoint.cs]
-            CheckResult[CheckResultRaw.cs]
-            Outage[Outage.cs]
-            Rollup15m[Rollup15m.cs]
-            RollupDaily[RollupDaily.cs]
-            Setting[Setting.cs]
-            ConfigVersion[ConfigVersion.cs]
-            AppUser[ApplicationUser.cs]
-        end
-        
-        DbContext[PulseDbContext.cs]
-        SQLiteDB[(SQLite Database)]
+    subgraph "Data Layer"
+        DB[(SQLite Database<br/>EF Core)]
     end
     
-    %% External Services
     subgraph "External"
-        Sentry[Sentry.io<br/>Error Monitoring]
-        Mixpanel[Mixpanel<br/>Analytics]
-        Network[Network Endpoints<br/>ICMP/TCP/HTTP]
+        NET[Network Targets<br/>ICMP/TCP/HTTP]
+        SENTRY[Sentry.io]
+        MIXPANEL[Mixpanel]
     end
     
-    %% Frontend to API Connections
-    Dashboard -->|GET /api/status/live| Status
-    History -->|GET /api/history/endpoint/{id}| HistoryAPI
-    Configuration -->|GET,POST /api/configuration/*| Config
-    Settings -->|CRUD /api/usermanagement/*| UserMgmt
-    Login -->|POST /api/auth/login| Auth
-    Onboarding -->|POST /api/auth/register| Auth
+    FE <-->|HTTP/JSON| API
+    API <--> BE
+    BE <--> DB
+    BE -->|Probes| NET
+    BE -->|Errors| SENTRY
+    FE -->|Analytics| MIXPANEL
+```
+
+## Frontend Architecture
+
+```mermaid
+graph TB
+    subgraph "Pages Layer"
+        Dashboard[Dashboard]
+        History[History]
+        Configuration[Configuration]
+        Settings[Settings]
+        Auth[Login/Onboarding]
+    end
     
-    %% Service Layer Connections
-    StatusService -->|HTTP Calls| ApiClient
-    HistoryService -->|HTTP Calls| ApiClient
-    ConfigService -->|HTTP Calls| ApiClient
-    AuthService -->|HTTP Calls| ApiClient
+    subgraph "Components Layer"
+        StatusTable[StatusTable]
+        AvailabilityChart[AvailabilityChart]
+        ConfigEditor[ConfigurationEditor]
+        Navigation[Navigation]
+    end
     
-    %% API to Backend Connections
-    Auth --> AuthController
-    Status --> StatusController
-    Config --> ConfigController
-    HistoryAPI --> HistoryController
-    UserMgmt --> UserController
+    subgraph "Service Layer"
+        StatusService[StatusService]
+        HistoryService[HistoryService]
+        ConfigService[ConfigurationService]
+        AuthService[AuthService]
+        ApiClient[ApiClient]
+    end
     
-    %% Backend Service Dependencies
+    subgraph "State Management"
+        useStatusQuery[useStatusQuery]
+        AuthContext[AuthContext]
+        Analytics[Analytics]
+    end
+    
+    Dashboard --> StatusTable
+    Dashboard --> useStatusQuery
+    History --> AvailabilityChart
+    Configuration --> ConfigEditor
+    
+    StatusTable --> StatusService
+    AvailabilityChart --> HistoryService
+    ConfigEditor --> ConfigService
+    Auth --> AuthService
+    
+    StatusService --> ApiClient
+    HistoryService --> ApiClient
+    ConfigService --> ApiClient
+    AuthService --> ApiClient
+    
+    useStatusQuery --> StatusService
+    Navigation --> AuthContext
+    AuthContext --> AuthService
+```
+
+## Backend Architecture
+
+```mermaid
+graph TB
+    subgraph "Controllers"
+        AuthController[AuthController]
+        StatusController[StatusController]
+        ConfigController[ConfigurationController]
+        HistoryController[HistoryController]
+        UserController[UserManagementController]
+    end
+    
+    subgraph "Business Services"
+        ConfigServiceBE[ConfigurationService]
+        StatusServiceBE[StatusService]
+        HistoryServiceBE[HistoryService]
+        ProbeService[ProbeService]
+        OutageDetection[OutageDetectionService]
+    end
+    
+    subgraph "Background Services"
+        MonitoringBG[MonitoringBackgroundService]
+        RollupBG[RollupBackgroundService]
+        LogCleanup[LogCleanupBackgroundService]
+    end
+    
+    subgraph "Data Services"
+        RollupService[RollupService]
+        PruneService[PruneService]
+        SettingsService[SettingsService]
+    end
+    
+    subgraph "Infrastructure"
+        SentryService[ConsentAwareSentryService]
+        ConfigParser[ConfigurationParser]
+        DbContext[PulseDbContext]
+    end
+    
     AuthController --> SettingsService
     StatusController --> StatusServiceBE
     ConfigController --> ConfigServiceBE
     HistoryController --> HistoryServiceBE
     UserController --> DbContext
     
-    %% Business Service Dependencies
-    StatusServiceBE --> DbContext
     StatusServiceBE --> OutageDetection
-    HistoryServiceBE --> DbContext
     ConfigServiceBE --> ConfigParser
-    ConfigServiceBE --> DbContext
     
-    %% Background Services
     MonitoringBG --> ProbeService
     MonitoringBG --> OutageDetection
-    MonitoringBG --> StatusServiceBE
     RollupBG --> RollupService
-    LogCleanup --> PathService
     
-    %% Monitoring Pipeline
-    ProbeService -->|Network Probes| Network
-    ProbeService --> CheckResult
-    OutageDetection --> Outage
-    OutageDetection --> CheckResult
+    ProbeService --> DbContext
+    OutageDetection --> DbContext
+    RollupService --> DbContext
+    PruneService --> DbContext
+    SettingsService --> DbContext
+```
+
+## Data Model Architecture
+
+```mermaid
+erDiagram
+    Group {
+        string Id PK
+        string Name
+        string ParentId FK
+        string Color
+        int SortOrder
+    }
     
-    %% Data Flow
-    RollupService --> CheckResult
-    RollupService --> Rollup15m
-    RollupService --> RollupDaily
-    PruneService --> CheckResult
+    Endpoint {
+        guid Id PK
+        string Name
+        string GroupId FK
+        enum Type
+        string Host
+        int Port
+        string HttpPath
+        string HttpMatch
+        int IntervalSeconds
+        int TimeoutMs
+        bool Enabled
+    }
     
-    %% Database Relationships
-    DbContext --> Group
-    DbContext --> Endpoint
-    DbContext --> CheckResult
-    DbContext --> Outage
-    DbContext --> Rollup15m
-    DbContext --> RollupDaily
-    DbContext --> Setting
-    DbContext --> ConfigVersion
-    DbContext --> AppUser
-    DbContext --> SQLiteDB
+    CheckResultRaw {
+        long Id PK
+        guid EndpointId FK
+        datetime Ts
+        enum Status
+        double RttMs
+        string Error
+    }
     
-    %% External Service Connections
-    SentryService -->|Error Reports| Sentry
-    Analytics -->|Usage Events| Mixpanel
+    Outage {
+        long Id PK
+        guid EndpointId FK
+        datetime StartedTs
+        datetime EndedTs
+        int DurationSeconds
+        string LastError
+    }
     
-    %% React Hooks
-    Dashboard --> useStatusQuery
-    History --> useAnalytics
-    Configuration --> useAnalytics
-    useStatusQuery --> StatusService
+    Rollup15m {
+        guid EndpointId PK,FK
+        datetime BucketTs PK
+        double UpPct
+        double AvgRttMs
+        int DownEvents
+    }
     
-    %% Authentication Flow
-    AuthContext --> AuthService
-    Navigation --> AuthContext
+    RollupDaily {
+        guid EndpointId PK,FK
+        date BucketDate PK
+        double UpPct
+        double AvgRttMs
+        int DownEvents
+    }
     
-    %% Styling
-    classDef frontend fill:#e1f5fe
-    classDef backend fill:#f3e5f5  
-    classDef data fill:#e8f5e8
-    classDef external fill:#fff3e0
-    classDef api fill:#fce4ec
+    ApplicationUser {
+        string Id PK
+        string Username
+        string Email
+        string Role
+        datetime CreatedAt
+        datetime LastLoginAt
+        bool IsActive
+    }
     
-    class Dashboard,History,Configuration,Settings,Login,Onboarding,EndpointDetail,StatusTable,StatusFilters,AvailabilityChart,ConfigEditor,HistoryTable,Navigation frontend
-    class AuthController,StatusController,ConfigController,HistoryController,UserController,ConfigServiceBE,StatusServiceBE,HistoryServiceBE,ProbeService,OutageDetection,Discovery,MonitoringBG,RollupBG,LogCleanup,RollupService,PruneService,SettingsService,PathService,SentryService,ConfigParser backend
-    class Group,Endpoint,CheckResult,Outage,Rollup15m,RollupDaily,Setting,ConfigVersion,AppUser,DbContext,SQLiteDB data
-    class Sentry,Mixpanel,Network external
-    class Auth,Status,Config,HistoryAPI,UserMgmt api
+    Group ||--o{ Endpoint : contains
+    Endpoint ||--o{ CheckResultRaw : monitors
+    Endpoint ||--o{ Outage : experiences
+    Endpoint ||--o{ Rollup15m : aggregates
+    Endpoint ||--o{ RollupDaily : summarizes
 ```
 
 ## API Relationship Matrix
@@ -213,13 +227,30 @@ graph TB
 ```mermaid
 graph LR
     subgraph "Frontend Services → Backend APIs"
-        FS1[StatusService] -->|GET /api/status/live<br/>Query: group, search| API1[StatusController.GetLive]
-        FS2[HistoryService] -->|GET /api/history/endpoint/{id}<br/>Query: from, to, bucket| API2[HistoryController.GetEndpoint]
-        FS3[ConfigurationService] -->|GET /api/configuration/versions<br/>GET /api/configuration/current<br/>POST /api/configuration/apply| API3[ConfigurationController]
-        FS4[AuthService] -->|POST /api/auth/login<br/>POST /api/auth/register<br/>GET /api/auth/session<br/>POST /api/auth/logout| API4[AuthController]
-        FS5[UserManagement] -->|GET /api/usermanagement/<br/>POST /api/usermanagement/<br/>PUT /api/usermanagement/{id}| API5[UserManagementController]
+        FS1[StatusService] -->|GET /api/status/live| API1[StatusController]
+        FS2[HistoryService] -->|GET /api/history/endpoint/ID| API2[HistoryController]
+        FS3[ConfigurationService] -->|GET/POST /api/configuration/*| API3[ConfigurationController]
+        FS4[AuthService] -->|POST /api/auth/*| API4[AuthController]
+        FS5[UserManagement] -->|CRUD /api/usermanagement/*| API5[UserManagementController]
     end
 ```
+
+### API Endpoints Detail
+
+| Frontend Service | HTTP Method | Endpoint | Backend Controller | Purpose |
+|-----------------|-------------|----------|-------------------|---------|
+| StatusService | GET | `/api/status/live` | StatusController | Real-time endpoint status |
+| HistoryService | GET | `/api/history/endpoint/{id}` | HistoryController | Historical data retrieval |
+| ConfigurationService | GET | `/api/configuration/versions` | ConfigurationController | List config versions |
+| ConfigurationService | GET | `/api/configuration/current` | ConfigurationController | Get current config |
+| ConfigurationService | POST | `/api/configuration/apply` | ConfigurationController | Apply new config |
+| AuthService | POST | `/api/auth/login` | AuthController | User authentication |
+| AuthService | POST | `/api/auth/register` | AuthController | Initial user setup |
+| AuthService | GET | `/api/auth/session` | AuthController | Session validation |
+| AuthService | POST | `/api/auth/logout` | AuthController | User logout |
+| UserManagement | GET | `/api/usermanagement/` | UserManagementController | List users |
+| UserManagement | POST | `/api/usermanagement/` | UserManagementController | Create user |
+| UserManagement | PUT | `/api/usermanagement/{id}` | UserManagementController | Update user |
 
 ## Data Flow Architecture
 
