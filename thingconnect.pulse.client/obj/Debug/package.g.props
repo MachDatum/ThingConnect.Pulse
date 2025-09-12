@@ -15,12 +15,14 @@
     <PackageJsonDependenciesEmotionReact Condition="$(PackageJsonDependenciesEmotionReact) == ''">^11.14.0</PackageJsonDependenciesEmotionReact>
     <PackageJsonDependenciesHookformResolvers Condition="$(PackageJsonDependenciesHookformResolvers) == ''">^5.2.1</PackageJsonDependenciesHookformResolvers>
     <PackageJsonDependenciesMonacoEditorReact Condition="$(PackageJsonDependenciesMonacoEditorReact) == ''">^4.7.0</PackageJsonDependenciesMonacoEditorReact>
+    <PackageJsonDependenciesSentryReact Condition="$(PackageJsonDependenciesSentryReact) == ''">^10.11.0</PackageJsonDependenciesSentryReact>
     <PackageJsonDependenciesTanstackReactQuery Condition="$(PackageJsonDependenciesTanstackReactQuery) == ''">^5.84.2</PackageJsonDependenciesTanstackReactQuery>
     <PackageJsonDependenciesAxios Condition="$(PackageJsonDependenciesAxios) == ''">^1.11.0</PackageJsonDependenciesAxios>
     <PackageJsonDependenciesDateFns Condition="$(PackageJsonDependenciesDateFns) == ''">^4.1.0</PackageJsonDependenciesDateFns>
     <PackageJsonDependenciesLodash Condition="$(PackageJsonDependenciesLodash) == ''">^4.17.21</PackageJsonDependenciesLodash>
     <PackageJsonDependenciesLucideReact Condition="$(PackageJsonDependenciesLucideReact) == ''">^0.541.0</PackageJsonDependenciesLucideReact>
     <PackageJsonDependenciesLuxon Condition="$(PackageJsonDependenciesLuxon) == ''">^3.7.1</PackageJsonDependenciesLuxon>
+    <PackageJsonDependenciesMixpanelBrowser Condition="$(PackageJsonDependenciesMixpanelBrowser) == ''">^2.70.0</PackageJsonDependenciesMixpanelBrowser>
     <PackageJsonDependenciesMonacoEditor Condition="$(PackageJsonDependenciesMonacoEditor) == ''">^0.52.2</PackageJsonDependenciesMonacoEditor>
     <PackageJsonDependenciesNextThemes Condition="$(PackageJsonDependenciesNextThemes) == ''">^0.4.6</PackageJsonDependenciesNextThemes>
     <PackageJsonDependenciesReact Condition="$(PackageJsonDependenciesReact) == ''">^19.1.1</PackageJsonDependenciesReact>
