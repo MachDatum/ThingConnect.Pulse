@@ -13,6 +13,7 @@ public sealed class MonitoringBackgroundService : BackgroundService
     private readonly ILogger<MonitoringBackgroundService> _logger;
     private readonly SemaphoreSlim _concurrencySemaphore;
     private readonly ConcurrentDictionary<Guid, Timer> _endpointTimers = new();
+    private readonly ConcurrentDictionary<Guid, bool> _probeExecuting = new();
     private readonly int _maxConcurrentProbes;
 
     public MonitoringBackgroundService(IServiceProvider serviceProvider,
@@ -55,18 +56,67 @@ public sealed class MonitoringBackgroundService : BackgroundService
             }
         }
 
-        // Handle graceful shutdown
-        using (IServiceScope scope = _serviceProvider.CreateScope())
+        // Handle graceful shutdown with cancellation support
+        try
         {
-            IOutageDetectionService outageService = scope.ServiceProvider.GetRequiredService<IOutageDetectionService>();
-            await outageService.HandleGracefulShutdownAsync("Service stopping", CancellationToken.None);
+            using (IServiceScope scope = _serviceProvider.CreateScope())
+            {
+                IOutageDetectionService outageService = scope.ServiceProvider.GetRequiredService<IOutageDetectionService>();
+                
+                // Create a timeout for graceful shutdown (30 seconds max)
+                // This allows force shutdown while giving reasonable time for data safety
+                using var shutdownCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+                using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken, shutdownCts.Token);
+                
+                await outageService.HandleGracefulShutdownAsync("Service stopping", combinedCts.Token);
+                
+                _logger.LogInformation("Graceful shutdown completed successfully");
+            }
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            _logger.LogWarning("Graceful shutdown was cancelled - service forced to stop");
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("Graceful shutdown timed out (30s) - proceeding with forced shutdown");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during graceful shutdown - proceeding with forced shutdown");
         }
 
-        // Clean up timers
-        foreach (Timer timer in _endpointTimers.Values)
+        // Clean up timers gracefully with cancellation support
+        var timerCleanupTasks = new List<Task>();
+        foreach (var kvp in _endpointTimers.ToList()) // ToList to avoid modification during enumeration
         {
-            timer.Dispose();
+            timerCleanupTasks.Add(StopTimerGracefullyAsync(kvp.Value, kvp.Key));
         }
+        
+        try
+        {
+            // Create timeout for timer cleanup (30 seconds max) while respecting external cancellation
+            using var timerCleanupCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            using var combinedCleanupCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken, timerCleanupCts.Token);
+            
+            // Wait for all timers to shutdown gracefully (with timeout and cancellation)
+            await Task.WhenAll(timerCleanupTasks).WaitAsync(combinedCleanupCts.Token);
+            
+            _logger.LogInformation("All timers stopped gracefully");
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            _logger.LogWarning("Timer cleanup was cancelled - service forced to stop");
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("Timer cleanup timed out (30s) - some timers may not have stopped cleanly");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during timer cleanup");
+        }
+        
         _endpointTimers.Clear();
 
         _logger.LogInformation("Monitoring background service stopped");
@@ -91,7 +141,8 @@ public sealed class MonitoringBackgroundService : BackgroundService
         {
             if (_endpointTimers.TryRemove(endpointId, out Timer? timer))
             {
-                timer.Dispose();
+                await StopTimerGracefullyAsync(timer, endpointId);
+                _probeExecuting.TryRemove(endpointId, out _); // Clean up execution tracking
                 _logger.LogInformation("Stopped monitoring endpoint: {EndpointId}", endpointId);
             }
         }
@@ -103,7 +154,16 @@ public sealed class MonitoringBackgroundService : BackgroundService
 
             if (_endpointTimers.TryGetValue(endpoint.Id, out Timer? existingTimer))
             {
-                // Update existing timer if interval changed
+                // Stop timer to prevent race condition, then restart with new interval
+                existingTimer.Change(Timeout.Infinite, Timeout.Infinite);
+                
+                // Wait briefly if probe is currently executing to avoid immediate restart
+                if (_probeExecuting.TryGetValue(endpoint.Id, out bool isExecuting) && isExecuting)
+                {
+                    await Task.Delay(100); // Brief delay to let current execution complete
+                }
+                
+                // Restart with new interval
                 existingTimer.Change(TimeSpan.Zero, TimeSpan.FromMilliseconds(intervalMs));
             }
             else
@@ -133,6 +193,9 @@ public sealed class MonitoringBackgroundService : BackgroundService
             _logger.LogWarning("Concurrency limit reached, skipping probe for endpoint: {EndpointId}", endpointId);
             return;
         }
+
+        // Mark probe as executing to prevent timer race conditions
+        _probeExecuting.TryAdd(endpointId, true);
 
         try
         {
@@ -171,7 +234,45 @@ public sealed class MonitoringBackgroundService : BackgroundService
         }
         finally
         {
+            // Clear execution flag
+            _probeExecuting.TryRemove(endpointId, out _);
             _concurrencySemaphore.Release();
+        }
+    }
+
+    /// <summary>
+    /// Gracefully stops a timer by disabling it, waiting for current execution to complete, then disposing.
+    /// </summary>
+    private async Task StopTimerGracefullyAsync(Timer timer, Guid endpointId)
+    {
+        try
+        {
+            // Stop the timer from firing again
+            timer.Change(Timeout.Infinite, Timeout.Infinite);
+
+            // Wait for current probe execution to complete (with timeout)
+            int maxWaitMs = 30000; // 30 seconds max wait
+            int waitedMs = 0;
+            const int checkIntervalMs = 100;
+
+            while (waitedMs < maxWaitMs && _probeExecuting.TryGetValue(endpointId, out bool isExecuting) && isExecuting)
+            {
+                await Task.Delay(checkIntervalMs);
+                waitedMs += checkIntervalMs;
+            }
+
+            if (waitedMs >= maxWaitMs)
+            {
+                _logger.LogWarning("Timeout waiting for probe execution to complete for endpoint: {EndpointId}", endpointId);
+            }
+
+            // Now safe to dispose
+            timer.Dispose();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during graceful timer shutdown for endpoint: {EndpointId}", endpointId);
+            timer.Dispose(); // Force dispose on error
         }
     }
 
@@ -179,9 +280,20 @@ public sealed class MonitoringBackgroundService : BackgroundService
     {
         _concurrencySemaphore?.Dispose();
 
+        // Force dispose all remaining timers (should already be cleaned up in ExecuteAsync)
         foreach (Timer timer in _endpointTimers.Values)
         {
-            timer.Dispose();
+            try
+            {
+                // Stop timer first, then dispose (no graceful wait in synchronous dispose)
+                timer.Change(Timeout.Infinite, Timeout.Infinite);
+                timer.Dispose();
+            }
+            catch (Exception ex)
+            {
+                // Log but don't throw during disposal
+                _logger?.LogWarning(ex, "Error disposing timer during service disposal");
+            }
         }
 
         base.Dispose();

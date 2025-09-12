@@ -54,16 +54,36 @@ public sealed class ProbeService : IProbeService
             using var ping = new Ping();
             var stopwatch = Stopwatch.StartNew();
 
-            PingReply reply = await ping.SendPingAsync(host, timeoutMs);
-            stopwatch.Stop();
+            // Create cancellation token that respects both timeout and external cancellation
+            using var timeoutCts = new CancellationTokenSource(timeoutMs);
+            using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
 
-            if (reply.Status == IPStatus.Success)
+            try
             {
-                return CheckResult.Success(endpointId, timestamp, reply.RoundtripTime);
+                // Use overload that accepts cancellation token
+                PingReply reply = await ping.SendPingAsync(host, timeoutMs, null, null, combinedCts.Token);
+                stopwatch.Stop();
+
+                if (reply.Status == IPStatus.Success)
+                {
+                    return CheckResult.Success(endpointId, timestamp, reply.RoundtripTime);
+                }
+                else
+                {
+                    return CheckResult.Failure(endpointId, timestamp, $"Ping failed: {reply.Status}");
+                }
             }
-            else
+            catch (OperationCanceledException) when (timeoutCts.Token.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
             {
-                return CheckResult.Failure(endpointId, timestamp, $"Ping failed: {reply.Status}");
+                // Timeout occurred (not external cancellation)
+                stopwatch.Stop();
+                return CheckResult.Failure(endpointId, timestamp, $"Ping timeout to {host}");
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // External cancellation requested (service shutdown, etc.)
+                stopwatch.Stop();
+                return CheckResult.Failure(endpointId, timestamp, $"Ping cancelled to {host}");
             }
         }
         catch (Exception ex)
@@ -81,25 +101,36 @@ public sealed class ProbeService : IProbeService
             using var tcpClient = new TcpClient();
             var stopwatch = Stopwatch.StartNew();
 
-            // Create a timeout task
-            var timeoutTask = Task.Delay(timeoutMs, cancellationToken);
-            Task connectTask = tcpClient.ConnectAsync(host, port);
+            // Create cancellation token that respects both timeout and external cancellation
+            using var timeoutCts = new CancellationTokenSource(timeoutMs);
+            using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
 
-            Task completedTask = await Task.WhenAny(connectTask, timeoutTask);
-            stopwatch.Stop();
+            // Use the combined cancellation token for the connection
+            Task connectTask = tcpClient.ConnectAsync(host, port, combinedCts.Token);
 
-            if (completedTask == connectTask && connectTask.IsCompletedSuccessfully)
+            try
             {
+                await connectTask;
+                stopwatch.Stop();
                 return CheckResult.Success(endpointId, timestamp, stopwatch.ElapsedMilliseconds);
             }
-            else if (completedTask == timeoutTask)
+            catch (OperationCanceledException) when (timeoutCts.Token.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
             {
+                // Timeout occurred (not external cancellation)
+                stopwatch.Stop();
                 return CheckResult.Failure(endpointId, timestamp, $"TCP connection timeout to {host}:{port}");
             }
-            else
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                Exception? exception = connectTask.Exception?.GetBaseException();
-                return CheckResult.Failure(endpointId, timestamp, $"TCP connection failed: {exception?.Message}");
+                // External cancellation requested (service shutdown, etc.)
+                stopwatch.Stop();
+                return CheckResult.Failure(endpointId, timestamp, $"TCP connection cancelled to {host}:{port}");
+            }
+            catch (Exception ex)
+            {
+                // Connection failed for other reasons
+                stopwatch.Stop();
+                return CheckResult.Failure(endpointId, timestamp, $"TCP connection failed: {ex.Message}");
             }
         }
         catch (Exception ex)
@@ -115,19 +146,10 @@ public sealed class ProbeService : IProbeService
 
         try
         {
-            // Build URL
-            string scheme = port == 443 ? "https" : "http";
-            string url = $"{scheme}://{host}";
-
-            if (port != 80 && port != 443)
-            {
-                url += $":{port}";
-            }
-
-            if (!string.IsNullOrEmpty(path))
-            {
-                url += path.StartsWith("/") ? path : "/" + path;
-            }
+            // Build URL with proper protocol detection and validation
+            string url = BuildHttpUrl(host, port, path);
+            _logger.LogTrace("Built HTTP URL: {Url} from host={Host}, port={Port}, path={Path}", 
+                url, host, port, path);
 
             var stopwatch = Stopwatch.StartNew();
 
@@ -170,5 +192,105 @@ public sealed class ProbeService : IProbeService
         {
             return CheckResult.Failure(endpointId, timestamp, $"HTTP error: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Builds HTTP URL with proper protocol detection and validation.
+    /// Handles cases where host already contains protocol or needs port-based detection.
+    /// </summary>
+    private static string BuildHttpUrl(string host, int port, string? path)
+    {
+        string url;
+        
+        // Check if host already contains a protocol
+        if (host.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || 
+            host.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            // Host already includes protocol, use as-is but validate port compatibility
+            url = host;
+            
+            // If explicit port provided and doesn't match standard ports, append it
+            bool isHttps = host.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
+            int standardPort = isHttps ? 443 : 80;
+            
+            if (port != standardPort)
+            {
+                // Check if host already has a port
+                var uri = new Uri(host);
+                if (uri.Port == -1 || uri.IsDefaultPort)
+                {
+                    // No explicit port in host, add the specified port
+                    url = $"{uri.Scheme}://{uri.Host}:{port}";
+                }
+                // If host already has explicit port, keep it as-is
+            }
+        }
+        else
+        {
+            // Host doesn't contain protocol, determine from port and context
+            string scheme;
+            
+            // Use smart defaults: 443 and common HTTPS ports default to HTTPS, others to HTTP
+            if (port == 443 || IsCommonHttpsPort(port))
+            {
+                scheme = "https";
+            }
+            else
+            {
+                scheme = "http";
+            }
+            
+            url = $"{scheme}://{host}";
+            
+            // Add port if not standard for the chosen protocol
+            int standardPort = scheme == "https" ? 443 : 80;
+            if (port != standardPort)
+            {
+                url += $":{port}";
+            }
+        }
+        
+        // Add path if specified
+        if (!string.IsNullOrEmpty(path))
+        {
+            // Ensure URL ends with host/port and path starts with /
+            if (!url.EndsWith("/") && !path.StartsWith("/"))
+            {
+                url += "/";
+            }
+            else if (url.EndsWith("/") && path.StartsWith("/"))
+            {
+                // Remove duplicate slash
+                path = path.Substring(1);
+            }
+            
+            url += path;
+        }
+        
+        // Validate the final URL
+        try
+        {
+            var validationUri = new Uri(url);
+            return url;
+        }
+        catch (UriFormatException ex)
+        {
+            throw new ArgumentException($"Invalid URL constructed: {url}", ex);
+        }
+    }
+    
+    /// <summary>
+    /// Checks if the port is commonly used for HTTPS services.
+    /// </summary>
+    private static bool IsCommonHttpsPort(int port)
+    {
+        // Common HTTPS ports used in practice
+        return port switch
+        {
+            8443 => true,  // Common alternative HTTPS port
+            9443 => true,  // Common in containerized environments
+            4443 => true,  // Sometimes used for APIs
+            _ => false
+        };
     }
 }
