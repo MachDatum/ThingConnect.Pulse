@@ -11,7 +11,6 @@ import {
   Button,
   Heading,
   Icon,
-  Table,
 } from '@chakra-ui/react';
 import { useParams, Link as RouterLink, Navigate } from 'react-router-dom';
 import {
@@ -29,16 +28,16 @@ import {
   Gauge,
   CircleCheckBig,
   CircleAlert,
-  CloudOff,
   SearchX,
 } from 'lucide-react';
 import { Page } from '@/components/layout/Page';
 import { useQuery } from '@tanstack/react-query';
 import { EndpointService } from '@/api/services/endpoint.service';
 import { formatDistanceToNow } from 'date-fns';
-import type { RawCheck, Outage } from '@/api/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
+import { RecentChecksTable } from '@/components/RecentChecksTable';
+import { OutagesList } from '@/components/OutageList';
 
 function getStatusColor(status: string) {
   switch (status.toLowerCase()) {
@@ -90,133 +89,6 @@ function getEndpointTypeColor(type: string) {
     default:
       return 'gray';
   }
-}
-
-function formatDuration(seconds?: number | null): string {
-  if (!seconds) return 'Unknown';
-
-  if (seconds < 60) return `${seconds}s`;
-  if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
-
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.round((seconds % 3600) / 60);
-  return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
-}
-
-interface RecentChecksTableProps {
-  checks: RawCheck[];
-}
-
-function RecentChecksTable({ checks }: RecentChecksTableProps) {
-  if (checks.length === 0) {
-    return (
-      <Text color='gray.500' textAlign='center' py={8}>
-        No recent checks available
-      </Text>
-    );
-  }
-
-  return (
-    <VStack gap={2} align='stretch'>
-      <Table.Root size='sm'>
-        <Table.Header>
-          <Table.Row>
-            <Table.ColumnHeader w={'30%'}>Time</Table.ColumnHeader>
-            <Table.ColumnHeader w={'20%'}>Status</Table.ColumnHeader>
-            <Table.ColumnHeader w={'25%'}>RTT</Table.ColumnHeader>
-            <Table.ColumnHeader w={'25%'}>Error</Table.ColumnHeader>
-          </Table.Row>
-        </Table.Header>
-        <Table.Body>
-          {checks.slice(0, 10).map((check, index) => (
-            <Table.Row key={`${check.ts}-${index}`}>
-              <Table.Cell w={'30%'}>
-                <Text flex='1' fontSize='sm'>
-                  {formatDistanceToNow(new Date(check.ts), { addSuffix: true })}
-                </Text>
-              </Table.Cell>
-              <Table.Cell w={'20%'}>
-                <Badge colorPalette={check.status === 'up' ? 'green' : 'red'} size='sm'>
-                  {check.status.toUpperCase()}
-                </Badge>
-              </Table.Cell>
-              <Table.Cell w={'25%'}>
-                <Text fontSize='sm'>{check.rttMs ? `${check.rttMs}ms` : '-'}</Text>
-              </Table.Cell>
-              <Table.Cell w={'25%'}>
-                <Text flex='1' fontSize='sm' color='gray.500' lineClamp={1}>
-                  {check.error || '-'}
-                </Text>
-              </Table.Cell>
-            </Table.Row>
-          ))}
-        </Table.Body>
-      </Table.Root>
-      {checks.length > 10 && (
-        <Text fontSize='sm' color='gray.500' textAlign='center' pt={2}>
-          Showing last 10 of {checks.length} checks
-        </Text>
-      )}
-    </VStack>
-  );
-}
-
-interface OutagesListProps {
-  outages: Outage[];
-}
-
-function OutagesList({ outages }: OutagesListProps) {
-  if (outages.length === 0) {
-    return (
-      <VStack color='gray.300' textAlign='center' gap={1} py={5}>
-        <CloudOff size={'40px'} />
-        <Text textAlign='center' color='gray.500'>
-          No recent outages
-        </Text>
-      </VStack>
-    );
-  }
-
-  return (
-    <VStack gap={4} align='stretch'>
-      {outages.slice(0, 5).map((outage, index) => (
-        <Card.Root key={`${outage.startedTs}-${index}`} variant='outline'>
-          <Card.Body>
-            <VStack gap={2} align='stretch'>
-              <HStack justify='space-between'>
-                <Text fontSize='sm' fontWeight='medium'>
-                  {formatDistanceToNow(new Date(outage.startedTs), { addSuffix: true })}
-                </Text>
-                <Badge colorPalette={outage.endedTs ? 'gray' : 'red'} size='sm'>
-                  {outage.endedTs ? 'Resolved' : 'Ongoing'}
-                </Badge>
-              </HStack>
-              <HStack justify='space-between'>
-                <Text fontSize='sm' color='gray.600'>
-                  Duration: {formatDuration(outage.durationS)}
-                </Text>
-                {outage.endedTs && (
-                  <Text fontSize='sm' color='gray.600'>
-                    Ended: {formatDistanceToNow(new Date(outage.endedTs), { addSuffix: true })}
-                  </Text>
-                )}
-              </HStack>
-              {outage.lastError && (
-                <Text fontSize='sm' color='red.600' _dark={{ color: 'red.400' }} lineClamp={2}>
-                  {outage.lastError}
-                </Text>
-              )}
-            </VStack>
-          </Card.Body>
-        </Card.Root>
-      ))}
-      {outages.length > 5 && (
-        <Text fontSize='sm' color='gray.500' textAlign='center'>
-          Showing 5 of {outages.length} recent outages
-        </Text>
-      )}
-    </VStack>
-  );
 }
 
 export default function EndpointDetail() {
@@ -311,14 +183,63 @@ export default function EndpointDetail() {
   const latestCheck = recent.length > 0 ? recent[0] : null;
   const currentStatus = latestCheck?.status || 'unknown';
 
+  // inside EndpointDetail component (before return)
+  const stats = [
+    {
+      key: 'uptime',
+      label: 'Uptime (Last Hour)',
+      value: `${uptimePercentage}%`,
+      help: `${recent.length} checks performed`,
+      icon: Timer,
+      color: 'green',
+      bg: 'green',
+    },
+    {
+      key: 'rtt',
+      label: 'Avg Response Time',
+      value: avgRtt ? `${avgRtt}ms` : 'N/A',
+      help: `${rttValues.length} successful checks`,
+      icon: Gauge,
+      color: 'blue',
+      bg: 'blue',
+    },
+    {
+      key: 'outages',
+      label: 'Active Outages',
+      value: outages.filter(o => !o.endedTs).length,
+      help: `${outages.length} total outages`,
+      icon: CircleAlert,
+      color: 'yellow.400',
+      bg: 'yellow',
+    },
+    {
+      key: 'lastCheck',
+      label: 'Last Check',
+      value: latestCheck
+        ? formatDistanceToNow(new Date(latestCheck.ts), { addSuffix: true })
+        : 'N/A',
+      help: latestCheck ? (latestCheck.rttMs ? `${latestCheck.rttMs}ms` : 'Failed') : '',
+      icon: CircleCheckBig,
+      color: 'purple',
+      bg: 'purple',
+    },
+  ];
+
   return (
     <Page
       title={endpoint.name}
-      description={`${endpoint.type.toUpperCase()} endpoint monitoring`}
+      description={
+        <HStack gap={2}>
+          <Text>{`${endpoint.type.toUpperCase()} endpoint monitoring`}</Text>
+          <Badge fontSize='xs' colorPalette='blue'>
+            Last 60 minutes
+          </Badge>
+        </HStack>
+      }
       actions={backButton}
     >
       <Card.Root>
-        <Card.Body p={4}>
+        <Card.Body p={3}>
           <VStack gap={4} align='stretch'>
             <HStack justify='space-between' align='start' borderBottomWidth={1} pb={3}>
               <HStack gap={3} align='center'>
@@ -419,114 +340,31 @@ export default function EndpointDetail() {
       </Card.Root>
 
       {/* Statistics */}
-      <VStack w={'full'} align={'self-start'}>
+      <VStack w='full' align='self-start'>
         <Heading size='md'>Recent Performance</Heading>
-        <StatGroup w={'full'} gap={2}>
-          <Stat.Root borderWidth='1px' p='4' rounded='md' h={'full'} w={'25%'}>
-            <HStack w={'full'} gap={3}>
-              <Box
-                bg={`green.100`}
-                _dark={{
-                  bg: `green.800`,
-                }}
-                boxSize='12'
-                display='flex'
-                alignItems='center'
-                justifyContent='center'
-                borderRadius='full'
-              >
-                <Icon color='green' _dark={{ color: 'green.400' }}>
-                  <Timer />
-                </Icon>
-              </Box>
-              <VStack align={'self-start'}>
-                <Stat.Label>Uptime (Last Hour)</Stat.Label>
-                <Stat.ValueText>{uptimePercentage}%</Stat.ValueText>
-                <Stat.HelpText>{recent.length} checks performed</Stat.HelpText>
-              </VStack>
-            </HStack>
-          </Stat.Root>
-
-          <Stat.Root borderWidth='1px' p='4' rounded='md' h={'full'} w={'25%'}>
-            <HStack w={'full'} gap={3}>
-              <Box
-                bg={`blue.100`}
-                _dark={{
-                  bg: `blue.800`,
-                }}
-                boxSize='12'
-                display='flex'
-                alignItems='center'
-                justifyContent='center'
-                borderRadius='full'
-              >
-                <Icon color='blue' _dark={{ color: 'blue.400' }}>
-                  <Gauge />
-                </Icon>
-              </Box>
-              <VStack align={'self-start'}>
-                <Stat.Label>Avg Response Time</Stat.Label>
-                <Stat.ValueText>{avgRtt ? `${avgRtt}ms` : 'N/A'}</Stat.ValueText>
-                <Stat.HelpText>{rttValues.length} successful checks</Stat.HelpText>
-              </VStack>
-            </HStack>
-          </Stat.Root>
-
-          <Stat.Root borderWidth='1px' p='4' rounded='md' h={'full'} w={'25%'}>
-            <HStack w={'full'} gap={3}>
-              <Box
-                bg={`yellow.100`}
-                _dark={{
-                  bg: `yellow.800`,
-                }}
-                boxSize='12'
-                display='flex'
-                alignItems='center'
-                justifyContent='center'
-                borderRadius='full'
-              >
-                <Icon color='yellow.400' _dark={{ color: 'yellow.400' }}>
-                  <CircleAlert />
-                </Icon>
-              </Box>
-              <VStack align={'self-start'}>
-                <Stat.Label>Active Outages</Stat.Label>
-                <Stat.ValueText>{outages.filter(o => !o.endedTs).length}</Stat.ValueText>
-                <Stat.HelpText>{outages.length} total outages</Stat.HelpText>
-              </VStack>
-            </HStack>
-          </Stat.Root>
-
-          <Stat.Root borderWidth='1px' p='4' rounded='md' h={'full'} w={'25%'}>
-            <HStack w={'full'} gap={3}>
-              <Box
-                bg={`purple.100`}
-                _dark={{
-                  bg: `purple.800`,
-                }}
-                boxSize='12'
-                display='flex'
-                alignItems='center'
-                justifyContent='center'
-                borderRadius='full'
-              >
-                <Icon color='purple' _dark={{ color: 'purple.400' }}>
-                  <CircleCheckBig />
-                </Icon>
-              </Box>
-              <VStack align={'self-start'}>
-                <Stat.Label>Last Check</Stat.Label>
-                <Stat.ValueText fontSize='sm'>
-                  {latestCheck
-                    ? formatDistanceToNow(new Date(latestCheck.ts), { addSuffix: true })
-                    : 'N/A'}
-                </Stat.ValueText>
-                <Stat.HelpText>
-                  {latestCheck ? (latestCheck.rttMs ? `${latestCheck.rttMs}ms` : 'Failed') : ''}
-                </Stat.HelpText>
-              </VStack>
-            </HStack>
-          </Stat.Root>
+        <StatGroup w='full' gap={2}>
+          {stats.map(stat => (
+            <Stat.Root key={stat.key} borderWidth='1px' p='3' rounded='md' h='full' w='25%'>
+              <HStack w='full' gap={3}>
+                <Box
+                  bg={`${stat.bg}.100`}
+                  _dark={{ bg: `${stat.bg}.800` }}
+                  boxSize='12'
+                  display='flex'
+                  alignItems='center'
+                  justifyContent='center'
+                  borderRadius='full'
+                >
+                  <Icon as={stat.icon} color={stat.color} _dark={{ color: `${stat.bg}.400` }} />
+                </Box>
+                <VStack align='self-start'>
+                  <Stat.Label>{stat.label}</Stat.Label>
+                  <Stat.ValueText>{stat.value}</Stat.ValueText>
+                  <Stat.HelpText>{stat.help}</Stat.HelpText>
+                </VStack>
+              </HStack>
+            </Stat.Root>
+          ))}
         </StatGroup>
       </VStack>
 
@@ -534,25 +372,23 @@ export default function EndpointDetail() {
       <SimpleGrid columns={{ base: 1, lg: 2 }} gap={2}>
         {/* Recent Checks */}
         <Card.Root>
-          <Card.Header p={4} pb={0}>
-            <HStack justify='space-between' align='center'>
-              <Heading size='md'>Recent Checks</Heading>
-              <Badge fontSize={'xs'} colorPalette={'blue'}>
-                Last 60 minutes
-              </Badge>
-            </HStack>
+          <Card.Header px={3} pt={3}>
+            <Text fontWeight='medium' fontSize='sm'>
+              Recent Checks
+            </Text>
           </Card.Header>
-          <Card.Body p={4}>
-            <RecentChecksTable checks={recent} />
+          <Card.Body flex={1} minH={0} p={3}>
+            <RecentChecksTable checks={recent} pageSize={10} />
           </Card.Body>
         </Card.Root>
-
         {/* Recent Outages */}
         <Card.Root>
-          <Card.Header p={4} pb={0}>
-            <Heading size='md'>Recent Outages</Heading>
+          <Card.Header p={3} pb={0}>
+            <Text fontWeight='medium' fontSize='sm'>
+              Recent Outages
+            </Text>
           </Card.Header>
-          <Card.Body p={4}>
+          <Card.Body p={3}>
             <OutagesList outages={outages} />
           </Card.Body>
         </Card.Root>
