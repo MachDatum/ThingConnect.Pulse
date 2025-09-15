@@ -21,7 +21,15 @@ function formatDuration(seconds?: number | null): string {
 export function OutagesList({ outages }: OutagesListProps) {
   if (outages.length === 0) {
     return (
-      <VStack color='gray.300' textAlign='center' gap={1} py={5}>
+      <VStack
+        justify='center'
+        align='center'
+        color='gray.300'
+        textAlign='center'
+        gap={1}
+        py={5}
+        h='100%'
+      >
         <CloudOff size={'40px'} />
         <Text textAlign='center' color='gray.500'>
           No recent outages

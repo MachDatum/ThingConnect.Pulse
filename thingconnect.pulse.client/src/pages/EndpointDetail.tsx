@@ -342,9 +342,9 @@ export default function EndpointDetail() {
       {/* Statistics */}
       <VStack w='full' align='self-start'>
         <Heading size='md'>Recent Performance</Heading>
-        <StatGroup w='full' gap={2}>
+        <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} gap={2} w='full'>
           {stats.map(stat => (
-            <Stat.Root key={stat.key} borderWidth='1px' p='3' rounded='md' h='full' w='25%'>
+            <Stat.Root key={stat.key} borderWidth='1px' p='3' rounded='md' h='full'>
               <HStack w='full' gap={3}>
                 <Box
                   bg={`${stat.bg}.100`}
@@ -365,30 +365,30 @@ export default function EndpointDetail() {
               </HStack>
             </Stat.Root>
           ))}
-        </StatGroup>
+        </SimpleGrid>
       </VStack>
-
       {/* Recent Checks and Outages */}
-      <SimpleGrid columns={{ base: 1, lg: 2 }} gap={2}>
+      <SimpleGrid columns={{ base: 1, md: 1, lg: 2 }} gap={2} w='full' h='full'>
         {/* Recent Checks */}
-        <Card.Root>
+        <Card.Root h='full' display='flex' flexDirection='column'>
           <Card.Header px={3} pt={3}>
             <Text fontWeight='medium' fontSize='sm'>
               Recent Checks
             </Text>
           </Card.Header>
-          <Card.Body flex={1} minH={0} p={3}>
+          <Card.Body flex={1} minH={0} p={3} overflow='auto'>
             <RecentChecksTable checks={recent} pageSize={10} />
           </Card.Body>
         </Card.Root>
+
         {/* Recent Outages */}
-        <Card.Root>
+        <Card.Root h='full' display='flex' flexDirection='column'>
           <Card.Header p={3} pb={0}>
             <Text fontWeight='medium' fontSize='sm'>
               Recent Outages
             </Text>
           </Card.Header>
-          <Card.Body p={3}>
+          <Card.Body flex={1} minH={0} p={3} overflow='auto'>
             <OutagesList outages={outages} />
           </Card.Body>
         </Card.Root>
