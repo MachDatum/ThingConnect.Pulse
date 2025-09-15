@@ -183,7 +183,6 @@ export default function EndpointDetail() {
   const latestCheck = recent.length > 0 ? recent[0] : null;
   const currentStatus = latestCheck?.status || 'unknown';
 
-  // inside EndpointDetail component (before return)
   const stats = [
     {
       key: 'uptime',
@@ -359,7 +358,9 @@ export default function EndpointDetail() {
                 </Box>
                 <VStack align='self-start'>
                   <Stat.Label>{stat.label}</Stat.Label>
-                  <Stat.ValueText>{stat.value}</Stat.ValueText>
+                  <Stat.ValueText fontSize={stat.key === 'lastCheck' ? 'sm' : undefined}>
+                    {stat.value}
+                  </Stat.ValueText>
                   <Stat.HelpText>{stat.help}</Stat.HelpText>
                 </VStack>
               </HStack>
