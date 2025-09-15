@@ -198,12 +198,20 @@ public class Program
                 Log.Information("Directory structure verified at {RootPath}", pathSvc.GetRootDirectory());
             }
 
-            // Initialize database with seed data in development
-            if (app.Environment.IsDevelopment())
+            // Ensure database exists and is up to date
+            using (IServiceScope scope = app.Services.CreateScope())
             {
-                using IServiceScope scope = app.Services.CreateScope();
                 PulseDbContext context = scope.ServiceProvider.GetRequiredService<PulseDbContext>();
-                SeedData.Initialize(context);
+
+                // Apply any pending migrations or create database if it doesn't exist
+                await context.Database.MigrateAsync();
+                Log.Information("Database migration completed");
+
+                // Initialize database with seed data in development only
+                if (app.Environment.IsDevelopment())
+                {
+                    SeedData.Initialize(context);
+                }
             }
 
             // Initialize sample configuration if no configuration exists

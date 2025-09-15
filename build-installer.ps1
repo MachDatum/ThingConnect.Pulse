@@ -93,9 +93,9 @@ if (-not $SkipBuild) {
         "publish", $ProjectDir,
         "-c", $Configuration,
         "-o", $PublishDir,
-        "--self-contained", "false",
+        "--self-contained", "true",
         "--runtime", "win-x64",
-        "/p:PublishSingleFile=false"
+        "/p:PublishSingleFile=true"
     )
     
     & dotnet @PublishArgs

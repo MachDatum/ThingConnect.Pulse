@@ -26,8 +26,29 @@ public sealed class ConfigurationParser
 
     public static async Task<ConfigurationParser> CreateAsync(ILogger<ConfigurationParser> logger, IDiscoveryService discoveryService)
     {
+        // Try multiple methods to determine the assembly directory
+        string? assemblyDirectory = null;
+
+        // Method 1: Try GetExecutingAssembly().Location
         string assemblyLocation = System.Reflection.Assembly.GetExecutingAssembly().Location;
-        string? assemblyDirectory = Path.GetDirectoryName(assemblyLocation);
+        if (!string.IsNullOrEmpty(assemblyLocation))
+        {
+            assemblyDirectory = Path.GetDirectoryName(assemblyLocation);
+        }
+
+        // Method 2: Try AppContext.BaseDirectory if Location failed
+        if (string.IsNullOrEmpty(assemblyDirectory))
+        {
+            assemblyDirectory = AppContext.BaseDirectory;
+            logger.LogDebug("Using AppContext.BaseDirectory: {BaseDirectory}", assemblyDirectory);
+        }
+
+        // Method 3: Try current directory as fallback
+        if (string.IsNullOrEmpty(assemblyDirectory))
+        {
+            assemblyDirectory = Environment.CurrentDirectory;
+            logger.LogDebug("Using current directory: {CurrentDirectory}", assemblyDirectory);
+        }
 
         if (string.IsNullOrEmpty(assemblyDirectory))
         {
