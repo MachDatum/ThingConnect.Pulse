@@ -30,12 +30,15 @@ import {
   CircleCheckBig,
   CircleAlert,
   CloudOff,
+  SearchX,
 } from 'lucide-react';
 import { Page } from '@/components/layout/Page';
 import { useQuery } from '@tanstack/react-query';
 import { EndpointService } from '@/api/services/endpoint.service';
 import { formatDistanceToNow } from 'date-fns';
 import type { RawCheck, Outage } from '@/api/types';
+import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
 
 function getStatusColor(status: string) {
   switch (status.toLowerCase()) {
@@ -218,10 +221,7 @@ function OutagesList({ outages }: OutagesListProps) {
 
 export default function EndpointDetail() {
   const { id } = useParams<{ id: string }>();
-
-  if (!id) {
-    return <Navigate to='/' replace />;
-  }
+  if (!id) return <Navigate to='/' replace />;
 
   const {
     data: endpointDetail,
@@ -233,26 +233,66 @@ export default function EndpointDetail() {
     refetchInterval: 10000, // Refresh every 10 seconds
   });
 
-  if (!endpointDetail && !isLoading && !error) {
+  const backButton = (
+    <RouterLink to='/'>
+      <Button variant='ghost' size='sm' h='32px' mt={-4} mr={7}>
+        <ArrowLeft size={16} />
+        Back to Dashboard
+      </Button>
+    </RouterLink>
+  );
+
+  if (isLoading) {
     return (
-      <Page
-        title='Endpoint Not Found'
-        description={`The endpoint with ID "${id}" was not found`}
-        actions={
-          <RouterLink to='/'>
-            <Button variant='ghost' size='sm'>
-              <ArrowLeft size={16} />
-              Back to Dashboard
-            </Button>
-          </RouterLink>
-        }
-      >
-        <Text>The endpoint with ID "{id}" was not found.</Text>
+      <Page title='Loading endpoint...' actions={backButton}>
+        <VStack gap={4} align='stretch'>
+          <Skeleton w='full' minH='150px' />
+          <Heading size='md'>Recent Performance</Heading>
+          <StatGroup w='full' gap={2}>
+            {Array(4)
+              .fill(0)
+              .map((_, i) => (
+                <Stat.Root key={i} borderWidth='1px' p='4' rounded='md' h='full' w='25%'>
+                  <HStack w='full' gap={3}>
+                    <Skeleton boxSize='12' borderRadius='full' />
+                    <VStack align='start' gap={1} w='full'>
+                      <Skeleton minH='12px' w='60px' />
+                      <Skeleton minH='16px' w='80px' />
+                      <Skeleton minH='12px' w='100px' />
+                    </VStack>
+                  </HStack>
+                </Stat.Root>
+              ))}
+          </StatGroup>
+          <SimpleGrid columns={{ base: 1, lg: 2 }} gap={2}>
+            <Skeleton w='full' minH='50vh' />
+            <Skeleton w='full' minH='50vh' />
+          </SimpleGrid>
+        </VStack>
       </Page>
     );
   }
 
-  if (!endpointDetail) return null;
+  if (error || !endpointDetail) {
+    return (
+      <Page title='Endpoint Not Found' actions={backButton}>
+        <EmptyState
+          icon={<SearchX />}
+          title='Endpoint Not Found'
+          description={
+            <>
+              <Text>The endpoint with ID "{id}" does not exist.</Text>
+              {error && (
+                <Text color='red.500' mt={2} fontSize='sm'>
+                  Error: {(error as Error).message}
+                </Text>
+              )}
+            </>
+          }
+        />
+      </Page>
+    );
+  }
 
   const { endpoint, recent, outages } = endpointDetail;
 
@@ -270,15 +310,6 @@ export default function EndpointDetail() {
   // Get current status from most recent check
   const latestCheck = recent.length > 0 ? recent[0] : null;
   const currentStatus = latestCheck?.status || 'unknown';
-
-  const backButton = (
-    <RouterLink to='/'>
-      <Button variant='ghost' size='sm' h='32px' mt={-4} mr={7}>
-        <ArrowLeft size={16} />
-        Back to Dashboard
-      </Button>
-    </RouterLink>
-  );
 
   return (
     <Page
@@ -506,9 +537,9 @@ export default function EndpointDetail() {
           <Card.Header p={4} pb={0}>
             <HStack justify='space-between' align='center'>
               <Heading size='md'>Recent Checks</Heading>
-              <Text color='blue' fontSize={'xs'}>
+              <Badge fontSize={'xs'} colorPalette={'blue'}>
                 Last 60 minutes
-              </Text>
+              </Badge>
             </HStack>
           </Card.Header>
           <Card.Body p={4}>
