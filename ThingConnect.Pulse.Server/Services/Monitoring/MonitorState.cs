@@ -5,9 +5,11 @@ namespace ThingConnect.Pulse.Server.Services.Monitoring;
 /// <summary>
 /// Per-endpoint in-memory state for outage detection and flap damping.
 /// Tracks success/fail streaks and manages state transitions.
+/// Thread-safe with internal locking.
 /// </summary>
 public sealed class MonitorState
 {
+    private readonly object _lock = new object();
     /// <summary>
     /// The last publicly reported status (UP/DOWN). Null if never determined.
     /// </summary>
@@ -40,12 +42,19 @@ public sealed class MonitorState
     /// </summary>
     public bool ShouldTransitionToDown(int threshold = 2)
     {
-        // If never initialized, transition immediately on first failure
-        if (LastPublicStatus == null && FailStreak >= 1)
-            return true;
+        lock (_lock)
+        {
+            // Must have enough failures to trigger transition
+            if (FailStreak < Math.Max(1, threshold))
+                return false;
+                
+            // Handle null status (never initialized) - transition on first failure
+            if (LastPublicStatus == null)
+                return FailStreak >= 1;
 
-        // Otherwise require threshold for state change from UP to DOWN
-        return LastPublicStatus != UpDown.down && FailStreak >= threshold;
+            // Only transition if currently UP (not already DOWN)
+            return LastPublicStatus == UpDown.up;
+        }
     }
 
     /// <summary>
@@ -55,12 +64,19 @@ public sealed class MonitorState
     /// </summary>
     public bool ShouldTransitionToUp(int threshold = 2)
     {
-        // If never initialized, transition immediately on first success
-        if (LastPublicStatus == null && SuccessStreak >= 1)
-            return true;
+        lock (_lock)
+        {
+            // Must have enough successes to trigger transition
+            if (SuccessStreak < Math.Max(1, threshold))
+                return false;
+                
+            // Handle null status (never initialized) - transition on first success
+            if (LastPublicStatus == null)
+                return SuccessStreak >= 1;
 
-        // Otherwise require threshold for state change from DOWN to UP
-        return LastPublicStatus != UpDown.up && SuccessStreak >= threshold;
+            // Only transition if currently DOWN (not already UP)
+            return LastPublicStatus == UpDown.down;
+        }
     }
 
     /// <summary>
@@ -68,8 +84,11 @@ public sealed class MonitorState
     /// </summary>
     public void RecordSuccess()
     {
-        SuccessStreak++;
-        FailStreak = 0;
+        lock (_lock)
+        {
+            SuccessStreak++;
+            FailStreak = 0;
+        }
     }
 
     /// <summary>
@@ -77,8 +96,11 @@ public sealed class MonitorState
     /// </summary>
     public void RecordFailure()
     {
-        FailStreak++;
-        SuccessStreak = 0;
+        lock (_lock)
+        {
+            FailStreak++;
+            SuccessStreak = 0;
+        }
     }
 
     /// <summary>
@@ -86,9 +108,12 @@ public sealed class MonitorState
     /// </summary>
     public void TransitionToDown(long timestamp, long outageId)
     {
-        LastPublicStatus = UpDown.down;
-        LastChangeTs = timestamp;
-        OpenOutageId = outageId;
+        lock (_lock)
+        {
+            LastPublicStatus = UpDown.down;
+            LastChangeTs = timestamp;
+            OpenOutageId = outageId;
+        }
     }
 
     /// <summary>
@@ -96,8 +121,39 @@ public sealed class MonitorState
     /// </summary>
     public void TransitionToUp(long timestamp)
     {
-        LastPublicStatus = UpDown.up;
-        LastChangeTs = timestamp;
-        OpenOutageId = null;
+        lock (_lock)
+        {
+            LastPublicStatus = UpDown.up;
+            LastChangeTs = timestamp;
+            OpenOutageId = null;
+        }
+    }
+
+    /// <summary>
+    /// Restores streak counters to previous values (used for rollback on transaction failures).
+    /// </summary>
+    public void RestoreStreakCounters(int successStreak, int failStreak)
+    {
+        lock (_lock)
+        {
+            SuccessStreak = successStreak;
+            FailStreak = failStreak;
+        }
+    }
+
+    /// <summary>
+    /// Validates that transition logic maintains mutual exclusivity.
+    /// This is used for debugging and ensuring state machine correctness.
+    /// </summary>
+    public bool ValidateTransitionMutualExclusivity(int threshold = 2)
+    {
+        lock (_lock)
+        {
+            bool shouldTransitionDown = ShouldTransitionToDown(threshold);
+            bool shouldTransitionUp = ShouldTransitionToUp(threshold);
+            
+            // Both transitions should never be true simultaneously
+            return !(shouldTransitionDown && shouldTransitionUp);
+        }
     }
 }

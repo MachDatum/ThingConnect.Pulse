@@ -10,6 +10,9 @@ import {
   Grid,
   GridItem,
   Button,
+  Alert,
+  Flex,
+  Separator
 } from '@chakra-ui/react';
 import {
   Bell,
@@ -19,12 +22,85 @@ import {
   Clock,
   Sparkles,
   ArrowRight,
+  Shield,
+  CheckCircle
 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import { Page } from '@/components/layout/Page';
 import { PageContent } from '@/components/layout/PageContent';
+import { Switch } from '@/components/ui/switch';
+import { LoadingButton } from '@/components/ui/LoadingButton';
+import { useTelemetryConsent } from '@/features/auth/hooks/useTelemetryConsent';
 import { Link as RouterLink } from 'react-router-dom';
 
 export default function Settings() {
+  const analytics = useAnalytics();
+  const { saveTelemetryConsent, getTelemetryConsent } = useTelemetryConsent();
+  const [telemetryConsent, setTelemetryConsent] = useState({
+    errorDiagnostics: false,
+    usageAnalytics: false
+  });
+  const [originalConsent, setOriginalConsent] = useState({
+    errorDiagnostics: false,
+    usageAnalytics: false
+  });
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
+  const [error, setError] = useState('');
+
+  // Track page view
+  useEffect(() => {
+    analytics.trackPageView('Settings', {
+      view_type: 'telemetry_settings',
+      section: 'privacy_controls'
+    });
+  }, []);
+
+  // Load current consent settings on component mount
+  useEffect(() => {
+    const loadConsent = async () => {
+      try {
+        const consent = await getTelemetryConsent();
+        console.log('Loaded consent from API:', consent);
+        setTelemetryConsent(consent);
+        setOriginalConsent(consent);
+        setIsInitialLoad(false);
+      } catch (err) {
+        console.error('Failed to load telemetry consent:', err);
+        setIsInitialLoad(false);
+      }
+    };
+    loadConsent();
+  }, [getTelemetryConsent]); // Now safe to use as dependency since it's useCallback wrapped
+
+  const handleSaveConsent = async () => {
+    console.log('Saving consent:', telemetryConsent);
+    setIsSaving(true);
+    setError('');
+    setSaveMessage('');
+
+    try {
+      await saveTelemetryConsent(telemetryConsent);
+      console.log('Consent saved successfully');
+      setOriginalConsent(telemetryConsent); // Update the original state
+      setSaveMessage('Telemetry preferences saved successfully!');
+      setTimeout(() => setSaveMessage(''), 3000);
+    } catch (err) {
+      console.error('Save failed:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save telemetry preferences';
+      setError(errorMessage);
+      // Revert to original state on error
+      setTelemetryConsent(originalConsent);
+      setTimeout(() => setError(''), 3000);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const hasChanges = JSON.stringify(telemetryConsent) !== JSON.stringify(originalConsent);
+
   const upcomingFeatures = [
     {
       icon: Bell,
@@ -57,6 +133,133 @@ export default function Settings() {
     >
       <PageContent>
         <Container maxW='4xl' py={8}>
+          {/* Telemetry Consent Section */}
+          <Box
+            p={6}
+            borderRadius='xl'
+            border='1px solid'
+            borderColor='gray.200'
+            _dark={{ 
+              borderColor: 'gray.700',
+              bg: 'gray.800'
+            }}
+            bg='white'
+            shadow='sm'
+            mb={12}
+          >
+            <VStack gap={6} align='start'>
+              <HStack gap={3}>
+                <Box
+                  p={3}
+                  borderRadius='lg'
+                  bg='blue.50'
+                  _dark={{ bg: 'blue.900' }}
+                >
+                  <Icon as={Shield} boxSize={6} color='blue.500' />
+                </Box>
+                <VStack align='start' gap={1}>
+                  <Heading size='lg' color='gray.800' _dark={{ color: 'white' }}>
+                    Telemetry & Analytics
+                  </Heading>
+                  <Text color='gray.600' _dark={{ color: 'gray.400' }}>
+                    Help us improve ThingConnect Pulse by sharing anonymous usage data
+                  </Text>
+                </VStack>
+              </HStack>
+
+              {error && (
+                <Alert.Root status='error' variant='subtle' w='full'>
+                  <Alert.Indicator />
+                  <Alert.Title>{error}</Alert.Title>
+                </Alert.Root>
+              )}
+
+              {saveMessage && (
+                <Alert.Root status='success' variant='subtle' w='full'>
+                  <Alert.Indicator />
+                  <Alert.Title>{saveMessage}</Alert.Title>
+                </Alert.Root>
+              )}
+
+              <VStack gap={4} w='full' align='start'>
+                <Flex justify='space-between' align='center' w='full'>
+                  <VStack align='start' gap={1} flex='1'>
+                    <HStack gap={2}>
+                      <Text fontWeight='medium' color='gray.800' _dark={{ color: 'white' }}>
+                        Send sanitized error diagnostics
+                      </Text>
+                      {telemetryConsent.errorDiagnostics && <Icon as={CheckCircle} boxSize={4} color='green.500' />}
+                    </HStack>
+                    <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
+                      Helps us identify and fix crashes faster. Only sends exception types, stack traces without sensitive data.
+                    </Text>
+                  </VStack>
+                  <Switch
+                    checked={telemetryConsent.errorDiagnostics}
+                    onCheckedChange={(details) => {
+                      console.log('Error diagnostics changed to:', details.checked);
+                      setTelemetryConsent(prev => ({ ...prev, errorDiagnostics: details.checked }));
+                    }}
+                    colorPalette='blue'
+                    size='md'
+                    disabled={isInitialLoad || isSaving}
+                  />
+                </Flex>
+
+                <Separator />
+
+                <Flex justify='space-between' align='center' w='full'>
+                  <VStack align='start' gap={1} flex='1'>
+                    <HStack gap={2}>
+                      <Text fontWeight='medium' color='gray.800' _dark={{ color: 'white' }}>
+                        Send anonymous usage analytics
+                      </Text>
+                      {telemetryConsent.usageAnalytics && <Icon as={CheckCircle} boxSize={4} color='green.500' />}
+                    </HStack>
+                    <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
+                      Helps us understand which features are useful. Only sends feature usage counts, no personal information.
+                    </Text>
+                  </VStack>
+                  <Switch
+                    checked={telemetryConsent.usageAnalytics}
+                    onCheckedChange={(details) => {
+                      console.log('Usage analytics changed to:', details.checked);
+                      setTelemetryConsent(prev => ({ ...prev, usageAnalytics: details.checked }));
+                    }}
+                    colorPalette='blue'
+                    size='md'
+                    disabled={isInitialLoad || isSaving}
+                  />
+                </Flex>
+              </VStack>
+
+              {isInitialLoad ? (
+                <Flex justify='center' w='full' pt={2}>
+                  <Text fontSize='sm' color='gray.500' _dark={{ color: 'gray.500' }}>
+                    Loading current preferences...
+                  </Text>
+                </Flex>
+              ) : (
+                <Flex justify='space-between' align='center' w='full' pt={2}>
+                  <Text fontSize='sm' color='gray.500' _dark={{ color: 'gray.500' }}>
+                    {hasChanges ? 'You have unsaved changes' : 'All changes saved and stored machine-wide'}
+                  </Text>
+                  <LoadingButton
+                    size='sm'
+                    onClick={handleSaveConsent}
+                    loading={isSaving}
+                    loadingText='Saving...'
+                    colorPalette='blue'
+                    disabled={!hasChanges}
+                    variant={hasChanges ? 'solid' : 'outline'}
+                  >
+                    {hasChanges ? 'Save Changes' : 'Saved'}
+                  </LoadingButton>
+                </Flex>
+              )}
+            </VStack>
+          </Box>
+
           {/* Hero Section */}
           <VStack gap={6} textAlign='center' mb={12}>
             <Box p={4} borderRadius='full' bg='blue.50' _dark={{ bg: 'blue.900' }}>

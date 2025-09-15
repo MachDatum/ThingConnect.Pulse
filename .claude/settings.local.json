@@ -13,7 +13,7 @@
       "Bash(timeout:*)",
       "Bash(ping:*)",
       "Bash(findstr:*)",
-      "Bash(powershell:*)"
+      "Bash(npx eslint:*)"
     ],
     "deny": [],
     "ask": []

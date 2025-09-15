@@ -102,3 +102,9 @@ public sealed class ChangePasswordDto
     [Compare("NewPassword")]
     public string ConfirmPassword { get; set; } = default!;
 }
+
+public sealed class TelemetryConsentDto
+{
+    public bool ErrorDiagnostics { get; set; }
+    public bool UsageAnalytics { get; set; }
+}

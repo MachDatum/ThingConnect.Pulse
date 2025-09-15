@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import { useQuery } from '@tanstack/react-query';
 import {
   Text,
@@ -33,6 +34,7 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { AvailabilityStats } from '@/components/AvailabilityStats';
 
 export default function History() {
+  const analytics = useAnalytics();
   // State for filters
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedEndpoint, setSelectedEndpoint] = useState<string>(
@@ -87,6 +89,16 @@ export default function History() {
       }
     }
   }, [liveData, set, selectedEndpoint, cleared]);
+
+  // Track page view
+  useEffect(() => {
+    analytics.trackPageView('History', {
+      view_type: 'history_analysis',
+      has_endpoint_filter: !!selectedEndpoint,
+      date_range_days: Math.ceil((new Date(dateRange.to).getTime() - new Date(dateRange.from).getTime()) / (1000 * 60 * 60 * 24)),
+      bucket_granularity: bucket
+    });
+  }, []);
 
   // Sync endpoint to URL
   useEffect(() => {

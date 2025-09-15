@@ -6,6 +6,8 @@ import {
   type LoginRequest,
   type RegisterRequest,
 } from '../services/authService';
+import { useSentryConsentInit } from '../../../hooks/useSentryConsentInit';
+import { useAnalyticsConsentInit } from '../../../hooks/useAnalyticsConsentInit';
 
 interface AuthContextType {
   user: UserInfo | null;
@@ -30,6 +32,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [setupRequired, setSetupRequired] = useState(false);
 
   const isAuthenticated = user !== null;
+
+  // Initialize Sentry based on user consent when authenticated
+  useSentryConsentInit(isAuthenticated);
+
+  // Initialize Analytics based on user consent when authenticated
+  const { analytics } = useAnalyticsConsentInit(isAuthenticated);
 
   const checkSession = async () => {
     try {
@@ -65,6 +73,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const userData = await authService.login(credentials);
       setUser(userData);
       setSetupRequired(false);
+
+      // Track successful login (after analytics is initialized)
+      setTimeout(() => {
+        analytics.track('User Login', {
+          user_role: userData.role,
+          login_method: 'password'
+        });
+      }, 1000);
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
@@ -76,6 +92,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const newUser = await authService.register(userData);
       setUser(newUser);
       setSetupRequired(false);
+
+      // Track user registration (after analytics is initialized)
+      setTimeout(() => {
+        analytics.track('User Registered', {
+          user_role: newUser.role,
+          registration_method: 'onboarding_flow'
+        });
+      }, 1000);
     } catch (error) {
       console.error('Registration failed:', error);
       throw error;
@@ -84,11 +108,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = async () => {
     try {
+      // Track logout before clearing session
+      analytics.track('User Logout');
+      
       await authService.logout();
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
       setUser(null);
+      
+      // Reset analytics session
+      analytics.reset();
+      
       // After logout, check if setup is needed
       try {
         const needsSetup = await authService.isSetupRequired();
