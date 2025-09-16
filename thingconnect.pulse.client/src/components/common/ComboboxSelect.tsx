@@ -72,6 +72,9 @@ export function ComboboxSelect({
         <Combobox.Control>
           <Combobox.Input 
             placeholder={placeholder || 'Select an option'} 
+            value={
+              collection.items.find((item) => item.value === selectedValue)?.label || ''
+            }
           />
           <Combobox.IndicatorGroup>
             <Combobox.ClearTrigger
