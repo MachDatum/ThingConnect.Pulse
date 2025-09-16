@@ -44,7 +44,7 @@ export function ComboboxSelect({
   }, [itemsWithAll, set]);
 
   return (
-    <Skeleton loading={isLoading} w='md'>
+    <Skeleton loading={isLoading} w='full'>
       <Combobox.Root
         size='md'
         w='xs'
