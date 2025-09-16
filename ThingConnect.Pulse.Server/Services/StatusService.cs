@@ -88,6 +88,10 @@ public sealed class StatusService : IStatusService
                 ? sparklineData[endpoint.Id]
                 : new List<SparklinePoint>();
 
+            _logger.LogInformation(
+                "Endpoint {EndpointName}: Status = {Status}, LastRttMs = {RttMs}, LastChangeTs = {LastChangeTs}",
+                endpoint.Name, status, endpoint.LastRttMs, endpoint.LastChangeTs);
+
             items.Add(new LiveStatusItemDto
             {
                 Endpoint = MapToEndpointDto(endpoint),
