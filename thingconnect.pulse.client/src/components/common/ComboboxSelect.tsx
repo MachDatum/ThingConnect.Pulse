@@ -7,13 +7,14 @@ type Option = {
   value: string;
 };
 
-interface ComboboxProps extends Omit<ComponentProps<typeof Combobox.Root>, 'onChange' | 'children' | 'value' | 'collection'
+export interface ComboboxProps extends Omit<ComponentProps<typeof Combobox.Root>, 'onChange' | 'children' | 'value' | 'collection'
 > {
   items: Option[];
   selectedValue?: string;
   onChange: (value: string) => void;
   placeholder?: string;
   isLoading?: boolean;
+  defaultToFirst?: boolean;
 }
 
 export function ComboboxSelect({
@@ -22,14 +23,15 @@ export function ComboboxSelect({
   onChange,
   placeholder = 'Select an option',
   isLoading = false,
+  defaultToFirst = false,
   ...rest
 }: ComboboxProps) {
 
-  const itemsWithAll = useMemo(() => {
-    return items.length > 0 
-      ? [{ label: 'All', value: '' }, ...items] 
+   const itemsWithAll = useMemo(() => {
+    return items.length > 0 && !defaultToFirst
+      ? [{ label: 'All', value: '' }, ...items]
       : items;
-  }, [items]);
+  }, [items, defaultToFirst]);
 
   const { contains } = useFilter({ sensitivity: 'base' });
   const { collection, set, filter } = useListCollection<Option>({
@@ -40,8 +42,14 @@ export function ComboboxSelect({
   });
 
   useEffect(() => {
+    // Always update the collection
     set(itemsWithAll);
-  }, [itemsWithAll, set]);
+
+    // If defaultToFirst is true and nothing is selected yet, pick the first option
+    if (defaultToFirst && !selectedValue && itemsWithAll.length > 0) {
+      onChange(itemsWithAll[0].value);
+    }
+  }, [itemsWithAll, set, defaultToFirst, selectedValue, onChange]);
 
   return (
     <Skeleton loading={isLoading} w='full'>
