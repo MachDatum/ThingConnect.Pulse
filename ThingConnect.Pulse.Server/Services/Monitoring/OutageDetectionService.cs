@@ -33,14 +33,21 @@ public sealed class OutageDetectionService : IOutageDetectionService
         
         try
         {
+            _logger.LogDebug("Processing check for endpoint {EndpointId}: Status={Status}, SuccessStreak={SuccessStreak}, FailStreak={FailStreak}",
+            result.EndpointId, result.Status, state.SuccessStreak, state.FailStreak);
+
             // Update streak counters based on result
             if (result.Status == UpDown.up)
             {
                 state.RecordSuccess();
+                _logger.LogDebug("Endpoint {EndpointId} recorded SUCCESS: SuccessStreak={SuccessStreak}, FailStreak={FailStreak}",
+                    result.EndpointId, state.SuccessStreak, state.FailStreak);
             }
             else
             {
                 state.RecordFailure();
+                _logger.LogDebug("Endpoint {EndpointId} recorded FAILURE: FailStreak={FailStreak}, SuccessStreak={SuccessStreak}",
+                    result.EndpointId, state.FailStreak, state.SuccessStreak);
             }
 
             // Validate state machine logic (debug build only)
