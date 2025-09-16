@@ -15,6 +15,7 @@ import { X } from 'lucide-react';
 import type { LiveStatusParams } from '@/api/types';
 import { MdSearch, MdExpandMore } from 'react-icons/md';
 import { useEffect, useState } from 'react';
+// import { EndpointCombobox } from '../common/ComboboxSelect';
 
 interface StatusFiltersProps {
   filters: LiveStatusParams;
@@ -43,27 +44,27 @@ export function StatusFilters({
   selectedGroup,
   onSelectedGroupChange,
 }: StatusFiltersProps) {
-  const [cleared, setCleared] = useState(false);
+  // const [cleared, setCleared] = useState(false);
 
-  const { contains } = useFilter({ sensitivity: 'base' });
-  const { collection, filter, set } = useListCollection<{
-    label: string;
-    value: string;
-  }>({
-    initialItems: [], // start empty
-    itemToString: item => item.label,
-    itemToValue: item => item.value,
-    filter: contains,
-  });
+  // const { contains } = useFilter({ sensitivity: 'base' });
+  // const { collection, filter, set } = useListCollection<{
+  //   label: string;
+  //   value: string;
+  // }>({
+  //   initialItems: [], // start empty
+  //   itemToString: item => item.label,
+  //   itemToValue: item => item.value,
+  //   filter: contains,
+  // });
 
-  useEffect(() => {
-    const newItems = groups.map(g => ({
-      label: g.name,
-      value: g.id,
-    }));
+  // useEffect(() => {
+  //   const newItems = groups.map(g => ({
+  //     label: g.name,
+  //     value: g.id,
+  //   }));
 
-    set(newItems);
-  }, [groups, set, cleared]);
+  //   set(newItems);
+  // }, [groups, set, cleared]);
 
   const handleGroupChange = (value: string) => {
     const newGroup = value || undefined;
@@ -87,19 +88,18 @@ export function StatusFilters({
 
   const clearSearch = () => {
     onSearchChange?.('');
-    // Optional: reset local cleared state
-    setCleared(true);
+    // Optional: reset local cleared state    
   };
 
-  const clearFilter = () => {
-    onFiltersChange({
-      ...filters,
-      group: undefined,
-      search: undefined,
-    });
-    onSelectedGroupChange?.(undefined);
-    setCleared(true);
-  };
+  // const clearFilter = () => {
+  //   onFiltersChange({
+  //     ...filters,
+  //     group: undefined,
+  //     search: undefined,
+  //   });
+  //   onSelectedGroupChange?.(undefined);
+  //   setCleared(true);
+  // };
 
   return (
     <Box
@@ -125,7 +125,7 @@ export function StatusFilters({
       <HStack gap={{ base: 2, md: 4 }} align='center' flexWrap={{ base: 'wrap', md: 'nowrap' }}>
         {/* Group Filter */}
         <Box w={'25%'}>
-          <Combobox.Root
+          {/* <Combobox.Root
             size='md'
             collection={collection}
             value={selectedGroup ? [selectedGroup] : []}
@@ -167,7 +167,17 @@ export function StatusFilters({
                 })}
               </Combobox.Content>
             </Combobox.Positioner>
-          </Combobox.Root>
+          </Combobox.Root> */}
+          {/* <EndpointCombobox 
+            items={groups.map(g => ({ label: g.name, value: g.id }))}
+            selectedValue={selectedGroup ? selectedGroup : ''}
+            onChange={handleGroupChange}
+            isLoading={false}
+            error={undefined}
+            placeholder='Select Group...'
+            optionName='Groups'
+            defaultToFirst={false}
+          /> */}
         </Box>
         {/* Search Input */}
         <Flex w='80' position='relative' align='center'>

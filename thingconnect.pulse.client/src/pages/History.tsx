@@ -32,6 +32,7 @@ import { HistoryService } from '@/api/services/history.service';
 import { StatusService } from '@/api/services/status.service';
 import { Tooltip } from '@/components/ui/tooltip';
 import { AvailabilityStats } from '@/components/AvailabilityStats';
+// import { EndpointCombobox } from '@/components/common/ComboboxSelect';
 
 export default function History() {
   const analytics = useAnalytics();
@@ -63,32 +64,32 @@ export default function History() {
   });
 
   // Filtering + collection for Combobox
-  const { contains } = useFilter({ sensitivity: 'base' });
-  const { collection, set, filter } = useListCollection<{
-    label: string;
-    value: string;
-  }>({
-    initialItems: [],
-    itemToString: item => item.label,
-    itemToValue: item => item.value,
-    filter: contains,
-  });
+  // const { contains } = useFilter({ sensitivity: 'base' });
+  // const { collection, set, filter } = useListCollection<{
+  //   label: string;
+  //   value: string;
+  // }>({
+  //   initialItems: [],
+  //   itemToString: item => item.label,
+  //   itemToValue: item => item.value,
+  //   filter: contains,
+  // });
 
-  // Update collection when liveData changes
-  useEffect(() => {
-    if (liveData?.items) {
-      const items = liveData.items.map((item: any) => ({
-        label: `${item.endpoint.name} (${item.endpoint.host})`,
-        value: item.endpoint.id,
-      }));
-      set(items);
+  // // Update collection when liveData changes
+  // useEffect(() => {
+  //   if (liveData?.items) {
+  //     const items = liveData.items.map((item: any) => ({
+  //       label: `${item.endpoint.name} (${item.endpoint.host})`,
+  //       value: item.endpoint.id,
+  //     }));
+  //     set(items);
 
-      // fallback only if not cleared manually
-      if (!selectedEndpoint && items.length > 0 && !cleared) {
-        setSelectedEndpoint(items[0].value);
-      }
-    }
-  }, [liveData, set, selectedEndpoint, cleared]);
+  //     // fallback only if not cleared manually
+  //     if (!selectedEndpoint && items.length > 0 && !cleared) {
+  //       setSelectedEndpoint(items[0].value);
+  //     }
+  //   }
+  // }, [liveData, set, selectedEndpoint, cleared]);
 
   // Track page view
   useEffect(() => {
@@ -170,61 +171,20 @@ export default function History() {
               Endpoint
             </Text>
             <Skeleton loading={isLiveDataLoading} w='md'>
-              <Combobox.Root
-                size='xs'
-                w='md'
-                collection={collection}
-                value={selectedEndpoint ? [selectedEndpoint] : []}
-                onValueChange={e => {
-                  setSelectedEndpoint(e.value[0] ?? '');
-                  setCleared(false);
-                }}
-                onInputValueChange={e => filter(e.inputValue)}
-                onOpenChange={open => {
-                  if (open) filter('');
-                }}
-                openOnClick
-              >
-                <Combobox.Control>
-                  <Combobox.Input placeholder='Select endpoint...' />
-                  <Combobox.IndicatorGroup>
-                    <Combobox.ClearTrigger
-                      onClick={() => {
-                        setSelectedEndpoint('');
-                        setCleared(true);
-                      }}
-                    />
-                    <Combobox.Trigger />
-                  </Combobox.IndicatorGroup>
-                </Combobox.Control>
-                <Portal>
-                  <Combobox.Positioner>
-                    <Combobox.Content minW='sm'>
-                      {isLiveDataLoading ? (
-                        <HStack p='2'>
-                          <Spinner size='xs' borderWidth='1px' />
-                          <Span>Loading endpoints...</Span>
-                        </HStack>
-                      ) : liveDataError ? (
-                        <Span p='2' color='fg.error'>
-                          Failed to load endpoints
-                        </Span>
-                      ) : collection.items.length === 0 ? (
-                        <Combobox.Empty>No endpoints found</Combobox.Empty>
-                      ) : (
-                        collection.items.map(item => (
-                          <Combobox.Item key={item.value} item={item}>
-                            <HStack justify='space-between' textStyle='sm'>
-                              {item.label}
-                            </HStack>
-                            <Combobox.ItemIndicator />
-                          </Combobox.Item>
-                        ))
-                      )}
-                    </Combobox.Content>
-                  </Combobox.Positioner>
-                </Portal>
-              </Combobox.Root>
+
+              {/* <EndpointCombobox 
+                items={liveData?.items.map((item: any) => ({
+                  label: `${item.endpoint.name} (${item.endpoint.host})`,
+                  value: item.endpoint.id,
+                })) || []}
+                selectedValue={selectedEndpoint ? selectedEndpoint : ''}
+                onChange={setSelectedEndpoint}
+                isLoading={false}
+                error={undefined}
+                placeholder='Select endpoint...'
+                optionName='Endpoints'
+                defaultToFirst={true}
+              /> */}
             </Skeleton>
           </VStack>
           <VStack align='start' gap={1}>
