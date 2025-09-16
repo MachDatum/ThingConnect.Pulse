@@ -14,21 +14,20 @@ export function EndpointSelect({
   placeholder = 'Select endpoint...',
   setName,
   defaultToFirst = false,
-    ...rest
+  ...rest
 }: EndpointSelectProps) {
-
   // Live endpoints
-  const {
-    data: liveData,
-    isLoading,
-  } = useQuery({
+  const { data: liveData, isLoading } = useQuery({
     queryKey: ['live-status'],
     queryFn: () => StatusService.getLiveStatus({ pageSize: 100 }),
     staleTime: 30000,
   });
 
   const selectedEndpointName = useMemo(() => {
-    return liveData?.items?.find(item => item.endpoint.id === selectedValue)?.endpoint?.name || 'Unknown Endpoint';
+    return (
+      liveData?.items?.find(item => item.endpoint.id === selectedValue)?.endpoint?.name ||
+      'Unknown Endpoint'
+    );
   }, [liveData, selectedValue]);
 
   useEffect(() => {
@@ -39,10 +38,12 @@ export function EndpointSelect({
 
   return (
     <ComboboxSelect
-      items={liveData?.items.map(item => ({
-        label: item.endpoint.name,
-        value: item.endpoint.id,
-      })) || []}
+      items={
+        liveData?.items.map(item => ({
+          label: item.endpoint.name,
+          value: item.endpoint.id,
+        })) || []
+      }
       selectedValue={selectedValue}
       onChange={onChange}
       isLoading={isLoading}

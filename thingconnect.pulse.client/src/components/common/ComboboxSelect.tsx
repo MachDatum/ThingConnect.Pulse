@@ -7,8 +7,11 @@ type Option = {
   value: string;
 };
 
-export interface ComboboxProps extends Omit<ComponentProps<typeof Combobox.Root>, 'onChange' | 'children' | 'value' | 'collection'
-> {
+export interface ComboboxProps
+  extends Omit<
+    ComponentProps<typeof Combobox.Root>,
+    'onChange' | 'children' | 'value' | 'collection'
+  > {
   items: Option[];
   selectedValue?: string;
   onChange: (value: string) => void;
@@ -26,11 +29,8 @@ export function ComboboxSelect({
   defaultToFirst = false,
   ...rest
 }: ComboboxProps) {
-
-   const itemsWithAll = useMemo(() => {
-    return items.length > 0 && !defaultToFirst
-      ? [{ label: 'All', value: '' }, ...items]
-      : items;
+  const itemsWithAll = useMemo(() => {
+    return items.length > 0 && !defaultToFirst ? [{ label: 'All', value: '' }, ...items] : items;
   }, [items, defaultToFirst]);
 
   const { contains } = useFilter({ sensitivity: 'base' });
@@ -70,11 +70,9 @@ export function ComboboxSelect({
         {...rest}
       >
         <Combobox.Control>
-          <Combobox.Input 
-            placeholder={placeholder || 'Select an option'} 
-            value={
-              collection.items.find((item) => item.value === selectedValue)?.label || ''
-            }
+          <Combobox.Input
+            placeholder={placeholder || 'Select an option'}
+            value={collection.items.find(item => item.value === selectedValue)?.label || ''}
           />
           <Combobox.IndicatorGroup>
             <Combobox.ClearTrigger

@@ -2,15 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { useQuery } from '@tanstack/react-query';
-import {
-  Text,
-  HStack,
-  Button,
-  Card,
-  IconButton,
-  VStack,
-  Tabs,
-} from '@chakra-ui/react';
+import { Text, HStack, Button, Card, IconButton, VStack, Tabs } from '@chakra-ui/react';
 import { Download, TrendingUp, AlertCircle, RefreshCw } from 'lucide-react';
 import { Page } from '@/components/layout/Page';
 import { PageSection } from '@/components/layout/PageSection';
@@ -25,7 +17,6 @@ import { HistoryService } from '@/api/services/history.service';
 import { Tooltip } from '@/components/ui/tooltip';
 import { AvailabilityStats } from '@/components/AvailabilityStats';
 import { EndpointSelect } from '@/components/common/EndpointSelect';
-// import { EndpointCombobox } from '@/components/common/ComboboxSelect';
 
 export default function History() {
   const analytics = useAnalytics();
@@ -50,8 +41,11 @@ export default function History() {
     analytics.trackPageView('History', {
       view_type: 'history_analysis',
       has_endpoint_filter: !!selectedEndpoint,
-      date_range_days: Math.ceil((new Date(dateRange.to).getTime() - new Date(dateRange.from).getTime()) / (1000 * 60 * 60 * 24)),
-      bucket_granularity: bucket
+      date_range_days: Math.ceil(
+        (new Date(dateRange.to).getTime() - new Date(dateRange.from).getTime()) /
+          (1000 * 60 * 60 * 24)
+      ),
+      bucket_granularity: bucket,
     });
   }, []);
 
@@ -176,11 +170,7 @@ export default function History() {
       </PageSection>
       {/* History Data */}
       <PageSection title='Performance Summary' testId='availability-stats'>
-        <AvailabilityStats
-          data={historyData}
-          bucket={bucket}
-          isLoading={isHistoryDataLoading }
-        />
+        <AvailabilityStats data={historyData} bucket={bucket} isLoading={isHistoryDataLoading} />
       </PageSection>
       <Tabs.Root
         defaultValue='chart'
