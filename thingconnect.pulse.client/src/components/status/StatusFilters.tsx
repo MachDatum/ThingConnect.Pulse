@@ -7,14 +7,11 @@ import {
   Input,
   Text,
   Menu,
-  Combobox,
-  useFilter,
-  useListCollection,
 } from '@chakra-ui/react';
 import { X } from 'lucide-react';
 import type { LiveStatusParams } from '@/api/types';
 import { MdSearch, MdExpandMore } from 'react-icons/md';
-import { useEffect, useState } from 'react';
+import { ComboboxSelect } from '../common/ComboboxSelect';
 // import { EndpointCombobox } from '../common/ComboboxSelect';
 
 interface StatusFiltersProps {
@@ -44,28 +41,6 @@ export function StatusFilters({
   selectedGroup,
   onSelectedGroupChange,
 }: StatusFiltersProps) {
-  // const [cleared, setCleared] = useState(false);
-
-  // const { contains } = useFilter({ sensitivity: 'base' });
-  // const { collection, filter, set } = useListCollection<{
-  //   label: string;
-  //   value: string;
-  // }>({
-  //   initialItems: [], // start empty
-  //   itemToString: item => item.label,
-  //   itemToValue: item => item.value,
-  //   filter: contains,
-  // });
-
-  // useEffect(() => {
-  //   const newItems = groups.map(g => ({
-  //     label: g.name,
-  //     value: g.id,
-  //   }));
-
-  //   set(newItems);
-  // }, [groups, set, cleared]);
-
   const handleGroupChange = (value: string) => {
     const newGroup = value || undefined;
     onSelectedGroupChange?.(newGroup);
@@ -76,10 +51,8 @@ export function StatusFilters({
   };
 
   const handleSearchChange = (value: string) => {
-    // Update search term in parent component
     onSearchChange && onSearchChange(value);
 
-    // Optionally reset page when searching
     onFiltersChange({
       ...filters,
       search: value || undefined,
@@ -88,18 +61,8 @@ export function StatusFilters({
 
   const clearSearch = () => {
     onSearchChange?.('');
-    // Optional: reset local cleared state    
+    
   };
-
-  // const clearFilter = () => {
-  //   onFiltersChange({
-  //     ...filters,
-  //     group: undefined,
-  //     search: undefined,
-  //   });
-  //   onSelectedGroupChange?.(undefined);
-  //   setCleared(true);
-  // };
 
   return (
     <Box
@@ -124,61 +87,7 @@ export function StatusFilters({
     >
       <HStack gap={{ base: 2, md: 4 }} align='center' flexWrap={{ base: 'wrap', md: 'nowrap' }}>
         {/* Group Filter */}
-        <Box w={'25%'}>
-          {/* <Combobox.Root
-            size='md'
-            collection={collection}
-            value={selectedGroup ? [selectedGroup] : []}
-            onValueChange={e => {
-              handleGroupChange(e.value[0]);
-              setCleared(false);
-            }}
-            onInputValueChange={e => {
-              filter(e.inputValue);
-            }}
-            onOpenChange={open => {
-              if (open) filter('');
-            }}
-            openOnClick
-          >
-            <Combobox.Control>
-              <Combobox.Input placeholder='Select Group...' />
-              <Combobox.IndicatorGroup>
-                <Combobox.ClearTrigger onClick={clearFilter} cursor={'pointer'} />
-                <Combobox.Trigger />
-              </Combobox.IndicatorGroup>
-            </Combobox.Control>
-            <Combobox.Positioner>
-              <Combobox.Content>
-                <Combobox.Empty>No groups found</Combobox.Empty>
-                <Combobox.Item key='allgroups' item={{ label: 'All Groups', value: '' }}>
-                  <HStack justify='space-between' textStyle='sm'>
-                    All Groups
-                  </HStack>
-                </Combobox.Item>
-                {collection.items.map(item => {
-                  return (
-                    <Combobox.Item key={item.value} item={item}>
-                      <HStack justify='space-between' textStyle='sm'>
-                        {item.label}
-                      </HStack>
-                    </Combobox.Item>
-                  );
-                })}
-              </Combobox.Content>
-            </Combobox.Positioner>
-          </Combobox.Root> */}
-          {/* <EndpointCombobox 
-            items={groups.map(g => ({ label: g.name, value: g.id }))}
-            selectedValue={selectedGroup ? selectedGroup : ''}
-            onChange={handleGroupChange}
-            isLoading={false}
-            error={undefined}
-            placeholder='Select Group...'
-            optionName='Groups'
-            defaultToFirst={false}
-          /> */}
-        </Box>
+
         {/* Search Input */}
         <Flex w='80' position='relative' align='center'>
           <Icon

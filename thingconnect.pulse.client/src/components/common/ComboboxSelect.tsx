@@ -1,90 +1,74 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, type ComponentProps } from 'react';
 import { Combobox, HStack, Portal, Span, Spinner, Skeleton } from '@chakra-ui/react';
 import { useFilter, useListCollection } from '@chakra-ui/react';
 
-type EndpointOption = {
+type Option = {
   label: string;
   value: string;
 };
 
-interface ComboboxProps {
-  items: { label: string; value: string }[];
-  selectedValue: string;
+interface ComboboxProps extends Omit<ComponentProps<typeof Combobox.Root>, 'onChange' | 'children' | 'value' | 'collection'
+> {
+  items: Option[];
+  selectedValue?: string;
   onChange: (value: string) => void;
-  isLoading?: boolean;
-  error?: boolean;
   placeholder?: string;
-  optionName?: string;
-  defaultToFirst?: boolean;
+  isLoading?: boolean;
 }
 
 export function ComboboxSelect({
   items,
-  selectedValue,
+  selectedValue = '',
   onChange,
+  placeholder = 'Select an option',
   isLoading = false,
-  error = false,
-  placeholder = 'Select endpoint...',
-  optionName = '',
-  defaultToFirst = false,
+  ...rest
 }: ComboboxProps) {
-  const [cleared, setCleared] = useState(false);
 
-  const itemsWithAll: EndpointOption[] =
-    defaultToFirst && items.length > 0
-      ? items
-      : [{ label: `All ${optionName}`, value: '' }, ...items];
+  const itemsWithAll = useMemo(() => {
+    return items.length > 0 
+      ? [{ label: 'All', value: '' }, ...items] 
+      : items;
+  }, [items]);
 
-      console.log('Items with All option:', itemsWithAll);
-
-  // Filtering
   const { contains } = useFilter({ sensitivity: 'base' });
-  const { collection, set, filter } = useListCollection<EndpointOption>({
+  const { collection, set, filter } = useListCollection<Option>({
     initialItems: [],
     itemToString: item => item.label,
     itemToValue: item => item.value,
     filter: contains,
   });
 
-  // Update collection whenever items change
   useEffect(() => {
     set(itemsWithAll);
-
-    if (defaultToFirst && itemsWithAll.length > 0 && !selectedValue && !cleared) {
-      console.log('Defaulting to first item:', itemsWithAll[0]);
-      onChange(itemsWithAll[0].value);
-
-    } else if (!defaultToFirst && !selectedValue && !cleared) {
-      console.log('Defaulting to "All" option');
-      onChange('');
-    }
-  }, [items, set, selectedValue, cleared, onChange]);
+  }, [itemsWithAll, set]);
 
   return (
     <Skeleton loading={isLoading} w='md'>
       <Combobox.Root
-        size='xs'
+        size='md'
         w='xs'
         collection={collection}
-        // value={selectedValue ? [selectedValue] : []}
         value={[selectedValue]}
         onValueChange={e => {
-          onChange(e.value[0] ?? '');
-          setCleared(false);
+          const newValue = e.value[0] ?? '';
+          onChange(newValue);
         }}
         onInputValueChange={e => filter(e.inputValue)}
         onOpenChange={open => {
           if (open) filter('');
         }}
         openOnClick
+        {...rest}
       >
         <Combobox.Control>
-          <Combobox.Input placeholder={placeholder} />
+          <Combobox.Input 
+            placeholder={placeholder || 'Select an option'} 
+          />
           <Combobox.IndicatorGroup>
             <Combobox.ClearTrigger
               onClick={() => {
                 onChange('');
-                setCleared(true);
               }}
             />
             <Combobox.Trigger />
@@ -96,14 +80,10 @@ export function ComboboxSelect({
               {isLoading ? (
                 <HStack p='2'>
                   <Spinner size='xs' borderWidth='1px' />
-                  <Span>Loading endpoints...</Span>
+                  <Span>Loading...</Span>
                 </HStack>
-              ) : error ? (
-                <Span p='2' color='fg.error'>
-                  Failed to load endpoints
-                </Span>
               ) : collection.items.length === 0 ? (
-                <Combobox.Empty>No endpoints found</Combobox.Empty>
+                <Combobox.Empty>No options found</Combobox.Empty>
               ) : (
                 collection.items.map(item => (
                   <Combobox.Item key={item.value} item={item}>
