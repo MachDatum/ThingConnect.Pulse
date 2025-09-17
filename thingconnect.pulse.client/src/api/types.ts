@@ -155,11 +155,11 @@ export interface ConfigurationDiff {
 }
 
 export interface ConfigurationApplyResponse {
-  config_version_id: string;
-  changes: ConfigurationDiff[];
-  validation_errors?: string[];
-  applied_ts: string;
-  file_hash: string;
+  configVersionId: string;
+  added: number;
+  updated: number;
+  removed: number;
+  warnings: string[];
 }
 
 // Error response type
