@@ -6,17 +6,15 @@ import {
   DialogFooter,
   Button,
   Input,
-  FormControl,
-  FormLabel,
-  FormErrorMessage,
   VStack,
-  Select,
   Alert,
-  PasswordInput,
 } from '@chakra-ui/react';
 import { useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { LoadingButton } from '@/components/ui/LoadingButton';
+import { Field } from '@/components/ui/field';
+import { PasswordInput } from '@/components/form/PasswordInput';
+import { NativeSelectRoot, NativeSelectField } from '@/components/ui/native-select';
 import type { CreateUserRequest } from '@/api/types';
 
 interface CreateUserModalProps {
@@ -44,6 +42,7 @@ export function CreateUserModal({
     formState: { errors, isSubmitting },
     reset,
     watch,
+    setValue,
   } = useForm<FormData>({
     defaultValues: {
       username: '',
@@ -108,8 +107,11 @@ export function CreateUserModal({
               )}
 
               {/* Username */}
-              <FormControl isInvalid={!!errors.username}>
-                <FormLabel>Username</FormLabel>
+              <Field
+                label="Username"
+                errorText={errors.username?.message}
+                invalid={!!errors.username}
+              >
                 <Input
                   {...register('username', {
                     required: 'Username is required',
@@ -121,14 +123,14 @@ export function CreateUserModal({
                   placeholder="Enter username"
                   disabled={isSubmitting || loading}
                 />
-                {errors.username && (
-                  <FormErrorMessage>{errors.username.message}</FormErrorMessage>
-                )}
-              </FormControl>
+              </Field>
 
               {/* Email */}
-              <FormControl isInvalid={!!errors.email}>
-                <FormLabel>Email</FormLabel>
+              <Field
+                label="Email"
+                errorText={errors.email?.message}
+                invalid={!!errors.email}
+              >
                 <Input
                   type="email"
                   {...register('email', {
@@ -145,14 +147,14 @@ export function CreateUserModal({
                   placeholder="Enter email address"
                   disabled={isSubmitting || loading}
                 />
-                {errors.email && (
-                  <FormErrorMessage>{errors.email.message}</FormErrorMessage>
-                )}
-              </FormControl>
+              </Field>
 
               {/* Password */}
-              <FormControl isInvalid={!!errors.password}>
-                <FormLabel>Password</FormLabel>
+              <Field
+                label="Password"
+                errorText={errors.password?.message}
+                invalid={!!errors.password}
+              >
                 <PasswordInput
                   {...register('password', {
                     required: 'Password is required',
@@ -168,14 +170,14 @@ export function CreateUserModal({
                   placeholder="Enter password"
                   disabled={isSubmitting || loading}
                 />
-                {errors.password && (
-                  <FormErrorMessage>{errors.password.message}</FormErrorMessage>
-                )}
-              </FormControl>
+              </Field>
 
               {/* Confirm Password */}
-              <FormControl isInvalid={!!errors.confirmPassword}>
-                <FormLabel>Confirm Password</FormLabel>
+              <Field
+                label="Confirm Password"
+                errorText={errors.confirmPassword?.message}
+                invalid={!!errors.confirmPassword}
+              >
                 <PasswordInput
                   {...register('confirmPassword', {
                     required: 'Please confirm your password',
@@ -185,30 +187,26 @@ export function CreateUserModal({
                   placeholder="Confirm password"
                   disabled={isSubmitting || loading}
                 />
-                {errors.confirmPassword && (
-                  <FormErrorMessage>{errors.confirmPassword.message}</FormErrorMessage>
-                )}
-              </FormControl>
+              </Field>
 
               {/* Role */}
-              <FormControl isInvalid={!!errors.role}>
-                <FormLabel>Role</FormLabel>
-                <Select.Root
-                  {...register('role', { required: 'Role is required' })}
-                  disabled={isSubmitting || loading}
-                >
-                  <Select.Trigger>
-                    <Select.ValueText placeholder="Select role" />
-                  </Select.Trigger>
-                  <Select.Content>
-                    <Select.Item value="User">User</Select.Item>
-                    <Select.Item value="Administrator">Administrator</Select.Item>
-                  </Select.Content>
-                </Select.Root>
-                {errors.role && (
-                  <FormErrorMessage>{errors.role.message}</FormErrorMessage>
-                )}
-              </FormControl>
+              <Field
+                label="Role"
+                errorText={errors.role?.message}
+                invalid={!!errors.role}
+              >
+                <NativeSelectRoot>
+                  <NativeSelectField
+                    placeholder="Select role"
+                    defaultValue="User"
+                    onChange={(e) => setValue('role', e.target.value as 'User' | 'Administrator')}
+                    _disabled={isSubmitting || loading ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+                  >
+                    <option value="User">User</option>
+                    <option value="Administrator">Administrator</option>
+                  </NativeSelectField>
+                </NativeSelectRoot>
+              </Field>
             </VStack>
 
             <DialogFooter>

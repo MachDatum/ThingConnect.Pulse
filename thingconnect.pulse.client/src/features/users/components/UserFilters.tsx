@@ -1,11 +1,11 @@
 import {
   HStack,
   Input,
-  Select,
   Button,
   Icon,
   IconButton,
   Box,
+  NativeSelect,
 } from '@chakra-ui/react';
 import { Search, X, Filter } from 'lucide-react';
 import { useState, useCallback } from 'react';
@@ -51,7 +51,7 @@ export function UserFilters({ onFilterChange, loading = false }: UserFiltersProp
   const hasFilters = search.trim() || role || isActive !== '';
 
   return (
-    <Box p={4} bg="white" _dark={{ bg: "gray.800" }} borderRadius="lg" border="1px solid" borderColor="gray.200" _dark={{ borderColor: "gray.700" }}>
+    <Box p={4} bg="white" _dark={{ bg: "gray.800", borderColor: "gray.700" }} borderRadius="lg" border="1px solid" borderColor="gray.200">
       <HStack gap={4} wrap="wrap">
         {/* Search Input */}
         <HStack flex="1" minW="200px">
@@ -62,7 +62,7 @@ export function UserFilters({ onFilterChange, loading = false }: UserFiltersProp
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleFilterChange()}
               pl={10}
-              disabled={loading}
+              _disabled={loading ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
             />
             <Icon
               as={Search}
@@ -77,38 +77,32 @@ export function UserFilters({ onFilterChange, loading = false }: UserFiltersProp
         </HStack>
 
         {/* Role Filter */}
-        <Select.Root
-          value={role}
-          onValueChange={(details) => setRole(details.value[0] || '')}
-          disabled={loading}
-          width="150px"
-        >
-          <Select.Trigger>
-            <Select.ValueText placeholder="All Roles" />
-          </Select.Trigger>
-          <Select.Content>
-            <Select.Item value="">All Roles</Select.Item>
-            <Select.Item value="Administrator">Administrator</Select.Item>
-            <Select.Item value="User">User</Select.Item>
-          </Select.Content>
-        </Select.Root>
+        <NativeSelect.Root width="150px">
+          <NativeSelect.Field
+            placeholder="All Roles"
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            _disabled={loading ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+          >
+            <option value="">All Roles</option>
+            <option value="Administrator">Administrator</option>
+            <option value="User">User</option>
+          </NativeSelect.Field>
+        </NativeSelect.Root>
 
         {/* Status Filter */}
-        <Select.Root
-          value={isActive}
-          onValueChange={(details) => setIsActive(details.value[0] || '')}
-          disabled={loading}
-          width="150px"
-        >
-          <Select.Trigger>
-            <Select.ValueText placeholder="All Status" />
-          </Select.Trigger>
-          <Select.Content>
-            <Select.Item value="">All Status</Select.Item>
-            <Select.Item value="true">Active</Select.Item>
-            <Select.Item value="false">Inactive</Select.Item>
-          </Select.Content>
-        </Select.Root>
+        <NativeSelect.Root width="150px">
+          <NativeSelect.Field
+            placeholder="All Status"
+            value={isActive}
+            onChange={(e) => setIsActive(e.target.value)}
+            _disabled={loading ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+          >
+            <option value="">All Status</option>
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </NativeSelect.Field>
+        </NativeSelect.Root>
 
         {/* Filter Button */}
         <Button
@@ -116,9 +110,9 @@ export function UserFilters({ onFilterChange, loading = false }: UserFiltersProp
           colorPalette="blue"
           variant="solid"
           size="md"
-          disabled={loading}
-          leftIcon={<Filter size={16} />}
+          _disabled={loading ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
         >
+          <Filter size={16} />
           Filter
         </Button>
 
@@ -129,7 +123,7 @@ export function UserFilters({ onFilterChange, loading = false }: UserFiltersProp
             variant="outline"
             colorPalette="gray"
             size="md"
-            disabled={loading}
+            _disabled={loading ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
             aria-label="Clear filters"
           >
             <X size={16} />

@@ -1,8 +1,5 @@
 import {
-  MenuRoot,
-  MenuTrigger,
-  MenuContent,
-  MenuItem,
+  Menu,
   IconButton,
   Icon,
   Dialog,
@@ -13,11 +10,8 @@ import {
   Button,
   Text,
   VStack,
-  FormControl,
-  FormLabel,
-  Select,
-  PasswordInput,
   Alert,
+  NativeSelect,
 } from '@chakra-ui/react';
 import {
   MoreVertical,
@@ -31,6 +25,8 @@ import {
 import { useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { LoadingButton } from '@/components/ui/LoadingButton';
+import { Field } from '@/components/ui/field';
+import { PasswordInput } from '@/components/form/PasswordInput';
 import type { UserInfo, ChangeRoleRequest, ResetPasswordRequest } from '@/api/types';
 
 interface UserActionsProps {
@@ -82,7 +78,6 @@ export function UserActions({
 
   // Change Role Form
   const {
-    register: registerRole,
     handleSubmit: handleSubmitRole,
     formState: { errors: roleErrors },
     reset: resetRoleForm,
@@ -167,8 +162,8 @@ export function UserActions({
 
   return (
     <>
-      <MenuRoot>
-        <MenuTrigger asChild>
+      <Menu.Root>
+        <Menu.Trigger asChild>
           <IconButton
             variant="ghost"
             size="sm"
@@ -177,40 +172,43 @@ export function UserActions({
           >
             <MoreVertical size={16} />
           </IconButton>
-        </MenuTrigger>
-        <MenuContent>
-          <MenuItem onClick={() => onEdit(user)}>
-            <Icon as={Edit} boxSize={4} />
-            Edit User
-          </MenuItem>
+        </Menu.Trigger>
+        <Menu.Positioner>
+          <Menu.Content>
+            <Menu.Item value="edit" onSelect={() => onEdit(user)}>
+              <Icon as={Edit} boxSize={4} />
+              Edit User
+            </Menu.Item>
 
-          <MenuItem onClick={() => setChangeRoleDialogOpen(true)}>
-            <Icon as={Shield} boxSize={4} />
-            Change Role
-          </MenuItem>
+            <Menu.Item value="change-role" onSelect={() => setChangeRoleDialogOpen(true)}>
+              <Icon as={Shield} boxSize={4} />
+              Change Role
+            </Menu.Item>
 
-          <MenuItem onClick={() => setResetPasswordDialogOpen(true)}>
-            <Icon as={Key} boxSize={4} />
-            Reset Password
-          </MenuItem>
+            <Menu.Item value="reset-password" onSelect={() => setResetPasswordDialogOpen(true)}>
+              <Icon as={Key} boxSize={4} />
+              Reset Password
+            </Menu.Item>
 
-          <MenuItem onClick={handleToggleStatus}>
-            <Icon as={user.isActive ? UserX : UserCheck} boxSize={4} />
-            {user.isActive ? 'Deactivate' : 'Activate'}
-          </MenuItem>
+            <Menu.Item value="toggle-status" onSelect={handleToggleStatus}>
+              <Icon as={user.isActive ? UserX : UserCheck} boxSize={4} />
+              {user.isActive ? 'Deactivate' : 'Activate'}
+            </Menu.Item>
 
-          <MenuItem
-            onClick={() => setDeleteDialogOpen(true)}
-            disabled={isCurrentUser}
-            color="red.500"
-            _hover={{ bg: 'red.50', color: 'red.600' }}
-            _dark={{ _hover: { bg: 'red.900', color: 'red.300' } }}
-          >
-            <Icon as={Trash2} boxSize={4} />
-            Delete User
-          </MenuItem>
-        </MenuContent>
-      </MenuRoot>
+            <Menu.Item
+              value="delete"
+              onSelect={() => setDeleteDialogOpen(true)}
+              disabled={isCurrentUser}
+              color="red.500"
+              _hover={{ bg: 'red.50', color: 'red.600' }}
+              _dark={{ _hover: { bg: 'red.900', color: 'red.300' } }}
+            >
+              <Icon as={Trash2} boxSize={4} />
+              Delete User
+            </Menu.Item>
+          </Menu.Content>
+        </Menu.Positioner>
+      </Menu.Root>
 
       {/* Delete Confirmation Dialog */}
       <Dialog.Root
@@ -286,8 +284,11 @@ export function UserActions({
                   </Alert.Root>
                 )}
 
-                <FormControl isInvalid={!!passwordErrors.newPassword}>
-                  <FormLabel>New Password</FormLabel>
+                <Field
+                  label="New Password"
+                  errorText={passwordErrors.newPassword?.message}
+                  invalid={!!passwordErrors.newPassword}
+                >
                   <PasswordInput
                     {...registerPassword('newPassword', {
                       required: 'Password is required',
@@ -303,15 +304,13 @@ export function UserActions({
                     placeholder="Enter new password"
                     disabled={actionLoading}
                   />
-                  {passwordErrors.newPassword && (
-                    <Alert.Root status="error" variant="subtle" mt={1}>
-                      <Alert.Title>{passwordErrors.newPassword.message}</Alert.Title>
-                    </Alert.Root>
-                  )}
-                </FormControl>
+                </Field>
 
-                <FormControl isInvalid={!!passwordErrors.confirmPassword}>
-                  <FormLabel>Confirm New Password</FormLabel>
+                <Field
+                  label="Confirm New Password"
+                  errorText={passwordErrors.confirmPassword?.message}
+                  invalid={!!passwordErrors.confirmPassword}
+                >
                   <PasswordInput
                     {...registerPassword('confirmPassword', {
                       required: 'Please confirm the password',
@@ -321,12 +320,7 @@ export function UserActions({
                     placeholder="Confirm new password"
                     disabled={actionLoading}
                   />
-                  {passwordErrors.confirmPassword && (
-                    <Alert.Root status="error" variant="subtle" mt={1}>
-                      <Alert.Title>{passwordErrors.confirmPassword.message}</Alert.Title>
-                    </Alert.Root>
-                  )}
-                </FormControl>
+                </Field>
               </VStack>
 
               <DialogFooter>
@@ -382,29 +376,23 @@ export function UserActions({
                   Current role: <strong>{user.role}</strong>
                 </Text>
 
-                <FormControl isInvalid={!!roleErrors.role}>
-                  <FormLabel>New Role</FormLabel>
-                  <Select.Root
-                    defaultValue={user.role}
-                    onValueChange={(details) =>
-                      setRoleValue('role', details.value[0] as 'User' | 'Administrator')
-                    }
-                    disabled={actionLoading}
-                  >
-                    <Select.Trigger>
-                      <Select.ValueText placeholder="Select role" />
-                    </Select.Trigger>
-                    <Select.Content>
-                      <Select.Item value="User">User</Select.Item>
-                      <Select.Item value="Administrator">Administrator</Select.Item>
-                    </Select.Content>
-                  </Select.Root>
-                  {roleErrors.role && (
-                    <Alert.Root status="error" variant="subtle" mt={1}>
-                      <Alert.Title>{roleErrors.role.message}</Alert.Title>
-                    </Alert.Root>
-                  )}
-                </FormControl>
+                <Field
+                  label="New Role"
+                  errorText={roleErrors.role?.message}
+                  invalid={!!roleErrors.role}
+                >
+                  <NativeSelect.Root>
+                    <NativeSelect.Field
+                      placeholder="Select role"
+                      defaultValue={user.role}
+                      onChange={(e) => setRoleValue('role', e.target.value as 'User' | 'Administrator')}
+                      _disabled={actionLoading ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+                    >
+                      <option value="User">User</option>
+                      <option value="Administrator">Administrator</option>
+                    </NativeSelect.Field>
+                  </NativeSelect.Root>
+                </Field>
               </VStack>
 
               <DialogFooter>

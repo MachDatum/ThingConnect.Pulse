@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { UserManagementService } from '@/api/services/user-management.service';
 import type {
   UserInfo,

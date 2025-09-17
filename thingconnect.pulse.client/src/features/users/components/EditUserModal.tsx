@@ -6,18 +6,16 @@ import {
   DialogFooter,
   Button,
   Input,
-  FormControl,
-  FormLabel,
-  FormErrorMessage,
   VStack,
   Alert,
-  Switch,
   HStack,
   Text,
+  Switch,
 } from '@chakra-ui/react';
 import { useState, useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { LoadingButton } from '@/components/ui/LoadingButton';
+import { Field } from '@/components/ui/field';
 import type { UserInfo, UpdateUserRequest } from '@/api/types';
 
 interface EditUserModalProps {
@@ -141,8 +139,11 @@ export function EditUserModal({
               )}
 
               {/* Username */}
-              <FormControl isInvalid={!!errors.username}>
-                <FormLabel>Username</FormLabel>
+              <Field
+                label="Username"
+                errorText={errors.username?.message}
+                invalid={!!errors.username}
+              >
                 <Input
                   {...register('username', {
                     maxLength: {
@@ -153,14 +154,14 @@ export function EditUserModal({
                   placeholder="Enter username"
                   disabled={isSubmitting || loading}
                 />
-                {errors.username && (
-                  <FormErrorMessage>{errors.username.message}</FormErrorMessage>
-                )}
-              </FormControl>
+              </Field>
 
               {/* Email */}
-              <FormControl isInvalid={!!errors.email}>
-                <FormLabel>Email</FormLabel>
+              <Field
+                label="Email"
+                errorText={errors.email?.message}
+                invalid={!!errors.email}
+              >
                 <Input
                   type="email"
                   {...register('email', {
@@ -176,43 +177,42 @@ export function EditUserModal({
                   placeholder="Enter email address"
                   disabled={isSubmitting || loading}
                 />
-                {errors.email && (
-                  <FormErrorMessage>{errors.email.message}</FormErrorMessage>
-                )}
-              </FormControl>
+              </Field>
 
               {/* Active Status */}
-              <FormControl>
+              <Field label="Account Status">
                 <HStack justify="space-between" w="full">
                   <VStack align="start" gap={1}>
-                    <FormLabel mb={0}>Account Status</FormLabel>
                     <Text fontSize="sm" color="gray.600" _dark={{ color: "gray.400" }}>
                       {isActive ? 'User can log in' : 'User cannot log in'}
                     </Text>
                   </VStack>
-                  <Switch
+                  <Switch.Root
                     checked={isActive}
                     onCheckedChange={(details) => setValue('isActive', details.checked)}
                     colorPalette="green"
                     size="lg"
                     disabled={isSubmitting || loading}
-                  />
+                  >
+                    <Switch.Control>
+                      <Switch.Thumb />
+                    </Switch.Control>
+                  </Switch.Root>
                 </HStack>
-              </FormControl>
+              </Field>
 
               {/* Role Info (Read-only) */}
-              <FormControl>
-                <FormLabel>Role</FormLabel>
+              <Field
+                label="Role"
+                helperText="Use the role change action in the user list to modify roles"
+              >
                 <Input
                   value={user.role}
                   disabled
                   bg="gray.50"
                   _dark={{ bg: "gray.700" }}
                 />
-                <Text fontSize="sm" color="gray.600" _dark={{ color: "gray.400" }} mt={1}>
-                  Use the role change action in the user list to modify roles
-                </Text>
-              </FormControl>
+              </Field>
             </VStack>
 
             <DialogFooter>
