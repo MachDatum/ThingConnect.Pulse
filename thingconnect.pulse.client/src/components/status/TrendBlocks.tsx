@@ -31,6 +31,15 @@ const TrendBlocks = ({ data }: { data: SparklinePoint[] }) => {
         setShowNewData(true);
         setIsSliding(false);
       }, 500);
+
+      // Reset showNewData after slide-in animation completes
+      setTimeout(() => {
+        setShowNewData(false);
+      }, 1000);
+    } else if (latestTimestamp && !lastTimestampRef.current) {
+      // First load - no animation needed
+      setIsSliding(false);
+      setShowNewData(false);
     }
 
     lastTimestampRef.current = latestTimestamp;
@@ -41,9 +50,9 @@ const TrendBlocks = ({ data }: { data: SparklinePoint[] }) => {
       <style>
         {`
           @keyframes heartbeat {
-            0% { transform: scale(0.9); }
-            50% { transform: scale(1.10); }
-            100% { transform: scale(0.9); }
+            0% { transform: scale(0.95); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(0.95); }
           }
           @keyframes slideLeftGroup {
             0% { transform: translateX(0); }
@@ -70,6 +79,8 @@ const TrendBlocks = ({ data }: { data: SparklinePoint[] }) => {
           const isLastElement = idx === displayBlocks.length - 1 && point !== null;
           const isEmpty = point === null;
           const isNewElement = isLastElement && showNewData;
+          const shouldHeartbeat = isLastElement && !isSliding;
+
 
           return (
             <Box
@@ -87,11 +98,11 @@ const TrendBlocks = ({ data }: { data: SparklinePoint[] }) => {
                   : point.s === 'd' ? 'red.600' : 'green.600'
               }}
               className={
-                isNewElement
-                  ? 'slide-in-animation'
-                  : isSliding && !isEmpty
+                isSliding && !isEmpty
                   ? 'slide-left-animation'
-                  : isLastElement && !isSliding && !showNewData
+                  : isNewElement
+                  ? 'slide-in-animation'
+                  : shouldHeartbeat
                   ? 'heartbeat-animation'
                   : undefined
               }
