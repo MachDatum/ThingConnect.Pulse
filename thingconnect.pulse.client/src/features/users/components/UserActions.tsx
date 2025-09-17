@@ -204,7 +204,7 @@ export function UserActions({
               _dark={{ _hover: { bg: 'red.900', color: 'red.300' } }}
             >
               <Icon as={Trash2} boxSize={4} />
-              Delete User
+              Remove User
             </Menu.Item>
           </Menu.Content>
         </Menu.Positioner>
@@ -219,7 +219,7 @@ export function UserActions({
         <Dialog.Positioner>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Delete User</DialogTitle>
+              <DialogTitle>Remove User</DialogTitle>
             </DialogHeader>
 
             <VStack gap={4} py={4}>
@@ -231,8 +231,8 @@ export function UserActions({
               )}
 
               <Text>
-                Are you sure you want to delete the user <strong>{user.username}</strong>?
-                This action cannot be undone.
+                Are you sure you want to remove the user <strong>{user.username}</strong>?
+                This will deactivate their account and prevent login, but preserves all data for audit purposes.
               </Text>
             </VStack>
 
@@ -248,9 +248,9 @@ export function UserActions({
                 colorPalette="red"
                 onClick={handleDelete}
                 loading={actionLoading}
-                loadingText="Deleting..."
+                loadingText="Removing..."
               >
-                Delete User
+                Remove User
               </LoadingButton>
             </DialogFooter>
           </DialogContent>

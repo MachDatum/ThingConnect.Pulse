@@ -99,6 +99,7 @@ export function useUserManagement(): UseUserManagementReturn {
     try {
       setActionLoading(true);
       setError(null);
+      // Note: This performs a soft delete (deactivation) rather than hard delete
       await UserManagementService.deleteUser(id);
       // Refresh the users list after deletion
       await loadUsers();
