@@ -175,8 +175,7 @@ public sealed class MonitoringBackgroundService : BackgroundService
                     callback: async _ => await ProbeEndpointAsync(endpoint.Id),
                     state: null,
                     dueTime: TimeSpan.Zero, // Start immediately
-                    period: TimeSpan.FromMilliseconds(intervalMs)
-                );
+                    period: TimeSpan.FromMilliseconds(intervalMs));
 
                 _endpointTimers.TryAdd(endpoint.Id, timer);
                 _logger.LogInformation("Started monitoring endpoint: {EndpointId} ({Name}) every {IntervalSeconds}s",
@@ -304,6 +303,7 @@ public sealed class MonitoringBackgroundService : BackgroundService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to update monitoring session heartbeat");
+
             // Don't throw - heartbeat failure shouldn't stop monitoring
         }
     }

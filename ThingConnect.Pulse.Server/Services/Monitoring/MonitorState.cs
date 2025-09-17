@@ -10,28 +10,29 @@ namespace ThingConnect.Pulse.Server.Services.Monitoring;
 public sealed class MonitorState
 {
     private readonly object _lock = new();
+
     /// <summary>
-    /// The last publicly reported status (UP/DOWN). Null if never determined.
+    /// Gets or sets the last publicly reported status (UP/DOWN). Null if never determined.
     /// </summary>
     public UpDown? LastPublicStatus { get; set; }
 
     /// <summary>
-    /// Current consecutive failure count. Reset to 0 on success.
+    /// Gets or sets current consecutive failure count. Reset to 0 on success.
     /// </summary>
     public int FailStreak { get; set; }
 
     /// <summary>
-    /// Current consecutive success count. Reset to 0 on failure.
+    /// Gets or sets current consecutive success count. Reset to 0 on failure.
     /// </summary>
     public int SuccessStreak { get; set; }
 
     /// <summary>
-    /// Timestamp of the last status change (UP→DOWN or DOWN→UP).
+    /// Gets or sets timestamp of the last status change (UP→DOWN or DOWN→UP).
     /// </summary>
     public long? LastChangeTs { get; set; }
 
     /// <summary>
-    /// ID of the currently open outage record. Null if endpoint is UP.
+    /// Gets or sets iD of the currently open outage record. Null if endpoint is UP.
     /// </summary>
     public long? OpenOutageId { get; set; }
 
@@ -39,6 +40,7 @@ public sealed class MonitorState
     /// Evaluates if the current state should transition to DOWN based on fail streak.
     /// Always requires at least 2 consecutive failures regardless of initialization state.
     /// </summary>
+    /// <returns></returns>
     public bool ShouldTransitionToDown(int threshold = 2)
     {
         lock (_lock)
@@ -46,7 +48,9 @@ public sealed class MonitorState
             // Always require at least 2 consecutive failures
             int requiredFailures = Math.Max(1, threshold);
             if (FailStreak < requiredFailures)
+            {
                 return false;
+            }
 
             // New endpoints (null) or UP endpoints can transition to DOWN
             // DOWN endpoints cannot transition to DOWN (already DOWN)
@@ -58,6 +62,7 @@ public sealed class MonitorState
     /// Evaluates if the current state should transition to UP based on success streak.
     /// Always requires at least 2 consecutive successes regardless of initialization state.
     /// </summary>
+    /// <returns></returns>
     public bool ShouldTransitionToUp(int threshold = 2)
     {
         lock (_lock)
@@ -65,7 +70,9 @@ public sealed class MonitorState
             // Always require at least 2 consecutive successes
             int requiredSuccesses = Math.Max(1, threshold);
             if (SuccessStreak < requiredSuccesses)
+            {
                 return false;
+            }
 
             // New endpoints (null) or DOWN endpoints can transition to UP
             // UP endpoints cannot transition to UP (already UP)

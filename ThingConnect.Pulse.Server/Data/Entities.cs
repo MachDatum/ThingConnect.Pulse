@@ -63,13 +63,13 @@ public sealed class Outage
     public string? LastError { get; set; }
 
     /// <summary>
-    /// Timestamp when monitoring was lost during this outage (service downtime).
+    /// Gets or sets timestamp when monitoring was lost during this outage (service downtime).
     /// If not null, indicates outage duration may be inaccurate due to monitoring gap.
     /// </summary>
     public long? MonitoringStoppedTs { get; set; }
 
     /// <summary>
-    /// True if this outage spans a period when monitoring service was unavailable.
+    /// Gets or sets a value indicating whether true if this outage spans a period when monitoring service was unavailable.
     /// Indicates uncertainty in the actual endpoint availability during that time.
     /// </summary>
     public bool HasMonitoringGap { get; set; }
@@ -119,8 +119,9 @@ public sealed class MonitoringSession
     public long Id { get; set; }
     public long StartedTs { get; set; }
     public long? EndedTs { get; set; }
+
     /// <summary>
-    /// Timestamp of last monitoring activity (periodic heartbeat).
+    /// Gets or sets timestamp of last monitoring activity (periodic heartbeat).
     /// Updated regularly during monitoring to provide accurate gap detection.
     /// </summary>
     public long? LastActivityTs { get; set; }

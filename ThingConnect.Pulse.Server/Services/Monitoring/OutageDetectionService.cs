@@ -43,7 +43,6 @@ public sealed class OutageDetectionService : IOutageDetectionService
                 state.RecordFailure();
             }
 
-
             // Check for DOWN transition
             if (state.ShouldTransitionToDown())
             {
@@ -52,6 +51,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
                 _logger.LogWarning("Endpoint {EndpointId} transitioned to DOWN after {FailStreak} consecutive failures",
                     result.EndpointId, state.FailStreak);
             }
+
             // Check for UP transition
             else if (state.ShouldTransitionToUp())
             {
@@ -82,6 +82,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
     /// Initializes monitor states from database on service startup.
     /// Loads last known status, handles monitoring gaps, and starts new monitoring session.
     /// </summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     public async Task InitializeStatesFromDatabaseAsync(CancellationToken cancellationToken = default)
     {
         try
@@ -99,13 +100,16 @@ public sealed class OutageDetectionService : IOutageDetectionService
                 .OrderByDescending(ts => ts)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (lastCheckTime == 0) lastCheckTime = null; // Handle case where no check results exist
+            if (lastCheckTime == 0)
+            {
+                lastCheckTime = null; // Handle case where no check results exist
+            }
 
             // Use multiple signals for robust gap detection
             long? lastMonitoringTime =
-                lastSession?.EndedTs ??        // Graceful shutdown (rare but reliable)
-                lastCheckTime ??                // Actual monitoring data (most reliable)
-                lastSession?.LastActivityTs ??  // Heartbeat signal (fallback)
+                lastSession?.EndedTs ?? // Graceful shutdown (rare but reliable)
+                lastCheckTime ?? // Actual monitoring data (most reliable)
+                lastSession?.LastActivityTs ?? // Heartbeat signal (fallback)
                 lastSession?.StartedTs;         // Last resort (potentially very old)
 
             // Load endpoints once for both gap analysis and state initialization
@@ -215,7 +219,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
     /// Analyzes which endpoints are affected by monitoring gap based on their individual intervals.
     /// Returns list of endpoints where gap duration exceeds their monitoring interval significantly.
     /// </summary>
-    private async Task<List<Data.Endpoint>> AnalyzeMonitoringGapsAsync(List<Data.Endpoint> endpoints, long gapDuration, CancellationToken cancellationToken)
+    private Task<List<Data.Endpoint>> AnalyzeMonitoringGapsAsync(List<Data.Endpoint> endpoints, long gapDuration, CancellationToken cancellationToken)
     {
         var affectedEndpoints = new List<Data.Endpoint>();
 
@@ -238,7 +242,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
             }
         }
 
-        return affectedEndpoints;
+        return Task.FromResult(affectedEndpoints);
     }
 
     private async Task HandleMonitoringGapAsync(long lastMonitoringTime,
@@ -267,7 +271,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
                 "Gap {GapDuration}s exceeded interval {IntervalSeconds}s. Actual outage may have been shorter.",
                 outage.Id, outage.EndpointId,
                 affectedEndpoints.First(e => e.Id == outage.EndpointId).Name,
-                (now - lastMonitoringTime),
+                now - lastMonitoringTime,
                 affectedEndpoints.First(e => e.Id == outage.EndpointId).IntervalSeconds);
         }
 
@@ -290,6 +294,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
     /// <summary>
     /// Handles graceful shutdown by closing the current monitoring session and marking open outages.
     /// </summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     public async Task HandleGracefulShutdownAsync(string? shutdownReason = null, CancellationToken cancellationToken = default)
     {
         try
@@ -435,9 +440,9 @@ public sealed class OutageDetectionService : IOutageDetectionService
         bool hasOpenOutage = openOutageId.HasValue;
 
         // Case 1: Consistent states - no changes needed
-        if ((endpointStatus == UpDown.down && hasOpenOutage) ||     // DOWN with outage ✓
-            (endpointStatus == UpDown.up && !hasOpenOutage) ||       // UP without outage ✓  
-            (endpointStatus == null))                                 // Unknown status (first time) ✓
+        if ((endpointStatus == UpDown.down && hasOpenOutage) || // DOWN with outage ✓
+            (endpointStatus == UpDown.up && !hasOpenOutage) || // UP without outage ✓
+            (endpointStatus == null)) // Unknown status (first time) ✓
         {
             return (endpointStatus, openOutageId, false);
         }

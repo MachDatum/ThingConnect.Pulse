@@ -222,6 +222,7 @@ public sealed class ProbeService : IProbeService
                     // No explicit port in host, add the specified port
                     url = $"{uri.Scheme}://{uri.Host}:{port}";
                 }
+
                 // If host already has explicit port, keep it as-is
             }
         }
