@@ -85,6 +85,7 @@ public sealed class ConfigurationService : IConfigurationService
             };
 
             _context.ConfigVersions.Add(configVersion);
+            await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
             return new ApplyResultDto
