@@ -9,7 +9,7 @@ namespace ThingConnect.Pulse.Server.Services.Monitoring;
 /// </summary>
 public sealed class MonitorState
 {
-    private readonly object _lock = new object();
+    private readonly object _lock = new();
     /// <summary>
     /// The last publicly reported status (UP/DOWN). Null if never determined.
     /// </summary>
@@ -44,17 +44,25 @@ public sealed class MonitorState
     {
         lock (_lock)
         {
-            // Must have enough failures to trigger transition
-            if (FailStreak < Math.Max(1, threshold))
-                return false;
-                
-            // Handle null status (never initialized) - transition on first failure
-            if (LastPublicStatus == null)
-                return FailStreak >= 1;
-
-            // Only transition if currently UP (not already DOWN)
-            return LastPublicStatus == UpDown.up;
+            return ShouldTransitionToDownUnsafe(threshold);
         }
+    }
+
+    /// <summary>
+    /// Internal unsafe version of ShouldTransitionToDown that assumes lock is already held.
+    /// </summary>
+    private bool ShouldTransitionToDownUnsafe(int threshold = 2)
+    {
+        // Must have enough failures to trigger transition
+        if (FailStreak < Math.Max(1, threshold))
+            return false;
+
+        // Handle null status (never initialized) - transition on first failure
+        if (LastPublicStatus == null)
+            return FailStreak >= 1;
+
+        // Only transition if currently UP (not already DOWN)
+        return LastPublicStatus == UpDown.up;
     }
 
     /// <summary>
@@ -66,17 +74,25 @@ public sealed class MonitorState
     {
         lock (_lock)
         {
-            // Must have enough successes to trigger transition
-            if (SuccessStreak < Math.Max(1, threshold))
-                return false;
-                
-            // Handle null status (never initialized) - transition on first success
-            if (LastPublicStatus == null)
-                return SuccessStreak >= 1;
-
-            // Only transition if currently DOWN (not already UP)
-            return LastPublicStatus == UpDown.down;
+            return ShouldTransitionToUpUnsafe(threshold);
         }
+    }
+
+    /// <summary>
+    /// Internal unsafe version of ShouldTransitionToUp that assumes lock is already held.
+    /// </summary>
+    private bool ShouldTransitionToUpUnsafe(int threshold = 2)
+    {
+        // Must have enough successes to trigger transition
+        if (SuccessStreak < Math.Max(1, threshold))
+            return false;
+
+        // Handle null status (never initialized) - transition on first success
+        if (LastPublicStatus == null)
+            return SuccessStreak >= 1;
+
+        // Only transition if currently DOWN (not already UP)
+        return LastPublicStatus == UpDown.down;
     }
 
     /// <summary>
@@ -149,9 +165,9 @@ public sealed class MonitorState
     {
         lock (_lock)
         {
-            bool shouldTransitionDown = ShouldTransitionToDown(threshold);
-            bool shouldTransitionUp = ShouldTransitionToUp(threshold);
-            
+            bool shouldTransitionDown = ShouldTransitionToDownUnsafe(threshold);
+            bool shouldTransitionUp = ShouldTransitionToUpUnsafe(threshold);
+
             // Both transitions should never be true simultaneously
             return !(shouldTransitionDown && shouldTransitionUp);
         }

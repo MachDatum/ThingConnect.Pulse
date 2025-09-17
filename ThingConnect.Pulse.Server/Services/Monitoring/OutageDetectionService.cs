@@ -30,7 +30,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
         // Save current streak state for potential rollback
         int originalSuccessStreak = state.SuccessStreak;
         int originalFailStreak = state.FailStreak;
-        
+
         try
         {
             // Update streak counters based on result
@@ -44,7 +44,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
             }
 
             // Validate state machine logic (debug build only)
-            #if DEBUG
+#if DEBUG
             if (!state.ValidateTransitionMutualExclusivity())
             {
                 _logger.LogError("CRITICAL: State machine violation for endpoint {EndpointId} - " +
@@ -53,7 +53,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
                     result.EndpointId, state.LastPublicStatus, state.SuccessStreak, state.FailStreak);
                 throw new InvalidOperationException($"State machine mutual exclusivity violation for endpoint {result.EndpointId}");
             }
-            #endif
+#endif
 
             // Check for DOWN transition
             if (state.ShouldTransitionToDown())
@@ -81,10 +81,10 @@ public sealed class OutageDetectionService : IOutageDetectionService
         {
             // If transition fails, restore original streak counters to maintain consistency
             _logger.LogError(ex, "Failed to process check result for endpoint {EndpointId}, reverting state changes", result.EndpointId);
-            
+
             // Restore original streak state using thread-safe method
             state.RestoreStreakCounters(originalSuccessStreak, originalFailStreak);
-            
+
             throw;
         }
     }
@@ -116,29 +116,42 @@ public sealed class OutageDetectionService : IOutageDetectionService
         {
             long now = UnixTimestamp.Now();
 
-            // Check for monitoring gap (when was the last monitoring session)
+            // Check for monitoring gap using multiple signals for reliability
             MonitoringSession? lastSession = await _context.MonitoringSessions
                 .OrderByDescending(s => s.StartedTs)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            long? lastMonitoringTime = lastSession?.EndedTs ?? lastSession?.StartedTs;
-            
+            // Get the most recent check result timestamp (most reliable signal)
+            long? lastCheckTime = await _context.CheckResultsRaw
+                .Select(c => c.Ts)
+                .OrderByDescending(ts => ts)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (lastCheckTime == 0) lastCheckTime = null; // Handle case where no check results exist
+
+            // Use multiple signals for robust gap detection
+            long? lastMonitoringTime =
+                lastSession?.EndedTs ??        // Graceful shutdown (rare but reliable)
+                lastCheckTime ??                // Actual monitoring data (most reliable)
+                lastSession?.LastActivityTs ??  // Heartbeat signal (fallback)
+                lastSession?.StartedTs;         // Last resort (potentially very old)
+
             // Load endpoints once for both gap analysis and state initialization
             List<Data.Endpoint> endpoints = await _context.Endpoints
                 .Where(e => e.Enabled)
                 .ToListAsync(cancellationToken);
-                
+
             if (lastMonitoringTime.HasValue)
             {
                 long gapDuration = now - lastMonitoringTime.Value;
-                
-                var endpointsWithGaps = await AnalyzeMonitoringGapsAsync(endpoints, gapDuration, cancellationToken);
-                
+
+                List<Data.Endpoint> endpointsWithGaps = await AnalyzeMonitoringGapsAsync(endpoints, gapDuration, cancellationToken);
+
                 if (endpointsWithGaps.Count > 0)
                 {
                     _logger.LogWarning("Detected monitoring gap of {GapDuration}s since {LastMonitoringTime}. " +
-                        "Affects {AffectedCount} of {TotalCount} endpoints.", 
-                        gapDuration, UnixTimestamp.FromUnixSeconds(lastMonitoringTime.Value), 
+                        "Affects {AffectedCount} of {TotalCount} endpoints.",
+                        gapDuration, UnixTimestamp.FromUnixSeconds(lastMonitoringTime.Value),
                         endpointsWithGaps.Count, endpoints.Count);
 
                     await HandleMonitoringGapAsync(lastMonitoringTime.Value, now, endpointsWithGaps, cancellationToken);
@@ -151,7 +164,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
             }
 
             // Start new monitoring session
-            var newSession = new MonitoringSession
+            MonitoringSession newSession = new MonitoringSession
             {
                 StartedTs = now,
                 Version = GetType().Assembly.GetName().Version?.ToString()
@@ -168,15 +181,15 @@ public sealed class OutageDetectionService : IOutageDetectionService
 
             int initializedCount = 0;
             int inconsistenciesFixed = 0;
-            
+
             foreach (Data.Endpoint? endpoint in endpoints)
             {
                 // Check for state inconsistencies during initialization
                 bool hasOpenOutage = openOutagesByEndpoint.TryGetValue(endpoint.Id, out long outageId);
                 UpDown? endpointStatus = endpoint.LastStatus;
-                
+
                 // Validate and fix inconsistent states
-                var (correctedStatus, correctedOutageId, wasInconsistent) = await ValidateAndFixStateConsistencyAsync(
+                (UpDown? correctedStatus, long? correctedOutageId, bool wasInconsistent) = await ValidateAndFixStateConsistencyAsync(
                     endpoint.Id, endpointStatus, hasOpenOutage ? outageId : null, cancellationToken);
 
                 if (wasInconsistent)
@@ -184,7 +197,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
                     inconsistenciesFixed++;
                     _logger.LogWarning("Fixed state inconsistency for endpoint {EndpointId}: Status={OriginalStatus}→{CorrectedStatus}, OutageId={OutageId}",
                         endpoint.Id, endpointStatus, correctedStatus, correctedOutageId);
-                    
+
                     // Update endpoint in database with corrected status
                     endpoint.LastStatus = correctedStatus;
                     endpoint.LastChangeTs = now;
@@ -233,26 +246,26 @@ public sealed class OutageDetectionService : IOutageDetectionService
     private async Task<List<Data.Endpoint>> AnalyzeMonitoringGapsAsync(List<Data.Endpoint> endpoints, long gapDuration, CancellationToken cancellationToken)
     {
         var affectedEndpoints = new List<Data.Endpoint>();
-        
-        foreach (var endpoint in endpoints)
+
+        foreach (Data.Endpoint endpoint in endpoints)
         {
             // Consider gap significant if it's longer than 2.5x the endpoint's monitoring interval
             // This allows for some service startup time and avoids false positives
             double gapThreshold = endpoint.IntervalSeconds * 2.5;
-            
+
             if (gapDuration > gapThreshold)
             {
                 int missedChecks = (int)(gapDuration / endpoint.IntervalSeconds);
-                
+
                 _logger.LogDebug("Endpoint {EndpointId} ({Name}) affected by gap: " +
                     "{GapDuration}s gap > {Threshold}s threshold ({IntervalSeconds}s interval), " +
                     "missed ~{MissedChecks} checks",
                     endpoint.Id, endpoint.Name, gapDuration, gapThreshold, endpoint.IntervalSeconds, missedChecks);
-                
+
                 affectedEndpoints.Add(endpoint);
             }
         }
-        
+
         return affectedEndpoints;
     }
 
@@ -261,11 +274,11 @@ public sealed class OutageDetectionService : IOutageDetectionService
     {
         // Get affected endpoint IDs for filtering
         var affectedEndpointIds = affectedEndpoints.Select(e => e.Id).ToHashSet();
-        
+
         // Handle open outages only for affected endpoints
         List<Outage> outagesForAffectedEndpoints = await _context.Outages
-            .Where(o => o.EndedTs == null && 
-                       o.StartedTs < lastMonitoringTime && 
+            .Where(o => o.EndedTs == null &&
+                       o.StartedTs < lastMonitoringTime &&
                        affectedEndpointIds.Contains(o.EndpointId))
             .ToListAsync(cancellationToken);
 
@@ -279,8 +292,8 @@ public sealed class OutageDetectionService : IOutageDetectionService
             outage.LastError = "Monitoring gap detected - actual end time unknown";
 
             _logger.LogWarning("Closed outage {OutageId} for endpoint {EndpointId} ({Name}) due to monitoring gap. " +
-                "Gap {GapDuration}s exceeded interval {IntervalSeconds}s. Actual outage may have been shorter.", 
-                outage.Id, outage.EndpointId, 
+                "Gap {GapDuration}s exceeded interval {IntervalSeconds}s. Actual outage may have been shorter.",
+                outage.Id, outage.EndpointId,
                 affectedEndpoints.First(e => e.Id == outage.EndpointId).Name,
                 (now - lastMonitoringTime),
                 affectedEndpoints.First(e => e.Id == outage.EndpointId).IntervalSeconds);
@@ -291,13 +304,13 @@ public sealed class OutageDetectionService : IOutageDetectionService
         {
             endpoint.LastStatus = null; // Unknown status after monitoring gap
             endpoint.LastChangeTs = now;
-            
+
             _logger.LogDebug("Reset status to unknown for endpoint {EndpointId} ({Name}) due to monitoring gap",
                 endpoint.Id, endpoint.Name);
         }
 
         await _context.SaveChangesAsync(cancellationToken);
-        
+
         _logger.LogInformation("Handled monitoring gap: closed {OutageCount} outages and reset {EndpointCount} endpoint statuses",
             outagesForAffectedEndpoints.Count, affectedEndpoints.Count);
     }
@@ -349,8 +362,8 @@ public sealed class OutageDetectionService : IOutageDetectionService
         string? error, CancellationToken cancellationToken)
     {
         // Use database transaction to ensure atomicity of all changes
-        using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
-        
+        using Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+
         try
         {
             // Create new outage record
@@ -362,16 +375,16 @@ public sealed class OutageDetectionService : IOutageDetectionService
             };
 
             _context.Outages.Add(outage);
-            
+
             // Update endpoint's last status and change timestamp in same transaction
             await UpdateEndpointStatusAsync(endpointId, UpDown.down, timestamp, cancellationToken);
-            
+
             // Save all changes atomically
             await _context.SaveChangesAsync(cancellationToken);
-            
+
             // Commit transaction - all database changes are now permanent
             await transaction.CommitAsync(cancellationToken);
-            
+
             // Update in-memory state ONLY after successful database commit
             state.TransitionToDown(timestamp, outage.Id);
 
@@ -389,14 +402,14 @@ public sealed class OutageDetectionService : IOutageDetectionService
         CancellationToken cancellationToken)
     {
         // Use database transaction to ensure atomicity of all changes
-        using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
-        
+        using Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+
         try
         {
             // Close existing outage if any
             long? closedOutageId = null;
             int? outageDurationSeconds = null;
-            
+
             if (state.OpenOutageId.HasValue)
             {
                 Outage? outage = await _context.Outages.FindAsync([state.OpenOutageId.Value], cancellationToken);
@@ -411,16 +424,16 @@ public sealed class OutageDetectionService : IOutageDetectionService
 
             // Update endpoint's last status and change timestamp in same transaction
             await UpdateEndpointStatusAsync(endpointId, UpDown.up, timestamp, cancellationToken);
-            
+
             // Save all changes atomically
             await _context.SaveChangesAsync(cancellationToken);
-            
+
             // Commit transaction - all database changes are now permanent
             await transaction.CommitAsync(cancellationToken);
-            
+
             // Update in-memory state ONLY after successful database commit
             state.TransitionToUp(timestamp);
-            
+
             if (closedOutageId.HasValue)
             {
                 _logger.LogInformation("Closed outage {OutageId} for endpoint {EndpointId}, duration: {DurationSeconds}s",
@@ -454,7 +467,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
         Guid endpointId, UpDown? endpointStatus, long? openOutageId, CancellationToken cancellationToken)
     {
         bool hasOpenOutage = openOutageId.HasValue;
-        
+
         // Case 1: Consistent states - no changes needed
         if ((endpointStatus == UpDown.down && hasOpenOutage) ||     // DOWN with outage ✓
             (endpointStatus == UpDown.up && !hasOpenOutage) ||       // UP without outage ✓  
@@ -462,13 +475,13 @@ public sealed class OutageDetectionService : IOutageDetectionService
         {
             return (endpointStatus, openOutageId, false);
         }
-        
+
         // Case 2: UP status but has open outage (inconsistent)
         if (endpointStatus == UpDown.up && hasOpenOutage)
         {
-            _logger.LogWarning("Endpoint {EndpointId} shows UP but has open outage {OutageId}. Resolving by closing outage.", 
+            _logger.LogWarning("Endpoint {EndpointId} shows UP but has open outage {OutageId}. Resolving by closing outage.",
                 endpointId, openOutageId);
-                
+
             // Close the outage - assume endpoint recovered during service downtime
             Outage? outage = await _context.Outages.FindAsync([openOutageId.Value], cancellationToken);
             if (outage != null)
@@ -478,16 +491,16 @@ public sealed class OutageDetectionService : IOutageDetectionService
                 outage.DurationSeconds = (int)(now - outage.StartedTs);
                 outage.LastError = "Auto-resolved: Endpoint status was UP during service restart";
             }
-            
+
             return (UpDown.up, null, true);
         }
-        
+
         // Case 3: DOWN status but no open outage (inconsistent)  
         if (endpointStatus == UpDown.down && !hasOpenOutage)
         {
-            _logger.LogWarning("Endpoint {EndpointId} shows DOWN but has no open outage. Resolving by creating outage.", 
+            _logger.LogWarning("Endpoint {EndpointId} shows DOWN but has no open outage. Resolving by creating outage.",
                 endpointId);
-                
+
             // Create new outage - assume endpoint went down during service downtime
             long now = UnixTimestamp.Now();
             var outage = new Outage
@@ -496,13 +509,13 @@ public sealed class OutageDetectionService : IOutageDetectionService
                 StartedTs = now,
                 LastError = "Auto-created: Endpoint status was DOWN during service restart"
             };
-            
+
             _context.Outages.Add(outage);
             await _context.SaveChangesAsync(cancellationToken); // Need ID for return
-            
+
             return (UpDown.down, outage.Id, true);
         }
-        
+
         // Should not reach here, but return original values if we do
         return (endpointStatus, openOutageId, false);
     }

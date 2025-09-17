@@ -119,6 +119,11 @@ public sealed class MonitoringSession
     public long Id { get; set; }
     public long StartedTs { get; set; }
     public long? EndedTs { get; set; }
+    /// <summary>
+    /// Timestamp of last monitoring activity (periodic heartbeat).
+    /// Updated regularly during monitoring to provide accurate gap detection.
+    /// </summary>
+    public long? LastActivityTs { get; set; }
     public string? ShutdownReason { get; set; }
     public string? Version { get; set; }
 }
