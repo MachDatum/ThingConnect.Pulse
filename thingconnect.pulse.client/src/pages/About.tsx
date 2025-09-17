@@ -26,7 +26,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import thingConnectLogo from '@/assets/thingconnect-logo.svg';
+import thingConnectLogo from '@/assets/thingconnect-pulse-logo.svg';
 
 export default function About() {
   return (
@@ -68,7 +68,7 @@ export default function About() {
                   IT/OT infrastructure with ease.
                 </Text>
                 <HStack justify='center' gap={3}>
-                  <Image src={thingConnectLogo} alt='ThingConnect' h='50px' />
+                  <Image src={thingConnectLogo} alt='ThingConnect' h='50px' width={'100%'} />
                   <HStack gap={2}>
                     <Badge colorPalette='blue' variant='solid' size='sm'>
                       v1.0.0
