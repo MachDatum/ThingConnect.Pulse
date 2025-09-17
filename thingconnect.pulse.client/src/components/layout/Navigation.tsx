@@ -36,7 +36,7 @@ export function Navigation({ onItemClick }: NavigationProps) {
   return (
     <Box h='100%' display='flex' flexDirection='column' data-testid='navigation'>
       <Box
-        p={6}
+        p={4}
         borderBottom='1px'
         borderColor='gray.200'
         _dark={{ borderColor: 'gray.700' }}
@@ -46,7 +46,7 @@ export function Navigation({ onItemClick }: NavigationProps) {
           data-testid='thingconnect-icon'
           src={thingConnectIcon}
           alt='ThingConnect'
-          w={44}
+          
           h='auto'
         />
       </Box>
