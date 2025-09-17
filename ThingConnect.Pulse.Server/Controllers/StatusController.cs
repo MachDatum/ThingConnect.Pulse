@@ -35,10 +35,10 @@ public sealed class StatusController : ControllerBase
             _logger.LogInformation("Getting live status - group: {Group}, search: {Search}, page: {Page}, pageSize: {PageSize}",
                 group, search);
 
-            var result = await _statusService.GetLiveStatusAsync(group, search);
-    
-        return Ok(new { items = result });
-    }
+            List<LiveStatusItemDto> result = await _statusService.GetLiveStatusAsync(group, search);
+
+            return Ok(new { items = result });
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting live status");

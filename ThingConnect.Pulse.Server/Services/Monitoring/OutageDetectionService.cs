@@ -24,7 +24,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
 
     public async Task<bool> ProcessCheckResultAsync(CheckResult result, CancellationToken cancellationToken = default)
     {
-        MonitorState state = GetOrCreateMonitorState(result.EndpointId);
+        MonitorState state = _states.GetOrAdd(result.EndpointId, _ => new MonitorState());
         bool stateChanged = false;
 
         // Save current streak state for potential rollback
@@ -43,17 +43,6 @@ public sealed class OutageDetectionService : IOutageDetectionService
                 state.RecordFailure();
             }
 
-            // Validate state machine logic (debug build only)
-#if DEBUG
-            if (!state.ValidateTransitionMutualExclusivity())
-            {
-                _logger.LogError("CRITICAL: State machine violation for endpoint {EndpointId} - " +
-                    "both UP and DOWN transitions are true simultaneously. " +
-                    "LastStatus={LastStatus}, SuccessStreak={SuccessStreak}, FailStreak={FailStreak}",
-                    result.EndpointId, state.LastPublicStatus, state.SuccessStreak, state.FailStreak);
-                throw new InvalidOperationException($"State machine mutual exclusivity violation for endpoint {result.EndpointId}");
-            }
-#endif
 
             // Check for DOWN transition
             if (state.ShouldTransitionToDown())
@@ -87,23 +76,6 @@ public sealed class OutageDetectionService : IOutageDetectionService
 
             throw;
         }
-    }
-
-    public MonitorState GetOrCreateMonitorState(Guid endpointId)
-    {
-        return _states.GetOrAdd(endpointId, _ => new MonitorState());
-    }
-
-    public MonitorState? GetMonitorState(Guid endpointId)
-    {
-        _states.TryGetValue(endpointId, out MonitorState? state);
-        return state;
-    }
-
-    public void ClearAllStates()
-    {
-        _states.Clear();
-        _logger.LogInformation("Cleared all monitor states");
     }
 
     /// <summary>
@@ -164,7 +136,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
             }
 
             // Start new monitoring session
-            MonitoringSession newSession = new MonitoringSession
+            var newSession = new MonitoringSession
             {
                 StartedTs = now,
                 Version = GetType().Assembly.GetName().Version?.ToString()
@@ -190,7 +162,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
 
                 // Validate and fix inconsistent states
                 (UpDown? correctedStatus, long? correctedOutageId, bool wasInconsistent) = await ValidateAndFixStateConsistencyAsync(
-                    endpoint.Id, endpointStatus, hasOpenOutage ? outageId : null, cancellationToken);
+                    endpoint.Id, endpointStatus, hasOpenOutage ? outageId : null, endpoint.LastChangeTs, cancellationToken);
 
                 if (wasInconsistent)
                 {
@@ -203,7 +175,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
                     endpoint.LastChangeTs = now;
                 }
 
-                var state = new MonitorState
+                MonitorState state = new MonitorState
                 {
                     LastPublicStatus = correctedStatus,
                     LastChangeTs = endpoint.LastChangeTs,
@@ -367,7 +339,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
         try
         {
             // Create new outage record
-            var outage = new Outage
+            Outage outage = new()
             {
                 EndpointId = endpointId,
                 StartedTs = timestamp,
@@ -379,10 +351,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
             // Update endpoint's last status and change timestamp in same transaction
             await UpdateEndpointStatusAsync(endpointId, UpDown.down, timestamp, cancellationToken);
 
-            // Save all changes atomically
-            await _context.SaveChangesAsync(cancellationToken);
-
-            // Commit transaction - all database changes are now permanent
+            // Commit transaction - EF Core will save and commit all changes atomically
             await transaction.CommitAsync(cancellationToken);
 
             // Update in-memory state ONLY after successful database commit
@@ -406,29 +375,26 @@ public sealed class OutageDetectionService : IOutageDetectionService
 
         try
         {
-            // Close existing outage if any
+            // Close existing outage if any - query database for actual open outage
             long? closedOutageId = null;
             int? outageDurationSeconds = null;
 
-            if (state.OpenOutageId.HasValue)
+            Outage? openOutage = await _context.Outages
+                .Where(o => o.EndpointId == endpointId && o.EndedTs == null)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (openOutage != null)
             {
-                Outage? outage = await _context.Outages.FindAsync([state.OpenOutageId.Value], cancellationToken);
-                if (outage != null)
-                {
-                    outage.EndedTs = timestamp;
-                    outage.DurationSeconds = (int)(timestamp - outage.StartedTs);
-                    closedOutageId = outage.Id;
-                    outageDurationSeconds = outage.DurationSeconds;
-                }
+                openOutage.EndedTs = timestamp;
+                openOutage.DurationSeconds = (int)(timestamp - openOutage.StartedTs);
+                closedOutageId = openOutage.Id;
+                outageDurationSeconds = openOutage.DurationSeconds;
             }
 
             // Update endpoint's last status and change timestamp in same transaction
             await UpdateEndpointStatusAsync(endpointId, UpDown.up, timestamp, cancellationToken);
 
-            // Save all changes atomically
-            await _context.SaveChangesAsync(cancellationToken);
-
-            // Commit transaction - all database changes are now permanent
+            // Commit transaction - EF Core will save and commit all changes atomically
             await transaction.CommitAsync(cancellationToken);
 
             // Update in-memory state ONLY after successful database commit
@@ -464,7 +430,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
     /// Returns corrected status, outage ID, and whether inconsistency was found.
     /// </summary>
     private async Task<(UpDown? correctedStatus, long? correctedOutageId, bool wasInconsistent)> ValidateAndFixStateConsistencyAsync(
-        Guid endpointId, UpDown? endpointStatus, long? openOutageId, CancellationToken cancellationToken)
+        Guid endpointId, UpDown? endpointStatus, long? openOutageId, long? endpointLastChangeTs, CancellationToken cancellationToken)
     {
         bool hasOpenOutage = openOutageId.HasValue;
 
@@ -482,32 +448,36 @@ public sealed class OutageDetectionService : IOutageDetectionService
             _logger.LogWarning("Endpoint {EndpointId} shows UP but has open outage {OutageId}. Resolving by closing outage.",
                 endpointId, openOutageId);
 
-            // Close the outage - assume endpoint recovered during service downtime
-            Outage? outage = await _context.Outages.FindAsync([openOutageId.Value], cancellationToken);
+            // Close the outage - use endpoint's LastChangeTs if available, otherwise fall back to now
+            Outage? outage = await _context.Outages.FindAsync([openOutageId!.Value], cancellationToken);
             if (outage != null)
             {
-                long now = UnixTimestamp.Now();
-                outage.EndedTs = now;
-                outage.DurationSeconds = (int)(now - outage.StartedTs);
-                outage.LastError = "Auto-resolved: Endpoint status was UP during service restart";
+                long outageEndTime = endpointLastChangeTs ?? UnixTimestamp.Now();
+                outage.EndedTs = outageEndTime;
+                outage.DurationSeconds = (int)(outageEndTime - outage.StartedTs);
+                outage.LastError = endpointLastChangeTs.HasValue
+                    ? "Auto-resolved: Endpoint status was UP at last known change time"
+                    : "Auto-resolved: Endpoint status was UP during service restart";
             }
 
             return (UpDown.up, null, true);
         }
 
-        // Case 3: DOWN status but no open outage (inconsistent)  
+        // Case 3: DOWN status but no open outage (inconsistent)
         if (endpointStatus == UpDown.down && !hasOpenOutage)
         {
             _logger.LogWarning("Endpoint {EndpointId} shows DOWN but has no open outage. Resolving by creating outage.",
                 endpointId);
 
-            // Create new outage - assume endpoint went down during service downtime
-            long now = UnixTimestamp.Now();
+            // Create new outage - use endpoint's LastChangeTs if available, otherwise fall back to now
+            long outageStartTime = endpointLastChangeTs ?? UnixTimestamp.Now();
             var outage = new Outage
             {
                 EndpointId = endpointId,
-                StartedTs = now,
-                LastError = "Auto-created: Endpoint status was DOWN during service restart"
+                StartedTs = outageStartTime,
+                LastError = endpointLastChangeTs.HasValue
+                    ? "Auto-created: Endpoint status was DOWN at last known change time"
+                    : "Auto-created: Endpoint status was DOWN during service restart"
             };
 
             _context.Outages.Add(outage);
@@ -522,7 +492,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
 
     private async Task SaveCheckResultAsync(CheckResult result, CancellationToken cancellationToken)
     {
-        var rawResult = new CheckResultRaw
+        CheckResultRaw rawResult = new CheckResultRaw
         {
             EndpointId = result.EndpointId,
             Ts = UnixTimestamp.ToUnixSeconds(result.Timestamp),
@@ -533,28 +503,5 @@ public sealed class OutageDetectionService : IOutageDetectionService
 
         _context.CheckResultsRaw.Add(rawResult);
         await _context.SaveChangesAsync(cancellationToken);
-    }
-
-    /// <summary>
-    /// Batch save multiple check results in a single transaction for better performance
-    /// </summary>
-    public async Task SaveCheckResultsBatchAsync(IEnumerable<CheckResult> results, CancellationToken cancellationToken = default)
-    {
-        var rawResults = results.Select(result => new CheckResultRaw
-        {
-            EndpointId = result.EndpointId,
-            Ts = UnixTimestamp.ToUnixSeconds(result.Timestamp),
-            Status = result.Status,
-            RttMs = result.RttMs,
-            Error = result.Error
-        }).ToList();
-
-        if (rawResults.Count > 0)
-        {
-            _context.CheckResultsRaw.AddRange(rawResults);
-            await _context.SaveChangesAsync(cancellationToken);
-
-            _logger.LogDebug("Batch saved {Count} check results", rawResults.Count);
-        }
     }
 }

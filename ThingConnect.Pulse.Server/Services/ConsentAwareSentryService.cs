@@ -1,5 +1,3 @@
-using Sentry;
-
 namespace ThingConnect.Pulse.Server.Services;
 
 public interface IConsentAwareSentryService
@@ -28,9 +26,9 @@ public class ConsentAwareSentryService : IConsentAwareSentryService
 
         try
         {
-            using var scope = _serviceProvider.CreateScope();
-            var settingsService = scope.ServiceProvider.GetRequiredService<ISettingsService>();
-            
+            using IServiceScope scope = _serviceProvider.CreateScope();
+            ISettingsService settingsService = scope.ServiceProvider.GetRequiredService<ISettingsService>();
+
             // Check if user has consented to error diagnostics
             string? errorDiagnosticsConsent = await settingsService.GetAsync("telemetry_error_diagnostics");
             bool hasErrorDiagnosticsConsent = bool.TryParse(errorDiagnosticsConsent, out bool errorValue) && errorValue;

@@ -85,7 +85,6 @@ public sealed class ConfigurationService : IConfigurationService
             };
 
             _context.ConfigVersions.Add(configVersion);
-            await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
             return new ApplyResultDto
@@ -195,7 +194,7 @@ public sealed class ConfigurationService : IConfigurationService
     public async Task InitializeSampleConfigurationAsync()
     {
         // Check if any configuration versions already exist
-        var existingVersions = await _context.ConfigVersions.AnyAsync();
+        bool existingVersions = await _context.ConfigVersions.AnyAsync();
         if (existingVersions)
         {
             return; // Configuration already exists, skip initialization
@@ -209,7 +208,7 @@ public sealed class ConfigurationService : IConfigurationService
         }
 
         string sampleContent = await File.ReadAllTextAsync(sampleConfigPath);
-        
+
         // Apply sample configuration automatically
         await ApplyConfigurationAsync(sampleContent, "system", "Initial sample configuration applied automatically");
     }

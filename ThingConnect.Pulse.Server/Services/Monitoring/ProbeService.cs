@@ -148,7 +148,7 @@ public sealed class ProbeService : IProbeService
         {
             // Build URL with proper protocol detection and validation
             string url = BuildHttpUrl(host, port, path);
-            _logger.LogTrace("Built HTTP URL: {Url} from host={Host}, port={Port}, path={Path}", 
+            _logger.LogTrace("Built HTTP URL: {Url} from host={Host}, port={Port}, path={Path}",
                 url, host, port, path);
 
             var stopwatch = Stopwatch.StartNew();
@@ -201,18 +201,18 @@ public sealed class ProbeService : IProbeService
     private static string BuildHttpUrl(string host, int port, string? path)
     {
         string url;
-        
+
         // Check if host already contains a protocol
-        if (host.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || 
+        if (host.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
             host.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
         {
             // Host already includes protocol, use as-is but validate port compatibility
             url = host;
-            
+
             // If explicit port provided and doesn't match standard ports, append it
             bool isHttps = host.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
             int standardPort = isHttps ? 443 : 80;
-            
+
             if (port != standardPort)
             {
                 // Check if host already has a port
@@ -229,7 +229,7 @@ public sealed class ProbeService : IProbeService
         {
             // Host doesn't contain protocol, determine from port and context
             string scheme;
-            
+
             // Use smart defaults: 443 and common HTTPS ports default to HTTPS, others to HTTP
             if (port == 443 || IsCommonHttpsPort(port))
             {
@@ -239,9 +239,9 @@ public sealed class ProbeService : IProbeService
             {
                 scheme = "http";
             }
-            
+
             url = $"{scheme}://{host}";
-            
+
             // Add port if not standard for the chosen protocol
             int standardPort = scheme == "https" ? 443 : 80;
             if (port != standardPort)
@@ -249,7 +249,7 @@ public sealed class ProbeService : IProbeService
                 url += $":{port}";
             }
         }
-        
+
         // Add path if specified
         if (!string.IsNullOrEmpty(path))
         {
@@ -263,10 +263,10 @@ public sealed class ProbeService : IProbeService
                 // Remove duplicate slash
                 path = path.Substring(1);
             }
-            
+
             url += path;
         }
-        
+
         // Validate the final URL
         try
         {
@@ -278,7 +278,7 @@ public sealed class ProbeService : IProbeService
             throw new ArgumentException($"Invalid URL constructed: {url}", ex);
         }
     }
-    
+
     /// <summary>
     /// Checks if the port is commonly used for HTTPS services.
     /// </summary>

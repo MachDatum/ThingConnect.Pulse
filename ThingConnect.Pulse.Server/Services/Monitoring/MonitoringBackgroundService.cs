@@ -49,7 +49,7 @@ public sealed class MonitoringBackgroundService : BackgroundService
             {
                 await RefreshEndpointsAsync(stoppingToken);
                 await UpdateHeartbeatAsync(stoppingToken);
-                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken); // Check for endpoint changes every minute
+                await Task.Delay(TimeSpan.FromSeconds(15), stoppingToken); // Check for endpoint changes every minute
             }
             catch (Exception ex)
             {

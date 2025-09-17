@@ -124,7 +124,7 @@ public sealed class AuthController : ControllerBase
 
             // Sign in the user immediately after successful registration
             await _signInManager.SignInAsync(user, isPersistent: true);
-            
+
             // Update last login time since we just signed them in
             user.LastLoginAt = DateTimeOffset.UtcNow;
             await _userManager.UpdateAsync(user);
