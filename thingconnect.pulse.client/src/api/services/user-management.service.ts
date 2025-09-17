@@ -74,7 +74,7 @@ export class UserManagementService {
    * Change user role
    */
   static async changeUserRole(id: string, request: ChangeRoleRequest): Promise<UserInfo> {
-    return apiClient.patch<UserInfo>(`/api/UserManagement/${encodeURIComponent(id)}/role`, request);
+    return apiClient.put<UserInfo>(`/api/UserManagement/${encodeURIComponent(id)}/role`, request);
   }
 
   /**
@@ -88,7 +88,7 @@ export class UserManagementService {
    * Toggle user active status
    */
   static async toggleUserStatus(id: string, isActive: boolean): Promise<UserInfo> {
-    return apiClient.patch<UserInfo>(`/api/UserManagement/${encodeURIComponent(id)}`, {
+    return apiClient.put<UserInfo>(`/api/UserManagement/${encodeURIComponent(id)}`, {
       isActive,
     });
   }
