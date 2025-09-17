@@ -12,6 +12,7 @@ import { ChevronLeft, ChevronRight, CloudOff } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import type { RawCheck } from '@/api/types';
 import { useMemo, useState } from 'react';
+import { Tooltip } from './ui/tooltip';
 interface RecentChecksTableProps {
   checks: RawCheck[];
   pageSize?: number;
@@ -74,9 +75,11 @@ export function RecentChecksTable({ checks, pageSize = 10 }: RecentChecksTablePr
                     <Text fontSize='sm'>{check.rttMs ? `${check.rttMs}ms` : '-'}</Text>
                   </Table.Cell>
                   <Table.Cell w='25%'>
-                    <Text flex='1' fontSize='sm' color='gray.500' lineClamp={1}>
-                      {check.error || '-'}
-                    </Text>
+                    <Tooltip content={check.error || '-'}>
+                      <Text flex='1' fontSize='sm' color='gray.500' lineClamp={1}>
+                        {check.error || '-'}
+                      </Text>
+                    </Tooltip>
                   </Table.Cell>
                 </Table.Row>
               ))}
