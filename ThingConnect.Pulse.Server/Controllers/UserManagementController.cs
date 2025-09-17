@@ -187,7 +187,7 @@ public sealed class UserManagementController : ControllerBase
             _logger.LogInformation("User created: {Username} (ID: {UserId}) by admin {AdminId}",
                 user.UserName, user.Id, currentUser?.Id);
 
-            return CreatedAtAction(nameof(GetUserByIdAsync), new { id = user.Id }, new UserInfoDto
+            var userDto = new UserInfoDto
             {
                 Id = user.Id,
                 Username = user.UserName,
@@ -196,7 +196,14 @@ public sealed class UserManagementController : ControllerBase
                 CreatedAt = user.CreatedAt,
                 LastLoginAt = user.LastLoginAt,
                 IsActive = user.IsActive
-            });
+            };
+
+            return CreatedAtAction(
+                actionName: nameof(GetUserByIdAsync),
+                controllerName: null, // Same controller
+                routeValues: new { id = user.Id },
+                value: userDto
+            );
         }
         catch (Exception ex)
         {
