@@ -12,13 +12,13 @@ namespace ThingConnect.Pulse.Server.Services.Monitoring;
 /// </summary>
 public sealed class OutageDetectionService : IOutageDetectionService
 {
-    private readonly PulseDbContext _context;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<OutageDetectionService> _logger;
     private readonly ConcurrentDictionary<Guid, MonitorState> _states = new();
 
-    public OutageDetectionService(PulseDbContext context, ILogger<OutageDetectionService> logger)
+    public OutageDetectionService(IServiceProvider serviceProvider, ILogger<OutageDetectionService> logger)
     {
-        _context = context;
+        _serviceProvider = serviceProvider;
         _logger = logger;
     }
 
@@ -93,17 +93,20 @@ public sealed class OutageDetectionService : IOutageDetectionService
     /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     public async Task InitializeStatesFromDatabaseAsync(CancellationToken cancellationToken = default)
     {
+        using IServiceScope scope = _serviceProvider.CreateScope();
+        PulseDbContext context = scope.ServiceProvider.GetRequiredService<PulseDbContext>();
+
         try
         {
             long now = UnixTimestamp.Now();
 
             // Check for monitoring gap using multiple signals for reliability
-            MonitoringSession? lastSession = await _context.MonitoringSessions
+            MonitoringSession? lastSession = await context.MonitoringSessions
                 .OrderByDescending(s => s.StartedTs)
                 .FirstOrDefaultAsync(cancellationToken);
 
             // Get the most recent check result timestamp (most reliable signal)
-            long? lastCheckTime = await _context.CheckResultsRaw
+            long? lastCheckTime = await context.CheckResultsRaw
                 .Select(c => c.Ts)
                 .OrderByDescending(ts => ts)
                 .FirstOrDefaultAsync(cancellationToken);
@@ -121,7 +124,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
                 lastSession?.StartedTs;         // Last resort (potentially very old)
 
             // Load endpoints once for both gap analysis and state initialization
-            List<Data.Endpoint> endpoints = await _context.Endpoints
+            List<Data.Endpoint> endpoints = await context.Endpoints
                 .Where(e => e.Enabled)
                 .ToListAsync(cancellationToken);
 
@@ -138,7 +141,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
                         gapDuration, UnixTimestamp.FromUnixSeconds(lastMonitoringTime.Value),
                         endpointsWithGaps.Count, endpoints.Count);
 
-                    await HandleMonitoringGapAsync(lastMonitoringTime.Value, now, endpointsWithGaps, cancellationToken);
+                    await HandleMonitoringGapAsync(context, lastMonitoringTime.Value, now, endpointsWithGaps, cancellationToken);
                 }
                 else
                 {
@@ -154,10 +157,10 @@ public sealed class OutageDetectionService : IOutageDetectionService
                 Version = GetType().Assembly.GetName().Version?.ToString()
             };
 
-            _context.MonitoringSessions.Add(newSession);
-            await _context.SaveChangesAsync(cancellationToken);
+            context.MonitoringSessions.Add(newSession);
+            await context.SaveChangesAsync(cancellationToken);
 
-            List<Outage> openOutages = await _context.Outages
+            List<Outage> openOutages = await context.Outages
                 .Where(o => o.EndedTs == null)
                 .ToListAsync(cancellationToken);
 
@@ -174,7 +177,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
 
                 // Validate and fix inconsistent states
                 (UpDown? correctedStatus, long? correctedOutageId, bool wasInconsistent) = await ValidateAndFixStateConsistencyAsync(
-                    endpoint.Id, endpointStatus, hasOpenOutage ? outageId : null, endpoint.LastChangeTs, cancellationToken);
+                    context, endpoint.Id, endpointStatus, hasOpenOutage ? outageId : null, endpoint.LastChangeTs, cancellationToken);
 
                 if (wasInconsistent)
                 {
@@ -203,7 +206,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
             // Save any endpoint status corrections
             if (inconsistenciesFixed > 0)
             {
-                await _context.SaveChangesAsync(cancellationToken);
+                await context.SaveChangesAsync(cancellationToken);
             }
 
             if (inconsistenciesFixed > 0)
@@ -253,14 +256,14 @@ public sealed class OutageDetectionService : IOutageDetectionService
         return Task.FromResult(affectedEndpoints);
     }
 
-    private async Task HandleMonitoringGapAsync(long lastMonitoringTime,
+    private async Task HandleMonitoringGapAsync(PulseDbContext context, long lastMonitoringTime,
         long now, List<Data.Endpoint> affectedEndpoints, CancellationToken cancellationToken)
     {
         // Get affected endpoint IDs for filtering
         var affectedEndpointIds = affectedEndpoints.Select(e => e.Id).ToHashSet();
 
         // Handle open outages only for affected endpoints
-        List<Outage> outagesForAffectedEndpoints = await _context.Outages
+        List<Outage> outagesForAffectedEndpoints = await context.Outages
             .Where(o => o.EndedTs == null &&
                        o.StartedTs < lastMonitoringTime &&
                        affectedEndpointIds.Contains(o.EndpointId))
@@ -293,7 +296,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
                 endpoint.Id, endpoint.Name);
         }
 
-        await _context.SaveChangesAsync(cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("Handled monitoring gap: closed {OutageCount} outages and reset {EndpointCount} endpoint statuses",
             outagesForAffectedEndpoints.Count, affectedEndpoints.Count);
@@ -305,12 +308,15 @@ public sealed class OutageDetectionService : IOutageDetectionService
     /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     public async Task HandleGracefulShutdownAsync(string? shutdownReason = null, CancellationToken cancellationToken = default)
     {
+        using IServiceScope scope = _serviceProvider.CreateScope();
+        PulseDbContext context = scope.ServiceProvider.GetRequiredService<PulseDbContext>();
+
         try
         {
             long now = UnixTimestamp.Now();
 
             // Close current monitoring session
-            MonitoringSession? currentSession = await _context.MonitoringSessions
+            MonitoringSession? currentSession = await context.MonitoringSessions
                 .Where(s => s.EndedTs == null)
                 .OrderByDescending(s => s.StartedTs)
                 .FirstOrDefaultAsync(cancellationToken);
@@ -324,7 +330,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
             }
 
             // Mark all open outages with monitoring stop time (but don't close them yet)
-            List<Outage> openOutages = await _context.Outages
+            List<Outage> openOutages = await context.Outages
                 .Where(o => o.EndedTs == null && o.MonitoringStoppedTs == null)
                 .ToListAsync(cancellationToken);
 
@@ -333,7 +339,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
                 outage.MonitoringStoppedTs = now;
             }
 
-            await _context.SaveChangesAsync(cancellationToken);
+            await context.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation("Gracefully shut down monitoring, marked {Count} open outages", openOutages.Count);
         }
@@ -346,8 +352,11 @@ public sealed class OutageDetectionService : IOutageDetectionService
     private async Task TransitionToDownAsync(Guid endpointId, MonitorState state, long timestamp,
         string? error, CancellationToken cancellationToken)
     {
+        using IServiceScope scope = _serviceProvider.CreateScope();
+        PulseDbContext context = scope.ServiceProvider.GetRequiredService<PulseDbContext>();
+
         // Use database transaction to ensure atomicity of all changes
-        using Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        using Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction = await context.Database.BeginTransactionAsync(cancellationToken);
 
         try
         {
@@ -359,11 +368,11 @@ public sealed class OutageDetectionService : IOutageDetectionService
                 LastError = error
             };
 
-            _context.Outages.Add(outage);
+            context.Outages.Add(outage);
 
             // Update endpoint's last status and change timestamp in same transaction
-            await UpdateEndpointStatusAsync(endpointId, UpDown.down, timestamp, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
+            await UpdateEndpointStatusAsync(context, endpointId, UpDown.down, timestamp, cancellationToken);
+            await context.SaveChangesAsync(cancellationToken);
             // Commit transaction - EF Core will save and 
             await transaction.CommitAsync(cancellationToken);
 
@@ -383,8 +392,11 @@ public sealed class OutageDetectionService : IOutageDetectionService
     private async Task TransitionToUpAsync(Guid endpointId, MonitorState state, long timestamp,
         CancellationToken cancellationToken)
     {
+        using IServiceScope scope = _serviceProvider.CreateScope();
+        PulseDbContext context = scope.ServiceProvider.GetRequiredService<PulseDbContext>();
+
         // Use database transaction to ensure atomicity of all changes
-        using Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        using Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction = await context.Database.BeginTransactionAsync(cancellationToken);
 
         try
         {
@@ -392,7 +404,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
             long? closedOutageId = null;
             int? outageDurationSeconds = null;
 
-            Outage? openOutage = await _context.Outages
+            Outage? openOutage = await context.Outages
                 .Where(o => o.EndpointId == endpointId && o.EndedTs == null)
                 .FirstOrDefaultAsync(cancellationToken);
 
@@ -405,8 +417,8 @@ public sealed class OutageDetectionService : IOutageDetectionService
             }
 
             // Update endpoint's last status and change timestamp in same transaction
-            await UpdateEndpointStatusAsync(endpointId, UpDown.up, timestamp, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
+            await UpdateEndpointStatusAsync(context, endpointId, UpDown.up, timestamp, cancellationToken);
+            await context.SaveChangesAsync(cancellationToken);
             // Commit transaction - EF Core will save and commit all changes atomically
             await transaction.CommitAsync(cancellationToken);
 
@@ -427,10 +439,10 @@ public sealed class OutageDetectionService : IOutageDetectionService
         }
     }
 
-    private async Task UpdateEndpointStatusAsync(Guid endpointId, UpDown status, long timestamp,
+    private async Task UpdateEndpointStatusAsync(PulseDbContext context, Guid endpointId, UpDown status, long timestamp,
         CancellationToken cancellationToken)
     {
-        Data.Endpoint? endpoint = await _context.Endpoints.FindAsync([endpointId], cancellationToken);
+        Data.Endpoint? endpoint = await context.Endpoints.FindAsync([endpointId], cancellationToken);
         if (endpoint != null)
         {
             endpoint.LastStatus = status;
@@ -443,7 +455,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
     /// Returns corrected status, outage ID, and whether inconsistency was found.
     /// </summary>
     private async Task<(UpDown? correctedStatus, long? correctedOutageId, bool wasInconsistent)> ValidateAndFixStateConsistencyAsync(
-        Guid endpointId, UpDown? endpointStatus, long? openOutageId, long? endpointLastChangeTs, CancellationToken cancellationToken)
+        PulseDbContext context, Guid endpointId, UpDown? endpointStatus, long? openOutageId, long? endpointLastChangeTs, CancellationToken cancellationToken)
     {
         bool hasOpenOutage = openOutageId.HasValue;
 
@@ -462,7 +474,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
                 endpointId, openOutageId);
 
             // Close the outage - use endpoint's LastChangeTs if available, otherwise fall back to now
-            Outage? outage = await _context.Outages.FindAsync([openOutageId!.Value], cancellationToken);
+            Outage? outage = await context.Outages.FindAsync([openOutageId!.Value], cancellationToken);
             if (outage != null)
             {
                 long outageEndTime = endpointLastChangeTs ?? UnixTimestamp.Now();
@@ -493,8 +505,8 @@ public sealed class OutageDetectionService : IOutageDetectionService
                     : "Auto-created: Endpoint status was DOWN during service restart"
             };
 
-            _context.Outages.Add(outage);
-            await _context.SaveChangesAsync(cancellationToken); // Need ID for return
+            context.Outages.Add(outage);
+            await context.SaveChangesAsync(cancellationToken); // Need ID for return
 
             return (UpDown.down, outage.Id, true);
         }
@@ -505,6 +517,9 @@ public sealed class OutageDetectionService : IOutageDetectionService
 
     private async Task SaveCheckResultAsync(CheckResult result, CancellationToken cancellationToken)
     {
+        using IServiceScope scope = _serviceProvider.CreateScope();
+        PulseDbContext context = scope.ServiceProvider.GetRequiredService<PulseDbContext>();
+
         CheckResultRaw rawResult = new CheckResultRaw
         {
             EndpointId = result.EndpointId,
@@ -514,7 +529,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
             Error = result.Error
         };
 
-        _context.CheckResultsRaw.Add(rawResult);
-        await _context.SaveChangesAsync(cancellationToken);
+        context.CheckResultsRaw.Add(rawResult);
+        await context.SaveChangesAsync(cancellationToken);
     }
 }
