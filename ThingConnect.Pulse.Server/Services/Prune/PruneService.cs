@@ -5,7 +5,7 @@ using ThingConnect.Pulse.Server.Helpers;
 namespace ThingConnect.Pulse.Server.Services.Prune;
 
 /// <summary>
-/// Service for pruning old raw data while preserving rollups
+/// Service for pruning old raw data while preserving rollups.
 /// </summary>
 public sealed class PruneService : IPruneService
 {

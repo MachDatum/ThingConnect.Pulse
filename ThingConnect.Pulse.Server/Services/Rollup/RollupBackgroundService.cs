@@ -1,7 +1,7 @@
 namespace ThingConnect.Pulse.Server.Services.Rollup;
 
 /// <summary>
-/// Background service that processes rollups every 5 minutes
+/// Background service that processes rollups every 5 minutes.
 /// </summary>
 public sealed class RollupBackgroundService : BackgroundService
 {

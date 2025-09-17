@@ -8,33 +8,34 @@ namespace ThingConnect.Pulse.Server.Models;
 public sealed class CheckResult
 {
     /// <summary>
-    /// The endpoint that was checked.
+    /// Gets or sets the endpoint that was checked.
     /// </summary>
     public Guid EndpointId { get; set; }
 
     /// <summary>
-    /// Timestamp when the check was performed.
+    /// Gets or sets timestamp when the check was performed.
     /// </summary>
     public DateTimeOffset Timestamp { get; set; }
 
     /// <summary>
-    /// Result status: UP or DOWN.
+    /// Gets or sets result status: UP or DOWN.
     /// </summary>
     public UpDown Status { get; set; }
 
     /// <summary>
-    /// Round-trip time in milliseconds. Null if not applicable or failed.
+    /// Gets or sets round-trip time in milliseconds. Null if not applicable or failed.
     /// </summary>
     public double? RttMs { get; set; }
 
     /// <summary>
-    /// Error message if the check failed. Null if successful.
+    /// Gets or sets error message if the check failed. Null if successful.
     /// </summary>
     public string? Error { get; set; }
 
     /// <summary>
     /// Creates a successful check result.
     /// </summary>
+    /// <returns></returns>
     public static CheckResult Success(Guid endpointId, DateTimeOffset timestamp, double? rttMs = null)
     {
         return new CheckResult
@@ -50,6 +51,7 @@ public sealed class CheckResult
     /// <summary>
     /// Creates a failed check result.
     /// </summary>
+    /// <returns></returns>
     public static CheckResult Failure(Guid endpointId, DateTimeOffset timestamp, string error)
     {
         return new CheckResult
