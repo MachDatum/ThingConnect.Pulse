@@ -12,14 +12,14 @@ public sealed class SettingsService : ISettingsService, IDisposable
     private const string LastPruneKey = "last_prune";
     private const string VersionKey = "version";
 
-    private readonly PulseDbContext _context;
+    private readonly IServiceProvider _serviceProvider;
     private readonly IMemoryCache _cache;
     private readonly SemaphoreSlim _semaphore;
     private readonly TimeSpan _cacheExpiration = TimeSpan.FromMinutes(5);
 
-    public SettingsService(PulseDbContext context, IMemoryCache cache)
+    public SettingsService(IServiceProvider serviceProvider, IMemoryCache cache)
     {
-        _context = context;
+        _serviceProvider = serviceProvider;
         _cache = cache;
         _semaphore = new SemaphoreSlim(1, 1);
     }
@@ -41,7 +41,10 @@ public sealed class SettingsService : ISettingsService, IDisposable
                 return cachedValue;
             }
 
-            Setting? setting = await _context.Settings
+            using IServiceScope scope = _serviceProvider.CreateScope();
+            PulseDbContext context = scope.ServiceProvider.GetRequiredService<PulseDbContext>();
+
+            Setting? setting = await context.Settings
                 .FirstOrDefaultAsync(s => s.K == key);
 
             string? value = setting?.V;
@@ -60,20 +63,23 @@ public sealed class SettingsService : ISettingsService, IDisposable
         await _semaphore.WaitAsync();
         try
         {
-            Setting? setting = await _context.Settings
+            using IServiceScope scope = _serviceProvider.CreateScope();
+            PulseDbContext context = scope.ServiceProvider.GetRequiredService<PulseDbContext>();
+
+            Setting? setting = await context.Settings
                 .FirstOrDefaultAsync(s => s.K == key);
 
             if (setting == null)
             {
                 setting = new Setting { K = key, V = value };
-                _context.Settings.Add(setting);
+                context.Settings.Add(setting);
             }
             else
             {
                 setting.V = value;
             }
 
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
 
             string cacheKey = $"setting:{key}";
             _cache.Set(cacheKey, value, _cacheExpiration);
@@ -128,7 +134,10 @@ public sealed class SettingsService : ISettingsService, IDisposable
         await _semaphore.WaitAsync();
         try
         {
-            List<Setting> existingSettings = await _context.Settings
+            using IServiceScope scope = _serviceProvider.CreateScope();
+            PulseDbContext context = scope.ServiceProvider.GetRequiredService<PulseDbContext>();
+
+            List<Setting> existingSettings = await context.Settings
                 .Where(s => values.Keys.Contains(s.K))
                 .ToListAsync();
 
@@ -137,7 +146,7 @@ public sealed class SettingsService : ISettingsService, IDisposable
                 Setting? existing = existingSettings.FirstOrDefault(s => s.K == kvp.Key);
                 if (existing == null)
                 {
-                    _context.Settings.Add(new Setting { K = kvp.Key, V = kvp.Value });
+                    context.Settings.Add(new Setting { K = kvp.Key, V = kvp.Value });
                 }
                 else
                 {
@@ -148,7 +157,7 @@ public sealed class SettingsService : ISettingsService, IDisposable
                 _cache.Set(cacheKey, kvp.Value, _cacheExpiration);
             }
 
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
         finally
         {
@@ -161,13 +170,16 @@ public sealed class SettingsService : ISettingsService, IDisposable
         await _semaphore.WaitAsync();
         try
         {
-            Setting? setting = await _context.Settings
+            using IServiceScope scope = _serviceProvider.CreateScope();
+            PulseDbContext context = scope.ServiceProvider.GetRequiredService<PulseDbContext>();
+
+            Setting? setting = await context.Settings
                 .FirstOrDefaultAsync(s => s.K == key);
 
             if (setting != null)
             {
-                _context.Settings.Remove(setting);
-                await _context.SaveChangesAsync();
+                context.Settings.Remove(setting);
+                await context.SaveChangesAsync();
             }
 
             string cacheKey = $"setting:{key}";
