@@ -29,8 +29,9 @@ public sealed class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// User login - creates authentication cookie
+    /// User login - creates authentication cookie.
     /// </summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     [HttpPost("login")]
     public async Task<ActionResult<UserInfoDto>> LoginAsync([FromBody] LoginRequestDto request)
     {
@@ -88,8 +89,9 @@ public sealed class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Initial user registration - only allows admin creation if no users exist
+    /// Initial user registration - only allows admin creation if no users exist.
     /// </summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     [HttpPost("register")]
     public async Task<ActionResult<UserInfoDto>> RegisterAsync([FromBody] RegisterRequestDto request)
     {
@@ -124,7 +126,7 @@ public sealed class AuthController : ControllerBase
 
             // Sign in the user immediately after successful registration
             await _signInManager.SignInAsync(user, isPersistent: true);
-            
+
             // Update last login time since we just signed them in
             user.LastLoginAt = DateTimeOffset.UtcNow;
             await _userManager.UpdateAsync(user);
@@ -150,8 +152,9 @@ public sealed class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Check if initial setup is needed
+    /// Check if initial setup is needed.
     /// </summary>
+    /// <returns></returns>
     [HttpGet("setup-required")]
     public ActionResult<bool> IsSetupRequired()
     {
@@ -168,8 +171,9 @@ public sealed class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Get current user session information
+    /// Get current user session information.
     /// </summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     [HttpGet("session")]
     [Authorize]
     public async Task<ActionResult<UserInfoDto>> GetSessionAsync()
@@ -201,8 +205,9 @@ public sealed class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Change user's own password
+    /// Change user's own password.
     /// </summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     [HttpPost("change-password")]
     [Authorize]
     public async Task<IActionResult> ChangePasswordAsync([FromBody] ChangePasswordDto request)
@@ -237,8 +242,9 @@ public sealed class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Logout - removes authentication cookie
+    /// Logout - removes authentication cookie.
     /// </summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     [HttpPost("logout")]
     [Authorize]
     public async Task<IActionResult> LogoutAsync()
@@ -263,8 +269,9 @@ public sealed class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Save telemetry consent settings during onboarding
+    /// Save telemetry consent settings during onboarding.
     /// </summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     [HttpPost("telemetry-consent")]
     public async Task<IActionResult> SaveTelemetryConsentAsync([FromBody] TelemetryConsentDto request)
     {
@@ -288,8 +295,9 @@ public sealed class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Get current telemetry consent settings
+    /// Get current telemetry consent settings.
     /// </summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     [HttpGet("telemetry-consent")]
     public async Task<ActionResult<TelemetryConsentDto>> GetTelemetryConsentAsync()
     {

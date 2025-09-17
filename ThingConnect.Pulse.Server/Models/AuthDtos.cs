@@ -13,7 +13,6 @@ public sealed class LoginRequestDto
     public string Password { get; set; } = default!;
 }
 
-
 public sealed class RegisterRequestDto
 {
     [Required]

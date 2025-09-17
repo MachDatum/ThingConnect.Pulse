@@ -18,10 +18,10 @@ public sealed class ConfigurationController : ControllerBase
     }
 
     /// <summary>
-    /// Validate and apply YAML configuration
+    /// Validate and apply YAML configuration.
     /// </summary>
-    /// <param name="dryRun">If true, only validate and preview changes without applying</param>
-    /// <returns>Apply result with counts of changes made or preview of changes</returns>
+    /// <param name="dryRun">If true, only validate and preview changes without applying.</param>
+    /// <returns>Apply result with counts of changes made or preview of changes.</returns>
     [HttpPost("apply")]
     [Authorize(Roles = UserRoles.Administrator)]
     public async Task<ActionResult<ApplyResultDto>> ApplyAsync([FromQuery] bool dryRun = false)
@@ -38,7 +38,7 @@ public sealed class ConfigurationController : ControllerBase
                     Message = "YAML content is required",
                     Errors = new List<ValidationError>
                     {
-                        new() { Path = "", Message = "YAML content cannot be empty", Value = null }
+                        new() { Path = string.Empty, Message = "YAML content cannot be empty", Value = null }
                     }
                 });
             }
@@ -69,7 +69,7 @@ public sealed class ConfigurationController : ControllerBase
                 Message = ex.Message,
                 Errors = new List<ValidationError>
                 {
-                    new() { Path = "", Message = ex.Message, Value = null }
+                    new() { Path = string.Empty, Message = ex.Message, Value = null }
                 }
             });
         }
@@ -80,16 +80,16 @@ public sealed class ConfigurationController : ControllerBase
                 Message = "Internal server error while applying configuration",
                 Errors = new List<ValidationError>
                 {
-                    new() { Path = "", Message = ex.Message, Value = null }
+                    new() { Path = string.Empty, Message = ex.Message, Value = null }
                 }
             });
         }
     }
 
     /// <summary>
-    /// List all configuration versions
+    /// List all configuration versions.
     /// </summary>
-    /// <returns>List of configuration versions ordered by applied timestamp descending</returns>
+    /// <returns>List of configuration versions ordered by applied timestamp descending.</returns>
     [HttpGet("versions")]
     [Authorize]
     public async Task<ActionResult<List<ConfigurationVersionDto>>> GetVersionsAsync()
@@ -106,10 +106,10 @@ public sealed class ConfigurationController : ControllerBase
     }
 
     /// <summary>
-    /// Download a specific configuration version as YAML
+    /// Download a specific configuration version as YAML.
     /// </summary>
-    /// <param name="id">Configuration version ID</param>
-    /// <returns>Plain YAML content</returns>
+    /// <param name="id">Configuration version ID.</param>
+    /// <returns>Plain YAML content.</returns>
     [HttpGet("versions/{id}")]
     [Authorize]
     public async Task<ActionResult> GetVersionAsync(string id)
@@ -131,9 +131,9 @@ public sealed class ConfigurationController : ControllerBase
     }
 
     /// <summary>
-    /// Get the current active configuration as YAML
+    /// Get the current active configuration as YAML.
     /// </summary>
-    /// <returns>Plain YAML content of the active configuration</returns>
+    /// <returns>Plain YAML content of the active configuration.</returns>
     [HttpGet("current")]
     [Authorize]
     public async Task<ActionResult> GetCurrentAsync()

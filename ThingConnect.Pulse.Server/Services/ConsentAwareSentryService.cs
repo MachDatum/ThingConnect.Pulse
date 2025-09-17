@@ -1,5 +1,3 @@
-using Sentry;
-
 namespace ThingConnect.Pulse.Server.Services;
 
 public interface IConsentAwareSentryService
@@ -24,13 +22,16 @@ public class ConsentAwareSentryService : IConsentAwareSentryService
 
     public async Task InitializeIfConsentedAsync()
     {
-        if (_consentChecked) return;
+        if (_consentChecked)
+        {
+            return;
+        }
 
         try
         {
-            using var scope = _serviceProvider.CreateScope();
-            var settingsService = scope.ServiceProvider.GetRequiredService<ISettingsService>();
-            
+            using IServiceScope scope = _serviceProvider.CreateScope();
+            ISettingsService settingsService = scope.ServiceProvider.GetRequiredService<ISettingsService>();
+
             // Check if user has consented to error diagnostics
             string? errorDiagnosticsConsent = await settingsService.GetAsync("telemetry_error_diagnostics");
             bool hasErrorDiagnosticsConsent = bool.TryParse(errorDiagnosticsConsent, out bool errorValue) && errorValue;
@@ -42,10 +43,13 @@ public class ConsentAwareSentryService : IConsentAwareSentryService
                 SentrySdk.Init(options =>
                 {
                     options.Dsn = "https://8518fcf27e7b1fd9a09167ffc7a909d7@o349349.ingest.us.sentry.io/4510000957882368";
+
                     // Privacy-first configuration: no PII data collection
                     options.SendDefaultPii = false;
+
                     // Disable debug mode for production privacy
                     options.Debug = false;
+
                     // Note: Additional PII filtering would be done here if needed
                     // but SendDefaultPii = false already handles most privacy concerns
                 });
