@@ -41,14 +41,14 @@ export function OutagesList({ outages }: OutagesListProps) {
   return (
     <VStack gap={4} align='stretch'>
       {outages.slice(0, 5).map((outage, index) => (
-        <Card.Root key={`${outage.startedTs}-${index}`} variant='outline'>
-          <Card.Body>
+        <Card.Root key={`${outage.startedTs}-${index}`} size={'sm'}>
+          <Card.Body p={3}>
             <VStack gap={2} align='stretch'>
               <HStack justify='space-between'>
                 <Text fontSize='sm' fontWeight='medium'>
                   {formatDistanceToNow(new Date(outage.startedTs), { addSuffix: true })}
                 </Text>
-                <Badge colorPalette={outage.endedTs ? 'gray' : 'red'} size='sm'>
+                <Badge colorPalette={outage.endedTs ? 'green' : 'red'} size='sm'>
                   {outage.endedTs ? 'Resolved' : 'Ongoing'}
                 </Badge>
               </HStack>

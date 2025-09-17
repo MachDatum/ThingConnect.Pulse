@@ -199,7 +199,6 @@ export function HistoryTable({ data, bucket, pageSize = 20, isLoading }: History
                               fontSize='sm'
                               color={row.error ? 'red.600' : 'gray.500'}
                               _dark={{ color: row.error ? 'red.400' : 'gray.400' }}
-                              maxW='200px'
                               overflow='hidden'
                               textOverflow='ellipsis'
                               whiteSpace='nowrap'
