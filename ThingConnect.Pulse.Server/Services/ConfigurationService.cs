@@ -145,15 +145,20 @@ public sealed class ConfigurationService : IConfigurationService
                 .GetFiles("*.yaml")
                 .OrderByDescending(f => f.CreationTimeUtc)
                 .FirstOrDefault();
+
             // If a version file exists, load and return its content
             if (latestFile != null && latestFile.Exists)
+            {
                 return await File.ReadAllTextAsync(latestFile.FullName);
+            }
         }
 
-        //Fall back to the default config.yaml in the config directory
+        // Fall back to the default config.yaml in the config directory
         string configPath = _pathService.GetConfigFilePath();
         if (File.Exists(configPath))
+        {
             return await File.ReadAllTextAsync(configPath);
+        }
 
         return null;
     }
@@ -190,12 +195,13 @@ public sealed class ConfigurationService : IConfigurationService
     }
 
     /// <summary>
-    /// Initialize the system with sample configuration if no configuration versions exist
+    /// Initialize the system with sample configuration if no configuration versions exist.
     /// </summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     public async Task InitializeSampleConfigurationAsync()
     {
         // Check if any configuration versions already exist
-        var existingVersions = await _context.ConfigVersions.AnyAsync();
+        bool existingVersions = await _context.ConfigVersions.AnyAsync();
         if (existingVersions)
         {
             return; // Configuration already exists, skip initialization
@@ -209,7 +215,7 @@ public sealed class ConfigurationService : IConfigurationService
         }
 
         string sampleContent = await File.ReadAllTextAsync(sampleConfigPath);
-        
+
         // Apply sample configuration automatically
         await ApplyConfigurationAsync(sampleContent, "system", "Initial sample configuration applied automatically");
     }
@@ -226,8 +232,7 @@ public sealed class ConfigurationService : IConfigurationService
         return (
             Added: groupChanges.Added + endpointChanges.Added,
             Updated: groupChanges.Updated + endpointChanges.Updated,
-            Removed: groupChanges.Removed + endpointChanges.Removed
-        );
+            Removed: groupChanges.Removed + endpointChanges.Removed);
     }
 
     private (int Added, int Updated, int Removed) UpdateGroups(

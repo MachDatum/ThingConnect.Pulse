@@ -13,7 +13,8 @@
       "Bash(timeout:*)",
       "Bash(ping:*)",
       "Bash(findstr:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Read(//c/ProgramData/ThingConnect.Pulse/logs/**)"
     ],
     "deny": [],
     "ask": []

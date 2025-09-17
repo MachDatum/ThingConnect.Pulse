@@ -26,8 +26,29 @@ public sealed class ConfigurationParser
 
     public static async Task<ConfigurationParser> CreateAsync(ILogger<ConfigurationParser> logger, IDiscoveryService discoveryService)
     {
+        // Try multiple methods to determine the assembly directory
+        string? assemblyDirectory = null;
+
+        // Method 1: Try GetExecutingAssembly().Location
         string assemblyLocation = System.Reflection.Assembly.GetExecutingAssembly().Location;
-        string? assemblyDirectory = Path.GetDirectoryName(assemblyLocation);
+        if (!string.IsNullOrEmpty(assemblyLocation))
+        {
+            assemblyDirectory = Path.GetDirectoryName(assemblyLocation);
+        }
+
+        // Method 2: Try AppContext.BaseDirectory if Location failed
+        if (string.IsNullOrEmpty(assemblyDirectory))
+        {
+            assemblyDirectory = AppContext.BaseDirectory;
+            logger.LogDebug("Using AppContext.BaseDirectory: {BaseDirectory}", assemblyDirectory);
+        }
+
+        // Method 3: Try current directory as fallback
+        if (string.IsNullOrEmpty(assemblyDirectory))
+        {
+            assemblyDirectory = Environment.CurrentDirectory;
+            logger.LogDebug("Using current directory: {CurrentDirectory}", assemblyDirectory);
+        }
 
         if (string.IsNullOrEmpty(assemblyDirectory))
         {
@@ -73,7 +94,7 @@ public sealed class ConfigurationParser
                 _logger.LogWarning("Configuration validation failed with {ErrorCount} errors", validationResults.Count);
                 foreach (NJsonSchema.Validation.ValidationError validationResult in validationResults)
                 {
-                    _logger.LogWarning("Validation error at {Path}: {Message}", validationResult.Path ?? "", validationResult.ToString());
+                    _logger.LogWarning("Validation error at {Path}: {Message}", validationResult.Path ?? string.Empty, validationResult.ToString());
                 }
 
                 var errors = new ValidationErrorsDto
@@ -81,7 +102,7 @@ public sealed class ConfigurationParser
                     Message = "Configuration validation failed",
                     Errors = validationResults.Select(v => new ValidationError
                     {
-                        Path = v.Path ?? "",
+                        Path = v.Path ?? string.Empty,
                         Message = v.ToString(),
                         Value = null
                     }).ToList()
@@ -105,7 +126,7 @@ public sealed class ConfigurationParser
                 {
                     new()
                     {
-                        Path = "",
+                        Path = string.Empty,
                         Message = yamlEx.Message,
                         Value = null,
                         Line = (int?)yamlEx.Start.Line,
@@ -127,7 +148,7 @@ public sealed class ConfigurationParser
                 {
                     new()
                     {
-                        Path = "",
+                        Path = string.Empty,
                         Message = ex.Message,
                         Value = null
                     }
@@ -177,5 +198,4 @@ public sealed class ConfigurationParser
 
         return (groups, endpoints);
     }
-
 }

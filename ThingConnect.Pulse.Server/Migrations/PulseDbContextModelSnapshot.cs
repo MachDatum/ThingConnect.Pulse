@@ -398,6 +398,9 @@ namespace ThingConnect.Pulse.Server.Migrations
                     b.Property<long?>("EndedTs")
                         .HasColumnType("INTEGER");
 
+                    b.Property<long?>("LastActivityTs")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("ShutdownReason")
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
