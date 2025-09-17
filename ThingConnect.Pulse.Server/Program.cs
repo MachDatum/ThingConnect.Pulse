@@ -140,21 +140,22 @@ public class Program
             builder.Services.AddSingleton<IConsentAwareSentryService, ConsentAwareSentryService>();
 
             // Add configuration services
-            builder.Services.AddScoped<ConfigurationParser>(serviceProvider =>
+            builder.Services.AddSingleton<ConfigurationParser>(serviceProvider =>
             {
                 ILogger<ConfigurationParser> logger = serviceProvider.GetRequiredService<ILogger<ConfigurationParser>>();
                 IDiscoveryService discoveryService = serviceProvider.GetRequiredService<IDiscoveryService>();
                 return ConfigurationParser.CreateAsync(logger, discoveryService).GetAwaiter().GetResult();
             });
             builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
-            builder.Services.AddScoped<ISettingsService, SettingsService>();
+            builder.Services.AddSingleton<ISettingsService, SettingsService>();
 
             // Add monitoring services
             builder.Services.AddScoped<IProbeService, ProbeService>();
-            builder.Services.AddScoped<IOutageDetectionService, OutageDetectionService>();
-            builder.Services.AddScoped<IDiscoveryService, DiscoveryService>();
+            builder.Services.AddSingleton<IOutageDetectionService, OutageDetectionService>();
+            builder.Services.AddSingleton<IDiscoveryService, DiscoveryService>();
             builder.Services.AddScoped<IStatusService, StatusService>();
             builder.Services.AddScoped<IHistoryService, HistoryService>();
+            builder.Services.AddScoped<IEndpointService, EndpointService>();
             builder.Services.AddHostedService<MonitoringBackgroundService>();
 
             // Add rollup services

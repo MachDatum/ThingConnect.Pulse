@@ -15,7 +15,7 @@ import { Link as RouterLink } from 'react-router-dom';
 
 export interface PageHeaderProps {
   title: string;
-  description?: string;
+  description?: ReactNode;
   breadcrumbs?: (string | null | undefined)[];
   tos?: string[];
   actions?: ReactNode;

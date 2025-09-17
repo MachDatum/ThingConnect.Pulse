@@ -6,7 +6,7 @@ import { type LucideIcon } from 'lucide-react';
 
 export interface PageProps {
   title: string;
-  description?: string;
+  description?: ReactNode;
   testId?: string;
   children: ReactNode;
   isLoading?: boolean;

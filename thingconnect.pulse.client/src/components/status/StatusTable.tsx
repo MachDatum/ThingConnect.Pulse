@@ -46,9 +46,9 @@ export function StatusTable({ items, isLoading }: StatusTableProps) {
     analytics.trackDashboardInteraction('endpoint_details_click', {
       table_type: 'status_overview',
       endpoint_id: id,
-      source: 'main_dashboard'
+      source: 'main_dashboard',
     });
-    
+
     void navigate(`/endpoints/${id}`);
   };
   console.log('isLoading in StatusTable:', items);
