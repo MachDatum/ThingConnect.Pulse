@@ -37,10 +37,18 @@ public sealed class OutageDetectionService : IOutageDetectionService
             if (result.Status == UpDown.up)
             {
                 state.RecordSuccess();
+                _logger.LogDebug(
+                    "RecordSuccess called for endpoint {EndpointId}. SuccessStreak={SuccessStreak}, FailStreak={FailStreak}",
+                    result.EndpointId, state.SuccessStreak, state.FailStreak
+                );
             }
             else
             {
                 state.RecordFailure();
+                _logger.LogDebug(
+                    "RecordFailure called for endpoint {EndpointId}. SuccessStreak={SuccessStreak}, FailStreak={FailStreak}, Error={Error}",
+                    result.EndpointId, state.SuccessStreak, state.FailStreak, result.Error
+                );
             }
 
             // Check for DOWN transition
@@ -355,8 +363,8 @@ public sealed class OutageDetectionService : IOutageDetectionService
 
             // Update endpoint's last status and change timestamp in same transaction
             await UpdateEndpointStatusAsync(endpointId, UpDown.down, timestamp, cancellationToken);
-
-            // Commit transaction - EF Core will save and commit all changes atomically
+            await _context.SaveChangesAsync(cancellationToken);
+            // Commit transaction - EF Core will save and 
             await transaction.CommitAsync(cancellationToken);
 
             // Update in-memory state ONLY after successful database commit
@@ -398,7 +406,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
 
             // Update endpoint's last status and change timestamp in same transaction
             await UpdateEndpointStatusAsync(endpointId, UpDown.up, timestamp, cancellationToken);
-
+            await _context.SaveChangesAsync(cancellationToken);
             // Commit transaction - EF Core will save and commit all changes atomically
             await transaction.CommitAsync(cancellationToken);
 
