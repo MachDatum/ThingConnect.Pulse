@@ -41,9 +41,6 @@ export function BenefitsSection() {
       <VStack align='start' gap={8} maxW='lg' mx='auto'>
         <Box>
           <Box mb={6}>
-            {/* <Heading size='lg' color='#076bb3' fontWeight='bold'>
-              ThingConnect Pulse
-            </Heading> */}
             <Image src={thingConnectLogo} alt='ThingConnect' h='50px' />
           </Box>
           <Heading size='2xl' color='gray.800' lineHeight='1.2' mb={4} fontWeight='bold'>
