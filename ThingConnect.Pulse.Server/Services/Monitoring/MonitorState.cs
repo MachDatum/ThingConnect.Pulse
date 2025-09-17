@@ -9,73 +9,74 @@ namespace ThingConnect.Pulse.Server.Services.Monitoring;
 /// </summary>
 public sealed class MonitorState
 {
-    private readonly object _lock = new object();
+    private readonly object _lock = new();
+
     /// <summary>
-    /// The last publicly reported status (UP/DOWN). Null if never determined.
+    /// Gets or sets the last publicly reported status (UP/DOWN). Null if never determined.
     /// </summary>
     public UpDown? LastPublicStatus { get; set; }
 
     /// <summary>
-    /// Current consecutive failure count. Reset to 0 on success.
+    /// Gets or sets current consecutive failure count. Reset to 0 on success.
     /// </summary>
     public int FailStreak { get; set; }
 
     /// <summary>
-    /// Current consecutive success count. Reset to 0 on failure.
+    /// Gets or sets current consecutive success count. Reset to 0 on failure.
     /// </summary>
     public int SuccessStreak { get; set; }
 
     /// <summary>
-    /// Timestamp of the last status change (UP→DOWN or DOWN→UP).
+    /// Gets or sets timestamp of the last status change (UP→DOWN or DOWN→UP).
     /// </summary>
     public long? LastChangeTs { get; set; }
 
     /// <summary>
-    /// ID of the currently open outage record. Null if endpoint is UP.
+    /// Gets or sets iD of the currently open outage record. Null if endpoint is UP.
     /// </summary>
     public long? OpenOutageId { get; set; }
 
     /// <summary>
     /// Evaluates if the current state should transition to DOWN based on fail streak.
-    /// If never initialized (startup), transitions immediately on first failure.
-    /// Otherwise requires threshold consecutive failures (default: 2).
+    /// Always requires at least 2 consecutive failures regardless of initialization state.
     /// </summary>
+    /// <returns></returns>
     public bool ShouldTransitionToDown(int threshold = 2)
     {
         lock (_lock)
         {
-            // Must have enough failures to trigger transition
-            if (FailStreak < Math.Max(1, threshold))
+            // Always require at least 2 consecutive failures
+            int requiredFailures = Math.Max(1, threshold);
+            if (FailStreak < requiredFailures)
+            {
                 return false;
-                
-            // Handle null status (never initialized) - transition on first failure
-            if (LastPublicStatus == null)
-                return FailStreak >= 1;
+            }
 
-            // Only transition if currently UP (not already DOWN)
-            return LastPublicStatus == UpDown.up;
+            // New endpoints (null) or UP endpoints can transition to DOWN
+            // DOWN endpoints cannot transition to DOWN (already DOWN)
+            return LastPublicStatus != UpDown.down;
         }
     }
 
     /// <summary>
     /// Evaluates if the current state should transition to UP based on success streak.
-    /// If never initialized (startup), transitions immediately on first success.
-    /// Otherwise requires threshold consecutive successes (default: 2).
+    /// Always requires at least 2 consecutive successes regardless of initialization state.
     /// </summary>
+    /// <returns></returns>
     public bool ShouldTransitionToUp(int threshold = 2)
     {
         lock (_lock)
         {
-            // Must have enough successes to trigger transition
-            if (SuccessStreak < Math.Max(1, threshold))
+            // Always require at least 2 consecutive successes
+            int requiredSuccesses = Math.Max(1, threshold);
+            if (SuccessStreak < requiredSuccesses)
+            {
                 return false;
-                
-            // Handle null status (never initialized) - transition on first success
-            if (LastPublicStatus == null)
-                return SuccessStreak >= 1;
+            }
 
-            // Only transition if currently DOWN (not already UP)
-            return LastPublicStatus == UpDown.down;
+            // New endpoints (null) or DOWN endpoints can transition to UP
+            // UP endpoints cannot transition to UP (already UP)
+            return LastPublicStatus != UpDown.up;
         }
     }
 
@@ -138,22 +139,6 @@ public sealed class MonitorState
         {
             SuccessStreak = successStreak;
             FailStreak = failStreak;
-        }
-    }
-
-    /// <summary>
-    /// Validates that transition logic maintains mutual exclusivity.
-    /// This is used for debugging and ensuring state machine correctness.
-    /// </summary>
-    public bool ValidateTransitionMutualExclusivity(int threshold = 2)
-    {
-        lock (_lock)
-        {
-            bool shouldTransitionDown = ShouldTransitionToDown(threshold);
-            bool shouldTransitionUp = ShouldTransitionToUp(threshold);
-            
-            // Both transitions should never be true simultaneously
-            return !(shouldTransitionDown && shouldTransitionUp);
         }
     }
 }

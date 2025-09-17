@@ -76,7 +76,7 @@ public sealed class DefaultsSection
 public sealed class HttpSection
 {
     public string UserAgent { get; set; } = "ThingConnectPulse/1.0";
-    public string ExpectText { get; set; } = "";
+    public string ExpectText { get; set; } = string.Empty;
 }
 
 public sealed class GroupSection

@@ -97,6 +97,7 @@ public class Program
                         context.Response.StatusCode = 401;
                         return Task.CompletedTask;
                     }
+
                     // For regular requests, redirect to frontend login page
                     context.Response.Redirect("/login");
                     return Task.CompletedTask;
@@ -109,6 +110,7 @@ public class Program
                         context.Response.StatusCode = 403;
                         return Task.CompletedTask;
                     }
+
                     // For regular requests, redirect to access denied page
                     context.Response.Redirect("/access-denied");
                     return Task.CompletedTask;
@@ -125,7 +127,6 @@ public class Program
                     policy.RequireAuthenticatedUser());
             });
 
-
             // Add memory cache for settings service
             builder.Services.AddMemoryCache();
 
@@ -137,7 +138,6 @@ public class Program
 
             // Add consent-aware Sentry service
             builder.Services.AddSingleton<IConsentAwareSentryService, ConsentAwareSentryService>();
-
 
             // Add configuration services
             builder.Services.AddScoped<ConfigurationParser>(serviceProvider =>
@@ -184,6 +184,7 @@ public class Program
             {
                 options.InputFormatters.Insert(0, new PlainTextInputFormatter());
             });
+
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();

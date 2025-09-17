@@ -94,7 +94,7 @@ public sealed class ConfigurationParser
                 _logger.LogWarning("Configuration validation failed with {ErrorCount} errors", validationResults.Count);
                 foreach (NJsonSchema.Validation.ValidationError validationResult in validationResults)
                 {
-                    _logger.LogWarning("Validation error at {Path}: {Message}", validationResult.Path ?? "", validationResult.ToString());
+                    _logger.LogWarning("Validation error at {Path}: {Message}", validationResult.Path ?? string.Empty, validationResult.ToString());
                 }
 
                 var errors = new ValidationErrorsDto
@@ -102,7 +102,7 @@ public sealed class ConfigurationParser
                     Message = "Configuration validation failed",
                     Errors = validationResults.Select(v => new ValidationError
                     {
-                        Path = v.Path ?? "",
+                        Path = v.Path ?? string.Empty,
                         Message = v.ToString(),
                         Value = null
                     }).ToList()
@@ -126,7 +126,7 @@ public sealed class ConfigurationParser
                 {
                     new()
                     {
-                        Path = "",
+                        Path = string.Empty,
                         Message = yamlEx.Message,
                         Value = null,
                         Line = (int?)yamlEx.Start.Line,
@@ -148,7 +148,7 @@ public sealed class ConfigurationParser
                 {
                     new()
                     {
-                        Path = "",
+                        Path = string.Empty,
                         Message = ex.Message,
                         Value = null
                     }
@@ -198,5 +198,4 @@ public sealed class ConfigurationParser
 
         return (groups, endpoints);
     }
-
 }
