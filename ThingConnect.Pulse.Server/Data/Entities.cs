@@ -128,3 +128,43 @@ public sealed class MonitoringSession
     public string? ShutdownReason { get; set; }
     public string? Version { get; set; }
 }
+
+public enum NotificationType { info, warning, release, maintenance }
+public enum NotificationPriority { low, medium, high, critical }
+
+/// <summary>
+/// Represents a notification fetched from the remote server for display to users.
+/// </summary>
+public sealed class Notification
+{
+    public string Id { get; set; } = default!;
+    public NotificationType Type { get; set; }
+    public NotificationPriority Priority { get; set; }
+    public string Title { get; set; } = default!;
+    public string Message { get; set; } = default!;
+    public string? ActionUrl { get; set; }
+    public string? ActionText { get; set; }
+    public long ValidFromTs { get; set; }
+    public long ValidUntilTs { get; set; }
+    public string? TargetVersions { get; set; }
+    public bool ShowOnce { get; set; }
+    public bool IsRead { get; set; }
+    public bool IsShown { get; set; }
+    public long CreatedTs { get; set; }
+    public long? ReadTs { get; set; }
+    public long? ShownTs { get; set; }
+}
+
+/// <summary>
+/// Tracks the last successful notification fetch from the remote server.
+/// </summary>
+public sealed class NotificationFetch
+{
+    public long Id { get; set; }
+    public long FetchTs { get; set; }
+    public string RemoteVersion { get; set; } = default!;
+    public string RemoteLastUpdated { get; set; } = default!;
+    public int NotificationCount { get; set; }
+    public bool Success { get; set; }
+    public string? Error { get; set; }
+}

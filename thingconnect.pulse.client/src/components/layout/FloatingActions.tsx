@@ -3,6 +3,7 @@ import { Moon, Sun, HelpCircle } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { useColorMode } from '../ui/color-mode';
 import { Tooltip } from '../ui/tooltip';
+import { NotificationBellSimple } from '@/components/notifications/NotificationBellSimple';
 
 // Route-to-help URL mapping
 const ROUTE_HELP_URLS: Record<string, string> = {
@@ -34,6 +35,14 @@ export function FloatingActions() {
       gap={1}
       data-testid='floating-actions'
     >
+      {/* Notification Bell */}
+      <NotificationBellSimple
+        size='sm'
+        showPopover={true}
+        variant='ghost'
+        colorPalette='gray'
+      />
+
       {/* Help Button - only show if help URL exists for current route */}
       {helpUrl && (
         <Tooltip content='View Help'>
