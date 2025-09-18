@@ -11,7 +11,7 @@ import {
   Text,
 } from '@chakra-ui/react';
 import type { BucketType } from '@/types/bucket';
-import { Database } from 'lucide-react';
+import { Database, CircleAlert } from 'lucide-react';
 import type { AvailabilityChartProps } from './AvailabilityChart';
 
 export function AvailabilityStats({
@@ -79,6 +79,9 @@ export function AvailabilityStats({
       else downEventPct = totalDownEvents / totalPoints;
     }
 
+    // Active outages
+    const activeOutages = data?.outages.filter(o => !o.endedTs).length;
+
     return {
       availabilityPct,
       avgResponseTime,
@@ -86,8 +89,10 @@ export function AvailabilityStats({
       downEventPct,
       totalPoints,
       upPoints,
+      totalOutages: data?.outages.length,
+      activeOutages,
     };
-  }, [data, bucket]);
+  }, [data, bucket, data?.outages]);
 
   if (isLoading) {
     return (
@@ -131,7 +136,7 @@ export function AvailabilityStats({
   }
 
   return (
-    <SimpleGrid columns={{ base: 1, sm: 2, md: 5 }} gap={2}>
+    <SimpleGrid columns={{ base: 1, sm: 2, md: 6 }} gap={2}>
       {/* Data Points */}
       <Stat.Root p={3} borderWidth='1px' rounded='md' _dark={{ bg: 'gray.800' }}>
         <HStack justify='space-between'>
@@ -140,6 +145,16 @@ export function AvailabilityStats({
         </HStack>
         <Stat.ValueText>{stats.totalPoints}</Stat.ValueText>
         <Stat.HelpText>Checks included</Stat.HelpText>
+      </Stat.Root>
+      {/* Outages */}
+      <Stat.Root p={3} borderWidth='1px' rounded='md' _dark={{ bg: 'gray.800' }}>
+        <HStack justify='space-between'>
+          <Stat.Label>Active Outages</Stat.Label>
+        </HStack>
+        <Stat.ValueText color={stats.activeOutages > 0 ? 'red.600' : 'green.600'}>
+          {stats.activeOutages}
+        </Stat.ValueText>
+        <Stat.HelpText>{stats.totalOutages} total outages</Stat.HelpText>
       </Stat.Root>
       {/* Availability % */}
       <Stat.Root p={3} borderWidth='1px' rounded='md' _dark={{ bg: 'gray.800' }}>
