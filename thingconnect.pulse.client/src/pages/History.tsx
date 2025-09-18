@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { useQuery } from '@tanstack/react-query';
+import { Download, TrendingUp, AlertCircle, RefreshCw, Zap } from 'lucide-react';
 import { Text, HStack, Button, Card, IconButton, VStack, Tabs } from '@chakra-ui/react';
-import { Download, TrendingUp, AlertCircle, RefreshCw } from 'lucide-react';
 import { Page } from '@/components/layout/Page';
 import { PageSection } from '@/components/layout/PageSection';
 
@@ -12,10 +12,11 @@ import type { DateRange } from '@/components/DateRangePicker';
 import { BucketSelector } from '@/components/BucketSelector';
 import type { BucketType } from '@/types/bucket';
 import { AvailabilityChart } from '@/components/AvailabilityChart';
-import { HistoryTable } from '@/components/HistoryTable';
+import { HistoryTable } from '@/components/history/HistoryTable';
 import { HistoryService } from '@/api/services/history.service';
 import { Tooltip } from '@/components/ui/tooltip';
-import { AvailabilityStats } from '@/components/AvailabilityStats';
+import { AvailabilityStats } from '@/components/history/AvailabilityStats';
+import { OutagesList } from '@/components/OutageList';
 import { EndpointSelect } from '@/components/common/EndpointSelect';
 
 export default function History() {
@@ -180,12 +181,13 @@ export default function History() {
         flexDirection='column'
         variant='enclosed'
         flex={1}
+        overflow='auto'
       >
         <Tabs.List display='flex' flexDirection='row' _dark={{ bg: 'gray.700' }}>
           <Tabs.Trigger value='chart'>Availability Chart</Tabs.Trigger>
           <Tabs.Trigger value='history'>Historical Data</Tabs.Trigger>
         </Tabs.List>
-        <Tabs.Content value='chart' flex={1} display='flex' minH={0}>
+        <Tabs.Content value='chart' flex={1} display='flex' minH={0} gap={2}>
           <Card.Root flex={1} display='flex' flexDirection='column' size={'sm'}>
             <Card.Header px={3} pt={3}>
               <HStack gap={2}>
@@ -204,6 +206,29 @@ export default function History() {
                 bucket={bucket}
                 isLoading={isHistoryDataLoading}
               />
+            </Card.Body>
+          </Card.Root>
+          <Card.Root flex={1} display='flex' flexDirection='column' overflow='hidden' size={'sm'}>
+            <Card.Header px={3} pt={3}>
+              <HStack gap={2}>
+                <Zap size={20} />
+                <Text fontWeight='medium' fontSize='sm'>
+                  Outage History
+                </Text>
+                <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
+                  ({selectedEndpointName})
+                </Text>
+              </HStack>
+            </Card.Header>
+            <Card.Body
+              flex={1}
+              display='flex'
+              flexDirection='column'
+              minH={0}
+              p={3}
+              overflow={'auto'}
+            >
+              <OutagesList outages={historyData?.outages} isLoading={isHistoryDataLoading} />
             </Card.Body>
           </Card.Root>
         </Tabs.Content>

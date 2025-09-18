@@ -1,17 +1,10 @@
 import { useMemo, useRef, useState, useLayoutEffect } from 'react';
 import { Box, Text, VStack, Skeleton } from '@chakra-ui/react';
-import type { RollupBucket, DailyBucket, RawCheck } from '@/api/types';
+import type { HistoryResponse } from '@/api/types';
 import type { BucketType } from '@/types/bucket';
 
 export interface AvailabilityChartProps {
-  data:
-    | {
-        raw: RawCheck[];
-        rollup15m: RollupBucket[];
-        rollupDaily: DailyBucket[];
-      }
-    | null
-    | undefined;
+  data: HistoryResponse | null | undefined;
   bucket: BucketType;
   height?: number;
   showResponseTime?: boolean;
