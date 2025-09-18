@@ -18,6 +18,9 @@ const AccessDenied = lazy(() => import('@/pages/AccessDenied'));
 const LoginPage = lazy(() => import('@/features/auth/components/LoginPage'));
 const OnboardingPage = lazy(() => import('@/features/auth/components/OnboardingPage'));
 
+// User Management
+const UserManagement = lazy(() => import('@/pages/UserManagement'));
+
 export const router = createBrowserRouter([
   // Public routes (no authentication required)
   {
@@ -119,6 +122,24 @@ export const router = createBrowserRouter([
         element: (
           <LazyWrapper>
             <Settings />
+          </LazyWrapper>
+        ),
+      },
+    ],
+  },
+  {
+    path: '/users',
+    element: (
+      <ProtectedRoute adminOnly>
+        <AppShell />
+      </ProtectedRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: (
+          <LazyWrapper>
+            <UserManagement />
           </LazyWrapper>
         ),
       },

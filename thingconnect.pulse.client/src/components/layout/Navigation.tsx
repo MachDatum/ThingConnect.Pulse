@@ -1,6 +1,6 @@
 import { Box, VStack, Text, Icon, Image, HStack, Badge, Button } from '@chakra-ui/react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
-import { Wifi, Activity, LogOut } from 'lucide-react';
+import { Wifi, Activity, LogOut, Users } from 'lucide-react';
 import thingConnectIcon from '@/assets/ThingConnectPulseLogo.svg';
 import { Clock, Wrench, Settings, Info, Dashboard, Help } from '@/icons';
 import { useAuth } from '@/features/auth/context/AuthContext';
@@ -11,15 +11,18 @@ interface NavigationProps {
 const navigationItems = [
   { label: 'Dashboard', path: '/', icon: Dashboard },
   { label: 'History', path: '/history', icon: Clock },
-  { label: 'Configuration', path: '/configuration', icon: Wrench },
-  { label: 'Settings', path: '/settings', icon: Settings },
+  { label: 'Configuration', path: '/configuration', icon: Wrench, adminOnly: true },
+  { label: 'User Management', path: '/users', icon: Users, adminOnly: true },
+  { label: 'Settings', path: '/settings', icon: Settings, adminOnly: true },
   { label: 'Help', path: 'https://docs.thingconnect.io/pulse/', icon: Help, external: true },
   { label: 'About', path: '/about', icon: Info },
 ];
 
 export function Navigation({ onItemClick }: NavigationProps) {
   const location = useLocation();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+
+  const isAdmin = user?.role === 'Administrator';
 
   const isActiveRoute = (path: string) =>
     path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
@@ -51,7 +54,9 @@ export function Navigation({ onItemClick }: NavigationProps) {
         />
       </Box>
       <VStack gap={2} p={4} flex='1' align='stretch' data-testid='navigation-items'>
-        {navigationItems.map(item => {
+        {navigationItems
+          .filter(item => !item.adminOnly || isAdmin)
+          .map(item => {
           const isActive = !item.external && isActiveRoute(item.path);
           const ItemContent = (
             <HStack

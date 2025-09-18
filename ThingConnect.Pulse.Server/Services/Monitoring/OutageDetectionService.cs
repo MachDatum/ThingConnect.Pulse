@@ -530,6 +530,20 @@ public sealed class OutageDetectionService : IOutageDetectionService
         };
 
         context.CheckResultsRaw.Add(rawResult);
+
+        // Update LastRttMs for successful probes
+        if (result.Status == UpDown.up && result.RttMs.HasValue)
+        {
+            Data.Endpoint? endpoint = await context.Endpoints.FindAsync([result.EndpointId], cancellationToken);
+            if (endpoint != null)
+            {
+                endpoint.LastRttMs = result.RttMs.Value;
+                _logger.LogInformation(
+                    "Updated LastRttMs for endpoint {EndpointId} to {RttMs}ms",
+                    result.EndpointId, result.RttMs.Value);
+            }
+        }
+
         await context.SaveChangesAsync(cancellationToken);
     }
 }
