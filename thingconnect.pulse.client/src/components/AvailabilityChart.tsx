@@ -4,19 +4,12 @@ import { ParentSize } from '@visx/responsive';
 import { Group } from '@visx/group';
 import { AxisLeft, AxisBottom } from '@visx/axis';
 import { scaleBand, scaleLinear } from '@visx/scale';
-import type { RollupBucket, DailyBucket, RawCheck } from '@/api/types';
+import type { HistoryResponse } from '@/api/types';
 import type { BucketType } from '@/types/bucket';
 import { CloudOff } from 'lucide-react';
 
 export interface AvailabilityChartProps {
-  data:
-    | {
-        raw: RawCheck[];
-        rollup15m: RollupBucket[];
-        rollupDaily: DailyBucket[];
-      }
-    | null
-    | undefined;
+  data: HistoryResponse | null | undefined;
   bucket: BucketType;
   height?: number;
   showResponseTime?: boolean;
