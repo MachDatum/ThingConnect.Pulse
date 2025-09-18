@@ -4,7 +4,7 @@ import type { LiveStatusParams } from '@/api/types';
 import { MdSearch, MdExpandMore } from 'react-icons/md';
 import { ComboboxSelect } from '../common/ComboboxSelect';
 
-interface StatusFiltersProps {
+interface EndpointFiltersProps {
   filters: LiveStatusParams;
   onFiltersChange: (filters: LiveStatusParams & { group?: string }) => void; // single group
   groups?: {
@@ -20,7 +20,7 @@ interface StatusFiltersProps {
   onToggleGroupBy?: (groupBy: string, isSelected: boolean) => void;
 }
 
-export function StatusFilters({
+export function EndpointFilters({
   filters,
   onFiltersChange,
   groups = [],
@@ -30,7 +30,7 @@ export function StatusFilters({
   onToggleGroupBy,
   selectedGroup,
   onSelectedGroupChange,
-}: StatusFiltersProps) {
+}: EndpointFiltersProps) {
   const handleGroupChange = (value: string) => {
     const newGroup = value || undefined;
     onSelectedGroupChange?.(newGroup);
