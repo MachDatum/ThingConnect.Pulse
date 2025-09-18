@@ -20,11 +20,11 @@ public sealed class StatusController : ControllerBase
     }
 
     /// <summary>
-    /// Get paged live status feed for all endpoints
+    /// Get paged live status feed for all endpoints.
     /// </summary>
-    /// <param name="group">Optional group ID filter</param>
-    /// <param name="search">Optional search string (matches name or host)</param>
-    /// <returns>Paged list of endpoint status with sparkline data</returns>
+    /// <param name="group">Optional group ID filter.</param>
+    /// <param name="search">Optional search string (matches name or host).</param>
+    /// <returns>Paged list of endpoint status with sparkline data.</returns>
     [HttpGet("live")]
     public async Task<ActionResult<LiveStatusItemDto>> GetLiveStatusAsync(
         [FromQuery] string? group = null,
@@ -32,13 +32,13 @@ public sealed class StatusController : ControllerBase
     {
         try
         {
-            _logger.LogInformation("Getting live status - group: {Group}, search: {Search}, page: {Page}, pageSize: {PageSize}",
+            _logger.LogInformation("Getting live status - group: {Group}, search: {Search}",
                 group, search);
 
-            var result = await _statusService.GetLiveStatusAsync(group, search);
-    
-        return Ok(new { items = result });
-    }
+            List<LiveStatusItemDto> result = await _statusService.GetLiveStatusAsync(group, search);
+
+            return Ok(new { items = result });
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting live status");

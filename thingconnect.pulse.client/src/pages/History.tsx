@@ -2,22 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { useQuery } from '@tanstack/react-query';
-import {
-  Text,
-  HStack,
-  Button,
-  Card,
-  Combobox,
-  Portal,
-  Span,
-  Spinner,
-  useFilter,
-  useListCollection,
-  IconButton,
-  VStack,
-  Tabs,
-  Skeleton,
-} from '@chakra-ui/react';
+import { Text, HStack, Button, Card, IconButton, VStack, Tabs } from '@chakra-ui/react';
 import { Download, TrendingUp, AlertCircle, RefreshCw } from 'lucide-react';
 import { Page } from '@/components/layout/Page';
 import { PageSection } from '@/components/layout/PageSection';
@@ -29,9 +14,9 @@ import type { BucketType } from '@/types/bucket';
 import { AvailabilityChart } from '@/components/AvailabilityChart';
 import { HistoryTable } from '@/components/HistoryTable';
 import { HistoryService } from '@/api/services/history.service';
-import { StatusService } from '@/api/services/status.service';
 import { Tooltip } from '@/components/ui/tooltip';
 import { AvailabilityStats } from '@/components/AvailabilityStats';
+import { EndpointSelect } from '@/components/common/EndpointSelect';
 
 export default function History() {
   const analytics = useAnalytics();
@@ -40,7 +25,7 @@ export default function History() {
   const [selectedEndpoint, setSelectedEndpoint] = useState<string>(
     searchParams.get('endpoint') || ''
   );
-  const [cleared, setCleared] = useState(false);
+  const [selectedEndpointName, setSelectedEndpointName] = useState<string>('Unknown Endpoint');
   const [dateRange, setDateRange] = useState<DateRange>(() => {
     const defaultRange = HistoryService.getDefaultDateRange();
     return {
@@ -51,52 +36,16 @@ export default function History() {
   const [bucket, setBucket] = useState<BucketType>('15m');
   const [isExporting, setIsExporting] = useState(false);
 
-  // Live endpoints
-  const {
-    data: liveData,
-    isLoading: isLiveDataLoading,
-    error: liveDataError,
-  } = useQuery({
-    queryKey: ['live-status'],
-    queryFn: () => StatusService.getLiveStatus({ pageSize: 100 }),
-    staleTime: 30000,
-  });
-
-  // Filtering + collection for Combobox
-  const { contains } = useFilter({ sensitivity: 'base' });
-  const { collection, set, filter } = useListCollection<{
-    label: string;
-    value: string;
-  }>({
-    initialItems: [],
-    itemToString: item => item.label,
-    itemToValue: item => item.value,
-    filter: contains,
-  });
-
-  // Update collection when liveData changes
-  useEffect(() => {
-    if (liveData?.items) {
-      const items = liveData.items.map((item: any) => ({
-        label: `${item.endpoint.name} (${item.endpoint.host})`,
-        value: item.endpoint.id,
-      }));
-      set(items);
-
-      // fallback only if not cleared manually
-      if (!selectedEndpoint && items.length > 0 && !cleared) {
-        setSelectedEndpoint(items[0].value);
-      }
-    }
-  }, [liveData, set, selectedEndpoint, cleared]);
-
   // Track page view
   useEffect(() => {
     analytics.trackPageView('History', {
       view_type: 'history_analysis',
       has_endpoint_filter: !!selectedEndpoint,
-      date_range_days: Math.ceil((new Date(dateRange.to).getTime() - new Date(dateRange.from).getTime()) / (1000 * 60 * 60 * 24)),
-      bucket_granularity: bucket
+      date_range_days: Math.ceil(
+        (new Date(dateRange.to).getTime() - new Date(dateRange.from).getTime()) /
+          (1000 * 60 * 60 * 24)
+      ),
+      bucket_granularity: bucket,
     });
   }, []);
 
@@ -153,10 +102,6 @@ export default function History() {
     }
   };
 
-  const selectedEndpointName =
-    liveData?.items?.find(item => item.endpoint.id === selectedEndpoint)?.endpoint?.name ||
-    'Unknown Endpoint';
-
   return (
     <Page
       title='History'
@@ -169,63 +114,14 @@ export default function History() {
             <Text fontSize='sm' fontWeight='medium'>
               Endpoint
             </Text>
-            <Skeleton loading={isLiveDataLoading} w='md'>
-              <Combobox.Root
-                size='xs'
-                w='md'
-                collection={collection}
-                value={selectedEndpoint ? [selectedEndpoint] : []}
-                onValueChange={e => {
-                  setSelectedEndpoint(e.value[0] ?? '');
-                  setCleared(false);
-                }}
-                onInputValueChange={e => filter(e.inputValue)}
-                onOpenChange={open => {
-                  if (open) filter('');
-                }}
-                openOnClick
-              >
-                <Combobox.Control>
-                  <Combobox.Input placeholder='Select endpoint...' />
-                  <Combobox.IndicatorGroup>
-                    <Combobox.ClearTrigger
-                      onClick={() => {
-                        setSelectedEndpoint('');
-                        setCleared(true);
-                      }}
-                    />
-                    <Combobox.Trigger />
-                  </Combobox.IndicatorGroup>
-                </Combobox.Control>
-                <Portal>
-                  <Combobox.Positioner>
-                    <Combobox.Content minW='sm'>
-                      {isLiveDataLoading ? (
-                        <HStack p='2'>
-                          <Spinner size='xs' borderWidth='1px' />
-                          <Span>Loading endpoints...</Span>
-                        </HStack>
-                      ) : liveDataError ? (
-                        <Span p='2' color='fg.error'>
-                          Failed to load endpoints
-                        </Span>
-                      ) : collection.items.length === 0 ? (
-                        <Combobox.Empty>No endpoints found</Combobox.Empty>
-                      ) : (
-                        collection.items.map(item => (
-                          <Combobox.Item key={item.value} item={item}>
-                            <HStack justify='space-between' textStyle='sm'>
-                              {item.label}
-                            </HStack>
-                            <Combobox.ItemIndicator />
-                          </Combobox.Item>
-                        ))
-                      )}
-                    </Combobox.Content>
-                  </Combobox.Positioner>
-                </Portal>
-              </Combobox.Root>
-            </Skeleton>
+            <EndpointSelect
+              selectedValue={selectedEndpoint}
+              onChange={setSelectedEndpoint}
+              setName={setSelectedEndpointName}
+              defaultToFirst={true}
+              w={'xs'}
+              size='xs'
+            />
           </VStack>
           <VStack align='start' gap={1}>
             <Text fontSize='sm' fontWeight='medium'>
@@ -263,7 +159,7 @@ export default function History() {
               size='xs'
               colorPalette='blue'
               onClick={() => void handleExportCSV()}
-              loading={isExporting || isHistoryDataLoading || isLiveDataLoading}
+              loading={isExporting || isHistoryDataLoading}
               disabled={!historyData}
             >
               <Download size={16} />
@@ -274,11 +170,7 @@ export default function History() {
       </PageSection>
       {/* History Data */}
       <PageSection title='Performance Summary' testId='availability-stats'>
-        <AvailabilityStats
-          data={historyData}
-          bucket={bucket}
-          isLoading={isHistoryDataLoading || isLiveDataLoading}
-        />
+        <AvailabilityStats data={historyData} bucket={bucket} isLoading={isHistoryDataLoading} />
       </PageSection>
       <Tabs.Root
         defaultValue='chart'
@@ -310,7 +202,7 @@ export default function History() {
               <AvailabilityChart
                 data={historyData}
                 bucket={bucket}
-                isLoading={isHistoryDataLoading || isLiveDataLoading}
+                isLoading={isHistoryDataLoading}
               />
             </Card.Body>
           </Card.Root>
@@ -333,7 +225,7 @@ export default function History() {
                 data={historyData}
                 bucket={bucket}
                 pageSize={20}
-                isLoading={isHistoryDataLoading || isLiveDataLoading}
+                isLoading={isHistoryDataLoading}
               />
             </Card.Body>
           </Card.Root>

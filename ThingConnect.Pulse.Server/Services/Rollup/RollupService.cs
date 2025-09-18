@@ -5,7 +5,7 @@ using ThingConnect.Pulse.Server.Helpers;
 namespace ThingConnect.Pulse.Server.Services.Rollup;
 
 /// <summary>
-/// Service for computing data rollups from raw check results
+/// Service for computing data rollups from raw check results.
 /// </summary>
 public sealed class RollupService : IRollupService
 {
