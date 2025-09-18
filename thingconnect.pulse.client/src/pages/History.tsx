@@ -292,6 +292,7 @@ export default function History() {
         flexDirection='column'
         variant='enclosed'
         flex={1}
+        overflow='auto'
       >
         <Tabs.List display='flex' flexDirection='row' _dark={{ bg: 'gray.700' }}>
           <Tabs.Trigger value='chart'>Availability Chart</Tabs.Trigger>
@@ -356,8 +357,15 @@ export default function History() {
                 </Text>
               </HStack>
             </Card.Header>
-            <Card.Body flex={1} display='flex' flexDirection='column' minH={0} p={3}>
-              <OutagesTimeline outages={historyData?.outages} />
+            <Card.Body
+              flex={1}
+              display='flex'
+              flexDirection='column'
+              minH={0}
+              p={3}
+              overflow={'auto'}
+            >
+              <OutagesTimeline outages={historyData?.outages} isLoading={isHistoryDataLoading} />
             </Card.Body>
           </Card.Root>
         </Tabs.Content>
