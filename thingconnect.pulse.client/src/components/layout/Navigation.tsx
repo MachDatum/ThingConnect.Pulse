@@ -1,8 +1,7 @@
 import { Box, VStack, Text, Icon, Image, HStack, Badge, Button } from '@chakra-ui/react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { Wifi, Activity, LogOut, Users } from 'lucide-react';
-import thingConnectIcon from
- '@/assets/ThingConnectPulseLogo.svg';
+import thingConnectIcon from '@/assets/thingconnect-pulse-logo.svg';
 import { Clock, Wrench, Settings, Info, Dashboard, Help } from '@/icons';
 import { useAuth } from '@/features/auth/context/AuthContext';
 interface NavigationProps {
@@ -58,49 +57,49 @@ export function Navigation({ onItemClick }: NavigationProps) {
         {navigationItems
           .filter(item => !item.adminOnly || isAdmin)
           .map(item => {
-          const isActive = !item.external && isActiveRoute(item.path);
-          const ItemContent = (
-            <HStack
-              px={3}
-              py={2.5}
-              borderRadius='lg'
-              color={isActive ? 'blue.600' : 'gray.600'}
-              bg={isActive ? 'whiteAlpha.950' : 'transparent'}
-              border={isActive ? '1px solid' : undefined}
-              borderColor={isActive ? 'border' : undefined}
-              _hover={
-                isActive
-                  ? undefined
-                  : {
-                      bg: 'blackAlpha.50',
-                      _dark: { bg: 'gray.700' },
-                    }
-              }
-              _dark={{
-                color: isActive ? 'blue.200' : 'gray.200',
-                bg: isActive ? 'blackAlpha.200' : undefined,
-                border: isActive ? '1px solid rgba(255,255,255,0.1)' : undefined,
-              }}
-            >
-              <Icon as={item.icon} boxSize={4} />
-              <Text fontSize='sm' fontWeight='medium' letterSpacing='0.025em' lineHeight='1.2'>
-                {item.label}
-              </Text>
-            </HStack>
-          );
+            const isActive = !item.external && isActiveRoute(item.path);
+            const ItemContent = (
+              <HStack
+                px={3}
+                py={2.5}
+                borderRadius='lg'
+                color={isActive ? 'blue.600' : 'gray.600'}
+                bg={isActive ? 'whiteAlpha.950' : 'transparent'}
+                border={isActive ? '1px solid' : undefined}
+                borderColor={isActive ? 'border' : undefined}
+                _hover={
+                  isActive
+                    ? undefined
+                    : {
+                        bg: 'blackAlpha.50',
+                        _dark: { bg: 'gray.700' },
+                      }
+                }
+                _dark={{
+                  color: isActive ? 'blue.200' : 'gray.200',
+                  bg: isActive ? 'blackAlpha.200' : undefined,
+                  border: isActive ? '1px solid rgba(255,255,255,0.1)' : undefined,
+                }}
+              >
+                <Icon as={item.icon} boxSize={4} />
+                <Text fontSize='sm' fontWeight='medium' letterSpacing='0.025em' lineHeight='1.2'>
+                  {item.label}
+                </Text>
+              </HStack>
+            );
 
-          return item.external ? (
-            <Box as='a' key={item.path} asChild onClick={onItemClick}>
-              <a href={item.path} target='_blank' rel='noopener noreferrer'>
+            return item.external ? (
+              <Box as='a' key={item.path} asChild onClick={onItemClick}>
+                <a href={item.path} target='_blank' rel='noopener noreferrer'>
+                  {ItemContent}
+                </a>
+              </Box>
+            ) : (
+              <RouterLink key={item.path} to={item.path} onClick={onItemClick}>
                 {ItemContent}
-              </a>
-            </Box>
-          ) : (
-            <RouterLink key={item.path} to={item.path} onClick={onItemClick}>
-              {ItemContent}
-            </RouterLink>
-          );
-        })}
+              </RouterLink>
+            );
+          })}
       </VStack>
       <Box p={4} borderTop='1px' borderColor='gray.200' _dark={{ borderColor: 'gray.700' }}>
         <VStack align='stretch' gap={4}>
