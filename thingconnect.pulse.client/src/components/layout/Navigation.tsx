@@ -1,8 +1,8 @@
 import { Box, VStack, Text, Icon, Image, HStack, Badge, Button } from '@chakra-ui/react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
-import { Wifi, Activity, LogOut, Users } from 'lucide-react';
+import { Wifi, Activity, LogOut } from 'lucide-react';
 import thingConnectIcon from '@/assets/thingconnect-pulse-logo.svg';
-import { Clock, Wrench, Settings, Info, Dashboard, Help } from '@/icons';
+import { Clock, Wrench, Settings, Info, Dashboard, Help, Users } from '@/icons';
 import { useAuth } from '@/features/auth/context/AuthContext';
 interface NavigationProps {
   onItemClick?: () => void;
