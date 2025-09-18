@@ -33,6 +33,7 @@ import { StatusService } from '@/api/services/status.service';
 import { Tooltip } from '@/components/ui/tooltip';
 import { AvailabilityStats } from '@/components/history/AvailabilityStats';
 import { OutagesTimeline } from '@/components/history/OutageTimeline';
+import { OutagesTable } from '@/components/history/OutagesTable';
 
 export default function History() {
   const analytics = useAnalytics();
@@ -344,7 +345,7 @@ export default function History() {
             </Card.Body>
           </Card.Root>
         </Tabs.Content>
-        <Tabs.Content value='outages' flex={1} display='flex' minH={0}>
+        <Tabs.Content value='outages' flex={1} display='flex' minH={0} gap={2}>
           <Card.Root flex={1} display='flex' flexDirection='column' overflow='hidden' size={'sm'}>
             <Card.Header px={3} pt={3}>
               <HStack gap={2}>
@@ -366,6 +367,29 @@ export default function History() {
               overflow={'auto'}
             >
               <OutagesTimeline outages={historyData?.outages} isLoading={isHistoryDataLoading} />
+            </Card.Body>
+          </Card.Root>
+          <Card.Root flex={1} display='flex' flexDirection='column' overflow='hidden' size={'sm'}>
+            <Card.Header px={3} pt={3}>
+              <HStack gap={2}>
+                <Zap size={20} />
+                <Text fontWeight='medium' fontSize='sm'>
+                  Outage History
+                </Text>
+                <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
+                  ({selectedEndpointName})
+                </Text>
+              </HStack>
+            </Card.Header>
+            <Card.Body
+              flex={1}
+              display='flex'
+              flexDirection='column'
+              minH={0}
+              p={3}
+              overflow={'auto'}
+            >
+              <OutagesTable outages={historyData?.outages} isLoading={isHistoryDataLoading} />
             </Card.Body>
           </Card.Root>
         </Tabs.Content>

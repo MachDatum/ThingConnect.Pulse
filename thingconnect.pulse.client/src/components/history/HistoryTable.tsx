@@ -202,7 +202,6 @@ export function HistoryTable({ data, bucket, pageSize = 20, isLoading }: History
                               overflow='hidden'
                               textOverflow='ellipsis'
                               whiteSpace='nowrap'
-                              title={row.error || undefined}
                             >
                               {row.error || '-'}
                             </Text>
