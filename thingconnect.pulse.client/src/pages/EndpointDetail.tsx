@@ -390,7 +390,7 @@ export default function EndpointDetail() {
             </Text>
           </Card.Header>
           <Card.Body flex={1} minH={0} p={3} overflow='auto'>
-            <OutagesList outages={outages} />
+            <OutagesList outages={outages} isLoading={isLoading} />
           </Card.Body>
         </Card.Root>
       </SimpleGrid>
