@@ -36,6 +36,33 @@ export interface LiveStatusItem {
   sparkline: SparklinePoint[];
 }
 
+export interface Notification {
+  id: string;
+  type: 'info' | 'warning' | 'release' | 'maintenance';
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  title: string;
+  message: string;
+  actionUrl?: string | null;
+  actionText?: string | null;
+  validFrom: string;
+  validUntil: string;
+  isRead: boolean;
+  isShown: boolean;
+  created: string;
+}
+
+export interface NotificationStats {
+  activeNotifications: number;
+  unreadNotifications: number;
+  lastFetch?: string | null;
+  lastFetchSuccess: boolean;
+  lastFetchError?: string | null;
+}
+
+export interface MarkNotificationReadRequest {
+  notificationId: string;
+}
+
 export interface PageMeta {
   page: number;
   pageSize: number;

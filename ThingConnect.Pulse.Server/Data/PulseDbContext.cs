@@ -15,6 +15,8 @@ public sealed class PulseDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Setting> Settings => Set<Setting>();
     public DbSet<ConfigVersion> ConfigVersions => Set<ConfigVersion>();
     public DbSet<MonitoringSession> MonitoringSessions => Set<MonitoringSession>();
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<NotificationFetch> NotificationFetches => Set<NotificationFetch>();
 
     public PulseDbContext(DbContextOptions<PulseDbContext> options)
         : base(options) { }
@@ -113,6 +115,35 @@ public sealed class PulseDbContext : IdentityDbContext<ApplicationUser>
             e.Property(x => x.Version).HasMaxLength(50);
             e.HasIndex(x => x.StartedTs);
             e.HasIndex(x => x.EndedTs);
+        });
+
+        b.Entity<Notification>(e =>
+        {
+            e.ToTable("notification");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasMaxLength(64);
+            e.Property(x => x.Type).HasConversion<string>().IsRequired();
+            e.Property(x => x.Priority).HasConversion<string>().IsRequired();
+            e.Property(x => x.Title).IsRequired().HasMaxLength(200);
+            e.Property(x => x.Message).IsRequired().HasMaxLength(1000);
+            e.Property(x => x.ActionUrl).HasMaxLength(512);
+            e.Property(x => x.ActionText).HasMaxLength(100);
+            e.Property(x => x.TargetVersions).HasMaxLength(200);
+            e.HasIndex(x => x.ValidFromTs);
+            e.HasIndex(x => x.ValidUntilTs);
+            e.HasIndex(x => new { x.IsRead, x.ValidFromTs });
+            e.HasIndex(x => new { x.Priority, x.ValidFromTs });
+        });
+
+        b.Entity<NotificationFetch>(e =>
+        {
+            e.ToTable("notification_fetch");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.RemoteVersion).IsRequired().HasMaxLength(50);
+            e.Property(x => x.RemoteLastUpdated).IsRequired().HasMaxLength(50);
+            e.Property(x => x.Error).HasMaxLength(500);
+            e.HasIndex(x => x.FetchTs);
+            e.HasIndex(x => x.Success);
         });
     }
 }
