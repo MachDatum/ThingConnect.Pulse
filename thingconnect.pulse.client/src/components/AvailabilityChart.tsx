@@ -139,9 +139,11 @@ export function AvailabilityChart({ data, bucket, isLoading }: AvailabilityChart
                   tickStroke='transparent'
                   tickLabelProps={{
                     fill: '#718096',
-                    fontSize: 10,
                     textAnchor: 'end',
                     dx: -4,
+                    style: {
+                      fontSize: '12px',
+                    },
                   }}
                 />
 
@@ -149,7 +151,7 @@ export function AvailabilityChart({ data, bucket, isLoading }: AvailabilityChart
                 <text
                   x={-margin.left + 15}
                   y={yMax / 2}
-                  // style={{ fontSize: '12px' }}
+                  style={{ fontSize: '14px' }}
                   fill='#718096'
                   textAnchor='middle'
                   transform={`rotate(-90, ${-margin.left + 15}, ${yMax / 2})`}
@@ -165,8 +167,10 @@ export function AvailabilityChart({ data, bucket, isLoading }: AvailabilityChart
                   tickFormat={() => ''}
                   tickLabelProps={{
                     fill: '#718096',
-                    fontSize: 10,
                     textAnchor: 'middle',
+                    style: {
+                      fontSize: '12px',
+                    },
                   }}
                 />
               </Group>

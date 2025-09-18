@@ -1,4 +1,4 @@
-import { Text, VStack, Badge, HStack, Card, Skeleton } from '@chakra-ui/react';
+import { Text, VStack, Badge, HStack, Card, Skeleton, Box } from '@chakra-ui/react';
 import { CloudOff } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import type { Outage } from '@/api/types';
@@ -52,45 +52,62 @@ export function OutagesList({ outages, isLoading }: OutagesListProps) {
       })
     : [];
 
+  if (isLoading) {
+    return (
+      <Box
+        height='100%'
+        display='flex'
+        alignItems='center'
+        justifyContent='center'
+        borderRadius='md'
+        borderWidth='1px'
+        bg='gray.50'
+        _dark={{ bg: 'gray.800' }}
+      >
+        <VStack w='full' px={6} gap={4}>
+          <Skeleton height='100%' width='100%' />
+        </VStack>
+      </Box>
+    );
+  }
+
   return (
     <VStack gap={4} align='stretch'>
       {sortedOutages.map((outage, index) => (
-        <Skeleton loading={isLoading}>
-          <Card.Root key={`${outage.startedTs}-${index}`} size={'sm'}>
-            <Card.Body p={3}>
-              <VStack gap={2} align='stretch'>
-                <HStack justify='space-between'>
-                  <Text fontSize='sm' fontWeight='medium'>
-                    {capitalizeFirstLetter(
-                      formatDistanceToNow(new Date(outage.startedTs), { addSuffix: true })
-                    )}
-                  </Text>
-                  <Badge colorPalette={outage.endedTs ? 'green' : 'red'} size='sm'>
-                    {outage.endedTs ? 'Resolved' : 'Ongoing'}
-                  </Badge>
-                </HStack>
-                <HStack justify='space-between'>
-                  <Text fontSize='sm' color='gray.600'>
-                    Duration: {formatDuration(outage.durationS)}
-                  </Text>
-                  <Text fontSize='sm' color='gray.600'>
-                    Ended:{' '}
-                    {outage.endedTs
-                      ? capitalizeFirstLetter(
-                          formatDistanceToNow(new Date(outage.endedTs), { addSuffix: true })
-                        )
-                      : 'Unknown'}
-                  </Text>
-                </HStack>
-                {outage.lastError && (
-                  <Text fontSize='sm' color='red.600' _dark={{ color: 'red.400' }} lineClamp={2}>
-                    {outage.lastError}
-                  </Text>
-                )}
-              </VStack>
-            </Card.Body>
-          </Card.Root>
-        </Skeleton>
+        <Card.Root key={`${outage.startedTs}-${index}`} size={'sm'}>
+          <Card.Body p={3}>
+            <VStack gap={2} align='stretch'>
+              <HStack justify='space-between'>
+                <Text fontSize='sm' fontWeight='medium'>
+                  {capitalizeFirstLetter(
+                    formatDistanceToNow(new Date(outage.startedTs), { addSuffix: true })
+                  )}
+                </Text>
+                <Badge colorPalette={outage.endedTs ? 'green' : 'red'} size='sm'>
+                  {outage.endedTs ? 'Resolved' : 'Ongoing'}
+                </Badge>
+              </HStack>
+              <HStack justify='space-between'>
+                <Text fontSize='sm' color='gray.600'>
+                  Duration: {formatDuration(outage.durationS)}
+                </Text>
+                <Text fontSize='sm' color='gray.600'>
+                  Ended:{' '}
+                  {outage.endedTs
+                    ? capitalizeFirstLetter(
+                        formatDistanceToNow(new Date(outage.endedTs), { addSuffix: true })
+                      )
+                    : 'Unknown'}
+                </Text>
+              </HStack>
+              {outage.lastError && (
+                <Text fontSize='sm' color='red.600' _dark={{ color: 'red.400' }} lineClamp={2}>
+                  {outage.lastError}
+                </Text>
+              )}
+            </VStack>
+          </Card.Body>
+        </Card.Root>
       ))}
     </VStack>
   );
