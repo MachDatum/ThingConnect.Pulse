@@ -16,7 +16,8 @@ public sealed class PulseDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ConfigVersion> ConfigVersions => Set<ConfigVersion>();
     public DbSet<MonitoringSession> MonitoringSessions => Set<MonitoringSession>();
 
-    public PulseDbContext(DbContextOptions<PulseDbContext> options) : base(options) { }
+    public PulseDbContext(DbContextOptions<PulseDbContext> options)
+        : base(options) { }
 
     protected override void OnModelCreating(ModelBuilder b)
     {

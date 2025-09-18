@@ -20,13 +20,13 @@ public sealed class HistoryController : ControllerBase
     }
 
     /// <summary>
-    /// Get historical data for a specific endpoint
+    /// Get historical data for a specific endpoint.
     /// </summary>
-    /// <param name="id">Endpoint ID</param>
-    /// <param name="from">Start time (ISO 8601 format)</param>
-    /// <param name="to">End time (ISO 8601 format)</param>
-    /// <param name="bucket">Data bucket type: raw, 15m, or daily</param>
-    /// <returns>Historical data for the endpoint</returns>
+    /// <param name="id">Endpoint ID.</param>
+    /// <param name="from">Start time (ISO 8601 format).</param>
+    /// <param name="to">End time (ISO 8601 format).</param>
+    /// <param name="bucket">Data bucket type: raw, 15m, or daily.</param>
+    /// <returns>Historical data for the endpoint.</returns>
     [HttpGet("endpoint/{id}")]
     public async Task<ActionResult<HistoryResponseDto>> GetEndpointHistoryAsync(
         [FromRoute] Guid id,

@@ -9,8 +9,8 @@ namespace ThingConnect.Pulse.Tests;
 public class ConfigurationValidationTests
 {
     private JsonSchema? _schema;
-    private IDeserializer _yamlDeserializer;
-    private ISerializer _yamlSerializer;
+    private IDeserializer? _yamlDeserializer;
+    private ISerializer? _yamlSerializer;
 
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
@@ -129,14 +129,26 @@ public class ConfigurationValidationTests
         try
         {
             string[] parts = cidr.Split('/');
-            if (parts.Length != 2) return result;
+            if (parts.Length != 2)
+            {
+                return result;
+            }
 
             string baseIp = parts[0];
-            if (!int.TryParse(parts[1], out int prefixLength)) return result;
+            if (!int.TryParse(parts[1], out int prefixLength))
+            {
+                return result;
+            }
 
-            if (prefixLength < 0 || prefixLength > 32) return result;
+            if (prefixLength < 0 || prefixLength > 32)
+            {
+                return result;
+            }
 
-            if (!System.Net.IPAddress.TryParse(baseIp, out System.Net.IPAddress? ipAddress)) return result;
+            if (!System.Net.IPAddress.TryParse(baseIp, out System.Net.IPAddress? ipAddress))
+            {
+                return result;
+            }
 
             byte[] addressBytes = ipAddress.GetAddressBytes();
             uint addressInt = BitConverter.ToUInt32(addressBytes.Reverse().ToArray(), 0);

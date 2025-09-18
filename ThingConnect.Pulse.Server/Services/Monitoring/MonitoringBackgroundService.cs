@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Microsoft.EntityFrameworkCore;
 using ThingConnect.Pulse.Server.Data;
+using ThingConnect.Pulse.Server.Helpers;
 
 namespace ThingConnect.Pulse.Server.Services.Monitoring;
 
@@ -47,7 +48,8 @@ public sealed class MonitoringBackgroundService : BackgroundService
             try
             {
                 await RefreshEndpointsAsync(stoppingToken);
-                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken); // Check for endpoint changes every minute
+                await UpdateHeartbeatAsync(stoppingToken);
+                await Task.Delay(TimeSpan.FromSeconds(15), stoppingToken); // Check for endpoint changes every minute
             }
             catch (Exception ex)
             {
@@ -62,14 +64,14 @@ public sealed class MonitoringBackgroundService : BackgroundService
             using (IServiceScope scope = _serviceProvider.CreateScope())
             {
                 IOutageDetectionService outageService = scope.ServiceProvider.GetRequiredService<IOutageDetectionService>();
-                
+
                 // Create a timeout for graceful shutdown (30 seconds max)
                 // This allows force shutdown while giving reasonable time for data safety
                 using var shutdownCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
                 using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken, shutdownCts.Token);
-                
+
                 await outageService.HandleGracefulShutdownAsync("Service stopping", combinedCts.Token);
-                
+
                 _logger.LogInformation("Graceful shutdown completed successfully");
             }
         }
@@ -88,20 +90,20 @@ public sealed class MonitoringBackgroundService : BackgroundService
 
         // Clean up timers gracefully with cancellation support
         var timerCleanupTasks = new List<Task>();
-        foreach (var kvp in _endpointTimers.ToList()) // ToList to avoid modification during enumeration
+        foreach (KeyValuePair<Guid, Timer> kvp in _endpointTimers.ToList()) // ToList to avoid modification during enumeration
         {
             timerCleanupTasks.Add(StopTimerGracefullyAsync(kvp.Value, kvp.Key));
         }
-        
+
         try
         {
             // Create timeout for timer cleanup (30 seconds max) while respecting external cancellation
             using var timerCleanupCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
             using var combinedCleanupCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken, timerCleanupCts.Token);
-            
+
             // Wait for all timers to shutdown gracefully (with timeout and cancellation)
             await Task.WhenAll(timerCleanupTasks).WaitAsync(combinedCleanupCts.Token);
-            
+
             _logger.LogInformation("All timers stopped gracefully");
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -116,7 +118,7 @@ public sealed class MonitoringBackgroundService : BackgroundService
         {
             _logger.LogError(ex, "Error during timer cleanup");
         }
-        
+
         _endpointTimers.Clear();
 
         _logger.LogInformation("Monitoring background service stopped");
@@ -156,13 +158,13 @@ public sealed class MonitoringBackgroundService : BackgroundService
             {
                 // Stop timer to prevent race condition, then restart with new interval
                 existingTimer.Change(Timeout.Infinite, Timeout.Infinite);
-                
+
                 // Wait briefly if probe is currently executing to avoid immediate restart
                 if (_probeExecuting.TryGetValue(endpoint.Id, out bool isExecuting) && isExecuting)
                 {
                     await Task.Delay(100); // Brief delay to let current execution complete
                 }
-                
+
                 // Restart with new interval
                 existingTimer.Change(TimeSpan.Zero, TimeSpan.FromMilliseconds(intervalMs));
             }
@@ -173,8 +175,7 @@ public sealed class MonitoringBackgroundService : BackgroundService
                     callback: async _ => await ProbeEndpointAsync(endpoint.Id),
                     state: null,
                     dueTime: TimeSpan.Zero, // Start immediately
-                    period: TimeSpan.FromMilliseconds(intervalMs)
-                );
+                    period: TimeSpan.FromMilliseconds(intervalMs));
 
                 _endpointTimers.TryAdd(endpoint.Id, timer);
                 _logger.LogInformation("Started monitoring endpoint: {EndpointId} ({Name}) every {IntervalSeconds}s",
@@ -273,6 +274,37 @@ public sealed class MonitoringBackgroundService : BackgroundService
         {
             _logger.LogError(ex, "Error during graceful timer shutdown for endpoint: {EndpointId}", endpointId);
             timer.Dispose(); // Force dispose on error
+        }
+    }
+
+    /// <summary>
+    /// Updates the LastActivityTs field in the current monitoring session to provide heartbeat signal.
+    /// </summary>
+    private async Task UpdateHeartbeatAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            using IServiceScope scope = _serviceProvider.CreateScope();
+            PulseDbContext context = scope.ServiceProvider.GetRequiredService<PulseDbContext>();
+
+            // Find the current active monitoring session
+            MonitoringSession? currentSession = await context.MonitoringSessions
+                .Where(s => s.EndedTs == null)
+                .OrderByDescending(s => s.StartedTs)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (currentSession != null)
+            {
+                currentSession.LastActivityTs = UnixTimestamp.Now();
+                await context.SaveChangesAsync(cancellationToken);
+                _logger.LogTrace("Updated monitoring session heartbeat for session {SessionId}", currentSession.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to update monitoring session heartbeat");
+
+            // Don't throw - heartbeat failure shouldn't stop monitoring
         }
     }
 
