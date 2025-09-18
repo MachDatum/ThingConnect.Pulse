@@ -11,7 +11,7 @@ import {
   Text,
 } from '@chakra-ui/react';
 import type { BucketType } from '@/types/bucket';
-import { Database, CircleAlert } from 'lucide-react';
+import { Database } from 'lucide-react';
 import type { AvailabilityChartProps } from '../AvailabilityChart';
 
 export function AvailabilityStats({
