@@ -6,7 +6,7 @@ using ThingConnect.Pulse.Server.Data;
 namespace ThingConnect.Pulse.Server.Infrastructure;
 
 /// <summary>
-/// Custom claims principal factory to add role claims from ApplicationUser.Role property
+/// Custom claims principal factory to add role claims from ApplicationUser.Role property.
 /// </summary>
 public sealed class ApplicationUserClaimsPrincipalFactory : UserClaimsPrincipalFactory<ApplicationUser, IdentityRole>
 {

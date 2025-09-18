@@ -59,7 +59,6 @@ public sealed class StatusService : IStatusService
         .ThenBy(e => e.Name)
         .ToListAsync();
 
-
         // Get live status for each endpoint
         var items = new List<LiveStatusItemDto>();
         var endpointIds = endpoints.Select(e => e.Id).ToList();
@@ -106,8 +105,9 @@ public sealed class StatusService : IStatusService
     }
 
     /// <summary>
-    /// Gets all groups with caching for better performance
+    /// Gets all groups with caching for better performance.
     /// </summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     public async Task<List<Data.Group>> GetGroupsCachedAsync()
     {
         const string cacheKey = "all_groups";
@@ -130,7 +130,7 @@ public sealed class StatusService : IStatusService
     }
 
     /// <summary>
-    /// Invalidates the groups cache - call when groups are modified
+    /// Invalidates the groups cache - call when groups are modified.
     /// </summary>
     public void InvalidateGroupsCache()
     {

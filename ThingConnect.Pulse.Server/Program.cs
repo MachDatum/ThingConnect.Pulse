@@ -97,6 +97,7 @@ public class Program
                         context.Response.StatusCode = 401;
                         return Task.CompletedTask;
                     }
+
                     // For regular requests, redirect to frontend login page
                     context.Response.Redirect("/login");
                     return Task.CompletedTask;
@@ -109,6 +110,7 @@ public class Program
                         context.Response.StatusCode = 403;
                         return Task.CompletedTask;
                     }
+
                     // For regular requests, redirect to access denied page
                     context.Response.Redirect("/access-denied");
                     return Task.CompletedTask;
@@ -125,7 +127,6 @@ public class Program
                     policy.RequireAuthenticatedUser());
             });
 
-
             // Add memory cache for settings service
             builder.Services.AddMemoryCache();
 
@@ -138,23 +139,23 @@ public class Program
             // Add consent-aware Sentry service
             builder.Services.AddSingleton<IConsentAwareSentryService, ConsentAwareSentryService>();
 
-
             // Add configuration services
-            builder.Services.AddScoped<ConfigurationParser>(serviceProvider =>
+            builder.Services.AddSingleton<ConfigurationParser>(serviceProvider =>
             {
                 ILogger<ConfigurationParser> logger = serviceProvider.GetRequiredService<ILogger<ConfigurationParser>>();
                 IDiscoveryService discoveryService = serviceProvider.GetRequiredService<IDiscoveryService>();
                 return ConfigurationParser.CreateAsync(logger, discoveryService).GetAwaiter().GetResult();
             });
             builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
-            builder.Services.AddScoped<ISettingsService, SettingsService>();
+            builder.Services.AddSingleton<ISettingsService, SettingsService>();
 
             // Add monitoring services
             builder.Services.AddScoped<IProbeService, ProbeService>();
-            builder.Services.AddScoped<IOutageDetectionService, OutageDetectionService>();
-            builder.Services.AddScoped<IDiscoveryService, DiscoveryService>();
+            builder.Services.AddSingleton<IOutageDetectionService, OutageDetectionService>();
+            builder.Services.AddSingleton<IDiscoveryService, DiscoveryService>();
             builder.Services.AddScoped<IStatusService, StatusService>();
             builder.Services.AddScoped<IHistoryService, HistoryService>();
+            builder.Services.AddScoped<IEndpointService, EndpointService>();
             builder.Services.AddHostedService<MonitoringBackgroundService>();
 
             // Add rollup services
@@ -184,6 +185,7 @@ public class Program
             {
                 options.InputFormatters.Insert(0, new PlainTextInputFormatter());
             });
+
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();

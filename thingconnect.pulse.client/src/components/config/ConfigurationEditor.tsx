@@ -372,11 +372,11 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
           {applyResult && (
             <Alert
               flex='1'
-              status='success'
+              status={'success'}
               title={
-                applyResult.validation_errors?.length
-                  ? applyResult.validation_errors[0]
-                  : `Configuration applied: ${applyResult.changes.filter(c => c.type === 'add').length} added, ${applyResult.changes.filter(c => c.type === 'update').length} updated, ${applyResult.changes.filter(c => c.type === 'remove').length} removed`
+                applyResult.warnings?.length
+                  ? `${applyResult.warnings.join('; ')}`
+                  : `Configuration applied: ${applyResult.added} added, ${applyResult.updated} updated, ${applyResult.removed} removed`
               }
             />
           )}
