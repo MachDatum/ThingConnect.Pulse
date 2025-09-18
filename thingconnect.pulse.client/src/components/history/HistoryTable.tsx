@@ -14,7 +14,7 @@ import {
 import { ChevronLeft, ChevronRight, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import type { RollupBucket, DailyBucket, RawCheck } from '@/api/types';
 import type { BucketType } from '@/types/bucket';
-import { Tooltip } from './ui/tooltip';
+import { Tooltip } from '../ui/tooltip';
 
 export interface HistoryTableProps {
   data:

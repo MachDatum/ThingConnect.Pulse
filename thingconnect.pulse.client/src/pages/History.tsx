@@ -27,11 +27,11 @@ import type { DateRange } from '@/components/DateRangePicker';
 import { BucketSelector } from '@/components/BucketSelector';
 import type { BucketType } from '@/types/bucket';
 import { AvailabilityChart } from '@/components/AvailabilityChart';
-import { HistoryTable } from '@/components/HistoryTable';
+import { HistoryTable } from '@/components/history/HistoryTable';
 import { HistoryService } from '@/api/services/history.service';
 import { StatusService } from '@/api/services/status.service';
 import { Tooltip } from '@/components/ui/tooltip';
-import { AvailabilityStats } from '@/components/AvailabilityStats';
+import { AvailabilityStats } from '@/components/history/AvailabilityStats';
 
 export default function History() {
   const analytics = useAnalytics();
@@ -95,8 +95,11 @@ export default function History() {
     analytics.trackPageView('History', {
       view_type: 'history_analysis',
       has_endpoint_filter: !!selectedEndpoint,
-      date_range_days: Math.ceil((new Date(dateRange.to).getTime() - new Date(dateRange.from).getTime()) / (1000 * 60 * 60 * 24)),
-      bucket_granularity: bucket
+      date_range_days: Math.ceil(
+        (new Date(dateRange.to).getTime() - new Date(dateRange.from).getTime()) /
+          (1000 * 60 * 60 * 24)
+      ),
+      bucket_granularity: bucket,
     });
   }, []);
 
@@ -292,6 +295,7 @@ export default function History() {
         <Tabs.List display='flex' flexDirection='row' _dark={{ bg: 'gray.700' }}>
           <Tabs.Trigger value='chart'>Availability Chart</Tabs.Trigger>
           <Tabs.Trigger value='history'>Historical Data</Tabs.Trigger>
+          <Tabs.Trigger value='outges'>Outages</Tabs.Trigger>
         </Tabs.List>
         <Tabs.Content value='chart' flex={1} display='flex' minH={0}>
           <Card.Root flex={1} display='flex' flexDirection='column' size={'sm'}>
