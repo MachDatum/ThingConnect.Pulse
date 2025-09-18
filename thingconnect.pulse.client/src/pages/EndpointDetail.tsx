@@ -369,27 +369,27 @@ export default function EndpointDetail() {
         </SimpleGrid>
       </VStack>
       {/* Recent Checks and Outages */}
-      <SimpleGrid columns={{ base: 1, md: 1, lg: 2 }} gap={2} w='full' h='full'>
+      <SimpleGrid columns={{ base: 1, md: 1, lg: 2 }} gap={2} w='full' h='full' overflow='auto'>
         {/* Recent Checks */}
-        <Card.Root h='full' display='flex' flexDirection='column'>
+        <Card.Root flex={1} display='flex' flexDirection='column' overflow='hidden' size={'sm'}>
           <Card.Header px={3} pt={3}>
             <Text fontWeight='medium' fontSize='sm'>
               Recent Checks
             </Text>
           </Card.Header>
-          <Card.Body flex={1} minH={0} p={3} overflow='auto'>
+          <Card.Body flex={1} display='flex' flexDirection='column' minH={0} p={3}>
             <RecentChecksTable checks={recent} pageSize={10} />
           </Card.Body>
         </Card.Root>
 
         {/* Recent Outages */}
-        <Card.Root h='full' display='flex' flexDirection='column'>
+        <Card.Root h='full' display='flex' flex={1} flexDirection='column'>
           <Card.Header p={3} pb={0}>
             <Text fontWeight='medium' fontSize='sm'>
               Recent Outages
             </Text>
           </Card.Header>
-          <Card.Body flex={1} minH={0} p={3} overflow='auto'>
+          <Card.Body flex={1} display='flex' flexDirection='column' minH={0} p={3}>
             <OutagesList outages={outages} isLoading={isLoading} />
           </Card.Body>
         </Card.Root>
