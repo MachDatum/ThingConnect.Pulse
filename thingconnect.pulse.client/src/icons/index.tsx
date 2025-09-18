@@ -5,5 +5,4 @@ export { Info } from './Info';
 export { Wrench } from './Wrench';
 export { Dashboard } from './Dashboard';
 export { Help } from './Help';
-// export { Sun } from './sun';
-// export { Moon } from './moon';
+export { Users } from './Users';
