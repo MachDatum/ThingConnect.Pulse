@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useForceRefreshNotifications, useNotificationStats } from '@/hooks/useNotifications';
-import thingConnectLogo from '@/assets/thingconnect-logo.svg';
+import thingConnectLogo from '@/assets/thingconnect-pulse-logo.svg';
 
 export default function About() {
   const { data: stats } = useNotificationStats();
@@ -78,7 +78,7 @@ export default function About() {
                   IT/OT infrastructure with ease.
                 </Text>
                 <HStack justify='center' gap={3}>
-                  <Image src={thingConnectLogo} alt='ThingConnect' h='50px' />
+                  <Image src={thingConnectLogo} alt='ThingConnect' h='50px' width={'100%'} />
                   <HStack gap={2}>
                     <Badge colorPalette='blue' variant='solid' size='sm'>
                       v1.0.0
@@ -126,7 +126,7 @@ export default function About() {
                       title: 'Discord',
                       desc: 'Community support and real-time help',
                       tags: ['Community Support', 'Q&A', 'General Chat', 'Networking'],
-                      link: 'https://discord.gg',
+                      link: 'https://discord.gg/ZvhWncwv3J',
                     },
                     {
                       icon: MessageCircle,
@@ -140,14 +140,14 @@ export default function About() {
                       title: 'LinkedIn',
                       desc: 'Professional community for industry leaders',
                       tags: ['Networking', 'Hiring', 'Case Studies'],
-                      link: 'https://linkedin.com',
+                      link: 'https://www.linkedin.com/company/thingconnect/',
                     },
                     {
                       icon: Instagram,
                       title: 'Instagram',
                       desc: 'Stories, highlights, and community moments',
                       tags: ['Updates', 'Events', 'Highlights'],
-                      link: 'https://instagram.com',
+                      link: 'https://www.instagram.com/thingconnect/',
                     },
                   ].map((c, i) => (
                     <Link key={i} href={c.link} target='_blank' _hover={{ textDecoration: 'none' }}>

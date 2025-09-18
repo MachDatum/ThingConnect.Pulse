@@ -14,7 +14,7 @@ import {
 import { ChevronLeft, ChevronRight, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import type { RollupBucket, DailyBucket, RawCheck } from '@/api/types';
 import type { BucketType } from '@/types/bucket';
-import { Tooltip } from './ui/tooltip';
+import { Tooltip } from '../ui/tooltip';
 
 export interface HistoryTableProps {
   data:
@@ -124,8 +124,6 @@ export function HistoryTable({ data, bucket, pageSize = 20, isLoading }: History
         textAlign='center'
         bg='gray.50'
         borderRadius='md'
-        border='2px dashed'
-        borderColor='gray.300'
         _dark={{ bg: 'gray.800', borderColor: 'gray.600' }}
         h='full'
         alignContent={'center'}
@@ -199,11 +197,9 @@ export function HistoryTable({ data, bucket, pageSize = 20, isLoading }: History
                               fontSize='sm'
                               color={row.error ? 'red.600' : 'gray.500'}
                               _dark={{ color: row.error ? 'red.400' : 'gray.400' }}
-                              maxW='200px'
                               overflow='hidden'
                               textOverflow='ellipsis'
                               whiteSpace='nowrap'
-                              title={row.error || undefined}
                             >
                               {row.error || '-'}
                             </Text>
