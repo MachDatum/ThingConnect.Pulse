@@ -39,6 +39,7 @@ export default function Configuration() {
         h='full'
         display='flex'
         flexDirection='column'
+        w={'full'}
       >
         <TabsList flexShrink={0} _dark={{ bg: 'gray.700' }}>
           <TabsTrigger value='editor'>

@@ -19,6 +19,7 @@
     <PackageJsonDependenciesTanstackReactQuery Condition="$(PackageJsonDependenciesTanstackReactQuery) == ''">^5.84.2</PackageJsonDependenciesTanstackReactQuery>
     <PackageJsonDependenciesAxios Condition="$(PackageJsonDependenciesAxios) == ''">^1.11.0</PackageJsonDependenciesAxios>
     <PackageJsonDependenciesDateFns Condition="$(PackageJsonDependenciesDateFns) == ''">^4.1.0</PackageJsonDependenciesDateFns>
+    <PackageJsonDependenciesFramerMotion Condition="$(PackageJsonDependenciesFramerMotion) == ''">^12.23.14</PackageJsonDependenciesFramerMotion>
     <PackageJsonDependenciesLodash Condition="$(PackageJsonDependenciesLodash) == ''">^4.17.21</PackageJsonDependenciesLodash>
     <PackageJsonDependenciesLucideReact Condition="$(PackageJsonDependenciesLucideReact) == ''">^0.541.0</PackageJsonDependenciesLucideReact>
     <PackageJsonDependenciesLuxon Condition="$(PackageJsonDependenciesLuxon) == ''">^3.7.1</PackageJsonDependenciesLuxon>

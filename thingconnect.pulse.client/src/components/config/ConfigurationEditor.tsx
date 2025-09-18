@@ -293,14 +293,15 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
         </HStack>
       </HStack>
       <Box display='flex' flex='1' overflow='hidden' gap={2}>
-        {/* LEFT: Editor */}
+      {/* LEFT: Editor */}
         <VStack
           align='stretch'
           border='1px solid'
           borderColor={colorMode === 'dark' ? 'gray.600' : 'gray.200'}
           borderRadius='md'
-          flex={3}
           minW='0'
+          w={'full'}
+          flex={isCollabsable ? '3' : '1'}
         >
           <HStack
             bg={colorMode === 'dark' ? 'gray.800' : 'gray.100'}
@@ -316,38 +317,40 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
               Editor
             </Text>
           </HStack>
-          <Box flex='1' overflow='hidden'>
-            <Editor
-              height='100%'
-              language='yaml'
-              theme={colorMode === 'dark' ? 'vs-dark' : 'vs-light'}
-              value={yamlContent}
-              onChange={value => {
-                setYamlContent(value || '');
-                setValidationResult(null);
-                setApplyResult(null);
-                setError(null);
-                clearValidationMarkers();
-              }}
-              onMount={(editor, monaco) => {
-                editorRef.current = editor;
-                monacoRef.current = monaco;
-              }}
-              options={{
-                minimap: { enabled: false },
-                scrollBeyondLastLine: false,
-                fontSize: 14,
-                tabSize: 2,
-                insertSpaces: true,
-                wordWrap: 'on',
-                lineNumbers: 'on',
-                folding: true,
-                automaticLayout: true,
-                bracketPairColorization: { enabled: true },
-                formatOnPaste: true,
-                formatOnType: true,
-              }}
-            />
+          <Box overflow='hidden' h={'full'}>
+            <Box h={'full'}>
+              <Editor
+                height='100%'
+                language='yaml'
+                theme={colorMode === 'dark' ? 'vs-dark' : 'vs-light'}
+                value={yamlContent}
+                onChange={value => {
+                  setYamlContent(value || '');
+                  setValidationResult(null);
+                  setApplyResult(null);
+                  setError(null);
+                  clearValidationMarkers();
+                }}
+                onMount={(editor, monaco) => {
+                  editorRef.current = editor;
+                  monacoRef.current = monaco;
+                }}
+                options={{
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  fontSize: 14,
+                  tabSize: 2,
+                  insertSpaces: true,
+                  wordWrap: 'on',
+                  lineNumbers: 'on',
+                  folding: true,
+                  automaticLayout: true,
+                  bracketPairColorization: { enabled: true },
+                  formatOnPaste: true,
+                  formatOnType: true,
+                }}
+              />
+            </Box>
           </Box>
         </VStack>
         <ConfigurationDescription

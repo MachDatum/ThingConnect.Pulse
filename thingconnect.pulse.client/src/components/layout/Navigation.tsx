@@ -39,7 +39,7 @@ export function Navigation({ onItemClick }: NavigationProps) {
   return (
     <Box h='100%' display='flex' flexDirection='column' data-testid='navigation'>
       <Box
-        p={6}
+        m={3}
         borderBottom='1px'
         borderColor='gray.200'
         _dark={{ borderColor: 'gray.700' }}
