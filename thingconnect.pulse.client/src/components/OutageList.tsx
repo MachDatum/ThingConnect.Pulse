@@ -38,6 +38,11 @@ export function OutagesList({ outages }: OutagesListProps) {
     );
   }
 
+  function capitalizeFirstLetter(text: string) {
+    if (!text) return '';
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  }
+
   return (
     <VStack gap={4} align='stretch'>
       {outages.slice(0, 5).map((outage, index) => (
@@ -46,7 +51,9 @@ export function OutagesList({ outages }: OutagesListProps) {
             <VStack gap={2} align='stretch'>
               <HStack justify='space-between'>
                 <Text fontSize='sm' fontWeight='medium'>
-                  {formatDistanceToNow(new Date(outage.startedTs), { addSuffix: true })}
+                  {capitalizeFirstLetter(
+                    formatDistanceToNow(new Date(outage.startedTs), { addSuffix: true })
+                  )}
                 </Text>
                 <Badge colorPalette={outage.endedTs ? 'green' : 'red'} size='sm'>
                   {outage.endedTs ? 'Resolved' : 'Ongoing'}
@@ -56,11 +63,14 @@ export function OutagesList({ outages }: OutagesListProps) {
                 <Text fontSize='sm' color='gray.600'>
                   Duration: {formatDuration(outage.durationS)}
                 </Text>
-                {outage.endedTs && (
-                  <Text fontSize='sm' color='gray.600'>
-                    Ended: {formatDistanceToNow(new Date(outage.endedTs), { addSuffix: true })}
-                  </Text>
-                )}
+                <Text fontSize='sm' color='gray.600'>
+                  Ended:{' '}
+                  {outage.endedTs
+                    ? capitalizeFirstLetter(
+                        formatDistanceToNow(new Date(outage.endedTs), { addSuffix: true })
+                      )
+                    : 'Unknown'}
+                </Text>
               </HStack>
               {outage.lastError && (
                 <Text fontSize='sm' color='red.600' _dark={{ color: 'red.400' }} lineClamp={2}>

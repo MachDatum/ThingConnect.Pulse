@@ -18,7 +18,7 @@ import {
   Tabs,
   Skeleton,
 } from '@chakra-ui/react';
-import { Download, TrendingUp, AlertCircle, RefreshCw } from 'lucide-react';
+import { Download, TrendingUp, AlertCircle, RefreshCw, Zap } from 'lucide-react';
 import { Page } from '@/components/layout/Page';
 import { PageSection } from '@/components/layout/PageSection';
 
@@ -32,6 +32,7 @@ import { HistoryService } from '@/api/services/history.service';
 import { StatusService } from '@/api/services/status.service';
 import { Tooltip } from '@/components/ui/tooltip';
 import { AvailabilityStats } from '@/components/history/AvailabilityStats';
+import { OutagesTimeline } from '@/components/history/OutageTimeline';
 
 export default function History() {
   const analytics = useAnalytics();
@@ -295,7 +296,7 @@ export default function History() {
         <Tabs.List display='flex' flexDirection='row' _dark={{ bg: 'gray.700' }}>
           <Tabs.Trigger value='chart'>Availability Chart</Tabs.Trigger>
           <Tabs.Trigger value='history'>Historical Data</Tabs.Trigger>
-          <Tabs.Trigger value='outges'>Outages</Tabs.Trigger>
+          <Tabs.Trigger value='outages'>Outages</Tabs.Trigger>
         </Tabs.List>
         <Tabs.Content value='chart' flex={1} display='flex' minH={0}>
           <Card.Root flex={1} display='flex' flexDirection='column' size={'sm'}>
@@ -339,6 +340,24 @@ export default function History() {
                 pageSize={20}
                 isLoading={isHistoryDataLoading || isLiveDataLoading}
               />
+            </Card.Body>
+          </Card.Root>
+        </Tabs.Content>
+        <Tabs.Content value='outages' flex={1} display='flex' minH={0}>
+          <Card.Root flex={1} display='flex' flexDirection='column' overflow='hidden' size={'sm'}>
+            <Card.Header px={3} pt={3}>
+              <HStack gap={2}>
+                <Zap size={20} />
+                <Text fontWeight='medium' fontSize='sm'>
+                  Outage History
+                </Text>
+                <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
+                  ({selectedEndpointName})
+                </Text>
+              </HStack>
+            </Card.Header>
+            <Card.Body flex={1} display='flex' flexDirection='column' minH={0} p={3}>
+              <OutagesTimeline outages={historyData?.outages} />
             </Card.Body>
           </Card.Root>
         </Tabs.Content>
