@@ -32,7 +32,7 @@ public sealed class StatusController : ControllerBase
     {
         try
         {
-            _logger.LogInformation("Getting live status - group: {Group}, search: {Search}, page: {Page}, pageSize: {PageSize}",
+            _logger.LogInformation("Getting live status - group: {Group}, search: {Search}",
                 group, search);
 
             List<LiveStatusItemDto> result = await _statusService.GetLiveStatusAsync(group, search);

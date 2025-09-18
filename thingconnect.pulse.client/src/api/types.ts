@@ -182,3 +182,51 @@ export interface ValidationErrorsDto {
   message: string;
   errors: ValidationError[];
 }
+
+// User Management Types
+export interface UserInfo {
+  id: string;
+  username: string;
+  email: string;
+  role: 'User' | 'Administrator';
+  createdAt: string;
+  lastLoginAt?: string | null;
+  isActive: boolean;
+}
+
+export interface CreateUserRequest {
+  username: string;
+  email: string;
+  password: string;
+  role: 'User' | 'Administrator';
+}
+
+export interface UpdateUserRequest {
+  username?: string;
+  email?: string;
+  isActive?: boolean;
+}
+
+export interface ChangeRoleRequest {
+  role: 'User' | 'Administrator';
+}
+
+export interface ResetPasswordRequest {
+  newPassword: string;
+}
+
+export interface UsersListParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  role?: string;
+  isActive?: boolean;
+}
+
+export interface PagedResult<T> {
+  items: T[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+}
