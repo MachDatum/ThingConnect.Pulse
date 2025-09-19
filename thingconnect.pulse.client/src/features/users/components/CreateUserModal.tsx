@@ -98,7 +98,7 @@ export function CreateUserModal({
           </DialogHeader>
 
           <form onSubmit={handleSubmit(onSubmit)}>
-            <VStack gap={4} py={4}>
+            <VStack gap={4} pb={4} px={6} align="stretch">
               {submitError && (
                 <Alert.Root status="error" variant="subtle">
                   <Alert.Indicator />

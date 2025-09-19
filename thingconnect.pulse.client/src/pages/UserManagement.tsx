@@ -136,7 +136,7 @@ export default function UserManagement() {
       description="Manage users, roles, and permissions"
     >
       <PageContent>
-        <Container maxW="6xl" py={8}>
+        <Container maxW="6xl" h={'100%'} py={2} px={0}>
           <VStack gap={6} align="stretch">
             {/* Header */}
             <HStack justify="space-between" wrap="wrap" gap={4}>
@@ -169,6 +169,7 @@ export default function UserManagement() {
                 colorPalette="blue"
                 variant="solid"
                 disabled={loading || actionLoading}
+                size="md"
               >
                 <UserPlus size={16} />
                 Create User
@@ -177,7 +178,7 @@ export default function UserManagement() {
 
             {/* Global Error */}
             {error && (
-              <Alert.Root status="error" variant="subtle">
+              <Alert.Root status="error" variant="subtle" alignItems={'center'}>
                 <Alert.Indicator />
                 <Alert.Title>Error</Alert.Title>
                 <Alert.Description>{error}</Alert.Description>

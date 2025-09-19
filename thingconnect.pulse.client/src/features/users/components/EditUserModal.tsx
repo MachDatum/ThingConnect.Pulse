@@ -130,7 +130,7 @@ export function EditUserModal({
           </DialogHeader>
 
           <form onSubmit={handleSubmit(onSubmit)}>
-            <VStack gap={4} py={4}>
+            <VStack gap={4} pb={4} px={6} align="stretch">
               {submitError && (
                 <Alert.Root status="error" variant="subtle">
                   <Alert.Indicator />
@@ -220,6 +220,7 @@ export function EditUserModal({
                 variant="outline"
                 onClick={handleClose}
                 disabled={isSubmitting || loading}
+                size={'md'}
               >
                 Cancel
               </Button>
@@ -228,6 +229,7 @@ export function EditUserModal({
                 colorPalette="blue"
                 loading={isSubmitting || loading}
                 loadingText="Updating..."
+                size={'md'}
               >
                 Update User
               </LoadingButton>
