@@ -1,6 +1,6 @@
-import { Box, VStack, Text, Icon, Image, HStack, Badge, Button } from '@chakra-ui/react';
+import { Box, VStack, Text, Icon, Image, HStack, Button } from '@chakra-ui/react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
-import { Wifi, Activity, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import thingConnectIcon from '@/assets/thingconnect-pulse-logo.svg';
 import { Clock, Wrench, Settings, Info, Dashboard, Help, Users } from '@/icons';
 import { useAuth } from '@/features/auth/context/AuthContext';
@@ -104,7 +104,7 @@ export function Navigation({ onItemClick }: NavigationProps) {
       <Box p={4} borderTop='1px' borderColor='gray.200' _dark={{ borderColor: 'gray.700' }}>
         <VStack align='stretch' gap={4}>
           <VStack align='stretch' gap={3}>
-            <HStack gap={2} display={{ base: 'none', md: 'flex' }} data-testid='connection-status'>
+            {/* <HStack gap={2} display={{ base: 'none', md: 'flex' }} data-testid='connection-status'>
               <Wifi size={16} aria-label='Connection status' />
               <Badge colorPalette='green' variant='solid' size='sm'>
                 Connected
@@ -120,8 +120,8 @@ export function Navigation({ onItemClick }: NavigationProps) {
               >
                 Updated 2s ago
               </Text>
-            </HStack>
-            <HStack gap={2}>
+            </HStack> */}
+            {/* <HStack gap={2}>
               <Icon
                 as={Activity}
                 boxSize={4}
@@ -138,7 +138,7 @@ export function Navigation({ onItemClick }: NavigationProps) {
               >
                 System Online
               </Text>
-            </HStack>
+            </HStack> */}
           </VStack>
           <Button
             onClick={handleLogout}
