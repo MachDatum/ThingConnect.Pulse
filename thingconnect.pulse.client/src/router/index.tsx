@@ -21,6 +21,9 @@ const OnboardingPage = lazy(() => import('@/features/auth/components/OnboardingP
 // User Management
 const UserManagement = lazy(() => import('@/pages/UserManagement'));
 
+// Notification Demo
+const NotificationDemo = lazy(() => import('@/pages/NotificationDemo'));
+
 export const router = createBrowserRouter([
   // Public routes (no authentication required)
   {
@@ -122,6 +125,14 @@ export const router = createBrowserRouter([
         element: (
           <LazyWrapper>
             <Settings />
+          </LazyWrapper>
+        ),
+      },
+      {
+        path: 'notifications',
+        element: (
+          <LazyWrapper>
+            <NotificationDemo />
           </LazyWrapper>
         ),
       },

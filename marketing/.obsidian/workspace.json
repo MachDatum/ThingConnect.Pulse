@@ -1,14 +1,14 @@
 {
   "main": {
-    "id": "8ea64b001ba0fe43",
+    "id": "new-8ea64b001ba0fe43",
     "type": "split",
     "children": [
       {
-        "id": "e90d2fa11f531859",
+        "id": "new-e90d2fa11f531859",
         "type": "tabs",
         "children": [
           {
-            "id": "ffaee7d95a949b68",
+            "id": "new-ffaee7d95a949b68",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -22,7 +22,7 @@
             }
           },
           {
-            "id": "710575145be63c3e",
+            "id": "new-710575145be63c3e",
             "type": "leaf",
             "state": {
               "type": "release-notes",
@@ -40,15 +40,15 @@
     "direction": "vertical"
   },
   "left": {
-    "id": "15e6e52f3c7d19a6",
+    "id": "new-15e6e52f3c7d19a6",
     "type": "split",
     "children": [
       {
-        "id": "923db5799b9d8e22",
+        "id": "new-923db5799b9d8e22",
         "type": "tabs",
         "children": [
           {
-            "id": "2646ce294c95bd17",
+            "id": "new-2646ce294c95bd17",
             "type": "leaf",
             "state": {
               "type": "file-explorer",
@@ -61,7 +61,7 @@
             }
           },
           {
-            "id": "8d52227cce953ae3",
+            "id": "new-8d52227cce953ae3",
             "type": "leaf",
             "state": {
               "type": "search",
@@ -78,7 +78,7 @@
             }
           },
           {
-            "id": "f8b127f34f393f5a",
+            "id": "new-f8b127f34f393f5a",
             "type": "leaf",
             "state": {
               "type": "bookmarks",
@@ -94,15 +94,15 @@
     "width": 300
   },
   "right": {
-    "id": "007cfd27e771f5c0",
+    "id": "new-007cfd27e771f5c0",
     "type": "split",
     "children": [
       {
-        "id": "74bbf3acc3c67291",
+        "id": "new-74bbf3acc3c67291",
         "type": "tabs",
         "children": [
           {
-            "id": "dc71ab57dd6424b6",
+            "id": "new-dc71ab57dd6424b6",
             "type": "leaf",
             "state": {
               "type": "backlink",
@@ -121,7 +121,7 @@
             }
           },
           {
-            "id": "f9e0e87e3c76d085",
+            "id": "new-f9e0e87e3c76d085",
             "type": "leaf",
             "state": {
               "type": "outgoing-link",
@@ -135,7 +135,7 @@
             }
           },
           {
-            "id": "5333af5eb6cf230e",
+            "id": "new-5333af5eb6cf230e",
             "type": "leaf",
             "state": {
               "type": "tag",
@@ -150,7 +150,7 @@
             }
           },
           {
-            "id": "0ee162e9472a50fc",
+            "id": "new-0ee162e9472a50fc",
             "type": "leaf",
             "state": {
               "type": "outline",

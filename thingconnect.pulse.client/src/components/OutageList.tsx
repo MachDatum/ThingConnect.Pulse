@@ -1,10 +1,11 @@
-import { Text, VStack, Badge, HStack, Card } from '@chakra-ui/react';
+import { Text, VStack, Badge, HStack, Card, Skeleton, Box } from '@chakra-ui/react';
 import { CloudOff } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import type { Outage } from '@/api/types';
 
 interface OutagesListProps {
-  outages: Outage[];
+  outages: Outage[] | undefined;
+  isLoading: boolean;
 }
 
 function formatDuration(seconds?: number | null): string {
@@ -18,8 +19,8 @@ function formatDuration(seconds?: number | null): string {
   return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
 }
 
-export function OutagesList({ outages }: OutagesListProps) {
-  if (outages.length === 0) {
+export function OutagesList({ outages, isLoading }: OutagesListProps) {
+  if (outages?.length === 0) {
     return (
       <VStack
         justify='center'
@@ -38,17 +39,51 @@ export function OutagesList({ outages }: OutagesListProps) {
     );
   }
 
+  function capitalizeFirstLetter(text: string) {
+    if (!text) return '';
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  }
+
+  const sortedOutages = outages
+    ? [...outages].sort((a, b) => {
+        if (!a.endedTs && b.endedTs) return -1;
+        if (a.endedTs && !b.endedTs) return 1;
+        return new Date(b.startedTs).getTime() - new Date(a.startedTs).getTime();
+      })
+    : [];
+
+  if (isLoading) {
+    return (
+      <Box
+        height='100%'
+        display='flex'
+        alignItems='center'
+        justifyContent='center'
+        borderRadius='md'
+        borderWidth='1px'
+        bg='gray.50'
+        _dark={{ bg: 'gray.800' }}
+      >
+        <VStack w='full' px={6} gap={4}>
+          <Skeleton height='100%' width='100%' />
+        </VStack>
+      </Box>
+    );
+  }
+
   return (
     <VStack gap={4} align='stretch'>
-      {outages.slice(0, 5).map((outage, index) => (
-        <Card.Root key={`${outage.startedTs}-${index}`} variant='outline'>
-          <Card.Body>
+      {sortedOutages.map((outage, index) => (
+        <Card.Root key={`${outage.startedTs}-${index}`} size={'sm'}>
+          <Card.Body p={3}>
             <VStack gap={2} align='stretch'>
               <HStack justify='space-between'>
                 <Text fontSize='sm' fontWeight='medium'>
-                  {formatDistanceToNow(new Date(outage.startedTs), { addSuffix: true })}
+                  {capitalizeFirstLetter(
+                    formatDistanceToNow(new Date(outage.startedTs), { addSuffix: true })
+                  )}
                 </Text>
-                <Badge colorPalette={outage.endedTs ? 'gray' : 'red'} size='sm'>
+                <Badge colorPalette={outage.endedTs ? 'green' : 'red'} size='sm'>
                   {outage.endedTs ? 'Resolved' : 'Ongoing'}
                 </Badge>
               </HStack>
@@ -56,11 +91,14 @@ export function OutagesList({ outages }: OutagesListProps) {
                 <Text fontSize='sm' color='gray.600'>
                   Duration: {formatDuration(outage.durationS)}
                 </Text>
-                {outage.endedTs && (
-                  <Text fontSize='sm' color='gray.600'>
-                    Ended: {formatDistanceToNow(new Date(outage.endedTs), { addSuffix: true })}
-                  </Text>
-                )}
+                <Text fontSize='sm' color='gray.600'>
+                  Ended:{' '}
+                  {outage.endedTs
+                    ? capitalizeFirstLetter(
+                        formatDistanceToNow(new Date(outage.endedTs), { addSuffix: true })
+                      )
+                    : 'Unknown'}
+                </Text>
               </HStack>
               {outage.lastError && (
                 <Text fontSize='sm' color='red.600' _dark={{ color: 'red.400' }} lineClamp={2}>
@@ -71,11 +109,6 @@ export function OutagesList({ outages }: OutagesListProps) {
           </Card.Body>
         </Card.Root>
       ))}
-      {outages.length > 5 && (
-        <Text fontSize='sm' color='gray.500' textAlign='center'>
-          Showing 5 of {outages.length} recent outages
-        </Text>
-      )}
     </VStack>
   );
 }

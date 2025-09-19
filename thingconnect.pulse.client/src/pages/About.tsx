@@ -24,11 +24,21 @@ import {
   Instagram,
   MessageCircle,
   ExternalLink,
+  Bell,
+  RefreshCw,
 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import thingConnectLogo from '@/assets/thingconnect-logo.svg';
+import { useForceRefreshNotifications, useNotificationStats } from '@/hooks/useNotifications';
+import thingConnectLogo from '@/assets/thingconnect-pulse-logo.svg';
 
 export default function About() {
+  const { data: stats } = useNotificationStats();
+  const refreshMutation = useForceRefreshNotifications();
+
+  const handleRefreshNotifications = () => {
+    refreshMutation.mutate();
+  };
+
   return (
     <>
       <Flex direction='column' h='100vh'>
@@ -57,7 +67,7 @@ export default function About() {
           mb={8}
         >
           {/* Hero Section */}
-          <Box bg='gray.50' _dark={{ bg: 'gray.900' }} py={8}>
+          <Box bg='gray.50' _dark={{ bg: 'gray.900' }} py={6}>
             <Container maxW='5xl'>
               <VStack gap={4} textAlign='center'>
                 <Heading size='3xl' color='gray.800' _dark={{ color: 'white' }}>
@@ -68,7 +78,7 @@ export default function About() {
                   IT/OT infrastructure with ease.
                 </Text>
                 <HStack justify='center' gap={3}>
-                  <Image src={thingConnectLogo} alt='ThingConnect' h='50px' />
+                  <Image src={thingConnectLogo} alt='ThingConnect' h='50px' width={'100%'} />
                   <HStack gap={2}>
                     <Badge colorPalette='blue' variant='solid' size='sm'>
                       v1.0.0
@@ -102,8 +112,85 @@ export default function About() {
             </Container>
           </Box>
 
+          {/* Community Section */}
+          <Box py={8}>
+            <Container maxW='6xl'>
+              <VStack gap={8} textAlign='center'>
+                <Heading size='2xl' color='gray.800' _dark={{ color: 'white' }}>
+                  Join Our Community
+                </Heading>
+                <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={6}>
+                  {[
+                    {
+                      icon: MessageCircle,
+                      title: 'Discord',
+                      desc: 'Community support and real-time help',
+                      tags: ['Community Support', 'Q&A', 'General Chat', 'Networking'],
+                      link: 'https://discord.gg/ZvhWncwv3J',
+                    },
+                    {
+                      icon: MessageCircle,
+                      title: 'Reddit',
+                      desc: 'Share questions and experiences',
+                      tags: ['Discussions', 'Tips', 'Troubleshooting'],
+                      link: 'https://reddit.com',
+                    },
+                    {
+                      icon: Linkedin,
+                      title: 'LinkedIn',
+                      desc: 'Professional community for industry leaders',
+                      tags: ['Networking', 'Hiring', 'Case Studies'],
+                      link: 'https://www.linkedin.com/company/thingconnect/',
+                    },
+                    {
+                      icon: Instagram,
+                      title: 'Instagram',
+                      desc: 'Stories, highlights, and community moments',
+                      tags: ['Updates', 'Events', 'Highlights'],
+                      link: 'https://www.instagram.com/thingconnect/',
+                    },
+                  ].map((c, i) => (
+                    <Link key={i} href={c.link} target='_blank' _hover={{ textDecoration: 'none' }}>
+                      <VStack
+                        align='start'
+                        p={4}
+                        border='1px solid'
+                        borderColor='gray.200'
+                        _dark={{ borderColor: 'gray.700', bg: 'gray.800' }}
+                        bg='white'
+                        borderRadius='lg'
+                        shadow='md'
+                        transition='all 0.2s'
+                        _hover={{ shadow: 'lg', transform: 'translateY(-4px)' }}
+                        h='100%'
+                        w={'full'}
+                      >
+                        <HStack gap={3}>
+                          <Icon as={c.icon} boxSize={6} color='blue.500' />
+                          <Heading size='md' color='gray.800' _dark={{ color: 'white' }}>
+                            {c.title}
+                          </Heading>
+                        </HStack>
+                        <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.300' }}>
+                          {c.desc}
+                        </Text>
+                        <HStack wrap='wrap' gap={2} pt={2}>
+                          {c.tags.map((tag, j) => (
+                            <Badge key={j} variant='subtle' colorPalette='blue'>
+                              {tag}
+                            </Badge>
+                          ))}
+                        </HStack>
+                      </VStack>
+                    </Link>
+                  ))}
+                </Grid>
+              </VStack>
+            </Container>
+          </Box>
+
           {/* Mission Section */}
-          <Box py={12} _dark={{ bg: 'gray.800' }}>
+          <Box py={8}>
             <Container maxW='5xl'>
               <VStack gap={4} textAlign='center'>
                 <Heading size='2xl' color='gray.800' _dark={{ color: 'white' }}>
@@ -118,7 +205,7 @@ export default function About() {
           </Box>
 
           {/* Features Section */}
-          <Box bg='blue.50' _dark={{ bg: 'blue.900' }} py={12}>
+          <Box bg='blue.50' _dark={{ bg: 'blue.900' }} py={8}>
             <Container maxW='6xl'>
               <VStack gap={8}>
                 <Heading size='2xl' textAlign='center' color='gray.800' _dark={{ color: 'white' }}>
@@ -178,7 +265,7 @@ export default function About() {
           </Box>
 
           {/* Technology Stack */}
-          <Box bg='gray.50' _dark={{ bg: 'gray.800' }} py={12}>
+          <Box py={8}>
             <Container maxW='5xl'>
               <VStack gap={4} textAlign='center'>
                 <Heading size='2xl' color='gray.800' _dark={{ color: 'white' }}>
@@ -210,85 +297,137 @@ export default function About() {
             </Container>
           </Box>
 
-          {/* Community Section */}
-          <Box py={12}>
-            <Container maxW='6xl'>
-              <VStack gap={8} textAlign='center'>
-                <Heading size='2xl' color='gray.800' _dark={{ color: 'white' }}>
-                  Join Our Community
+          {/* Notification System */}
+          <Box py={8}>
+            <Container maxW='5xl'>
+              <VStack gap={6}>
+                <Heading size='2xl' textAlign='center' color='gray.800' _dark={{ color: 'white' }}>
+                  Notification System
                 </Heading>
-                <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={6}>
-                  {[
-                    {
-                      icon: MessageCircle,
-                      title: 'Discord',
-                      desc: 'Community support and real-time help',
-                      tags: ['Community Support', 'Q&A', 'General Chat', 'Networking'],
-                      link: 'https://discord.gg',
-                    },
-                    {
-                      icon: MessageCircle,
-                      title: 'Reddit',
-                      desc: 'Share questions and experiences',
-                      tags: ['Discussions', 'Tips', 'Troubleshooting'],
-                      link: 'https://reddit.com',
-                    },
-                    {
-                      icon: Linkedin,
-                      title: 'LinkedIn',
-                      desc: 'Professional community for industry leaders',
-                      tags: ['Networking', 'Hiring', 'Case Studies'],
-                      link: 'https://linkedin.com',
-                    },
-                    {
-                      icon: Instagram,
-                      title: 'Instagram',
-                      desc: 'Stories, highlights, and community moments',
-                      tags: ['Updates', 'Events', 'Highlights'],
-                      link: 'https://instagram.com',
-                    },
-                  ].map((c, i) => (
-                    <Link key={i} href={c.link} target='_blank' _hover={{ textDecoration: 'none' }}>
-                      <VStack
-                        align='start'
-                        p={4}
-                        border='1px solid'
-                        borderColor='gray.200'
-                        _dark={{ borderColor: 'gray.700', bg: 'gray.800' }}
-                        bg='white'
-                        borderRadius='lg'
-                        shadow='md'
-                        transition='all 0.2s'
-                        _hover={{ shadow: 'lg', transform: 'translateY(-4px)' }}
-                        h='100%'
-                        w={'full'}
-                      >
-                        <HStack gap={3}>
-                          <Icon as={c.icon} boxSize={6} color='blue.500' />
-                          <Heading size='md' color='gray.800' _dark={{ color: 'white' }}>
-                            {c.title}
-                          </Heading>
-                        </HStack>
-                        <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.300' }}>
-                          {c.desc}
+
+                <Grid templateColumns={{ base: '1fr', lg: 'repeat(2, 1fr)' }} gap={6} w='full'>
+                  {/* Stats Card */}
+                  <VStack
+                    align='stretch'
+                    p={6}
+                    borderRadius='lg'
+                    border='1px solid'
+                    borderColor='gray.200'
+                    _dark={{ borderColor: 'gray.600', bg: 'gray.800' }}
+                    bg='white'
+                    shadow='sm'
+                  >
+                    <HStack gap={3} mb={4}>
+                      <Box p={2} borderRadius='md' bg='blue.50' _dark={{ bg: 'blue.900' }}>
+                        <Bell size={20} color='#3182ce' />
+                      </Box>
+                      <Heading size='md' color='gray.800' _dark={{ color: 'white' }}>
+                        Notification Status
+                      </Heading>
+                    </HStack>
+
+                    <VStack align='stretch' gap={3}>
+                      <HStack justifyContent='space-between'>
+                        <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
+                          Active Notifications:
                         </Text>
-                        <HStack wrap='wrap' gap={2} pt={2}>
-                          {c.tags.map((tag, j) => (
-                            <Badge key={j} variant='subtle' colorPalette='blue'>
-                              {tag}
-                            </Badge>
-                          ))}
-                        </HStack>
-                      </VStack>
-                    </Link>
-                  ))}
+                        <Badge variant='outline' colorPalette='blue'>
+                          {stats?.activeNotifications || 0}
+                        </Badge>
+                      </HStack>
+
+                      <HStack justifyContent='space-between'>
+                        <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
+                          Unread Count:
+                        </Text>
+                        <Badge variant='solid' colorPalette={stats?.unreadNotifications ? 'red' : 'gray'}>
+                          {stats?.unreadNotifications || 0}
+                        </Badge>
+                      </HStack>
+
+                      <HStack justifyContent='space-between'>
+                        <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
+                          Last Sync:
+                        </Text>
+                        <Text fontSize='sm' color='gray.700' _dark={{ color: 'gray.300' }}>
+                          {stats?.lastFetch ? new Date(stats.lastFetch).toLocaleDateString() : 'Never'}
+                        </Text>
+                      </HStack>
+
+                      <HStack justifyContent='space-between'>
+                        <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
+                          Sync Status:
+                        </Text>
+                        <Badge
+                          variant='solid'
+                          colorPalette={stats?.lastFetchSuccess ? 'green' : 'red'}
+                        >
+                          {stats?.lastFetchSuccess ? 'Success' : 'Failed'}
+                        </Badge>
+                      </HStack>
+                    </VStack>
+                  </VStack>
+
+                  {/* Control Card */}
+                  <VStack
+                    align='stretch'
+                    p={6}
+                    borderRadius='lg'
+                    border='1px solid'
+                    borderColor='gray.200'
+                    _dark={{ borderColor: 'gray.600', bg: 'gray.800' }}
+                    bg='white'
+                    shadow='sm'
+                  >
+                    <HStack gap={3} mb={4}>
+                      <Box p={2} borderRadius='md' bg='green.50' _dark={{ bg: 'green.900' }}>
+                        <RefreshCw size={20} color='#38a169' />
+                      </Box>
+                      <Heading size='md' color='gray.800' _dark={{ color: 'white' }}>
+                        Manual Sync
+                      </Heading>
+                    </HStack>
+
+                    <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }} mb={4}>
+                      Notifications are automatically synced every 6 hours. Use the button below to trigger an immediate refresh.
+                    </Text>
+
+                    <VStack align='stretch' gap={3}>
+                      <Button
+                        onClick={handleRefreshNotifications}
+                        loading={refreshMutation.isPending}
+                        loadingText='Syncing...'
+                        colorPalette='blue'
+                        size='md'
+                      >
+                        <RefreshCw size={16} />
+                        Refresh Notifications
+                      </Button>
+
+                      {refreshMutation.isSuccess && (
+                        <Text fontSize='sm' color='green.600' _dark={{ color: 'green.400' }} textAlign='center'>
+                          Notifications refreshed successfully!
+                        </Text>
+                      )}
+
+                      {refreshMutation.isError && (
+                        <Text fontSize='sm' color='red.600' _dark={{ color: 'red.400' }} textAlign='center'>
+                          Failed to refresh notifications. Please try again.
+                        </Text>
+                      )}
+
+                      <Text fontSize='xs' color='gray.500' _dark={{ color: 'gray.500' }} textAlign='center'>
+                        Syncs from: thingconnect-pulse.s3.ap-south-1.amazonaws.com
+                      </Text>
+                    </VStack>
+                  </VStack>
                 </Grid>
               </VStack>
             </Container>
           </Box>
 
           {/* Footer Section */}
-          <Box bg='gray.50' _dark={{ bg: 'gray.800' }} py={10}>
+          <Box py={6}>
             <Container maxW='4xl'>
               <VStack gap={3} textAlign='center'>
                 <HStack justify='center' gap={2}>

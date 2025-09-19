@@ -111,7 +111,7 @@
     {
       "version": 1,
       "defaults": { "interval_seconds": 10, "timeout_ms": 1500, "retries": 1, "http": { "user_agent": "ThingConnectPulse/1.0", "expect_text": "" } },
-      "groups": [ { "id": "press", "name": "Press Shop" }, { "id": "lab", "name": "Quality Lab" } ],
+      "groups": [ { "id": "new-press", "name": "Press Shop" }, { "id": "new-lab", "name": "Quality Lab" } ],
       "targets": [
         { "type": "icmp", "host": "10.10.1.21", "name": "PLC-Press-01", "group": "press", "interval_seconds": 5 },
         { "type": "tcp", "wildcard": "10.10.1.*", "port": 5900, "name": "HMI-VNC", "group": "press" },

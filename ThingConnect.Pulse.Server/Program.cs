@@ -168,6 +168,11 @@ public class Program
             // Add log cleanup service
             builder.Services.AddHostedService<LogCleanupBackgroundService>();
 
+            // Add notification service
+            builder.Services.AddSingleton<NotificationBackgroundService>();
+            builder.Services.AddSingleton<INotificationService>(provider => provider.GetRequiredService<NotificationBackgroundService>());
+            builder.Services.AddHostedService<NotificationBackgroundService>(provider => provider.GetRequiredService<NotificationBackgroundService>());
+
             // Add CORS
             builder.Services.AddCors(options =>
             {
