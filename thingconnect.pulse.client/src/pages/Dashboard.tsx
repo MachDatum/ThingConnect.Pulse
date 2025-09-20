@@ -9,6 +9,8 @@ import type { LiveStatusParams } from '@/api/types';
 import type { LiveStatusItem } from '@/api/types';
 import { EndpointFilters } from '@/components/status/EndpointFilters';
 import { EndpointAccordion } from '@/components/status/EndpointAccordion';
+import { testId } from '@/utils/testUtils';
+import { ARIA_ROLES } from '@/utils/ariaUtils';
 
 type GroupedEndpoints =
   | LiveStatusItem[]
@@ -215,31 +217,69 @@ export default function Dashboard() {
   return (
     <Page
       title='Dashboard'
-      testId='dashboard-page'
+      testId={testId.page('dashboard')}
       description='Real-time monitoring of network endpoints'
     >
-      <VStack align='stretch' gap='2' mb='2'>
-        <Heading size='xl'>System Overview</Heading>
-        <SystemOverviewStats statusCounts={statusCounts} />
-      </VStack>
-      <EndpointFilters
-        filters={filters}
-        onFiltersChange={handleFiltersChange}
-        groups={groups}
-        groupByOptions={groupByOptions}
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        onToggleGroupBy={handleToggleGroupBy}
-        selectedGroup={selectedGroup}
-        onSelectedGroupChange={setSelectedGroup}
-      />
-      <PageSection>
-        <EndpointAccordion
-          groupedEndpoints={groupedEndpoints}
-          isLoading={isLoading}
-          groupByOptions={groupByOptions}
-        />
-      </PageSection>
+      <main role={ARIA_ROLES.MAIN} aria-label="Dashboard content">
+        <section
+          aria-labelledby="system-overview-heading"
+          data-testid={testId.custom(['system', 'overview', 'section'])}
+        >
+          <VStack align='stretch' gap='2' mb='2'>
+            <Heading
+              id="system-overview-heading"
+              size='xl'
+              role={ARIA_ROLES.HEADING}
+              aria-level={1}
+              data-testid={testId.custom(['system', 'overview', 'heading'])}
+            >
+              System Overview
+            </Heading>
+            <div data-testid={testId.custom(['system', 'stats'])}>
+              <SystemOverviewStats statusCounts={statusCounts} />
+            </div>
+          </VStack>
+        </section>
+
+        <section
+          aria-labelledby="filters-heading"
+          data-testid={testId.custom(['endpoint', 'filters', 'section'])}
+        >
+          <h2 id="filters-heading" className="sr-only">Filter and search endpoints</h2>
+          <EndpointFilters
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            groups={groups}
+            groupByOptions={groupByOptions}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            onToggleGroupBy={handleToggleGroupBy}
+            selectedGroup={selectedGroup}
+            onSelectedGroupChange={setSelectedGroup}
+          />
+        </section>
+
+        <PageSection>
+          <section
+            aria-labelledby="endpoints-heading"
+            data-testid={testId.custom(['endpoints', 'list', 'section'])}
+          >
+            <h2 id="endpoints-heading" className="sr-only">Endpoint status list</h2>
+            <div
+              data-testid={testId.custom(['endpoints', 'accordion'])}
+              role="region"
+              aria-label="Endpoint status information"
+              aria-live="polite"
+            >
+              <EndpointAccordion
+                groupedEndpoints={groupedEndpoints}
+                isLoading={isLoading}
+                groupByOptions={groupByOptions}
+              />
+            </div>
+          </section>
+        </PageSection>
+      </main>
     </Page>
   );
 }

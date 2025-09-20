@@ -1,5 +1,7 @@
 import { Box, Text, Grid, VStack, HStack } from '@chakra-ui/react';
 import { Activity, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { testId } from '@/utils/testUtils';
+import { ARIA_ROLES } from '@/utils/ariaUtils';
 
 type StatusStat = {
   icon: any;
@@ -71,40 +73,84 @@ export function SystemOverviewStats({ statusCounts }: SystemOverviewStatsProps) 
   ];
 
   return (
-    <Grid templateColumns={{ base: '1fr', md: 'repeat(2,1fr)', lg: 'repeat(4,1fr)' }} gap='6'>
-      {stats.map(stat => (
-        <Box key={stat.title} p='4' borderRadius='xl' borderWidth={1} _dark={{ bg: 'gray.800' }}>
-          <VStack align='flex-start'>
-            <HStack justifyContent={'space-between'} w={'full'}>
-              <Text fontSize='lg' fontWeight='semibold' color='gray.500'>
-                {stat.title}
-              </Text>
-              <Box>
-                <Box
-                  bg={stat.bg}
-                  color={stat.color}
-                  _dark={{ bg: stat.darkBg, color: stat.color }}
-                  boxSize='12'
-                  display='flex'
-                  alignItems='center'
-                  justifyContent='center'
-                  borderRadius='full'
-                >
-                  <stat.icon size={28} />
+    <Grid
+      templateColumns={{ base: '1fr', md: 'repeat(2,1fr)', lg: 'repeat(4,1fr)' }}
+      gap='6'
+      role="region"
+      aria-label="System status overview"
+      data-testid={testId.custom(['system', 'overview', 'grid'])}
+    >
+      {stats.map((stat) => {
+        const statKey = stat.title.toLowerCase();
+
+        return (
+          <article
+            key={stat.title}
+            data-testid={testId.card(`stat-${statKey}`)}
+            role={ARIA_ROLES.ARTICLE}
+            aria-labelledby={`stat-${statKey}-title`}
+            aria-describedby={`stat-${statKey}-description`}
+          >
+            <Box
+              p='4'
+              borderRadius='xl'
+              borderWidth={1}
+              _dark={{ bg: 'gray.800' }}
+              role={ARIA_ROLES.STATUS}
+              aria-live="polite"
+            >
+              <VStack align='flex-start'>
+                <HStack justifyContent={'space-between'} w={'full'}>
+                  <Text
+                    id={`stat-${statKey}-title`}
+                    fontSize='lg'
+                    fontWeight='semibold'
+                    color='gray.500'
+                    role={ARIA_ROLES.HEADING}
+                    aria-level={3}
+                  >
+                    {stat.title}
+                  </Text>
+                  <Box>
+                    <Box
+                      bg={stat.bg}
+                      color={stat.color}
+                      _dark={{ bg: stat.darkBg, color: stat.color }}
+                      boxSize='12'
+                      display='flex'
+                      alignItems='center'
+                      justifyContent='center'
+                      borderRadius='full'
+                      aria-hidden="true"
+                      data-testid={testId.custom(['stat', statKey, 'icon'])}
+                    >
+                      <stat.icon size={28} />
+                    </Box>
+                  </Box>
+                </HStack>
+                <Box>
+                  <Text
+                    fontSize='4xl'
+                    fontWeight='bold'
+                    color={stat.textColor}
+                    data-testid={testId.custom(['stat', statKey, 'value'])}
+                    aria-label={`${stat.value} ${stat.title.toLowerCase()}`}
+                  >
+                    {stat.value}
+                  </Text>
+                  <Text
+                    id={`stat-${statKey}-description`}
+                    fontSize='sm'
+                    color='gray.500'
+                  >
+                    {stat.subtitle}
+                  </Text>
                 </Box>
-              </Box>
-            </HStack>
-            <Box>
-              <Text fontSize='4xl' fontWeight='bold' color={stat.textColor}>
-                {stat.value}
-              </Text>
-              <Text fontSize='sm' color='gray.500'>
-                {stat.subtitle}
-              </Text>
+              </VStack>
             </Box>
-          </VStack>
-        </Box>
-      ))}
+          </article>
+        );
+      })}
     </Grid>
   );
 }

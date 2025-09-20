@@ -4,6 +4,7 @@ import { AuthProvider } from '@/features/auth/context/AuthContext';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
+import './styles/accessibility.css';
 
 // NOTE: Sentry initialization moved to useSentryConsentInit hook
 // This ensures Sentry is only initialized after authentication and with explicit consent

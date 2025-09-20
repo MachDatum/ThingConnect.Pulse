@@ -7,6 +7,8 @@ import { LoadingButton } from '@/components/ui/LoadingButton';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 import { useAuth } from '../context/AuthContext';
 import { PageLoader } from '@/components/PageLoader';
+import { testId } from '@/utils/testUtils';
+import { ariaUtils, ARIA_ROLES } from '@/utils/ariaUtils';
 
 export default function LoginPage() {
   const { login, isLoading, isAuthenticated, setupRequired } = useAuth();
@@ -14,6 +16,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Error state for ARIA
+  const errors = {
+    username: !username.trim() && error ? 'Username is required' : '',
+    password: !password.trim() && error ? 'Password is required' : '',
+    general: error
+  };
 
   // Redirect if already authenticated
   if (isAuthenticated) {
@@ -59,63 +68,107 @@ export default function LoginPage() {
 
   return (
     <AuthLayout>
-      <VStack maxW='sm' mx='auto' w='full' gap={6} align='stretch' maxH='100%' overflow='auto'>
-        <VStack gap={2} textAlign='start' w='full'>
-          <Heading size='xl' color='gray.800' fontWeight='bold'>
-            Welcome Back
-          </Heading>
-          <Text color='gray.600' fontSize='sm' fontWeight='medium'>
-            Access your network monitoring dashboard
-          </Text>
-        </VStack>
-
-        {error && (
-          <Alert.Root status='error'>
-            <Alert.Indicator />
-            <Alert.Content>
-              <Alert.Description>{error}</Alert.Description>
-            </Alert.Content>
-          </Alert.Root>
-        )}
-
-        <form onSubmit={handleSubmit} style={{ width: '100%' }}>
-          <VStack gap={4}>
-            <FormField
-              type='text'
-              placeholder='Username'
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-              disabled={isSubmitting}
-              required
-            />
-
-            <FormField>
-              <PasswordInput
-                placeholder='Password'
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                disabled={isSubmitting}
-                required
-              />
-            </FormField>
-
-            <VStack gap={4} w='full' align='start'>
-              <LoadingButton
-                type='submit'
-                w='full'
-                loading={isSubmitting}
-                loadingText='Signing in...'
+      <main
+        data-testid={testId.page('login')}
+        role={ARIA_ROLES.MAIN}
+        aria-label="User login page"
+      >
+        <VStack maxW='sm' mx='auto' w='full' gap={6} align='stretch' maxH='100%' overflow='auto'>
+          <header data-testid={testId.pageHeader('login')}>
+            <VStack gap={2} textAlign='start' w='full'>
+              <Heading
+                size='xl'
+                color='gray.800'
+                fontWeight='bold'
+                role={ARIA_ROLES.HEADING}
+                aria-level={1}
               >
-                Sign In
-              </LoadingButton>
-
-              <Text textAlign='center' w='full' color='gray.600' fontSize='sm'>
-                Need an account? Contact your system administrator.
+                Welcome Back
+              </Heading>
+              <Text color='gray.600' fontSize='sm' fontWeight='medium'>
+                Access your network monitoring dashboard
               </Text>
             </VStack>
-          </VStack>
-        </form>
-      </VStack>
+          </header>
+
+          {error && (
+            <Alert.Root
+              status='error'
+              data-testid={testId.alert('login-error')}
+              role={ARIA_ROLES.ALERT}
+              aria-live="assertive"
+            >
+              <Alert.Indicator />
+              <Alert.Content>
+                <Alert.Description>{error}</Alert.Description>
+              </Alert.Content>
+            </Alert.Root>
+          )}
+
+          <form
+            onSubmit={handleSubmit}
+            style={{ width: '100%' }}
+            data-testid={testId.form('login')}
+            role={ARIA_ROLES.FORM}
+            aria-label="Login credentials"
+            noValidate
+          >
+            <VStack gap={4}>
+              <FormField
+                fieldName="username"
+                label="Username"
+                type='text'
+                placeholder='Username'
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                disabled={isSubmitting}
+                required
+                error={errors.username}
+                {...ariaUtils.fieldProps('username', errors, true)}
+              />
+
+              <FormField
+                fieldName="password"
+                label="Password"
+                error={errors.password}
+              >
+                <PasswordInput
+                  fieldName="password"
+                  placeholder='Password'
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  disabled={isSubmitting}
+                  required
+                  {...ariaUtils.fieldProps('password', errors, true)}
+                />
+              </FormField>
+
+              <VStack gap={4} w='full' align='start'>
+                <LoadingButton
+                  type='submit'
+                  w='full'
+                  loading={isSubmitting}
+                  loadingText='Signing in...'
+                  data-testid={testId.button('login-submit')}
+                  {...ariaUtils.loadingProps(isSubmitting)}
+                >
+                  Sign In
+                </LoadingButton>
+
+                <Text
+                  textAlign='center'
+                  w='full'
+                  color='gray.600'
+                  fontSize='sm'
+                  data-testid="help-text"
+                >
+                  Need an account? Contact your system administrator.
+                </Text>
+              </VStack>
+            </VStack>
+          </form>
+        </VStack>
+      </main>
     </AuthLayout>
   );
 }
