@@ -24,6 +24,7 @@
     <PackageJsonDependenciesVisxTooltip Condition="$(PackageJsonDependenciesVisxTooltip) == ''">^3.12.0</PackageJsonDependenciesVisxTooltip>
     <PackageJsonDependenciesAxios Condition="$(PackageJsonDependenciesAxios) == ''">^1.11.0</PackageJsonDependenciesAxios>
     <PackageJsonDependenciesDateFns Condition="$(PackageJsonDependenciesDateFns) == ''">^4.1.0</PackageJsonDependenciesDateFns>
+    <PackageJsonDependenciesFramerMotion Condition="$(PackageJsonDependenciesFramerMotion) == ''">^12.23.14</PackageJsonDependenciesFramerMotion>
     <PackageJsonDependenciesLodash Condition="$(PackageJsonDependenciesLodash) == ''">^4.17.21</PackageJsonDependenciesLodash>
     <PackageJsonDependenciesLucideReact Condition="$(PackageJsonDependenciesLucideReact) == ''">^0.541.0</PackageJsonDependenciesLucideReact>
     <PackageJsonDependenciesLuxon Condition="$(PackageJsonDependenciesLuxon) == ''">^3.7.2</PackageJsonDependenciesLuxon>
@@ -36,31 +37,31 @@
     <PackageJsonDependenciesReactHookForm Condition="$(PackageJsonDependenciesReactHookForm) == ''">^7.62.0</PackageJsonDependenciesReactHookForm>
     <PackageJsonDependenciesReactIcons Condition="$(PackageJsonDependenciesReactIcons) == ''">^5.5.0</PackageJsonDependenciesReactIcons>
     <PackageJsonDependenciesReactRouterDom Condition="$(PackageJsonDependenciesReactRouterDom) == ''">^7.8.1</PackageJsonDependenciesReactRouterDom>
-    <PackageJsonDependenciesZod Condition="$(PackageJsonDependenciesZod) == ''">^4.0.17</PackageJsonDependenciesZod>
+    <PackageJsonDependenciesZod Condition="$(PackageJsonDependenciesZod) == ''">^4.1.9</PackageJsonDependenciesZod>
     <PackageJsonDevdependenciesChakraUiCli Condition="$(PackageJsonDevdependenciesChakraUiCli) == ''">^3.24.0</PackageJsonDevdependenciesChakraUiCli>
     <PackageJsonDevdependenciesEslintJs Condition="$(PackageJsonDevdependenciesEslintJs) == ''">^9.33.0</PackageJsonDevdependenciesEslintJs>
     <PackageJsonDevdependenciesTanstackEslintPluginQuery Condition="$(PackageJsonDevdependenciesTanstackEslintPluginQuery) == ''">^5.83.1</PackageJsonDevdependenciesTanstackEslintPluginQuery>
     <PackageJsonDevdependenciesTanstackReactQueryDevtools Condition="$(PackageJsonDevdependenciesTanstackReactQueryDevtools) == ''">^5.85.5</PackageJsonDevdependenciesTanstackReactQueryDevtools>
     <PackageJsonDevdependenciesTypesLodash Condition="$(PackageJsonDevdependenciesTypesLodash) == ''">^4.17.20</PackageJsonDevdependenciesTypesLodash>
     <PackageJsonDevdependenciesTypesLuxon Condition="$(PackageJsonDevdependenciesTypesLuxon) == ''">^3.7.1</PackageJsonDevdependenciesTypesLuxon>
-    <PackageJsonDevdependenciesTypesNode Condition="$(PackageJsonDevdependenciesTypesNode) == ''">^22</PackageJsonDevdependenciesTypesNode>
+    <PackageJsonDevdependenciesTypesNode Condition="$(PackageJsonDevdependenciesTypesNode) == ''">^24</PackageJsonDevdependenciesTypesNode>
     <PackageJsonDevdependenciesTypesNumeral Condition="$(PackageJsonDevdependenciesTypesNumeral) == ''">^2.0.5</PackageJsonDevdependenciesTypesNumeral>
-    <PackageJsonDevdependenciesTypesReact Condition="$(PackageJsonDevdependenciesTypesReact) == ''">^19.1.10</PackageJsonDevdependenciesTypesReact>
-    <PackageJsonDevdependenciesTypesReactDom Condition="$(PackageJsonDevdependenciesTypesReactDom) == ''">^19.1.7</PackageJsonDevdependenciesTypesReactDom>
-    <PackageJsonDevdependenciesVitejsPluginReactSwc Condition="$(PackageJsonDevdependenciesVitejsPluginReactSwc) == ''">^3.11.0</PackageJsonDevdependenciesVitejsPluginReactSwc>
-    <PackageJsonDevdependenciesEslint Condition="$(PackageJsonDevdependenciesEslint) == ''">^9.33.0</PackageJsonDevdependenciesEslint>
+    <PackageJsonDevdependenciesTypesReact Condition="$(PackageJsonDevdependenciesTypesReact) == ''">^19.1.13</PackageJsonDevdependenciesTypesReact>
+    <PackageJsonDevdependenciesTypesReactDom Condition="$(PackageJsonDevdependenciesTypesReactDom) == ''">^19.1.9</PackageJsonDevdependenciesTypesReactDom>
+    <PackageJsonDevdependenciesVitejsPluginReactSwc Condition="$(PackageJsonDevdependenciesVitejsPluginReactSwc) == ''">^4.1.0</PackageJsonDevdependenciesVitejsPluginReactSwc>
+    <PackageJsonDevdependenciesEslint Condition="$(PackageJsonDevdependenciesEslint) == ''">^9.35.0</PackageJsonDevdependenciesEslint>
     <PackageJsonDevdependenciesEslintConfigPrettier Condition="$(PackageJsonDevdependenciesEslintConfigPrettier) == ''">^10.1.8</PackageJsonDevdependenciesEslintConfigPrettier>
-    <PackageJsonDevdependenciesEslintPluginReactDom Condition="$(PackageJsonDevdependenciesEslintPluginReactDom) == ''">^1.52.3</PackageJsonDevdependenciesEslintPluginReactDom>
+    <PackageJsonDevdependenciesEslintPluginReactDom Condition="$(PackageJsonDevdependenciesEslintPluginReactDom) == ''">^1.53.1</PackageJsonDevdependenciesEslintPluginReactDom>
     <PackageJsonDevdependenciesEslintPluginReactHooks Condition="$(PackageJsonDevdependenciesEslintPluginReactHooks) == ''">^5.2.0</PackageJsonDevdependenciesEslintPluginReactHooks>
     <PackageJsonDevdependenciesEslintPluginReactRefresh Condition="$(PackageJsonDevdependenciesEslintPluginReactRefresh) == ''">^0.4.20</PackageJsonDevdependenciesEslintPluginReactRefresh>
-    <PackageJsonDevdependenciesEslintPluginReactX Condition="$(PackageJsonDevdependenciesEslintPluginReactX) == ''">^1.52.3</PackageJsonDevdependenciesEslintPluginReactX>
+    <PackageJsonDevdependenciesEslintPluginReactX Condition="$(PackageJsonDevdependenciesEslintPluginReactX) == ''">^1.53.1</PackageJsonDevdependenciesEslintPluginReactX>
     <PackageJsonDevdependenciesGlobals Condition="$(PackageJsonDevdependenciesGlobals) == ''">^16.3.0</PackageJsonDevdependenciesGlobals>
     <PackageJsonDevdependenciesHusky Condition="$(PackageJsonDevdependenciesHusky) == ''">^9.1.7</PackageJsonDevdependenciesHusky>
     <PackageJsonDevdependenciesLintStaged Condition="$(PackageJsonDevdependenciesLintStaged) == ''">^16.1.4</PackageJsonDevdependenciesLintStaged>
     <PackageJsonDevdependenciesPrettier Condition="$(PackageJsonDevdependenciesPrettier) == ''">^3.6.2</PackageJsonDevdependenciesPrettier>
-    <PackageJsonDevdependenciesTypescript Condition="$(PackageJsonDevdependenciesTypescript) == ''">~5.8.3</PackageJsonDevdependenciesTypescript>
-    <PackageJsonDevdependenciesTypescriptEslint Condition="$(PackageJsonDevdependenciesTypescriptEslint) == ''">^8.39.1</PackageJsonDevdependenciesTypescriptEslint>
-    <PackageJsonDevdependenciesVite Condition="$(PackageJsonDevdependenciesVite) == ''">^7.1.2</PackageJsonDevdependenciesVite>
+    <PackageJsonDevdependenciesTypescript Condition="$(PackageJsonDevdependenciesTypescript) == ''">~5.9.2</PackageJsonDevdependenciesTypescript>
+    <PackageJsonDevdependenciesTypescriptEslint Condition="$(PackageJsonDevdependenciesTypescriptEslint) == ''">^8.44.0</PackageJsonDevdependenciesTypescriptEslint>
+    <PackageJsonDevdependenciesVite Condition="$(PackageJsonDevdependenciesVite) == ''">^7.1.6</PackageJsonDevdependenciesVite>
     <PackageJsonDevdependenciesViteTsconfigPaths Condition="$(PackageJsonDevdependenciesViteTsconfigPaths) == ''">^5.1.4</PackageJsonDevdependenciesViteTsconfigPaths>
     <PackageJsonLintStagedTsTsx Condition="$(PackageJsonLintStagedTsTsx) == ''">[
   "eslint --fix",
