@@ -7,6 +7,7 @@ import {
   Container,
   Box,
   Alert,
+  useDisclosure,
 } from '@chakra-ui/react';
 import { UserPlus, Users } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
@@ -39,7 +40,7 @@ export default function UserManagement() {
     clearError,
   } = useUserManagement();
 
-  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const { open, onOpen, onClose } = useDisclosure();
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserInfo | null>(null);
   const [currentFilters, setCurrentFilters] = useState<UsersListParams>({ page: 1, pageSize: 20 });
@@ -120,10 +121,6 @@ export default function UserManagement() {
     setEditModalOpen(true);
   }, []);
 
-  const handleCloseCreateModal = useCallback(() => {
-    setCreateModalOpen(false);
-  }, []);
-
   const handleCloseEditModal = useCallback(() => {
     setEditModalOpen(false);
     setEditingUser(null);
@@ -165,7 +162,7 @@ export default function UserManagement() {
               </HStack>
 
               <Button
-                onClick={() => setCreateModalOpen(true)}
+                onClick={onOpen}
                 colorPalette="blue"
                 variant="solid"
                 disabled={loading || actionLoading}
@@ -211,13 +208,15 @@ export default function UserManagement() {
         </Container>
 
         {/* Modals */}
+        {open && ( 
         <CreateUserModal
-          isOpen={createModalOpen}
-          onClose={handleCloseCreateModal}
+          isOpen={open}
+          onClose={onClose}
           onCreateUser={handleCreateUser}
           loading={actionLoading}
         />
-
+        )}
+        
         <EditUserModal
           isOpen={editModalOpen}
           user={editingUser}

@@ -89,18 +89,18 @@ export function CreateUserModal({
   );
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && handleClose()}>
+    <Dialog.Root open={isOpen} onOpenChange={e => !e.open && handleClose()}>
       <Dialog.Backdrop />
       <Dialog.Positioner>
-        <DialogContent maxW="md">
+        <DialogContent maxW='md'>
           <DialogHeader>
             <DialogTitle>Create New User</DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleSubmit(onSubmit)}>
-            <VStack gap={4} pb={4} px={6} align="stretch">
+            <VStack gap={4} pb={4} px={6} align='stretch'>
               {submitError && (
-                <Alert.Root status="error" variant="subtle">
+                <Alert.Root status='error' variant='subtle'>
                   <Alert.Indicator />
                   <Alert.Title>{submitError}</Alert.Title>
                 </Alert.Root>
@@ -108,7 +108,7 @@ export function CreateUserModal({
 
               {/* Username */}
               <Field
-                label="Username"
+                label='Username'
                 errorText={errors.username?.message}
                 invalid={!!errors.username}
               >
@@ -120,19 +120,15 @@ export function CreateUserModal({
                       message: 'Username must be 256 characters or less',
                     },
                   })}
-                  placeholder="Enter username"
+                  placeholder='Enter username'
                   disabled={isSubmitting || loading}
                 />
               </Field>
 
               {/* Email */}
-              <Field
-                label="Email"
-                errorText={errors.email?.message}
-                invalid={!!errors.email}
-              >
+              <Field label='Email' errorText={errors.email?.message} invalid={!!errors.email}>
                 <Input
-                  type="email"
+                  type='email'
                   {...register('email', {
                     required: 'Email is required',
                     pattern: {
@@ -144,14 +140,14 @@ export function CreateUserModal({
                       message: 'Email must be 256 characters or less',
                     },
                   })}
-                  placeholder="Enter email address"
+                  placeholder='Enter email address'
                   disabled={isSubmitting || loading}
                 />
               </Field>
 
               {/* Password */}
               <Field
-                label="Password"
+                label='Password'
                 errorText={errors.password?.message}
                 invalid={!!errors.password}
               >
@@ -167,61 +163,55 @@ export function CreateUserModal({
                       message: 'Password must be 100 characters or less',
                     },
                   })}
-                  placeholder="Enter password"
+                  placeholder='Enter password'
                   disabled={isSubmitting || loading}
                 />
               </Field>
 
               {/* Confirm Password */}
               <Field
-                label="Confirm Password"
+                label='Confirm Password'
                 errorText={errors.confirmPassword?.message}
                 invalid={!!errors.confirmPassword}
               >
                 <PasswordInput
                   {...register('confirmPassword', {
                     required: 'Please confirm your password',
-                    validate: (value) =>
-                      value === password || 'Passwords do not match',
+                    validate: value => value === password || 'Passwords do not match',
                   })}
-                  placeholder="Confirm password"
+                  placeholder='Confirm password'
                   disabled={isSubmitting || loading}
                 />
               </Field>
 
               {/* Role */}
-              <Field
-                label="Role"
-                errorText={errors.role?.message}
-                invalid={!!errors.role}
-              >
+              <Field label='Role' errorText={errors.role?.message} invalid={!!errors.role}>
                 <NativeSelectRoot>
                   <NativeSelectField
-                    placeholder="Select role"
-                    defaultValue="User"
-                    onChange={(e) => setValue('role', e.target.value as 'User' | 'Administrator')}
-                    _disabled={isSubmitting || loading ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+                    placeholder='Select role'
+                    defaultValue='User'
+                    onChange={e => setValue('role', e.target.value as 'User' | 'Administrator')}
+                    _disabled={
+                      isSubmitting || loading ? { opacity: 0.6, cursor: 'not-allowed' } : {}
+                    }
                   >
-                    <option value="User">User</option>
-                    <option value="Administrator">Administrator</option>
+                    <option value='User'>User</option>
+                    <option value='Administrator'>Administrator</option>
                   </NativeSelectField>
                 </NativeSelectRoot>
               </Field>
             </VStack>
 
             <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={handleClose}
-                disabled={isSubmitting || loading}
-              >
+              <Button variant='outline' onClick={handleClose} disabled={isSubmitting || loading} size={'md'}>
                 Cancel
               </Button>
               <LoadingButton
-                type="submit"
-                colorPalette="blue"
+                type='submit'
+                colorPalette='blue'
                 loading={isSubmitting || loading}
-                loadingText="Creating..."
+                loadingText='Creating...'
+                size={'md'}
               >
                 Create User
               </LoadingButton>
