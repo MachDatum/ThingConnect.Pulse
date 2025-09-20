@@ -10,7 +10,7 @@ interface AuthLayoutProps {
 export function AuthLayout({ children, showBenefits = true }: AuthLayoutProps) {
   if (!showBenefits) {
     return (
-      <Box h='100vh' bg='white' w='full' fontFamily="'Open Sans', sans-serif" overflow='hidden'>
+      <Box h='100vh' bg='bg' w='full' fontFamily="'Open Sans', sans-serif" overflow='hidden'>
         <Box
           p={{ base: 8, lg: 16 }}
           display='flex'
@@ -26,7 +26,7 @@ export function AuthLayout({ children, showBenefits = true }: AuthLayoutProps) {
   }
 
   return (
-    <Box h='100vh' bg='white' w='full' fontFamily="'Open Sans', sans-serif" overflow='hidden'>
+    <Box h='100vh' bg='bg' w='full' fontFamily="'Open Sans', sans-serif" overflow='hidden'>
       <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} h='100vh'>
         <BenefitsSection />
         <Box
@@ -34,7 +34,7 @@ export function AuthLayout({ children, showBenefits = true }: AuthLayoutProps) {
           display='flex'
           flexDirection='column'
           justifyContent='center'
-          bg='white'
+          bg='bg'
           overflow='auto'
         >
           {children}

@@ -61,10 +61,10 @@ export default function LoginPage() {
     <AuthLayout>
       <VStack maxW='sm' mx='auto' w='full' gap={6} align='stretch' maxH='100%' overflow='auto'>
         <VStack gap={2} textAlign='start' w='full'>
-          <Heading size='xl' color='gray.800' fontWeight='bold'>
+          <Heading size='xl' color='fg' fontWeight='bold'>
             Welcome Back
           </Heading>
-          <Text color='gray.600' fontSize='sm' fontWeight='medium'>
+          <Text color='fg.muted' fontSize='sm' fontWeight='medium'>
             Access your network monitoring dashboard
           </Text>
         </VStack>
@@ -109,7 +109,7 @@ export default function LoginPage() {
                 Sign In
               </LoadingButton>
 
-              <Text textAlign='center' w='full' color='gray.600' fontSize='sm'>
+              <Text textAlign='center' w='full' color='fg.muted' fontSize='sm'>
                 Need an account? Contact your system administrator.
               </Text>
             </VStack>

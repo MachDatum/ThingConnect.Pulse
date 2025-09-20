@@ -36,17 +36,17 @@ export function BenefitsSection() {
       display='flex'
       flexDirection='column'
       justifyContent='center'
-      bg='gray.50'
+      bg='bg.subtle'
     >
       <VStack align='start' gap={8} maxW='lg' mx='auto'>
         <Box>
           <Box mb={6}>
             <Image src={thingConnectLogo} alt='ThingConnect' h='50px' />
           </Box>
-          <Heading size='2xl' color='gray.800' lineHeight='1.2' mb={4} fontWeight='bold'>
+          <Heading size='2xl' color='fg' lineHeight='1.2' mb={4} fontWeight='bold'>
             Network Availability Monitoring for Manufacturing Sites
           </Heading>
-          <Text color='gray.600' fontSize='lg' fontWeight='medium'>
+          <Text color='fg.muted' fontSize='lg' fontWeight='medium'>
             Monitor your critical infrastructure with real-time network availability tracking and
             automated alerting.
           </Text>
@@ -71,10 +71,10 @@ export function BenefitsSection() {
                 </Icon>
               </Box>
               <Box>
-                <Text fontWeight='bold' color='gray.800' fontSize='md'>
+                <Text fontWeight='bold' color='fg' fontSize='md'>
                   {benefit.title}
                 </Text>
-                <Text color='gray.600' fontSize='sm' fontWeight='medium'>
+                <Text color='fg.muted' fontSize='sm' fontWeight='medium'>
                   {benefit.description}
                 </Text>
               </Box>
@@ -83,17 +83,17 @@ export function BenefitsSection() {
         </VStack>
 
         <Box pt={6}>
-          <Text fontSize='sm' color='gray.600' mb={4} fontWeight='semibold'>
+          <Text fontSize='sm' color='fg.muted' mb={4} fontWeight='semibold'>
             Trusted for manufacturing excellence
           </Text>
           <VStack align='start' gap={2}>
-            <Text fontSize='sm' color='gray.600' fontWeight='medium'>
+            <Text fontSize='sm' color='fg.muted' fontWeight='medium'>
               • ICMP, TCP & HTTP endpoint monitoring
             </Text>
-            <Text fontSize='sm' color='gray.600' fontWeight='medium'>
+            <Text fontSize='sm' color='fg.muted' fontWeight='medium'>
               • 15-minute and daily data rollups
             </Text>
-            <Text fontSize='sm' color='gray.600' fontWeight='medium'>
+            <Text fontSize='sm' color='fg.muted' fontWeight='medium'>
               • 60-day data retention for trend analysis
             </Text>
           </VStack>
