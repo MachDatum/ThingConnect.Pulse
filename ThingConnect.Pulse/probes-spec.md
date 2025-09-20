@@ -214,7 +214,7 @@ public sealed class Outage
 ```json
 {
   "Monitoring": {
-    "MaxConcurrentProbes": 100
+    "MaxConcurrentProbes": 20
   }
 }
 ```

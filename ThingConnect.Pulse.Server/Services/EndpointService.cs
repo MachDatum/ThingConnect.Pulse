@@ -30,10 +30,11 @@ public sealed class EndpointService : IEndpointService
         if (endpoint == null) return null;
 
         var windowStart = DateTimeOffset.UtcNow.AddMinutes(-windowMinutes);
+        var windowStartUnix = windowStart.ToUnixTimeSeconds();
 
         // --- Fetch recent raw checks ---
         var rawChecks = await _context.CheckResultsRaw
-            .Where(c => c.EndpointId == id)
+            .Where(c => c.EndpointId == id && c.Ts >= windowStartUnix)
             .OrderByDescending(c => c.Ts)
             .Take(RecentFetchLimit)
             .ToListAsync();
@@ -46,23 +47,13 @@ public sealed class EndpointService : IEndpointService
                 RttMs = c.RttMs,
                 Error = c.Error
             })
-            .Where(r => r.Ts >= windowStart)
-            .OrderByDescending(r => r.Ts)
             .ToList();
-
         // --- Fetch outages within window ---
-        var outageRaw = await _context.Outages
-            .Where(o => o.EndpointId == id)
-            .ToListAsync();
-
-        var outages = outageRaw
-            .Where(o =>
-            {
-                var started = ConvertToDateTimeOffset(o.StartedTs);
-                var ended = o.EndedTs != null ? ConvertToDateTimeOffset(o.EndedTs) : (DateTimeOffset?)null;
-                return started <= DateTimeOffset.UtcNow && (ended == null || ended >= windowStart);
-            })
-            .OrderByDescending(o => ConvertToDateTimeOffset(o.StartedTs))
+        var outages = await _context.Outages
+            .Where(o => o.EndpointId == id &&
+                        o.StartedTs <= DateTimeOffset.UtcNow.ToUnixTimeSeconds() &&
+                        (o.EndedTs == null || o.EndedTs >= windowStartUnix))
+            .OrderByDescending(o => o.StartedTs)
             .Select(o => new OutageDto
             {
                 StartedTs = ConvertToDateTimeOffset(o.StartedTs),
@@ -70,7 +61,7 @@ public sealed class EndpointService : IEndpointService
                 DurationS = NormalizeDurationToInt(o.DurationSeconds),
                 LastError = o.LastError
             })
-            .ToList();
+            .ToListAsync();
 
         // --- Map endpoint DTO ---
         var endpointDto = MapToEndpointDto(endpoint);
