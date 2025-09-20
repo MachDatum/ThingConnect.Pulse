@@ -1,9 +1,10 @@
-import { Box, VStack, Text, Icon, Image, HStack, Badge, Button } from '@chakra-ui/react';
+import { Box, VStack, Text, Icon, Image, HStack, Menu, Portal } from '@chakra-ui/react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
-import { Wifi, Activity, LogOut } from 'lucide-react';
+import { LogOut, ChevronDown } from 'lucide-react';
 import thingConnectIcon from '@/assets/thingconnect-pulse-logo.svg';
 import { Clock, Wrench, Settings, Info, Dashboard, Help, Users } from '@/icons';
 import { useAuth } from '@/features/auth/context/AuthContext';
+import { Avatar } from '../ui/avatar';
 interface NavigationProps {
   onItemClick?: () => void;
 }
@@ -103,7 +104,7 @@ export function Navigation({ onItemClick }: NavigationProps) {
       </VStack>
       <Box p={4} borderTop='1px' borderColor='gray.200' _dark={{ borderColor: 'gray.700' }}>
         <VStack align='stretch' gap={4}>
-          <VStack align='stretch' gap={3}>
+          {/* <VStack align='stretch' gap={3}>
             <HStack gap={2} display={{ base: 'none', md: 'flex' }} data-testid='connection-status'>
               <Wifi size={16} aria-label='Connection status' />
               <Badge colorPalette='green' variant='solid' size='sm'>
@@ -139,23 +140,48 @@ export function Navigation({ onItemClick }: NavigationProps) {
                 System Online
               </Text>
             </HStack>
-          </VStack>
-          <Button
-            onClick={handleLogout}
-            size='sm'
-            variant='ghost'
-            colorPalette='gray'
-            justifyContent='flex-start'
-            w='full'
-            _hover={{ bg: 'gray.100', _dark: { bg: 'gray.700' } }}
-            data-testid='logout-button'
-            px='0'
-          >
-            <LogOut size={16} />
-            <Text fontSize='sm' fontWeight='medium' letterSpacing='0.025em' lineHeight='1.2'>
-              Logout
-            </Text>
-          </Button>
+          </VStack> */}
+          <Menu.Root>
+            <Menu.Trigger
+              cursor='pointer'
+              px={2}
+              py={1}
+              borderRadius='md'
+              _hover={{
+                bg: 'gray.300',
+              }}
+              _dark={{
+                _hover: {
+                  bg: 'gray.700',
+                },
+              }}
+            >
+              <HStack justifyContent='space-between'>
+                <HStack key={user?.username} gap={2}>
+                  <Avatar size='sm' name={user?.username} _dark={{ bg: 'bg' }} />
+                  <VStack align='start' gap={0}>
+                    <Text fontSize='sm' fontWeight='medium' lineHeight='1.2'>
+                      {user?.username}
+                    </Text>
+                    <Text fontSize='xs' color='gray.500' _dark={{ color: 'gray.400' }}>
+                      {user?.role}
+                    </Text>
+                  </VStack>
+                </HStack>
+                <Icon as={ChevronDown} boxSize={4} />
+              </HStack>
+            </Menu.Trigger>
+            <Portal>
+              <Menu.Positioner>
+                <Menu.Content minW='3xs' p={1.5} borderRadius='8px'>
+                  <Menu.Item value='logout' onSelect={handleLogout}>
+                    <Icon as={LogOut} boxSize={4} mr={3} />
+                    Log out
+                  </Menu.Item>
+                </Menu.Content>
+              </Menu.Positioner>
+            </Portal>
+          </Menu.Root>
         </VStack>
       </Box>
     </Box>
