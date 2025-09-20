@@ -109,9 +109,9 @@ export default function LoginPage() {
                 Sign In
               </LoadingButton>
 
-              <Text textAlign='center' w='full' color='fg.muted' fontSize='sm'>
+              {/* <Text textAlign='center' w='full' color='fg.muted' fontSize='sm'>
                 Need an account? Contact your system administrator.
-              </Text>
+              </Text> */}
             </VStack>
           </VStack>
         </form>
