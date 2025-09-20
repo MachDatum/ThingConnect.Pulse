@@ -1,9 +1,7 @@
 import { useMemo } from 'react';
 import { Box, Text, VStack, Skeleton } from '@chakra-ui/react';
-import { ParentSize } from '@visx/responsive';
-import { Group } from '@visx/group';
-import { AxisLeft, AxisBottom } from '@visx/axis';
-import { scaleBand, scaleLinear } from '@visx/scale';
+import { Chart, useChart } from '@chakra-ui/charts';
+import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from 'recharts';
 import type { HistoryResponse } from '@/api/types';
 import type { BucketType } from '@/types/bucket';
 import { CloudOff } from 'lucide-react';
@@ -18,36 +16,41 @@ export interface AvailabilityChartProps {
 
 export function AvailabilityChart({ data, bucket, isLoading }: AvailabilityChartProps) {
   const chartData = useMemo(() => {
-    if (!data) return null;
+    if (!data) return [];
     switch (bucket) {
       case 'raw':
         return data.raw.map(check => ({
-          xaxis: new Date(check.ts).toLocaleTimeString('en-US', {
+          label: new Date(check.ts).toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit',
           }),
-          yaxis: check.status === 'up' ? 100 : 0,
+          uptime: check.status === 'up' ? 100 : 0,
         }));
       case '15m':
         return data.rollup15m.map(bucket => ({
-          xaxis: new Date(bucket.bucketTs).toLocaleTimeString('en-US', {
+          label: new Date(bucket.bucketTs).toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit',
           }),
-          yaxis: bucket.upPct,
+          uptime: bucket.upPct,
         }));
       case 'daily':
         return data.rollupDaily.map(bucket => ({
-          xaxis: new Date(bucket.bucketDate).toLocaleDateString('en-US', {
+          label: new Date(bucket.bucketDate).toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
           }),
-          yaxis: bucket.upPct,
+          uptime: bucket.upPct,
         }));
       default:
         return [];
     }
   }, [data, bucket]);
+
+  const chart = useChart({
+    data: chartData,
+    series: [{ name: 'uptime', color: 'blue.500' }],
+  });
 
   if (chartData?.length === 0) {
     return (
@@ -92,92 +95,38 @@ export function AvailabilityChart({ data, bucket, isLoading }: AvailabilityChart
     );
   }
 
-  const margin = { top: 20, right: 30, bottom: 40, left: 70 };
-
   return (
-    <Box flex={1} minH={0} w='full' h='full' position='relative'>
-      <ParentSize>
-        {({ width, height }) => {
-          const xMax = width - margin.left - margin.right;
-          const yMax = height - margin.top - margin.bottom;
-
-          const xScale = scaleBand({
-            range: [0, xMax],
-            domain: chartData?.map(d => d.xaxis) ?? [],
-            padding: 0.2,
-          });
-
-          const yScale = scaleLinear<number>({
-            range: [yMax, 0],
-            domain: [0, 100],
-          });
-
-          return (
-            <svg width={width} height={height}>
-              <Group left={margin.left} top={margin.top}>
-                {chartData?.map((d, i) => {
-                  const barWidth = xScale.bandwidth();
-                  const barHeight = yMax - (yScale(d.yaxis) ?? 0);
-                  const x = xScale(d.xaxis) ?? 0;
-                  const y = yMax - barHeight;
-                  return (
-                    <rect
-                      key={`bar-${i}`}
-                      x={x}
-                      y={y}
-                      width={barWidth}
-                      height={barHeight}
-                      fill='#3182ce'
-                    />
-                  );
-                })}
-
-                <AxisLeft
-                  scale={yScale}
-                  tickFormat={d => `${d}%`}
-                  stroke='#718096'
-                  tickStroke='transparent'
-                  tickLabelProps={{
-                    fill: '#718096',
-                    textAnchor: 'end',
-                    dx: -4,
-                    style: {
-                      fontSize: '12px',
-                    },
-                  }}
-                />
-
-                {/* Y-axis label */}
-                <text
-                  x={-margin.left + 15}
-                  y={yMax / 2}
-                  style={{ fontSize: '14px' }}
-                  fill='#718096'
-                  textAnchor='middle'
-                  transform={`rotate(-90, ${-margin.left + 15}, ${yMax / 2})`}
-                >
-                  Uptime %
-                </text>
-
-                <AxisBottom
-                  top={yMax}
-                  scale={xScale}
-                  stroke='#718096'
-                  tickStroke='#718096'
-                  tickFormat={() => ''}
-                  tickLabelProps={{
-                    fill: '#718096',
-                    textAnchor: 'middle',
-                    style: {
-                      fontSize: '12px',
-                    },
-                  }}
-                />
-              </Group>
-            </svg>
-          );
-        }}
-      </ParentSize>
-    </Box>
+    <Chart.Root chart={chart} w='100%' h='100%'>
+      <BarChart data={chart.data}>
+        <CartesianGrid stroke={chart.color('border.muted')} vertical={false} />
+        <XAxis axisLine={true} tickLine={false} dataKey={chart.key('label')} tick={false} />
+        <YAxis
+          label={{ value: 'Uptime %', angle: -90, position: 'insideLeft' }}
+          axisLine={false}
+          tickLine={false}
+          domain={[0, 100]}
+          ticks={[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]}
+          tickFormatter={v => `${v}%`}
+        />
+        <Tooltip
+          content={({ active, payload, label }) => {
+            if (active && payload && payload.length) {
+              const uptime = payload[0].payload.uptime;
+              return (
+                <Box bg='gray.700' color='white' p={2} borderRadius='md'>
+                  <Text fontSize='sm'>{`Time: ${label}`}</Text>
+                  <Text fontSize='sm'>{`Uptime: ${uptime.toFixed(3)}%`}</Text>
+                </Box>
+              );
+            }
+            return null;
+          }}
+        />
+        {chart.series.map(s => (
+          <Bar key={s.name} dataKey={chart.key(s.name)} fill={chart.color(s.color)} />
+        ))}
+        <YAxis />
+      </BarChart>
+    </Chart.Root>
   );
 }

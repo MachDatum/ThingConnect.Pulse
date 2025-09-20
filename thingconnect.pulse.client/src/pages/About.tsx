@@ -30,6 +30,7 @@ import {
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useForceRefreshNotifications, useNotificationStats } from '@/hooks/useNotifications';
 import thingConnectLogo from '@/assets/thingconnect-pulse-logo.svg';
+import { Discord } from '@/icons/Discord';
 
 export default function About() {
   const { data: stats } = useNotificationStats();
@@ -122,7 +123,7 @@ export default function About() {
                 <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={6}>
                   {[
                     {
-                      icon: MessageCircle,
+                      icon: Discord,
                       title: 'Discord',
                       desc: 'Community support and real-time help',
                       tags: ['Community Support', 'Q&A', 'General Chat', 'Networking'],
@@ -133,7 +134,7 @@ export default function About() {
                       title: 'Reddit',
                       desc: 'Share questions and experiences',
                       tags: ['Discussions', 'Tips', 'Troubleshooting'],
-                      link: 'https://reddit.com',
+                      link: 'https://www.reddit.com/r/thingconnectio/',
                     },
                     {
                       icon: Linkedin,
@@ -340,7 +341,10 @@ export default function About() {
                         <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
                           Unread Count:
                         </Text>
-                        <Badge variant='solid' colorPalette={stats?.unreadNotifications ? 'red' : 'gray'}>
+                        <Badge
+                          variant='solid'
+                          colorPalette={stats?.unreadNotifications ? 'red' : 'gray'}
+                        >
                           {stats?.unreadNotifications || 0}
                         </Badge>
                       </HStack>
@@ -350,7 +354,9 @@ export default function About() {
                           Last Sync:
                         </Text>
                         <Text fontSize='sm' color='gray.700' _dark={{ color: 'gray.300' }}>
-                          {stats?.lastFetch ? new Date(stats.lastFetch).toLocaleDateString() : 'Never'}
+                          {stats?.lastFetch
+                            ? new Date(stats.lastFetch).toLocaleDateString()
+                            : 'Never'}
                         </Text>
                       </HStack>
 
@@ -389,7 +395,8 @@ export default function About() {
                     </HStack>
 
                     <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }} mb={4}>
-                      Notifications are automatically synced every 6 hours. Use the button below to trigger an immediate refresh.
+                      Notifications are automatically synced every 6 hours. Use the button below to
+                      trigger an immediate refresh.
                     </Text>
 
                     <VStack align='stretch' gap={3}>
@@ -405,18 +412,33 @@ export default function About() {
                       </Button>
 
                       {refreshMutation.isSuccess && (
-                        <Text fontSize='sm' color='green.600' _dark={{ color: 'green.400' }} textAlign='center'>
+                        <Text
+                          fontSize='sm'
+                          color='green.600'
+                          _dark={{ color: 'green.400' }}
+                          textAlign='center'
+                        >
                           Notifications refreshed successfully!
                         </Text>
                       )}
 
                       {refreshMutation.isError && (
-                        <Text fontSize='sm' color='red.600' _dark={{ color: 'red.400' }} textAlign='center'>
+                        <Text
+                          fontSize='sm'
+                          color='red.600'
+                          _dark={{ color: 'red.400' }}
+                          textAlign='center'
+                        >
                           Failed to refresh notifications. Please try again.
                         </Text>
                       )}
 
-                      <Text fontSize='xs' color='gray.500' _dark={{ color: 'gray.500' }} textAlign='center'>
+                      <Text
+                        fontSize='xs'
+                        color='gray.500'
+                        _dark={{ color: 'gray.500' }}
+                        textAlign='center'
+                      >
                         Syncs from: thingconnect-pulse.s3.ap-south-1.amazonaws.com
                       </Text>
                     </VStack>

@@ -30,6 +30,9 @@ export function OutagesList({ outages, isLoading }: OutagesListProps) {
         gap={1}
         py={5}
         h='100%'
+        bg='gray.50'
+        _dark={{ bg: 'gray.800' }}
+        borderRadius='md'
       >
         <CloudOff size={'40px'} />
         <Text textAlign='center' color='gray.500'>
