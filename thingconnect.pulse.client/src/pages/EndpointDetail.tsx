@@ -38,6 +38,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { RecentChecksTable } from '@/components/RecentChecksTable';
 import { OutagesList } from '@/components/OutageList';
+import { PageSection } from '@/components/layout/PageSection';
 
 function getStatusColor(status: string) {
   switch (status.toLowerCase()) {
@@ -339,8 +340,7 @@ export default function EndpointDetail() {
       </Card.Root>
 
       {/* Statistics */}
-      <VStack w='full' align='self-start'>
-        <Heading size='md'>Recent Performance</Heading>
+      <PageSection title={'Recent Performance'} collapsible={true}>
         <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} gap={2} w='full'>
           {stats.map(stat => (
             <Stat.Root key={stat.key} borderWidth='1px' p='3' rounded='md' h='full'>
@@ -367,7 +367,8 @@ export default function EndpointDetail() {
             </Stat.Root>
           ))}
         </SimpleGrid>
-      </VStack>
+      </PageSection>
+
       {/* Recent Checks and Outages */}
       <SimpleGrid columns={{ base: 1, md: 1, lg: 2 }} gap={2} w='full' h='full' overflow='auto'>
         {/* Recent Checks */}
