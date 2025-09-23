@@ -37,6 +37,7 @@ public sealed class GroupDto
     public string Name { get; set; } = default!;
     public string? ParentId { get; set; }
     public string? Color { get; set; }
+    public int? SortOrder { get; set; }
 }
 
 public sealed class PageMetaDto

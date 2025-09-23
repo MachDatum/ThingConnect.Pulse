@@ -1,7 +1,35 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 using ThingConnect.Pulse.Server.Data;
 
 namespace ThingConnect.Pulse.Server.Models;
+
+/// <summary>
+/// Custom validation attribute that allows null values but validates non-null values against a regex pattern.
+/// </summary>
+public sealed class OptionalRegularExpressionAttribute : ValidationAttribute
+{
+    private readonly Regex _regex;
+
+    public OptionalRegularExpressionAttribute(string pattern)
+    {
+        _regex = new Regex(pattern, RegexOptions.Compiled);
+    }
+
+    public override bool IsValid(object? value)
+    {
+        // Allow null values (optional field)
+        if (value == null)
+            return true;
+
+        // Allow empty strings (optional field)
+        if (value is string str && string.IsNullOrEmpty(str))
+            return true;
+
+        // Validate non-empty strings against the pattern
+        return value is string stringValue && _regex.IsMatch(stringValue);
+    }
+}
 
 public class ConfigurationValidationException : Exception
 {
@@ -91,7 +119,7 @@ public sealed class GroupSection
 
     public string? ParentId { get; set; }
 
-    [RegularExpression("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$", ErrorMessage = "Color must be a valid hex color code")]
+    [OptionalRegularExpression("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$", ErrorMessage = "Color must be a valid hex color code")]
     public string? Color { get; set; }
 
     public int? SortOrder { get; set; }

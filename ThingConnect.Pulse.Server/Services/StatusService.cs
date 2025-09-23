@@ -53,9 +53,10 @@ public sealed class StatusService : IStatusService
         // Get total count for pagination
         int totalCount = await query.CountAsync();
 
-        // Apply pagination
+        // Apply pagination with proper group sorting
         List<Data.Endpoint> endpoints = await query
-        .OrderBy(e => e.GroupId)
+        .OrderBy(e => e.Group.SortOrder ?? int.MaxValue)
+        .ThenBy(e => e.Group.Name)
         .ThenBy(e => e.Name)
         .ToListAsync();
 
@@ -119,7 +120,8 @@ public sealed class StatusService : IStatusService
 
         List<Group> groups = await _context.Groups
             .AsNoTracking()
-            .OrderBy(g => g.Name)
+            .OrderBy(g => g.SortOrder ?? int.MaxValue)
+            .ThenBy(g => g.Name)
             .ToListAsync();
 
         // Cache for 5 minutes since groups don't change frequently
@@ -248,7 +250,8 @@ public sealed class StatusService : IStatusService
                 Id = endpoint.Group.Id,
                 Name = endpoint.Group.Name,
                 ParentId = endpoint.Group.ParentId,
-                Color = endpoint.Group.Color
+                Color = endpoint.Group.Color,
+                SortOrder = endpoint.Group.SortOrder
             },
             Type = endpoint.Type.ToString().ToLower(),
             Host = endpoint.Host,

@@ -39,8 +39,8 @@
           },
           "name": { "type": "string", "minLength": 1 },
           "parent_id": { "type": ["string", "null"] },
-          "color": { "type": "string", "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" },
-          "sort_order": { "type": ["integer", "string"] }
+          "color": { "type": ["string", "null"], "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" },
+          "sort_order": { "type": ["integer", "string", "null"] }
         },
         "additionalProperties": false
       }
