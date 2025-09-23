@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Box, Button, HStack, Input, Text, VStack } from '@chakra-ui/react';
+import { Box, Button, HStack, Text, VStack } from '@chakra-ui/react';
 import { Calendar } from 'lucide-react';
+import { DateTimePicker } from './common/DateTimePicker';
 
 export interface DateRange {
   from: string;
@@ -16,44 +17,27 @@ export interface DateRangePickerProps {
 export function DateRangePicker({ value, onChange, disabled = false }: DateRangePickerProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const handleFromChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onChange({
-      ...value,
-      from: event.target.value,
-    });
-  };
-
-  const handleToChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onChange({
-      ...value,
-      to: event.target.value,
-    });
-  };
-
   const setQuickRange = (hours: number) => {
     const now = new Date();
     const from = new Date(now.getTime() - hours * 60 * 60 * 1000);
 
+    const format = (date: Date): string => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+
     onChange({
-      from: formatDateForInput(from),
-      to: formatDateForInput(now),
+      from: format(from),
+      to: format(now),
     });
-  };
-
-  const formatDateForInput = (date: Date): string => {
-    // Format for HTML datetime-local input: YYYY-MM-DDTHH:MM
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
   const formatDisplayDate = (dateTimeLocal: string): string => {
     if (!dateTimeLocal) return '';
-
     const date = new Date(dateTimeLocal);
     return date.toLocaleString('en-US', {
       month: 'short',
@@ -127,11 +111,11 @@ export function DateRangePicker({ value, onChange, disabled = false }: DateRange
                 >
                   From
                 </Text>
-                <Input
-                  type='datetime-local'
+                <DateTimePicker
                   value={value.from}
-                  onChange={handleFromChange}
-                  size='sm'
+                  onChange={(val: any) => onChange({ ...value, from: val })}
+                  placeholder='Select start date'
+                  disabled={disabled}
                 />
               </Box>
 
@@ -145,7 +129,12 @@ export function DateRangePicker({ value, onChange, disabled = false }: DateRange
                 >
                   To
                 </Text>
-                <Input type='datetime-local' value={value.to} onChange={handleToChange} size='sm' />
+                <DateTimePicker
+                  value={value.to}
+                  onChange={(val: any) => onChange({ ...value, to: val })}
+                  placeholder='Select end date'
+                  disabled={disabled}
+                />
               </Box>
             </VStack>
 
