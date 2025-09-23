@@ -296,6 +296,9 @@ public sealed class ConfigurationService : IConfigurationService
                 existingEndpoint.Retries = endpoint.Retries;
                 existingEndpoint.HttpPath = endpoint.HttpPath;
                 existingEndpoint.HttpMatch = endpoint.HttpMatch;
+                existingEndpoint.Enabled = endpoint.Enabled;
+                existingEndpoint.Notes = endpoint.Notes;
+                existingEndpoint.ExpectedRttMs = endpoint.ExpectedRttMs;
                 updatedCount++;
             }
             else
@@ -377,7 +380,10 @@ public sealed class ConfigurationService : IConfigurationService
                     existingEndpoint.TimeoutMs != endpoint.TimeoutMs ||
                     existingEndpoint.Retries != endpoint.Retries ||
                     existingEndpoint.HttpPath != endpoint.HttpPath ||
-                    existingEndpoint.HttpMatch != endpoint.HttpMatch)
+                    existingEndpoint.HttpMatch != endpoint.HttpMatch ||
+                    existingEndpoint.Enabled != endpoint.Enabled ||
+                    existingEndpoint.Notes != endpoint.Notes ||
+                    existingEndpoint.ExpectedRttMs != endpoint.ExpectedRttMs)
                 {
                     updatedCount++;
                 }
