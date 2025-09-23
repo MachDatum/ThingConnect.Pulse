@@ -16,10 +16,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           type={showPassword ? 'text' : 'password'}
           pr='3rem'
           size='md'
-          borderColor='gray.400'
-          color='gray.800'
           _placeholder={{ color: 'gray.500', fontWeight: 'medium' }}
-          _focus={{ borderColor: '#076bb3', boxShadow: '0 0 0 1px #076bb3' }}
           {...props}
         />
         <Button

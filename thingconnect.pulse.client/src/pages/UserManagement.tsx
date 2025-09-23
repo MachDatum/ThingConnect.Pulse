@@ -152,7 +152,7 @@ export default function UserManagement() {
     >
       <PageContent>
         <Container maxW='6xl' h={'100%'} py={2} px={0}>
-          <VStack gap={6} align='stretch'>
+          <VStack gap={4} align='stretch'>
             {/* Header */}
             <HStack justify='space-between' wrap='wrap' gap={4}>
               <HStack gap={3}>

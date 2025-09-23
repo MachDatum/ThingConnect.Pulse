@@ -203,10 +203,15 @@ export function CreateUserModal({
             </VStack>
 
             <DialogFooter>
-              <Button variant='outline' onClick={handleClose} disabled={isSubmitting || loading} size={'md'}>
+              <Button
+                variant='outline'
+                onClick={handleClose}
+                disabled={isSubmitting || loading}
+                size={'md'}
+              >
                 Cancel
               </Button>
-              <LoadingButton
+              <Button
                 type='submit'
                 colorPalette='blue'
                 loading={isSubmitting || loading}
@@ -214,7 +219,7 @@ export function CreateUserModal({
                 size={'md'}
               >
                 Create User
-              </LoadingButton>
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
