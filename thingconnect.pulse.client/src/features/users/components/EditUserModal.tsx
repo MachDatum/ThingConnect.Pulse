@@ -14,7 +14,6 @@ import {
 } from '@chakra-ui/react';
 import { useState, useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { LoadingButton } from '@/components/ui/LoadingButton';
 import { Field } from '@/components/ui/field';
 import type { UserInfo, UpdateUserRequest } from '@/api/types';
 

@@ -2,7 +2,6 @@ import {
   HStack,
   Input,
   Icon,
-  Box,
   Portal,
   Select,
   createListCollection,

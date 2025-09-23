@@ -57,10 +57,6 @@ export function UserList({
     }
   };
 
-  const getStatusBadgeColor = (isActive: boolean) => {
-    return isActive ? 'green' : 'red';
-  };
-
   if (error) {
     return (
       <Alert.Root status='error' variant='subtle'>
