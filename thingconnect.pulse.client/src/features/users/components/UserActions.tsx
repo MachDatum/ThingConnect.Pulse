@@ -276,7 +276,7 @@ export function UserActions({
             </DialogHeader>
 
             <form onSubmit={handleSubmitPassword(handleResetPassword)}>
-              <VStack gap={4} py={4}>
+              <VStack gap={4} pb={4} px={6} align="stretch">
                 {error && (
                   <Alert.Root status="error" variant="subtle">
                     <Alert.Indicator />
@@ -328,6 +328,7 @@ export function UserActions({
                   variant="outline"
                   onClick={() => setResetPasswordDialogOpen(false)}
                   disabled={actionLoading}
+                  size={'md'}
                 >
                   Cancel
                 </Button>
@@ -336,6 +337,7 @@ export function UserActions({
                   colorPalette="blue"
                   loading={actionLoading}
                   loadingText="Resetting..."
+                  size={'md'}
                 >
                   Reset Password
                 </LoadingButton>
@@ -364,7 +366,7 @@ export function UserActions({
             </DialogHeader>
 
             <form onSubmit={handleSubmitRole(handleChangeRole)}>
-              <VStack gap={4} py={4}>
+              <VStack gap={4} pb={4} px={6} align="stretch">
                 {error && (
                   <Alert.Root status="error" variant="subtle">
                     <Alert.Indicator />
@@ -400,6 +402,7 @@ export function UserActions({
                   variant="outline"
                   onClick={() => setChangeRoleDialogOpen(false)}
                   disabled={actionLoading}
+                  size={'md'}
                 >
                   Cancel
                 </Button>
@@ -408,6 +411,7 @@ export function UserActions({
                   colorPalette="blue"
                   loading={actionLoading}
                   loadingText="Changing..."
+                  size={'md'}
                 >
                   Change Role
                 </LoadingButton>

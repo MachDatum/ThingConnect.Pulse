@@ -7,6 +7,7 @@ import {
   Container,
   Box,
   Alert,
+  useDisclosure,
 } from '@chakra-ui/react';
 import { UserPlus, Users } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
@@ -39,7 +40,7 @@ export default function UserManagement() {
     clearError,
   } = useUserManagement();
 
-  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const { open, onOpen, onClose } = useDisclosure();
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserInfo | null>(null);
   const [currentFilters, setCurrentFilters] = useState<UsersListParams>({ page: 1, pageSize: 20 });
@@ -48,7 +49,7 @@ export default function UserManagement() {
   useEffect(() => {
     analytics.trackPageView('User Management', {
       view_type: 'admin_panel',
-      section: 'user_management'
+      section: 'user_management',
     });
   }, [analytics]);
 
@@ -65,63 +66,77 @@ export default function UserManagement() {
     setCurrentFilters(prev => ({ ...prev, page }));
   }, []);
 
-  const handleCreateUser = useCallback(async (request: any) => {
-    await createUser(request);
-    analytics.track('User Created', {
-      user_role: request.role,
-      created_by: currentUser?.id
-    });
-  }, [createUser, analytics, currentUser]);
+  const handleCreateUser = useCallback(
+    async (request: any) => {
+      await createUser(request);
+      analytics.track('User Created', {
+        user_role: request.role,
+        created_by: currentUser?.id,
+      });
+    },
+    [createUser, analytics, currentUser]
+  );
 
-  const handleUpdateUser = useCallback(async (id: string, request: any) => {
-    await updateUser(id, request);
-    analytics.track('User Updated', {
-      user_id: id,
-      updated_by: currentUser?.id
-    });
-  }, [updateUser, analytics, currentUser]);
+  const handleUpdateUser = useCallback(
+    async (id: string, request: any) => {
+      await updateUser(id, request);
+      analytics.track('User Updated', {
+        user_id: id,
+        updated_by: currentUser?.id,
+      });
+    },
+    [updateUser, analytics, currentUser]
+  );
 
-  const handleDeleteUser = useCallback(async (id: string) => {
-    await deleteUser(id);
-    analytics.track('User Deleted', {
-      user_id: id,
-      deleted_by: currentUser?.id
-    });
-  }, [deleteUser, analytics, currentUser]);
+  const handleDeleteUser = useCallback(
+    async (id: string) => {
+      await deleteUser(id);
+      analytics.track('User Deleted', {
+        user_id: id,
+        deleted_by: currentUser?.id,
+      });
+    },
+    [deleteUser, analytics, currentUser]
+  );
 
-  const handleChangeRole = useCallback(async (id: string, request: any) => {
-    await changeUserRole(id, request);
-    analytics.track('User Role Changed', {
-      user_id: id,
-      new_role: request.role,
-      changed_by: currentUser?.id
-    });
-  }, [changeUserRole, analytics, currentUser]);
+  const handleChangeRole = useCallback(
+    async (id: string, request: any) => {
+      await changeUserRole(id, request);
+      analytics.track('User Role Changed', {
+        user_id: id,
+        new_role: request.role,
+        changed_by: currentUser?.id,
+      });
+    },
+    [changeUserRole, analytics, currentUser]
+  );
 
-  const handleResetPassword = useCallback(async (id: string, request: any) => {
-    await resetUserPassword(id, request);
-    analytics.track('User Password Reset', {
-      user_id: id,
-      reset_by: currentUser?.id
-    });
-  }, [resetUserPassword, analytics, currentUser]);
+  const handleResetPassword = useCallback(
+    async (id: string, request: any) => {
+      await resetUserPassword(id, request);
+      analytics.track('User Password Reset', {
+        user_id: id,
+        reset_by: currentUser?.id,
+      });
+    },
+    [resetUserPassword, analytics, currentUser]
+  );
 
-  const handleToggleStatus = useCallback(async (id: string, isActive: boolean) => {
-    await toggleUserStatus(id, isActive);
-    analytics.track('User Status Changed', {
-      user_id: id,
-      new_status: isActive ? 'active' : 'inactive',
-      changed_by: currentUser?.id
-    });
-  }, [toggleUserStatus, analytics, currentUser]);
+  const handleToggleStatus = useCallback(
+    async (id: string, isActive: boolean) => {
+      await toggleUserStatus(id, isActive);
+      analytics.track('User Status Changed', {
+        user_id: id,
+        new_status: isActive ? 'active' : 'inactive',
+        changed_by: currentUser?.id,
+      });
+    },
+    [toggleUserStatus, analytics, currentUser]
+  );
 
   const handleEditUser = useCallback((user: UserInfo) => {
     setEditingUser(user);
     setEditModalOpen(true);
-  }, []);
-
-  const handleCloseCreateModal = useCallback(() => {
-    setCreateModalOpen(false);
   }, []);
 
   const handleCloseEditModal = useCallback(() => {
@@ -131,29 +146,24 @@ export default function UserManagement() {
 
   return (
     <Page
-      title="User Management"
-      testId="user-management-page"
-      description="Manage users, roles, and permissions"
+      title='User Management'
+      testId='user-management-page'
+      description='Manage users, roles, and permissions'
     >
       <PageContent>
-        <Container maxW="6xl" py={8}>
-          <VStack gap={6} align="stretch">
+        <Container maxW='6xl' h={'100%'} py={2} px={0}>
+          <VStack gap={4} align='stretch'>
             {/* Header */}
-            <HStack justify="space-between" wrap="wrap" gap={4}>
+            <HStack justify='space-between' wrap='wrap' gap={4}>
               <HStack gap={3}>
-                <Box
-                  p={3}
-                  borderRadius="lg"
-                  bg="blue.50"
-                  _dark={{ bg: "blue.900" }}
-                >
-                  <Icon as={Users} boxSize={6} color="blue.500" />
+                <Box p={3} borderRadius='lg' bg='blue.50' _dark={{ bg: 'blue.900' }}>
+                  <Icon as={Users} boxSize={6} color='blue.500' />
                 </Box>
-                <VStack align="start" gap={1}>
-                  <Heading size="xl" color="gray.800" _dark={{ color: "white" }}>
+                <VStack align='start' gap={1}>
+                  <Heading size='xl' color='gray.800' _dark={{ color: 'white' }}>
                     User Management
                   </Heading>
-                  <HStack gap={2} color="gray.600" _dark={{ color: "gray.400" }}>
+                  <HStack gap={2} color='gray.600' _dark={{ color: 'gray.400' }}>
                     <Icon as={Users} boxSize={4} />
                     {users && (
                       <span>
@@ -165,10 +175,11 @@ export default function UserManagement() {
               </HStack>
 
               <Button
-                onClick={() => setCreateModalOpen(true)}
-                colorPalette="blue"
-                variant="solid"
+                onClick={onOpen}
+                colorPalette='blue'
+                variant='solid'
                 disabled={loading || actionLoading}
+                size='md'
               >
                 <UserPlus size={16} />
                 Create User
@@ -177,21 +188,18 @@ export default function UserManagement() {
 
             {/* Global Error */}
             {error && (
-              <Alert.Root status="error" variant="subtle">
+              <Alert.Root status='error' variant='subtle' alignItems={'center'}>
                 <Alert.Indicator />
                 <Alert.Title>Error</Alert.Title>
                 <Alert.Description>{error}</Alert.Description>
-                <Button variant="outline" size="sm" onClick={clearError}>
+                <Button variant='outline' size='sm' onClick={clearError}>
                   Dismiss
                 </Button>
               </Alert.Root>
             )}
 
             {/* Filters */}
-            <UserFilters
-              onFilterChange={handleFilterChange}
-              loading={loading}
-            />
+            <UserFilters onFilterChange={handleFilterChange} loading={loading} />
 
             {/* User List */}
             <UserList
@@ -210,12 +218,14 @@ export default function UserManagement() {
         </Container>
 
         {/* Modals */}
-        <CreateUserModal
-          isOpen={createModalOpen}
-          onClose={handleCloseCreateModal}
-          onCreateUser={handleCreateUser}
-          loading={actionLoading}
-        />
+        {open && (
+          <CreateUserModal
+            isOpen={open}
+            onClose={onClose}
+            onCreateUser={handleCreateUser}
+            loading={actionLoading}
+          />
+        )}
 
         <EditUserModal
           isOpen={editModalOpen}
