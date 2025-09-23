@@ -51,7 +51,7 @@ export function StatusTable({ items, isLoading }: StatusTableProps) {
 
     void navigate(`/endpoints/${id}`);
   };
-  console.log('isLoading in StatusTable:', items);
+
   return (
     <Box borderRadius='md' overflow='hidden'>
       <Table.Root size='md' borderWidth={0} width='full'>

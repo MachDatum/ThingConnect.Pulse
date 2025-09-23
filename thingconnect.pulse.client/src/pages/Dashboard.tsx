@@ -9,6 +9,7 @@ import type { LiveStatusParams } from '@/api/types';
 import type { LiveStatusItem } from '@/api/types';
 import { EndpointFilters } from '@/components/status/EndpointFilters';
 import { EndpointAccordion } from '@/components/status/EndpointAccordion';
+import { useGroupsQuery } from '@/hooks/useGroupsQuery';
 
 type GroupedEndpoints =
   | LiveStatusItem[]
@@ -19,6 +20,7 @@ export default function Dashboard() {
   const analytics = useAnalytics();
   const [filters, setFilters] = useState<LiveStatusParams>({});
   const [selectedGroup, setSelectedGroup] = useState<string | undefined>(undefined);
+  const { data: groupsData = [] } = useGroupsQuery();
 
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -166,20 +168,9 @@ export default function Dashboard() {
     return Object.keys(finalResult).length > 0 ? finalResult : filteredItems;
   }, [data?.items, groupByOptions, searchTerm, filters.group]);
 
-  // Extract unique groups for filter dropdown
   const groups = useMemo(() => {
-    if (!data?.items) return [];
-    const groupMap = new Map<string, { id: string; name: string }>();
-
-    data.items.forEach(item => {
-      const g = item.endpoint.group;
-      if (g?.id) {
-        groupMap.set(g.id, { id: g.id, name: g.name });
-      }
-    });
-
-    return Array.from(groupMap.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [data?.items]);
+    return groupsData.sort((a, b) => a.name.localeCompare(b.name));
+  }, [groupsData]);
 
   // Count status totals
   const statusCounts = useMemo(() => {
