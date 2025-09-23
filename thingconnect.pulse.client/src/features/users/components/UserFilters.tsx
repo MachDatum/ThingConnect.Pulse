@@ -1,13 +1,14 @@
 import {
   HStack,
   Input,
-  Button,
   Icon,
-  IconButton,
   Box,
-  NativeSelect,
+  Portal,
+  Select,
+  createListCollection,
+  InputGroup,
 } from '@chakra-ui/react';
-import { Search, X, Filter } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import type { UsersListParams } from '@/api/types';
 
@@ -26,110 +27,109 @@ export function UserFilters({ onFilterChange, loading = false }: UserFiltersProp
       page: 1, // Reset to first page when filtering
     };
 
-    if (search.trim()) {
-      filters.search = search.trim();
-    }
+    if (search.trim()) filters.search = search.trim();
 
-    if (role) {
-      filters.role = role;
-    }
-
-    if (isActive !== '') {
-      filters.isActive = isActive === 'true';
-    }
+    if (role) filters.role = role;
+    if (isActive !== '') filters.isActive = isActive === 'true';
 
     onFilterChange(filters);
   }, [search, role, isActive, onFilterChange]);
-
-  const handleClearFilters = useCallback(() => {
-    setSearch('');
-    setRole('');
-    setIsActive('');
-    onFilterChange({ page: 1 });
-  }, [onFilterChange]);
-
-  const hasFilters = search.trim() || role || isActive !== '';
-
   return (
-    <Box p={4} bg="white" _dark={{ bg: "gray.800", borderColor: "gray.700" }} borderRadius="lg" border="1px solid" borderColor="gray.200">
-      <HStack gap={4} wrap="wrap">
+    <Box p={4} borderRadius='lg' border='1px solid' borderColor='gray.200'>
+      <HStack gap={4}>
         {/* Search Input */}
-        <HStack flex="1" minW="200px">
-          <Box pos="relative" flex="1">
-            <Input
-              placeholder="Search by username or email..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleFilterChange()}
-              pl={10}
-              _disabled={loading ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
-            />
-            <Icon
-              as={Search}
-              pos="absolute"
-              left={3}
-              top="50%"
-              transform="translateY(-50%)"
-              color="gray.400"
-              boxSize={4}
-            />
-          </Box>
-        </HStack>
+        <InputGroup startElement={<Icon as={Search} left={3} color='gray.400' boxSize={4} />}>
+          <Input
+            placeholder='Search by username or email...'
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleFilterChange()}
+            pl={10}
+            _disabled={loading ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+            size='sm'
+          />
+        </InputGroup>
 
         {/* Role Filter */}
-        <NativeSelect.Root width="150px">
-          <NativeSelect.Field
-            placeholder="All Roles"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            _disabled={loading ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
-          >
-            <option value="">All Roles</option>
-            <option value="Administrator">Administrator</option>
-            <option value="User">User</option>
-          </NativeSelect.Field>
-        </NativeSelect.Root>
+        <Select.Root
+          collection={roleOptions}
+          value={[role]}
+          onValueChange={e => setRole(e.value[0] ?? '')}
+          size='sm'
+          disabled={loading}
+        >
+          <Select.HiddenSelect />
+          <Select.Control>
+            <Select.Trigger>
+              <Select.ValueText placeholder='All Roles' />
+            </Select.Trigger>
+            <Select.IndicatorGroup>
+              <Select.ClearTrigger />
+              <Select.Indicator />
+            </Select.IndicatorGroup>
+          </Select.Control>
+          <Portal>
+            <Select.Positioner>
+              <Select.Content>
+                {roleOptions.items.map(opt => (
+                  <Select.Item key={opt.value} item={opt}>
+                    {opt.label}
+                    <Select.ItemIndicator />
+                  </Select.Item>
+                ))}
+              </Select.Content>
+            </Select.Positioner>
+          </Portal>
+        </Select.Root>
 
         {/* Status Filter */}
-        <NativeSelect.Root width="150px">
-          <NativeSelect.Field
-            placeholder="All Status"
-            value={isActive}
-            onChange={(e) => setIsActive(e.target.value)}
-            _disabled={loading ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
-          >
-            <option value="">All Status</option>
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
-          </NativeSelect.Field>
-        </NativeSelect.Root>
-
-        {/* Filter Button */}
-        <Button
-          onClick={handleFilterChange}
-          colorPalette="blue"
-          variant="solid"
-          size="md"
-          _disabled={loading ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+        <Select.Root
+          collection={statusOptions}
+          value={[isActive]}
+          onValueChange={e => setIsActive(e.value[0] ?? '')}
+          size='sm'
+          disabled={loading}
         >
-          <Filter size={16} />
-          Filter
-        </Button>
-
-        {/* Clear Filters Button */}
-        {hasFilters && (
-          <IconButton
-            onClick={handleClearFilters}
-            variant="outline"
-            colorPalette="gray"
-            size="md"
-            _disabled={loading ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
-            aria-label="Clear filters"
-          >
-            <X size={16} />
-          </IconButton>
-        )}
+          <Select.HiddenSelect />
+          <Select.Control>
+            <Select.Trigger>
+              <Select.ValueText placeholder='All Status' />
+            </Select.Trigger>
+            <Select.IndicatorGroup>
+              <Select.ClearTrigger />
+              <Select.Indicator />
+            </Select.IndicatorGroup>
+          </Select.Control>
+          <Portal>
+            <Select.Positioner>
+              <Select.Content>
+                {statusOptions.items.map(opt => (
+                  <Select.Item key={opt.value} item={opt}>
+                    {opt.label}
+                  </Select.Item>
+                ))}
+              </Select.Content>
+            </Select.Positioner>
+          </Portal>
+        </Select.Root>
       </HStack>
     </Box>
   );
 }
+
+/* Collections for Select */
+const roleOptions = createListCollection({
+  items: [
+    { label: 'All Roles', value: '' },
+    { label: 'Administrator', value: 'Administrator' },
+    { label: 'User', value: 'User' },
+  ],
+});
+
+const statusOptions = createListCollection({
+  items: [
+    { label: 'All Status', value: '' },
+    { label: 'Active', value: 'true' },
+    { label: 'Inactive', value: 'false' },
+  ],
+});
