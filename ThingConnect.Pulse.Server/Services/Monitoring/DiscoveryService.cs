@@ -6,7 +6,7 @@ using ThingConnect.Pulse.Server.Data;
 namespace ThingConnect.Pulse.Server.Services.Monitoring;
 
 /// <summary>
-/// Implementation of discovery service for expanding network targets.
+/// Implementation of discovery service for expanding network targets, now supporting IPv6.
 /// </summary>
 public sealed class DiscoveryService : IDiscoveryService
 {
@@ -24,45 +24,67 @@ public sealed class DiscoveryService : IDiscoveryService
 
     public IEnumerable<string> ExpandCidr(string cidr)
     {
-        Match match = CidrRegex.Match(cidr);
-        if (!match.Success)
+        // IPv4 CIDR
+        Match matchV4 = CidrRegex.Match(cidr);
+        if (matchV4.Success)
         {
-            _logger.LogWarning("Invalid CIDR format: {Cidr}", cidr);
+            string baseIp = matchV4.Groups[1].Value;
+            int prefixLength = int.Parse(matchV4.Groups[2].Value);
+
+            if (prefixLength < 0 || prefixLength > 32)
+            {
+                _logger.LogWarning("Invalid CIDR prefix length: {PrefixLength}", prefixLength);
+                yield break;
+            }
+
+            if (!IPAddress.TryParse(baseIp, out IPAddress? ipAddress))
+            {
+                _logger.LogWarning("Invalid IP address in CIDR: {BaseIp}", baseIp);
+                yield break;
+            }
+
+            byte[] addressBytes = ipAddress.GetAddressBytes();
+            uint addressInt = BitConverter.ToUInt32(addressBytes.Reverse().ToArray(), 0);
+            int hostBits = 32 - prefixLength;
+            uint hostCount = (uint)(1 << hostBits);
+            uint networkAddress = addressInt & (0xFFFFFFFF << hostBits);
+
+            uint startAddress = networkAddress + 1;
+            uint endAddress = networkAddress + hostCount - 1;
+
+            for (uint address = startAddress; address < endAddress && address > networkAddress; address++)
+            {
+                byte[] bytes = BitConverter.GetBytes(address).Reverse().ToArray();
+                yield return new IPAddress(bytes).ToString();
+            }
+
             yield break;
         }
 
-        string baseIp = match.Groups[1].Value;
-        int prefixLength = int.Parse(match.Groups[2].Value);
-
-        if (prefixLength < 0 || prefixLength > 32)
+        // IPv6 CIDR (simple support: returns base address; full enumeration can be huge)
+        var ipv6Match = Regex.Match(cidr, @"^([0-9a-fA-F:]+)(?:%(\w+))?/(\d{1,3})$");
+        if (ipv6Match.Success)
         {
-            _logger.LogWarning("Invalid CIDR prefix length: {PrefixLength}", prefixLength);
+            string baseIp = ipv6Match.Groups[1].Value;
+            string? zone = ipv6Match.Groups[2].Success ? ipv6Match.Groups[2].Value : null;
+            int prefixLength = int.Parse(ipv6Match.Groups[3].Value);
+
+            if (!IPAddress.TryParse(baseIp, out IPAddress? ipAddress) || ipAddress.AddressFamily != AddressFamily.InterNetworkV6)
+            {
+                _logger.LogWarning("Invalid IPv6 address in CIDR: {BaseIp}", baseIp);
+                yield break;
+            }
+
+            // Only return base address + zone
+            if (!string.IsNullOrEmpty(zone))
+                yield return $"{ipAddress}%{zone}";
+            else
+                yield return ipAddress.ToString();
+
             yield break;
         }
 
-        if (!IPAddress.TryParse(baseIp, out IPAddress? ipAddress))
-        {
-            _logger.LogWarning("Invalid IP address in CIDR: {BaseIp}", baseIp);
-            yield break;
-        }
-
-        byte[] addressBytes = ipAddress.GetAddressBytes();
-        uint addressInt = BitConverter.ToUInt32(addressBytes.Reverse().ToArray(), 0);
-
-        int hostBits = 32 - prefixLength;
-        uint hostCount = (uint)(1 << hostBits);
-        uint networkAddress = addressInt & (0xFFFFFFFF << hostBits);
-
-        // Skip network and broadcast addresses for practical use
-        uint startAddress = networkAddress + 1;
-        uint endAddress = networkAddress + hostCount - 1;
-
-        for (uint address = startAddress; address < endAddress && address > networkAddress; address++)
-        {
-            byte[] bytes = BitConverter.GetBytes(address).Reverse().ToArray();
-            var ip = new IPAddress(bytes);
-            yield return ip.ToString();
-        }
+        _logger.LogWarning("Invalid CIDR format: {Cidr}", cidr);
     }
 
     public IEnumerable<string> ExpandWildcard(string wildcard, int startRange = 1, int endRange = 254)
@@ -96,8 +118,12 @@ public sealed class DiscoveryService : IDiscoveryService
         {
             IPAddress[] addresses = await Dns.GetHostAddressesAsync(hostname);
             return addresses
-                .Where(addr => addr.AddressFamily == AddressFamily.InterNetwork) // IPv4 only for now
-                .Select(addr => addr.ToString())
+                .Select(addr =>
+                {
+                    if (addr.AddressFamily == AddressFamily.InterNetworkV6 && addr.ScopeId != 0)
+                        return $"{addr}%{addr.ScopeId}";
+                    return addr.ToString();
+                })
                 .ToList();
         }
         catch (Exception ex)
