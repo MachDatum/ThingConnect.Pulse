@@ -153,6 +153,9 @@ public sealed class MonitoringBackgroundService : BackgroundService
         foreach (Data.Endpoint? endpoint in endpoints)
         {
             int intervalMs = endpoint.IntervalSeconds * 1000;
+            double jitterPercent = 0.1; // ±10% Calculate jittered interval
+            int jitterOffsetMs = (int)(intervalMs * ((Random.Shared.NextDouble() * 2 - 1) * jitterPercent));
+            int jitteredIntervalMs = intervalMs + jitterOffsetMs;
 
             if (_endpointTimers.TryGetValue(endpoint.Id, out Timer? existingTimer))
             {
@@ -165,20 +168,19 @@ public sealed class MonitoringBackgroundService : BackgroundService
                     await Task.Delay(100); // Brief delay to let current execution complete
                 }
 
-                // Restart with new interval
-                existingTimer.Change(TimeSpan.Zero, TimeSpan.FromMilliseconds(intervalMs));
+                // Restart timer with jittered interval
+                existingTimer.Change(TimeSpan.Zero, TimeSpan.FromMilliseconds(jitteredIntervalMs));
             }
             else
             {
-                // Create new timer for new endpoint
                 var timer = new Timer(
                     callback: async _ => await ProbeEndpointAsync(endpoint.Id),
                     state: null,
-                    dueTime: TimeSpan.Zero, // Start immediately
-                    period: TimeSpan.FromMilliseconds(intervalMs));
+                    dueTime: TimeSpan.Zero,
+                    period: TimeSpan.FromMilliseconds(jitteredIntervalMs));
 
                 _endpointTimers.TryAdd(endpoint.Id, timer);
-                _logger.LogInformation("Started monitoring endpoint: {EndpointId} ({Name}) every {IntervalSeconds}s",
+                _logger.LogInformation("Started monitoring endpoint: {EndpointId} ({Name}) every {IntervalSeconds}s (jitter applied)",
                     endpoint.Id, endpoint.Name, endpoint.IntervalSeconds);
             }
         }
