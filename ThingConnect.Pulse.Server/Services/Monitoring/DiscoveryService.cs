@@ -12,7 +12,10 @@ public sealed class DiscoveryService : IDiscoveryService
 {
     private readonly ILogger<DiscoveryService> _logger;
 
-    private static readonly Regex CidrRegex = new(@"^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/(\d{1,2})$",
+    // Regex for CIDR parsing
+    private static readonly Regex Ipv6CidrRegex = new Regex(@"^([0-9a-fA-F:]+)(?:/([0-9]{1,3}))?$",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    private static readonly Regex Ipv4CidrRegex = new Regex(@"^(\d{1,3}(?:\.\d{1,3}){3})(?:/([0-9]{1,2}))?$",
         RegexOptions.Compiled);
     private static readonly Regex WildcardRegex = new(@"^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.\*$",
         RegexOptions.Compiled);
@@ -25,7 +28,7 @@ public sealed class DiscoveryService : IDiscoveryService
     public IEnumerable<string> ExpandCidr(string cidr)
     {
         // IPv4 CIDR
-        Match matchV4 = CidrRegex.Match(cidr);
+        Match matchV4 = Ipv4CidrRegex.Match(cidr);
         if (matchV4.Success)
         {
             string baseIp = matchV4.Groups[1].Value;
@@ -61,26 +64,14 @@ public sealed class DiscoveryService : IDiscoveryService
             yield break;
         }
 
-        // IPv6 CIDR (simple support: returns base address; full enumeration can be huge)
-        var ipv6Match = Regex.Match(cidr, @"^([0-9a-fA-F:]+)(?:%(\w+))?/(\d{1,3})$");
-        if (ipv6Match.Success)
+        // IPv6 CIDR using helper expander
+        Match matchV6 = Ipv6CidrRegex.Match(cidr);
+        if (matchV6.Success)
         {
-            string baseIp = ipv6Match.Groups[1].Value;
-            string? zone = ipv6Match.Groups[2].Success ? ipv6Match.Groups[2].Value : null;
-            int prefixLength = int.Parse(ipv6Match.Groups[3].Value);
-
-            if (!IPAddress.TryParse(baseIp, out IPAddress? ipAddress) || ipAddress.AddressFamily != AddressFamily.InterNetworkV6)
+            foreach (var ip in Ipv6CidrExpander.Expand(cidr))
             {
-                _logger.LogWarning("Invalid IPv6 address in CIDR: {BaseIp}", baseIp);
-                yield break;
+                yield return ip;
             }
-
-            // Only return base address + zone
-            if (!string.IsNullOrEmpty(zone))
-                yield return $"{ipAddress}%{zone}";
-            else
-                yield return ipAddress.ToString();
-
             yield break;
         }
 
@@ -148,7 +139,7 @@ public sealed class DiscoveryService : IDiscoveryService
             catch (Exception ex)
             {
                 dynamic targetStr = target?.ToString() ?? "null";
-                Microsoft.Extensions.Logging.LoggerExtensions.LogError(_logger, ex, "Failed to expand target: " + targetStr);
+                _logger.LogError(ex, "Failed to expand target: {Target}", targetStr);
             }
         }
 
@@ -234,4 +225,65 @@ public sealed class DiscoveryService : IDiscoveryService
 
         return endpoint;
     }
+
+    private sealed class NetworkRange
+    {
+        public string BaseAddress { get; }
+        public int PrefixLength { get; }
+
+        public NetworkRange(string baseAddress, int prefixLength)
+        {
+            BaseAddress = baseAddress;
+            PrefixLength = prefixLength;
+        }
+    }
+
+ private sealed class Ipv6CidrExpander
+{
+    public static IEnumerable<string> Expand(string cidr)
+    {
+        var match = Ipv6CidrRegex.Match(cidr);
+        if (!match.Success)
+            throw new ArgumentException($"Invalid IPv6 CIDR: {cidr}");
+
+        string baseAddress = match.Groups[1].Value;
+        int prefixLength = match.Groups[2].Success ? int.Parse(match.Groups[2].Value) : 64;
+
+        if (!IPAddress.TryParse(baseAddress, out IPAddress? ipAddress) || ipAddress.AddressFamily != AddressFamily.InterNetworkV6)
+            throw new ArgumentException($"Invalid IPv6 address: {baseAddress}");
+
+        string zone = null;
+        // handle zone if specified (e.g., fe80::1%eth0/64)
+        int percentIndex = baseAddress.IndexOf('%');
+        if (percentIndex >= 0)
+        {
+            zone = baseAddress.Substring(percentIndex + 1);
+            baseAddress = baseAddress.Substring(0, percentIndex);
+            ipAddress = IPAddress.Parse(baseAddress);
+        }
+
+        if (prefixLength == 128)
+        {
+            yield return !string.IsNullOrEmpty(zone) ? $"{ipAddress}%{zone}" : ipAddress.ToString();
+        }
+        else if (prefixLength == 127)
+        {
+            byte[] bytes = ipAddress.GetAddressBytes();
+            yield return !string.IsNullOrEmpty(zone) ? $"{ipAddress}%{zone}" : ipAddress.ToString();
+
+            bytes[15] = (byte)(bytes[15] + 1);
+            var secondAddress = new IPAddress(bytes);
+            yield return !string.IsNullOrEmpty(zone) ? $"{secondAddress}%{zone}" : secondAddress.ToString();
+        }
+        else if (prefixLength == 64)
+        {
+            yield return !string.IsNullOrEmpty(zone) ? $"{ipAddress}%{zone}" : ipAddress.ToString();
+        }
+        else
+        {
+            yield return !string.IsNullOrEmpty(zone) ? $"{ipAddress}%{zone}" : ipAddress.ToString();
+        }
+    }
+}
+
 }
