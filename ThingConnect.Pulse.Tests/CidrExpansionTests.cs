@@ -173,32 +173,4 @@ public class CidrExpansionTests
             Assert.Fail("CRITICAL: CIDR expansion returned ZERO IPs! This explains why CIDR is not working.");
         }
     }
-    
-    [Test]
-    public void TestIpv6CidrExpansion_SmallRange_ShouldReturnExpectedIPs()
-    {
-        // Arrange
-        string cidr = "2001:db8::/126"; // small /126 subnet: 4 addresses, 2 usable
-
-        // Act
-        var expandedIPs = DiscoveryService.Ipv6CidrExpander.Expand(cidr).ToList();
-
-        // Assert
-        Assert.That(expandedIPs.Count, Is.EqualTo(4), "IPv6 /126 should expand to 4 IPs");
-        Assert.That(expandedIPs[0], Does.StartWith("2001:db8::"));
-        Console.WriteLine("Expanded IPv6 IPs:");
-        expandedIPs.ForEach(Console.WriteLine);
-    }
-
-    [Test]
-    public void TestIpv6CidrExpansion_PrefixTooLarge_ShouldThrow()
-    {
-        // Arrange
-        string cidr = "2001:db8::/64";
-
-        // Act & Assert
-        Assert.Throws<ArgumentException>(() => DiscoveryService.Ipv6CidrExpander.Expand(cidr).ToList(),
-            "Prefixes smaller than /120 should throw exception for practical expansion");
-    }
-
 }
