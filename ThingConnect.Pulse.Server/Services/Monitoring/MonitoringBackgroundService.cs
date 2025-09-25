@@ -124,12 +124,12 @@ public sealed class MonitoringBackgroundService : BackgroundService
         _logger.LogInformation("Monitoring background service stopped");
     }
 
-    private static readonly double JitterPercent = 0.1; // ±10%
+    private static readonly double jitterPercent = 0.1; // ±10%
 
-    private int GetJitteredIntervalMs(int baseIntervalMs)
+    private int GetJitteredIntervalMs(int intervalMs)
     {
-        double jitterOffset = (Random.Shared.NextDouble() * 2 - 1) * baseIntervalMs * JitterPercent;
-        return baseIntervalMs + (int)jitterOffset;
+        double jitterOffset = (Random.Shared.NextDouble() * 2 - 1) * intervalMs * jitterPercent;
+        return intervalMs + (int)jitterOffset;
     }
 
     private async Task RefreshEndpointsAsync(CancellationToken cancellationToken)
@@ -160,8 +160,8 @@ public sealed class MonitoringBackgroundService : BackgroundService
         // Add or update timers for current endpoints
         foreach (Data.Endpoint? endpoint in endpoints)
         {
-            int IntervalMs = endpoint.IntervalSeconds * 1000;
-            int jitteredIntervalMs = GetJitteredIntervalMs(IntervalMs);
+            int intervalMs = endpoint.IntervalSeconds * 1000;
+            int jitteredIntervalMs = GetJitteredIntervalMs(intervalMs);
 
             if (_endpointTimers.TryGetValue(endpoint.Id, out Timer? existingTimer))
             {
@@ -187,7 +187,7 @@ public sealed class MonitoringBackgroundService : BackgroundService
 
                 _endpointTimers.TryAdd(endpoint.Id, timer);
                 _logger.LogInformation("Started monitoring endpoint: {EndpointId} ({Name}) every {IntervalSeconds}s ±{JitterPercent:P}, first probe in {DueTimeMs}ms",
-                    endpoint.Id, endpoint.Name, endpoint.IntervalSeconds, JitterPercent, dueTimeMs);
+                    endpoint.Id, endpoint.Name, endpoint.IntervalSeconds, jitterPercent, dueTimeMs);
             }
         }
 
