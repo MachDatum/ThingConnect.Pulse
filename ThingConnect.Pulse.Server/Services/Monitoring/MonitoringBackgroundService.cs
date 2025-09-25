@@ -124,6 +124,14 @@ public sealed class MonitoringBackgroundService : BackgroundService
         _logger.LogInformation("Monitoring background service stopped");
     }
 
+    private static readonly double JitterPercent = 0.1; // ±10%
+
+    private int GetJitteredIntervalMs(int baseIntervalMs)
+    {
+        double jitterOffset = (Random.Shared.NextDouble() * 2 - 1) * baseIntervalMs * JitterPercent;
+        return baseIntervalMs + (int)jitterOffset;
+    }
+
     private async Task RefreshEndpointsAsync(CancellationToken cancellationToken)
     {
         using IServiceScope scope = _serviceProvider.CreateScope();
@@ -152,36 +160,34 @@ public sealed class MonitoringBackgroundService : BackgroundService
         // Add or update timers for current endpoints
         foreach (Data.Endpoint? endpoint in endpoints)
         {
-            int intervalMs = endpoint.IntervalSeconds * 1000;
-            double jitterPercent = 0.1; // ±10% Calculate jittered interval
-            int jitterOffsetMs = (int)(intervalMs * ((Random.Shared.NextDouble() * 2 - 1) * jitterPercent));
-            int jitteredIntervalMs = intervalMs + jitterOffsetMs;
+            int IntervalMs = endpoint.IntervalSeconds * 1000;
+            int jitteredIntervalMs = GetJitteredIntervalMs(IntervalMs);
 
             if (_endpointTimers.TryGetValue(endpoint.Id, out Timer? existingTimer))
             {
-                // Stop timer to prevent race condition, then restart with new interval
+                // Stop timer to prevent race condition
                 existingTimer.Change(Timeout.Infinite, Timeout.Infinite);
 
-                // Wait briefly if probe is currently executing to avoid immediate restart
                 if (_probeExecuting.TryGetValue(endpoint.Id, out bool isExecuting) && isExecuting)
-                {
-                    await Task.Delay(100); // Brief delay to let current execution complete
-                }
+                    await Task.Delay(100); // Wait for current probe
 
                 // Restart timer with jittered interval
                 existingTimer.Change(TimeSpan.Zero, TimeSpan.FromMilliseconds(jitteredIntervalMs));
             }
             else
             {
+                // Randomize first execution to avoid spikes on startup
+                int dueTimeMs = Random.Shared.Next(0, jitteredIntervalMs);
+
                 var timer = new Timer(
                     callback: async _ => await ProbeEndpointAsync(endpoint.Id),
                     state: null,
-                    dueTime: TimeSpan.Zero,
+                    dueTime: TimeSpan.FromMilliseconds(dueTimeMs),
                     period: TimeSpan.FromMilliseconds(jitteredIntervalMs));
 
                 _endpointTimers.TryAdd(endpoint.Id, timer);
-                _logger.LogInformation("Started monitoring endpoint: {EndpointId} ({Name}) every {IntervalSeconds}s (jitter applied)",
-                    endpoint.Id, endpoint.Name, endpoint.IntervalSeconds);
+                _logger.LogInformation("Started monitoring endpoint: {EndpointId} ({Name}) every {IntervalSeconds}s ±{JitterPercent:P}, first probe in {DueTimeMs}ms",
+                    endpoint.Id, endpoint.Name, endpoint.IntervalSeconds, JitterPercent, dueTimeMs);
             }
         }
 
