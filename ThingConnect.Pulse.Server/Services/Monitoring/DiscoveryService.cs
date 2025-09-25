@@ -52,6 +52,7 @@ public sealed class DiscoveryService : IDiscoveryService
             uint hostCount = (uint)(1 << hostBits);
             uint networkAddress = addressInt & (0xFFFFFFFF << hostBits);
 
+            // Skip network and broadcast addresses for practical use
             uint startAddress = networkAddress + 1;
             uint endAddress = networkAddress + hostCount - 1;
 
@@ -139,7 +140,7 @@ public sealed class DiscoveryService : IDiscoveryService
             catch (Exception ex)
             {
                 dynamic targetStr = target?.ToString() ?? "null";
-                _logger.LogError(ex, "Failed to expand target: {Target}", targetStr);
+                Microsoft.Extensions.Logging.LoggerExtensions.LogError(_logger, ex, "Failed to expand target: " + targetStr);
             }
         }
 
@@ -238,52 +239,53 @@ public sealed class DiscoveryService : IDiscoveryService
         }
     }
 
- private sealed class Ipv6CidrExpander
-{
-    public static IEnumerable<string> Expand(string cidr)
+    private sealed class Ipv6CidrExpander
     {
-        var match = Ipv6CidrRegex.Match(cidr);
-        if (!match.Success)
-            throw new ArgumentException($"Invalid IPv6 CIDR: {cidr}");
-
-        string baseAddress = match.Groups[1].Value;
-        int prefixLength = match.Groups[2].Success ? int.Parse(match.Groups[2].Value) : 64;
-
-        if (!IPAddress.TryParse(baseAddress, out IPAddress? ipAddress) || ipAddress.AddressFamily != AddressFamily.InterNetworkV6)
-            throw new ArgumentException($"Invalid IPv6 address: {baseAddress}");
-
-        string zone = null;
-        // handle zone if specified (e.g., fe80::1%eth0/64)
-        int percentIndex = baseAddress.IndexOf('%');
-        if (percentIndex >= 0)
+        public static IEnumerable<string> Expand(string cidr)
         {
-            zone = baseAddress.Substring(percentIndex + 1);
-            baseAddress = baseAddress.Substring(0, percentIndex);
-            ipAddress = IPAddress.Parse(baseAddress);
-        }
+            var match = Ipv6CidrRegex.Match(cidr);
+            if (!match.Success)
+                throw new ArgumentException($"Invalid IPv6 CIDR: {cidr}");
 
-        if (prefixLength == 128)
-        {
-            yield return !string.IsNullOrEmpty(zone) ? $"{ipAddress}%{zone}" : ipAddress.ToString();
-        }
-        else if (prefixLength == 127)
-        {
-            byte[] bytes = ipAddress.GetAddressBytes();
-            yield return !string.IsNullOrEmpty(zone) ? $"{ipAddress}%{zone}" : ipAddress.ToString();
+            string baseAddress = match.Groups[1].Value;
+            int prefixLength = match.Groups[2].Success ? int.Parse(match.Groups[2].Value) : 64;
 
-            bytes[15] = (byte)(bytes[15] + 1);
-            var secondAddress = new IPAddress(bytes);
-            yield return !string.IsNullOrEmpty(zone) ? $"{secondAddress}%{zone}" : secondAddress.ToString();
-        }
-        else if (prefixLength == 64)
-        {
-            yield return !string.IsNullOrEmpty(zone) ? $"{ipAddress}%{zone}" : ipAddress.ToString();
-        }
-        else
-        {
-            yield return !string.IsNullOrEmpty(zone) ? $"{ipAddress}%{zone}" : ipAddress.ToString();
+            if (!IPAddress.TryParse(baseAddress, out IPAddress? ipAddress) || ipAddress.AddressFamily != AddressFamily.InterNetworkV6)
+                throw new ArgumentException($"Invalid IPv6 address: {baseAddress}");
+
+            // handle zone if specified (e.g., fe80::1%eth0/64)
+            string? zone = null;
+            int percentIndex = baseAddress.IndexOf('%');
+            if (percentIndex >= 0)
+            {
+                zone = baseAddress.Substring(percentIndex + 1);
+                baseAddress = baseAddress.Substring(0, percentIndex);
+                ipAddress = IPAddress.Parse(baseAddress);
+            }
+
+            // enforce minimum prefix length
+            if (prefixLength < 64)
+                throw new ArgumentException($"IPv6 prefix length /{prefixLength} is too large for practical expansion. Minimum allowed: /64.");
+
+            if (prefixLength == 128)
+            {
+                yield return !string.IsNullOrEmpty(zone) ? $"{ipAddress}%{zone}" : ipAddress.ToString();
+            }
+            else if (prefixLength == 127)
+            {
+                byte[] bytes = ipAddress.GetAddressBytes();
+                yield return !string.IsNullOrEmpty(zone) ? $"{ipAddress}%{zone}" : ipAddress.ToString();
+
+                bytes[15] = (byte)(bytes[15] + 1); // increment last byte for second address
+                var secondAddress = new IPAddress(bytes);
+                yield return !string.IsNullOrEmpty(zone) ? $"{secondAddress}%{zone}" : secondAddress.ToString();
+            }
+            else
+            {
+                // for /64…/126 just return base address (full expansion impractical)
+                yield return !string.IsNullOrEmpty(zone) ? $"{ipAddress}%{zone}" : ipAddress.ToString();
+            }
         }
     }
 }
 
-}
