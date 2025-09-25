@@ -78,6 +78,46 @@ public sealed class ConfigurationParser
 
             // First, deserialize the YAML
             ConfigurationYaml config = _yamlDeserializer.Deserialize<ConfigurationYaml>(yamlContent);
+            var ipv6Errors = new List<ValidationError>();
+
+            foreach (var target in config.Targets)
+            {
+                if (!string.IsNullOrEmpty(target.Cidr) && target.Cidr.Contains(":"))
+                {
+                    string[] parts = target.Cidr.Split('/');
+                    if (parts.Length != 2 || !int.TryParse(parts[1], out int prefix))
+                    {
+                        ipv6Errors.Add(new ValidationError
+                        {
+                            Path = "cidr",
+                            Message = $"Invalid IPv6 CIDR format: {target.Cidr}",
+                            Value = target.Cidr
+                        });
+                        continue;
+                    }
+
+                    if (prefix < 120 || prefix > 128)
+                    {
+                        ipv6Errors.Add(new ValidationError
+                        {
+                            Path = "cidr",
+                            Message = $"IPv6 prefix /{prefix} too large to expand practically (supported: /120–/128)",
+                            Value = target.Cidr
+                        });
+                    }
+                }
+            }
+
+            if (ipv6Errors.Any())
+            {
+                return Task.FromResult<(ConfigurationYaml?, ValidationErrorsDto?)>(
+                    (null,
+                    new ValidationErrorsDto
+                    {
+                        Message = "IPv6 expansion validation failed",
+                        Errors = ipv6Errors
+                    }));
+            }
 
             // Convert back to JSON for schema validation
             ISerializer serializer = new SerializerBuilder()

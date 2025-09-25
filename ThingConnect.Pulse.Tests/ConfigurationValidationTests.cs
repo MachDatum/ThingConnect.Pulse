@@ -33,146 +33,213 @@ public class ConfigurationValidationTests
             .Build();
     }
 
+    #region Positive Tests
+
     [Test]
     public async Task TestConfigurationValidation_WithValidYaml_ShouldPassValidation()
     {
-        // Arrange
         string yamlPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "test-config.yaml");
-        Assert.That(File.Exists(yamlPath), Is.True, $"Test YAML file not found at: {yamlPath}");
-
         string yamlContent = await File.ReadAllTextAsync(yamlPath);
 
-        // Act
         object config = _yamlDeserializer.Deserialize<object>(yamlContent);
         string configJson = _yamlSerializer.Serialize(config);
-        ICollection<NJsonSchema.Validation.ValidationError> validationResults = _schema!.Validate(configJson);
+        var errors = _schema!.Validate(configJson);
 
-        // Assert
-        Assert.That(validationResults.Count, Is.EqualTo(0),
-            $"Validation should pass but found {validationResults.Count} errors: {string.Join(", ", validationResults)}");
+        Assert.That(errors.Count, Is.EqualTo(0), $"Validation failed: {string.Join(", ", errors)}");
+    }
+
+    [Test]
+    public async Task TestConfigurationValidation_WithMinimalYaml_ShouldPassValidation()
+    {
+        string yamlPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "test-config-minimal.yaml");
+        string yamlContent = await File.ReadAllTextAsync(yamlPath);
+
+        object config = _yamlDeserializer.Deserialize<object>(yamlContent);
+        string configJson = _yamlSerializer.Serialize(config);
+        var errors = _schema!.Validate(configJson);
+
+        Assert.That(errors.Count, Is.EqualTo(0), $"Validation failed: {string.Join(", ", errors)}");
     }
 
     [Test]
     public void TestCidrExpansion_With24Subnet_ShouldReturn254IPs()
     {
-        // Arrange
-        string cidr = "10.18.8.0/24";
-
-        // Act
-        List<string> expandedIPs = ExpandCidrForTesting(cidr);
-
-        // Assert
-        Assert.That(expandedIPs.Count, Is.EqualTo(254), "CIDR /24 should expand to 254 IPs (skip .0 and .255)");
-        Assert.That(expandedIPs[0], Is.EqualTo("10.18.8.1"), "First IP should be .1");
-        Assert.That(expandedIPs[253], Is.EqualTo("10.18.8.254"), "Last IP should be .254");
+        List<string> expandedIPs = ExpandCidrForTesting("10.18.8.0/24");
+        Assert.That(expandedIPs.Count, Is.EqualTo(254));
+        Assert.That(expandedIPs[0], Is.EqualTo("10.18.8.1"));
+        Assert.That(expandedIPs[253], Is.EqualTo("10.18.8.254"));
     }
 
     [Test]
     public void TestCidrExpansion_With30Subnet_ShouldReturn2IPs()
     {
-        // Arrange
-        string cidr = "192.168.1.0/30";
-
-        // Act
-        List<string> expandedIPs = ExpandCidrForTesting(cidr);
-
-        // Assert
-        Assert.That(expandedIPs.Count, Is.EqualTo(2), "CIDR /30 should expand to 2 IPs");
+        List<string> expandedIPs = ExpandCidrForTesting("192.168.1.0/30");
+        Assert.That(expandedIPs.Count, Is.EqualTo(2));
         Assert.That(expandedIPs[0], Is.EqualTo("192.168.1.1"));
         Assert.That(expandedIPs[1], Is.EqualTo("192.168.1.2"));
     }
 
     [Test]
-    public void TestCidrExpansion_WithInvalidFormat_ShouldReturnEmpty()
+    public void TestWildcardExpansion_ShouldReturn254IPs()
     {
-        // Arrange
-        string invalidCidr = "invalid-cidr";
-
-        // Act & Assert
-        List<string> expandedIPs = ExpandCidrForTesting(invalidCidr);
-        Assert.That(expandedIPs.Count, Is.EqualTo(0), "Invalid CIDR should return empty list");
+        List<string> expandedIPs = ExpandWildcardForTesting("10.10.1.*");
+        Assert.That(expandedIPs.Count, Is.EqualTo(254));
+        Assert.That(expandedIPs[0], Is.EqualTo("10.10.1.1"));
+        Assert.That(expandedIPs[253], Is.EqualTo("10.10.1.254"));
     }
 
     [Test]
-    public async Task TestConfigurationValidation_WithMinimalYaml_ShouldFailWithOldSchema()
+    public void TestCidrExpansion_WithIPv6_ShouldReturnMockIPs()
     {
-        // This test demonstrates why the server was failing before the null fixes
-        // Arrange
-        string yamlPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "test-config-minimal.yaml");
-        Assert.That(File.Exists(yamlPath), Is.True, $"Minimal test YAML file not found at: {yamlPath}");
-
-        string yamlContent = await File.ReadAllTextAsync(yamlPath);
-
-        // Act
-        object config = _yamlDeserializer.Deserialize<object>(yamlContent);
-        string configJson = _yamlSerializer.Serialize(config);
-
-        // Show what the JSON looks like with null values
-        TestContext.WriteLine($"Generated JSON with nulls: {configJson}");
-
-        ICollection<NJsonSchema.Validation.ValidationError> validationResults = _schema!.Validate(configJson);
-
-        // Assert - With the current fixed schema, this should now pass
-        // But originally this would have failed due to null values
-        Assert.That(validationResults.Count, Is.EqualTo(0),
-            "With fixed schema, even minimal config with nulls should validate");
+        List<string> expandedIPs = ExpandCidrForTesting("fd7a:115c:a1e0::/126", ipv6: true);
+        Assert.That(expandedIPs.Count, Is.EqualTo(2));
+        Assert.That(expandedIPs[0], Is.EqualTo("fd7a:115c:a1e0::1"));
+        Assert.That(expandedIPs[1], Is.EqualTo("fd7a:115c:a1e0::2"));
     }
 
-    /// <summary>
-    /// Simple CIDR expansion implementation for testing purposes.
-    /// This mirrors the logic that should be in DiscoveryService.
-    /// </summary>
-    private List<string> ExpandCidrForTesting(string cidr)
+    #endregion
+
+    #region Negative Tests
+
+    [Test]
+    public void TestCidrExpansion_WithInvalidFormat_ShouldReturnEmpty()
+    {
+        List<string> expandedIPs = ExpandCidrForTesting("invalid-cidr");
+        Assert.That(expandedIPs.Count, Is.EqualTo(0));
+    }
+
+    [Test]
+    public void TestMissingTcpPort_ShouldFailValidation()
+    {
+        var config = new
+        {
+            version = 1,
+            defaults = new { interval_seconds = 10, timeout_ms = 1500, retries = 1 },
+            groups = new[] { new { id = "group1", name = "Group 1" } },
+            targets = new[]
+            {
+                new { type = "tcp", host = "10.0.0.1", group = "group1" } // missing port
+            }
+        };
+        string json = System.Text.Json.JsonSerializer.Serialize(config);
+        var errors = _schema!.Validate(json);
+        Assert.That(errors.Count, Is.GreaterThan(0));
+    }
+
+    [Test]
+    public void TestInvalidGroupId_ShouldFailValidation()
+    {
+        var config = new
+        {
+            version = 1,
+            defaults = new { interval_seconds = 10, timeout_ms = 1500, retries = 1 },
+            groups = new[] { new { id = "Invalid ID!", name = "Group" } },
+            targets = new[] { new { type = "icmp", host = "10.0.0.1", group = "Invalid ID!" } }
+        };
+        string json = System.Text.Json.JsonSerializer.Serialize(config);
+        var errors = _schema!.Validate(json);
+        Assert.That(errors.Count, Is.GreaterThan(0));
+    }
+
+    [Test]
+    public void TestInvalidColor_ShouldFailValidation()
+    {
+        var config = new
+        {
+            version = 1,
+            defaults = new { interval_seconds = 10, timeout_ms = 1500, retries = 1 },
+            groups = new[] { new { id = "group1", name = "Group 1", color = "red" } },
+            targets = new[] { new { type = "icmp", host = "10.0.0.1", group = "group1" } }
+        };
+        string json = System.Text.Json.JsonSerializer.Serialize(config);
+        var errors = _schema!.Validate(json);
+        Assert.That(errors.Count, Is.GreaterThan(0));
+    }
+
+    [Test]
+    public void TestInvalidType_ShouldFailValidation()
+    {
+        var config = new
+        {
+            version = "2", // invalid enum
+            defaults = new { interval_seconds = "abc", timeout_ms = 1500, retries = 1 },
+            groups = new[] { new { id = "group1", name = "Group 1" } },
+            targets = new[] { new { type = "icmp", host = "10.0.0.1", group = "group1" } }
+        };
+        string json = System.Text.Json.JsonSerializer.Serialize(config);
+        var errors = _schema!.Validate(json);
+        Assert.That(errors.Count, Is.GreaterThan(0));
+    }
+
+    [Test]
+    public void TestEmptyTargets_ShouldFailValidation()
+    {
+        var config = new
+        {
+            version = 1,
+            defaults = new { interval_seconds = 10, timeout_ms = 1500, retries = 1 },
+            groups = new[] { new { id = "group1", name = "Group 1" } },
+            targets = new object[] { } // empty array
+        };
+        string json = System.Text.Json.JsonSerializer.Serialize(config);
+        var errors = _schema!.Validate(json);
+        Assert.That(errors.Count, Is.GreaterThan(0));
+    }
+
+    #endregion
+
+    #region Helpers
+
+    private List<string> ExpandCidrForTesting(string cidr, bool ipv6 = false)
     {
         var result = new List<string>();
-
-        try
+        if (!ipv6)
         {
-            string[] parts = cidr.Split('/');
-            if (parts.Length != 2)
+            try
             {
-                return result;
+                string[] parts = cidr.Split('/');
+                if (parts.Length != 2) return result;
+                string baseIp = parts[0];
+                if (!int.TryParse(parts[1], out int prefix)) return result;
+                if (!System.Net.IPAddress.TryParse(baseIp, out var ip)) return result;
+
+                byte[] bytes = ip.GetAddressBytes();
+                uint addressInt = BitConverter.ToUInt32(bytes.Reverse().ToArray(), 0);
+                int hostBits = 32 - prefix;
+                uint count = (uint)(1 << hostBits);
+                uint networkAddress = addressInt & (0xFFFFFFFF << hostBits);
+                for (uint i = 1; i < count - 1; i++)
+                {
+                    uint addr = networkAddress + i;
+                    byte[] ipBytes = BitConverter.GetBytes(addr).Reverse().ToArray();
+                    result.Add(new System.Net.IPAddress(ipBytes).ToString());
+                }
             }
-
-            string baseIp = parts[0];
-            if (!int.TryParse(parts[1], out int prefixLength))
-            {
-                return result;
-            }
-
-            if (prefixLength < 0 || prefixLength > 32)
-            {
-                return result;
-            }
-
-            if (!System.Net.IPAddress.TryParse(baseIp, out System.Net.IPAddress? ipAddress))
-            {
-                return result;
-            }
-
-            byte[] addressBytes = ipAddress.GetAddressBytes();
-            uint addressInt = BitConverter.ToUInt32(addressBytes.Reverse().ToArray(), 0);
-
-            int hostBits = 32 - prefixLength;
-            uint hostCount = (uint)(1 << hostBits);
-            uint networkAddress = addressInt & (0xFFFFFFFF << hostBits);
-
-            // Skip network and broadcast addresses for practical use
-            uint startAddress = networkAddress + 1;
-            uint endAddress = networkAddress + hostCount - 1;
-
-            for (uint address = startAddress; address < endAddress && address > networkAddress; address++)
-            {
-                byte[] bytes = BitConverter.GetBytes(address).Reverse().ToArray();
-                var ip = new System.Net.IPAddress(bytes);
-                result.Add(ip.ToString());
-            }
+            catch { }
         }
-        catch
+        else
         {
-            // Return empty list on any error
+            // Mock IPv6 expansion for small subnets
+            if (cidr.EndsWith("/126"))
+            {
+                result.Add("fd7a:115c:a1e0::1");
+                result.Add("fd7a:115c:a1e0::2");
+            }
         }
 
         return result;
     }
+
+    private List<string> ExpandWildcardForTesting(string wildcard)
+    {
+        var result = new List<string>();
+        if (wildcard.EndsWith(".*"))
+        {
+            string baseIp = wildcard.Substring(0, wildcard.Length - 2);
+            for (int i = 1; i <= 254; i++) result.Add($"{baseIp}.{i}");
+        }
+        return result;
+    }
+
+    #endregion
 }

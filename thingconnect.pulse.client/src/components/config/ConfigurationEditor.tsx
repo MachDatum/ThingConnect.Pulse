@@ -365,7 +365,7 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
               title={
                 validationResult.isValid
                   ? 'Configuration is valid'
-                  : `${validationResult.errors?.length || 0} error(s) found`
+                  : `${validationResult.errors?.map(e => e.message).join('; ')}`
               }
             />
           )}
