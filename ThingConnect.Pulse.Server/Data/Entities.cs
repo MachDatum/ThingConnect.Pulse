@@ -1,8 +1,25 @@
-// ThingConnect Pulse - EF Core Entities (v1)
+// ThingConnect Pulse - EF Core Entities (v2)
+// Updated for ICMP Fallback + Outage Classification
 namespace ThingConnect.Pulse.Server.Data;
 
 public enum ProbeType { icmp, tcp, http }
 public enum UpDown { up, down }
+
+/// <summary>
+/// Outage classification for failed probe analysis.
+/// </summary>
+public enum OutageClassification
+{
+    Unknown = 0,
+    Network = 1,         // Host unreachable (ICMP + service fail)
+    Service = 2,         // Service down, host reachable via ICMP
+    Intermittent = 3,    // Flapping / unstable
+    Performance = 4,     // RTT above threshold
+    PartialService = 5,  // HTTP error, TCP works
+    DnsResolution = 6,   // DNS fails, IP works
+    Congestion = 7,      // Correlated latency
+    Maintenance = 8      // Planned downtime
+}
 
 public record GroupVm(string Id, string Name, string? ParentId, string? Color);
 public record EndpointVm(Guid Id, string Name, GroupVm Group, ProbeType Type, string Host,
@@ -50,6 +67,13 @@ public sealed class CheckResultRaw
     public UpDown Status { get; set; }
     public double? RttMs { get; set; }
     public string? Error { get; set; }
+
+    // 🔹 New fields for fallback probe
+    public bool? FallbackAttempted { get; set; }
+    public UpDown? FallbackStatus { get; set; }
+    public double? FallbackRttMs { get; set; }
+    public string? FallbackError { get; set; }
+    public OutageClassification? Classification { get; set; }
 }
 
 public sealed class Outage
@@ -61,6 +85,7 @@ public sealed class Outage
     public long? EndedTs { get; set; }
     public int? DurationSeconds { get; set; }
     public string? LastError { get; set; }
+    public OutageClassification? Classification { get; set; }
 
     /// <summary>
     /// Gets or sets timestamp when monitoring was lost during this outage (service downtime).
