@@ -124,12 +124,16 @@ public sealed class MonitoringBackgroundService : BackgroundService
         _logger.LogInformation("Monitoring background service stopped");
     }
 
-    private static readonly double jitterPercent = 0.1; // ±10%
-
-    private int GetJitteredIntervalMs(int intervalMs)
+    private static int GetJitteredIntervalMs(int intervalMs, Guid endpointId)
     {
-        double jitterOffset = (Random.Shared.NextDouble() * 2 - 1) * intervalMs * jitterPercent;
-        return intervalMs + (int)jitterOffset;
+        // Use deterministic seeding based on endpoint ID for consistent jitter patterns
+        int seed = endpointId.GetHashCode();
+        var random = new Random(seed);
+        int jitterRange = (int)(intervalMs * 0.2); // 20% total range for ±10%
+        int jitterOffset = random.Next(0, jitterRange) - (jitterRange / 2); // -10% to +10%
+        int jitteredInterval = Math.Max(1000, intervalMs + jitterOffset);
+
+        return jitteredInterval;
     }
 
     private async Task RefreshEndpointsAsync(CancellationToken cancellationToken)
@@ -161,7 +165,7 @@ public sealed class MonitoringBackgroundService : BackgroundService
         foreach (Data.Endpoint? endpoint in endpoints)
         {
             int intervalMs = endpoint.IntervalSeconds * 1000;
-            int jitteredIntervalMs = GetJitteredIntervalMs(intervalMs);
+            int jitteredIntervalMs = GetJitteredIntervalMs(intervalMs, endpoint.Id);
 
             if (_endpointTimers.TryGetValue(endpoint.Id, out Timer? existingTimer))
             {
@@ -186,8 +190,8 @@ public sealed class MonitoringBackgroundService : BackgroundService
                     period: TimeSpan.FromMilliseconds(jitteredIntervalMs));
 
                 _endpointTimers.TryAdd(endpoint.Id, timer);
-                _logger.LogInformation("Started monitoring endpoint: {EndpointId} ({Name}) every {IntervalSeconds}s ±{JitterPercent:P}, first probe in {DueTimeMs}ms",
-                    endpoint.Id, endpoint.Name, endpoint.IntervalSeconds, jitterPercent, dueTimeMs);
+                _logger.LogInformation("Started monitoring endpoint: {EndpointId} ({Name}) every {IntervalSeconds}s (±10% jitter), first probe in {DueTimeMs}ms",
+                    endpoint.Id, endpoint.Name, endpoint.IntervalSeconds, dueTimeMs);
             }
         }
 
