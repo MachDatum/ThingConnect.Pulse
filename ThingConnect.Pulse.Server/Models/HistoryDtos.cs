@@ -39,4 +39,5 @@ public sealed class HistoryResponseDto
     public List<RollupBucketDto> Rollup15m { get; set; } = new();
     public List<DailyBucketDto> RollupDaily { get; set; } = new();
     public List<OutageDto> Outages { get; set; } = new();
+    public OutageClassificationDto? Classification { get; set; }
 }

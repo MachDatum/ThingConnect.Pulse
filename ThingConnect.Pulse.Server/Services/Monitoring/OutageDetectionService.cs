@@ -22,6 +22,10 @@ public sealed class OutageDetectionService : IOutageDetectionService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Processes a single check result: updates streaks, transitions UP/DOWN with flap damping,
+    /// and persists the raw result including fallback details and classification.
+    /// </summary>
     public async Task<bool> ProcessCheckResultAsync(CheckResult result, CancellationToken cancellationToken = default)
     {
         MonitorState state = _states.GetOrAdd(result.EndpointId, _ => new MonitorState());
@@ -54,7 +58,13 @@ public sealed class OutageDetectionService : IOutageDetectionService
             // Check for DOWN transition
             if (state.ShouldTransitionToDown())
             {
-                await TransitionToDownAsync(result.EndpointId, state, UnixTimestamp.ToUnixSeconds(result.Timestamp), result.Error, cancellationToken);
+                await TransitionToDownAsync(
+                    result.EndpointId,
+                    state,
+                    UnixTimestamp.ToUnixSeconds(result.Timestamp),
+                    result.Error,
+                    (OutageClassification?)result.Classification,
+                    cancellationToken);
                 stateChanged = true;
                 _logger.LogWarning("Endpoint {EndpointId} transitioned to DOWN after {FailStreak} consecutive failures",
                     result.EndpointId, state.FailStreak);
@@ -207,10 +217,6 @@ public sealed class OutageDetectionService : IOutageDetectionService
             if (inconsistenciesFixed > 0)
             {
                 await context.SaveChangesAsync(cancellationToken);
-            }
-
-            if (inconsistenciesFixed > 0)
-            {
                 _logger.LogInformation("Started monitoring session {SessionId}, initialized {Count} states, fixed {InconsistencyCount} state inconsistencies",
                     newSession.Id, initializedCount, inconsistenciesFixed);
             }
@@ -248,7 +254,6 @@ public sealed class OutageDetectionService : IOutageDetectionService
                     "{GapDuration}s gap > {Threshold}s threshold ({IntervalSeconds}s interval), " +
                     "missed ~{MissedChecks} checks",
                     endpoint.Id, endpoint.Name, gapDuration, gapThreshold, endpoint.IntervalSeconds, missedChecks);
-
                 affectedEndpoints.Add(endpoint);
             }
         }
@@ -265,8 +270,8 @@ public sealed class OutageDetectionService : IOutageDetectionService
         // Handle open outages only for affected endpoints
         List<Outage> outagesForAffectedEndpoints = await context.Outages
             .Where(o => o.EndedTs == null &&
-                       o.StartedTs < lastMonitoringTime &&
-                       affectedEndpointIds.Contains(o.EndpointId))
+                        o.StartedTs < lastMonitoringTime &&
+                        affectedEndpointIds.Contains(o.EndpointId))
             .ToListAsync(cancellationToken);
 
         foreach (Outage? outage in outagesForAffectedEndpoints)
@@ -349,8 +354,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
         }
     }
 
-    private async Task TransitionToDownAsync(Guid endpointId, MonitorState state, long timestamp,
-        string? error, CancellationToken cancellationToken)
+    private async Task TransitionToDownAsync(Guid endpointId, MonitorState state, long timestamp, string? error, OutageClassification? classification, CancellationToken cancellationToken)
     {
         using IServiceScope scope = _serviceProvider.CreateScope();
         PulseDbContext context = scope.ServiceProvider.GetRequiredService<PulseDbContext>();
@@ -365,7 +369,8 @@ public sealed class OutageDetectionService : IOutageDetectionService
             {
                 EndpointId = endpointId,
                 StartedTs = timestamp,
-                LastError = error
+                LastError = error,
+                Classification = classification
             };
 
             context.Outages.Add(outage);
@@ -515,18 +520,29 @@ public sealed class OutageDetectionService : IOutageDetectionService
         return (endpointStatus, openOutageId, false);
     }
 
+    /// <summary>
+    /// Persists the raw check result including fallback probe fields and classification.
+    /// Also updates endpoint's LastRttMs for successful probes.
+    /// </summary>
     private async Task SaveCheckResultAsync(CheckResult result, CancellationToken cancellationToken)
     {
         using IServiceScope scope = _serviceProvider.CreateScope();
         PulseDbContext context = scope.ServiceProvider.GetRequiredService<PulseDbContext>();
 
-        CheckResultRaw rawResult = new CheckResultRaw
+        var rawResult = new CheckResultRaw
         {
             EndpointId = result.EndpointId,
             Ts = UnixTimestamp.ToUnixSeconds(result.Timestamp),
             Status = result.Status,
             RttMs = result.RttMs,
-            Error = result.Error
+            Error = result.Error,
+
+            // New fallback fields
+            FallbackAttempted = result.FallbackAttempted,
+            FallbackStatus = result.FallbackStatus,
+            FallbackRttMs = result.FallbackRttMs,
+            FallbackError = result.FallbackError,
+            Classification = (OutageClassification?)result.Classification
         };
 
         context.CheckResultsRaw.Add(rawResult);

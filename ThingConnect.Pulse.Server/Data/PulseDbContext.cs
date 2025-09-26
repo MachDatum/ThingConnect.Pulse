@@ -65,6 +65,17 @@ public sealed class PulseDbContext : IdentityDbContext<ApplicationUser>
             e.HasKey(x => x.Id);
             e.Property(x => x.Status).HasConversion<string>().IsRequired();
             e.Property(x => x.RttMs).HasColumnType("double precision");
+
+            // New Fallback fields
+            e.Property(x => x.FallbackAttempted);
+            e.Property(x => x.FallbackStatus).HasConversion<string>();
+            e.Property(x => x.FallbackRttMs).HasColumnType("double precision");
+            e.Property(x => x.FallbackError);
+
+            // Classification field
+            e.Property(x => x.Classification)
+            .HasConversion<int?>();
+
             e.HasIndex(x => new { x.EndpointId, x.Ts });
         });
 
@@ -74,6 +85,10 @@ public sealed class PulseDbContext : IdentityDbContext<ApplicationUser>
             e.HasKey(x => x.Id);
             e.HasIndex(x => new { x.EndpointId, x.StartedTs });
             e.HasIndex(x => new { x.EndpointId, x.EndedTs });
+
+            // New Classification field
+            e.Property(x => x.Classification)
+            .HasConversion<int?>();
         });
 
         b.Entity<Rollup15m>(e =>
