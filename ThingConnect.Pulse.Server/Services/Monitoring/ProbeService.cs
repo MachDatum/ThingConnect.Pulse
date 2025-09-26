@@ -50,7 +50,9 @@ public sealed class ProbeService : IProbeService
         // Trigger ICMP fallback only if primary failed and endpoint is not ICMP itself
         if (primaryResult.Status == UpDown.down && endpoint.Type != ProbeType.icmp)
         {
-            fallbackResult = await PingAsync(endpoint.Id, endpoint.Host, endpoint.TimeoutMs, cancellationToken);
+            // Use half of the primary timeout, minimum 100ms
+            int fallbackTimeout = Math.Max(endpoint.TimeoutMs / 2, 100);
+            fallbackResult = await PingAsync(endpoint.Id, endpoint.Host, fallbackTimeout, cancellationToken);
 
             primaryResult.FallbackAttempted = true;
             primaryResult.FallbackStatus = fallbackResult.Status;
