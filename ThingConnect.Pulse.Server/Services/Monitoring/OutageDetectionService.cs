@@ -63,7 +63,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
                     state,
                     UnixTimestamp.ToUnixSeconds(result.Timestamp),
                     result.Error,
-                    result.Classification,
+                    (OutageClassification?)result.Classification,
                     cancellationToken);
                 stateChanged = true;
                 _logger.LogWarning("Endpoint {EndpointId} transitioned to DOWN after {FailStreak} consecutive failures",
@@ -354,7 +354,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
         }
     }
 
-    private async Task TransitionToDownAsync(Guid endpointId, MonitorState state, long timestamp, string? error, OutageClassification classification, CancellationToken cancellationToken)
+    private async Task TransitionToDownAsync(Guid endpointId, MonitorState state, long timestamp, string? error, OutageClassification? classification, CancellationToken cancellationToken)
     {
         using IServiceScope scope = _serviceProvider.CreateScope();
         PulseDbContext context = scope.ServiceProvider.GetRequiredService<PulseDbContext>();
@@ -542,7 +542,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
             FallbackStatus = result.FallbackStatus,
             FallbackRttMs = result.FallbackRttMs,
             FallbackError = result.FallbackError,
-            Classification = result.Classification
+            Classification = (OutageClassification?)result.Classification
         };
 
         context.CheckResultsRaw.Add(rawResult);
