@@ -24,10 +24,11 @@ public sealed class ProbeService : IProbeService
     public async Task<CheckResult> ProbeAsync(Data.Endpoint endpoint, CancellationToken cancellationToken = default)
     {
         DateTimeOffset timestamp = DateTimeOffset.UtcNow;
+        CheckResult primaryResult;
 
         try
         {
-            return endpoint.Type switch
+            primaryResult = endpoint.Type switch
             {
                 ProbeType.icmp => await PingAsync(endpoint.Id, endpoint.Host, endpoint.TimeoutMs, cancellationToken),
                 ProbeType.tcp => await TcpConnectAsync(endpoint.Id, endpoint.Host,
@@ -40,9 +41,32 @@ public sealed class ProbeService : IProbeService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Probe failed for endpoint {EndpointId} ({Host})", endpoint.Id, endpoint.Host);
-            return CheckResult.Failure(endpoint.Id, timestamp, ex.Message);
+            _logger.LogError(ex, "Primary probe failed for endpoint {EndpointId} ({Host})", endpoint.Id, endpoint.Host);
+            primaryResult = CheckResult.Failure(endpoint.Id, timestamp, ex.Message);
         }
+
+        CheckResult? fallbackResult = null;
+
+        // Trigger ICMP fallback only if primary failed and endpoint is not ICMP itself
+        if (primaryResult.Status == UpDown.down && endpoint.Type != ProbeType.icmp)
+        {
+            fallbackResult = await PingAsync(endpoint.Id, endpoint.Host, endpoint.TimeoutMs, cancellationToken);
+
+            primaryResult.FallbackAttempted = true;
+            primaryResult.FallbackStatus = fallbackResult.Status;
+            primaryResult.FallbackRttMs = fallbackResult.RttMs;
+            primaryResult.FallbackError = fallbackResult.Error;
+        }
+
+        // Centralized classifier
+        primaryResult.Classification = OutageClassifier.ClassifyOutage(
+            primaryResult,
+            fallbackResult,
+            endpoint,
+            Enumerable.Empty<CheckResult>() // later you can feed history here
+        );
+
+        return primaryResult;
     }
 
     public async Task<CheckResult> PingAsync(Guid endpointId, string host, int timeoutMs, CancellationToken cancellationToken = default)

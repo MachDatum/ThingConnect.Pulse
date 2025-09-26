@@ -10,7 +10,8 @@ public enum UpDown { up, down }
 /// </summary>
 public enum OutageClassification
 {
-    Unknown = 0,
+    None = -1,           // Explicitly healthy, no outage detected
+    Unknown = 0,         // Not enough information to classify
     Network = 1,         // Host unreachable (ICMP + service fail)
     Service = 2,         // Service down, host reachable via ICMP
     Intermittent = 3,    // Flapping / unstable
