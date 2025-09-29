@@ -1,52 +1,92 @@
-import { HStack, Box } from '@chakra-ui/react';
-import type { SparklinePoint } from '@/api/types';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Box } from "@chakra-ui/react";
+import type { SparklinePoint } from "@/api/types";
 
 const TrendBlocks = ({ data }: { data: SparklinePoint[] }) => {
   const maxBlocks = 20;
+  const blockPx = 12;
+  const gapPx = 4;
+  const totalWidth = maxBlocks * blockPx + (maxBlocks - 1) * gapPx;
+
   const [isSliding, setIsSliding] = useState(false);
   const [showNewData, setShowNewData] = useState(false);
-  const lastTimestampRef = useRef<string | null>(null);
+  const lastTsRef = useRef<string | null>(null);
 
-  // Take the last 20 points, but maintain order (oldest to newest)
-  const recentData = data.slice(-maxBlocks);
+  // last up to maxBlocks
+  const recent = useMemo(
+    () => (Array.isArray(data) ? data.slice(-maxBlocks) : []),
+    [data]
+  );
 
-  // Create array of 20 blocks, fill empty ones with null
-  const displayBlocks = Array(maxBlocks).fill(null).map((_, idx) => {
-    const dataIdx = idx - (maxBlocks - recentData.length);
-    return dataIdx >= 0 ? recentData[dataIdx] : null;
-  });
+  // always exactly maxBlocks long; earlier slots are null placeholders
+  const display = useMemo(() => {
+    const padded = new Array<SparklinePoint | null>(maxBlocks).fill(null);
+    const start = maxBlocks - recent.length;
+    for (let i = 0; i < recent.length; i++) {
+      padded[start + i] = recent[i];
+    }
+    return padded;
+  }, [recent]);
 
-  // Detect new data by checking if the latest timestamp changed
+  // heartbeat / slide animation trigger when latest timestamp changes
   useEffect(() => {
-    const latestTimestamp = recentData.length > 0 ? recentData[recentData.length - 1]?.ts : null;
-
-    if (latestTimestamp && lastTimestampRef.current && latestTimestamp !== lastTimestampRef.current) {
-      // New data detected - trigger slide animation
+    const latest = recent.length ? recent[recent.length - 1].ts : null;
+    
+    if (latest && lastTsRef.current && latest !== lastTsRef.current) {
       setIsSliding(true);
       setShowNewData(false);
 
-      // After slide completes, show the new data
-      setTimeout(() => {
+      const t1 = setTimeout(() => {
         setShowNewData(true);
         setIsSliding(false);
       }, 500);
 
-      // Reset showNewData after slide-in animation completes
-      setTimeout(() => {
+      const t2 = setTimeout(() => {
         setShowNewData(false);
       }, 1000);
-    } else if (latestTimestamp && !lastTimestampRef.current) {
-      // First load - no animation needed
+
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    } else if (latest && !lastTsRef.current) {
       setIsSliding(false);
       setShowNewData(false);
     }
 
-    lastTimestampRef.current = latestTimestamp;
-  }, [recentData]);
+    lastTsRef.current = latest;
+  }, [recent]);
+
+  // debug log to help spot if parent is sending too many points
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.debug(
+      "[TrendBlocks]",
+      "incoming:",
+      data.length,
+      "recent:",
+      recent.length,
+      "slots:",
+      display.length,
+      "lastTs:",
+      lastTsRef.current
+    );
+  }, [data, recent, display]);
 
   return (
-    <>
+    <Box
+      width={`${totalWidth}px`}
+      minWidth={`${totalWidth}px`}
+      maxWidth={`${totalWidth}px`}
+      display="grid"
+      gridTemplateColumns={`repeat(${maxBlocks}, ${blockPx}px)`}
+      gap={`${gapPx}px`}
+      overflow="hidden"
+      py="2px"
+      pr="2px"
+      alignItems="center"
+      boxSizing="border-box"
+    >
       <style>
         {`
           @keyframes heartbeat {
@@ -54,66 +94,47 @@ const TrendBlocks = ({ data }: { data: SparklinePoint[] }) => {
             50% { transform: scale(1.1); }
             100% { transform: scale(0.95); }
           }
-          @keyframes slideLeftGroup {
+          @keyframes slideLeft {
             0% { transform: translateX(0); }
-            100% { transform: translateX(-16px); }
+            100% { transform: translateX(-${blockPx + gapPx}px); }
           }
-          @keyframes slideInFromRight {
-            0% { transform: translateX(16px) scale(0.1); opacity: 0; }
-            50% { transform: translateX(8px) scale(0.5); opacity: 0.5; }
+          @keyframes slideIn {
+            0% { transform: translateX(${blockPx + gapPx}px) scale(0.1); opacity: 0; }
+            50% { transform: translateX(${Math.round((blockPx + gapPx) / 2)}px) scale(0.5); opacity: 0.5; }
             100% { transform: translateX(0) scale(1); opacity: 1; }
           }
-          .heartbeat-animation {
-            animation: heartbeat 1.5s ease-in-out infinite;
-          }
-          .slide-left-animation {
-            animation: slideLeftGroup 500ms ease-out;
-          }
-          .slide-in-animation {
-            animation: slideInFromRight 500ms ease-out;
-          }
+          .hb { animation: heartbeat 1.5s ease-in-out infinite; will-change: transform; }
+          .slide-left { animation: slideLeft 500ms ease-out; will-change: transform; }
+          .slide-in { animation: slideIn 500ms ease-out; will-change: transform; }
         `}
       </style>
-      <HStack gap={1} alignItems="center" overflow="hidden" py={"2px"} pr={"2px"}>
-        {displayBlocks.map((point, idx) => {
-          const isLastElement = idx === displayBlocks.length - 1 && point !== null;
-          const isEmpty = point === null;
-          const isNewElement = isLastElement && showNewData;
-          const shouldHeartbeat = isLastElement && !isSliding;
 
+      {display.map((pt, i) => {
+        const isLast = i === display.length - 1;
+        const isNew = isLast && showNewData && pt !== null;
+        const shouldHb = isLast && !isSliding && pt !== null;
+        const cls =
+          isSliding && pt !== null ? "slide-left" : isNew ? "slide-in" : shouldHb ? "hb" : undefined;
 
-          return (
-            <Box
-              key={point?.ts || `empty-${idx}`}
-              w='3'
-              h='5'
-              borderRadius='sm'
-              bg={isEmpty
-                ? 'gray.200'
-                : point.s === 'd' ? 'red.500' : 'green.500'
-              }
-              _dark={{
-                bg: isEmpty
-                  ? 'gray.700'
-                  : point.s === 'd' ? 'red.600' : 'green.600'
-              }}
-              className={
-                isSliding && !isEmpty
-                  ? 'slide-left-animation'
-                  : isNewElement
-                  ? 'slide-in-animation'
-                  : shouldHeartbeat
-                  ? 'heartbeat-animation'
-                  : undefined
-              }
-              transformOrigin="center"
-              position="relative"
-              zIndex={isLastElement ? 2 : 1}
-            />
-          );
-        })}
-      </HStack>
-    </>
+        const bg = pt === null ? "gray.200" : pt.s === "d" ? "red.500" : "green.500";
+        const darkBg = pt === null ? "gray.700" : pt.s === "d" ? "red.600" : "green.600";
+
+        return (
+          <Box
+            key={`slot-${i}-${pt?.ts ?? "empty"}`}
+            w={`${blockPx}px`}
+            h="5"
+            borderRadius="sm"
+            bg={bg}
+            _dark={{ bg: darkBg }}
+            className={cls}
+            transformOrigin="center"
+            position="relative"
+            zIndex={isLast && pt ? 2 : 1}
+          />
+        );
+      })}
+    </Box>
   );
 };
 
