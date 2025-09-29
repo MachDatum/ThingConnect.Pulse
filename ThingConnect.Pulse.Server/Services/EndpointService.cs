@@ -39,21 +39,38 @@ public sealed class EndpointService : IEndpointService
             .ToListAsync();
 
         var recent = rawChecks
-            .Select(c => new RawCheckDto
-            {
-                Ts = ConvertToDateTimeOffset(c.Ts),
-                Status = c.Status.ToString().ToLower(),
-                RttMs = c.RttMs,
-                Error = c.Error,
-                FallbackAttempted = c.FallbackAttempted,
-                FallbackStatus = c.FallbackStatus?.ToString().ToLower(),
-                FallbackRttMs = c.FallbackRttMs,
-                FallbackError = c.FallbackError,
-                Classification = c.Classification
-            })
-            .Where(r => r.Ts >= windowStart)
-            .OrderByDescending(r => r.Ts)
-            .ToList();
+             .Where(c => ConvertToDateTimeOffset(c.Ts) >= windowStart)
+             .OrderByDescending(c => ConvertToDateTimeOffset(c.Ts))
+             .Select(c => new CheckResultStructuredDto
+             {
+                 Ts = ConvertToDateTimeOffset(c.Ts),
+                 Classification = (int)(c.Classification ?? OutageClassification.Unknown),
+                 Primary = new ProbeResultDto
+                 {
+                     Type = endpoint.Type.ToString().ToLower(),
+                     Target = endpoint.Type == ProbeType.http
+                         ? $"{endpoint.Host}{endpoint.HttpPath ?? ""}"
+                         : endpoint.Type == ProbeType.tcp
+                             ? $"{endpoint.Host}:{endpoint.Port ?? 80}"
+                             : endpoint.Host, // For ICMP
+                     Status = c.Status.ToString().ToLower(),
+                     RttMs = c.RttMs,
+                     Error = c.Error
+                 },
+                 Fallback = new FallbackResultDto
+                 {
+                     Attempted = c.FallbackAttempted ?? false,
+                     Type = c.FallbackAttempted == true ? "icmp" : null,
+                     Target = c.FallbackAttempted == true ? endpoint.Host : null,
+                     Status = c.FallbackStatus?.ToString().ToLower(),
+                     RttMs = c.FallbackRttMs,
+                     Error = c.FallbackError
+                 }
+             })
+             .ToList();
+
+        // 🔹 ENHANCED: Proper current state calculation with flapping detection
+        var currentState = await BuildCurrentStateAsync(recent, endpoint.Id, endpoint.IntervalSeconds);
 
         // --- Fetch outages within window ---
         var outageRaw = await _context.Outages
@@ -73,7 +90,8 @@ public sealed class EndpointService : IEndpointService
                 StartedTs = ConvertToDateTimeOffset(o.StartedTs),
                 EndedTs = o.EndedTs != null ? ConvertToDateTimeOffset(o.EndedTs) : null,
                 DurationS = NormalizeDurationToInt(o.DurationSeconds),
-                LastError = o.LastError
+                LastError = o.LastError,
+                Classification = o.Classification
             })
             .ToList();
 
@@ -83,9 +101,160 @@ public sealed class EndpointService : IEndpointService
         return new EndpointDetailDto
         {
             Endpoint = endpointDto,
+            CurrentState = currentState,
             Recent = recent,
             Outages = outages
         };
+    }
+
+    // 🔹 NEW: Enhanced current state builder with flapping detection
+    private async Task<CurrentStateDto> BuildCurrentStateAsync(
+        List<CheckResultStructuredDto> recent, 
+        Guid endpointId, 
+        int intervalSeconds)
+    {
+        var lastCheck = recent.FirstOrDefault();
+        
+        // Handle no data case
+        if (lastCheck == null)
+        {
+            return new CurrentStateDto
+            {
+                EffectiveStatus = "down",
+                EffectiveRtt = null,
+                Classification = (int)OutageClassification.Unknown,
+                HostReachable = false,
+                LastCheck = DateTimeOffset.UtcNow
+            };
+        }
+
+        // Check if data is stale (older than 2x interval)
+        var expectedInterval = TimeSpan.FromSeconds(intervalSeconds * 2);
+        bool isStale = DateTimeOffset.UtcNow - lastCheck.Ts > expectedInterval;
+        
+        if (isStale)
+        {
+            return new CurrentStateDto
+            {
+                EffectiveStatus = "down",
+                EffectiveRtt = null,
+                Classification = (int)OutageClassification.Unknown,
+                HostReachable = false,
+                LastCheck = lastCheck.Ts
+            };
+        }
+
+        // 🔹 PRIORITY 1: Check for flapping using recent data
+        bool isFlapping = await IsFlappingAsync(endpointId, recent);
+        
+        if (isFlapping)
+        {
+            var (effectiveStatus, effectiveRtt) = DetermineEffectiveStatusAndRtt(lastCheck);
+            
+            return new CurrentStateDto
+            {
+                EffectiveStatus = "flapping",
+                EffectiveRtt = effectiveRtt,
+                Classification = (int)OutageClassification.Intermittent,
+                HostReachable = lastCheck.Primary.Status == "up" || 
+                               (lastCheck.Fallback.Attempted && lastCheck.Fallback.Status == "up"),
+                LastCheck = lastCheck.Ts
+            };
+        }
+
+        // 🔹 PRIORITY 2: Normal status logic
+        var (status, rtt) = DetermineEffectiveStatusAndRtt(lastCheck);
+        
+        return new CurrentStateDto
+        {
+            EffectiveStatus = status,
+            EffectiveRtt = rtt,
+            Classification = lastCheck.Classification,
+            HostReachable = lastCheck.Primary.Status == "up" || 
+                           (lastCheck.Fallback.Attempted && lastCheck.Fallback.Status == "up"),
+            LastCheck = lastCheck.Ts
+        };
+    }
+
+    // 🔹 NEW: Proper effective status determination
+    private (string status, double? rtt) DetermineEffectiveStatusAndRtt(CheckResultStructuredDto check)
+    {
+        // If primary DOWN but fallback UP → show as UP (service issue, host reachable)
+        if (check.Primary.Status == "down" && 
+            check.Fallback.Attempted && 
+            check.Fallback.Status == "up")
+        {
+            return ("up", check.Fallback.RttMs);
+        }
+        
+        // Otherwise use primary status and RTT
+        return (check.Primary.Status, check.Primary.RttMs);
+    }
+
+    // 🔹 NEW: Flapping detection using structured data
+    private async Task<bool> IsFlappingAsync(Guid endpointId, List<CheckResultStructuredDto> recent)
+    {
+        // Use recent data if we have enough, otherwise query database
+        var checksForFlapping = recent.Count >= 10 
+            ? recent.Take(10).ToList()
+            : await GetRecentChecksForFlappingAsync(endpointId);
+
+        if (checksForFlapping.Count < 4)
+        {
+            return false;
+        }
+
+        // Apply effective status logic to each check
+        var effectiveStatuses = checksForFlapping
+            .OrderBy(c => c.Ts)
+            .Select(c => {
+                var (effectiveStatus, _) = DetermineEffectiveStatusAndRtt(c);
+                return effectiveStatus;
+            })
+            .ToList();
+
+        // Count state changes in effective status
+        int stateChanges = 0;
+        for (int i = 1; i < effectiveStatuses.Count; i++)
+        {
+            if (effectiveStatuses[i] != effectiveStatuses[i - 1])
+            {
+                stateChanges++;
+            }
+        }
+
+        return stateChanges > 3;
+    }
+
+    // 🔹 NEW: Helper to get recent checks for flapping detection
+    private async Task<List<CheckResultStructuredDto>> GetRecentChecksForFlappingAsync(Guid endpointId)
+    {
+        var cutoffTime = DateTimeOffset.UtcNow.AddMinutes(-5);
+        var checks = await _context.CheckResultsRaw
+            .Where(c => c.EndpointId == endpointId && ConvertToDateTimeOffset(c.Ts) >= cutoffTime)
+            .OrderByDescending(c => c.Ts)
+            .Take(10)
+            .ToListAsync();
+
+        // Convert to structured format for consistency
+        return checks.Select(c => new CheckResultStructuredDto
+        {
+            Ts = ConvertToDateTimeOffset(c.Ts),
+            Classification = (int)(c.Classification ?? OutageClassification.Unknown),
+            Primary = new ProbeResultDto 
+            { 
+                Status = c.Status.ToString().ToLower(),
+                RttMs = c.RttMs,
+                Error = c.Error
+            },
+            Fallback = new FallbackResultDto 
+            { 
+                Attempted = c.FallbackAttempted ?? false,
+                Status = c.FallbackStatus?.ToString().ToLower(),
+                RttMs = c.FallbackRttMs,
+                Error = c.FallbackError
+            }
+        }).ToList();
     }
 
     private EndpointDto MapToEndpointDto(Data.Endpoint endpoint)

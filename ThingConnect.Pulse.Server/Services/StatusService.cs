@@ -9,6 +9,8 @@ namespace ThingConnect.Pulse.Server.Services;
 public interface IStatusService
 {
     Task<List<LiveStatusItemDto>> GetLiveStatusAsync(string? group, string? search);
+    Task<List<Data.Group>> GetGroupsCachedAsync();
+    void InvalidateGroupsCache();
 }
 
 public sealed class StatusService : IStatusService
@@ -63,7 +65,7 @@ public sealed class StatusService : IStatusService
         var items = new List<LiveStatusItemDto>();
         var endpointIds = endpoints.Select(e => e.Id).ToList();
 
-        // Get latest checks for all endpoints - optimized query using window functions in SQLite
+        // Get latest checks for all endpoints - optimized query
         var latestChecks = await _context.CheckResultsRaw
             .Where(c => endpointIds.Contains(c.EndpointId))
             .AsNoTracking()
@@ -82,21 +84,35 @@ public sealed class StatusService : IStatusService
 
         foreach (Data.Endpoint? endpoint in endpoints)
         {
-            StatusType status = DetermineStatus(endpoint, latestCheckDict);
+            CheckResultRaw? latestCheck = latestCheckDict.ContainsKey(endpoint.Id) 
+                ? latestCheckDict[endpoint.Id] 
+                : null;
+
+            // 🔹 NEW: Build enhanced status with fallback + flapping + classification
+            var statusInfo = await DetermineEnhancedStatusAsync(endpoint, latestCheck);
+            
             List<SparklinePoint> sparkline = sparklineData.ContainsKey(endpoint.Id)
                 ? sparklineData[endpoint.Id]
                 : new List<SparklinePoint>();
 
             _logger.LogInformation(
-                "Endpoint {EndpointName}: Status = {Status}, LastRttMs = {RttMs}, LastChangeTs = {LastChangeTs}",
-                endpoint.Name, status, endpoint.LastRttMs, endpoint.LastChangeTs);
+                "Endpoint {EndpointName}: EffectiveStatus = {EffectiveStatus}, EffectiveRtt = {EffectiveRtt}, Classification = {Classification}",
+                endpoint.Name, statusInfo.CurrentState.EffectiveStatus, statusInfo.CurrentState.EffectiveRtt, statusInfo.CurrentState.Classification);
 
             items.Add(new LiveStatusItemDto
             {
                 Endpoint = MapToEndpointDto(endpoint),
-                Status = status.ToString().ToLower(),
-                RttMs = endpoint.LastRttMs,
-                LastChangeTs = endpoint.LastChangeTs.HasValue ? UnixTimestamp.FromUnixSeconds(endpoint.LastChangeTs.Value) : DateTimeOffset.Now,
+                
+                // 🔹 LEGACY: Keep temporarily for backward compatibility
+                Status = statusInfo.CurrentState.EffectiveStatus,
+                RttMs = statusInfo.CurrentState.EffectiveRtt,
+                
+                // 🔹 NEW: Rich current state
+                CurrentState = statusInfo.CurrentState,
+                
+                LastChangeTs = endpoint.LastChangeTs.HasValue 
+                    ? UnixTimestamp.FromUnixSeconds(endpoint.LastChangeTs.Value) 
+                    : DateTimeOffset.Now,
                 Sparkline = sparkline
             });
         }
@@ -104,10 +120,175 @@ public sealed class StatusService : IStatusService
         return items;
     }
 
+    // 🔹 NEW: Enhanced status determination with all logic combined
+    private async Task<(CurrentStateDto CurrentState, StatusType LegacyStatus)> DetermineEnhancedStatusAsync(Data.Endpoint endpoint, CheckResultRaw? latestCheck)
+    {
+        // Handle no data case
+        if (latestCheck == null)
+        {
+            return (new CurrentStateDto
+            {
+                EffectiveStatus = "down",
+                EffectiveRtt = null,
+                Classification = (int)OutageClassification.Unknown,
+                HostReachable = false,
+                LastCheck = DateTimeOffset.UtcNow
+            }, StatusType.Down);
+        }
+
+        // Check if data is stale (older than 2x interval)
+        var expectedInterval = TimeSpan.FromSeconds(endpoint.IntervalSeconds * 2);
+        bool isStale = UnixTimestamp.Now() - latestCheck.Ts > (long)expectedInterval.TotalSeconds;
+ 
+        if (isStale)
+        {
+            return (new CurrentStateDto
+            {
+                EffectiveStatus = "down",
+                EffectiveRtt = null,
+                Classification = (int)OutageClassification.Unknown,
+                HostReachable = false,
+                LastCheck = UnixTimestamp.FromUnixSeconds(latestCheck.Ts)
+            }, StatusType.Down);
+        }
+
+        // 🔹 PRIORITY 1: Check for flapping (using your existing logic)
+        bool isFlapping = await IsFlappingAsync(endpoint.Id);
+
+        if (isFlapping)
+        {
+            return (new CurrentStateDto
+            {
+                EffectiveStatus = "flapping",
+                EffectiveRtt = CalculateEffectiveRtt(latestCheck),
+                Classification = (int)OutageClassification.Intermittent,
+                HostReachable = latestCheck.FallbackStatus == UpDown.up,
+                LastCheck = UnixTimestamp.FromUnixSeconds(latestCheck.Ts)
+            }, StatusType.Flapping);
+        }
+
+        // 🔹 PRIORITY 2: Normal status logic with fallback awareness
+        string effectiveStatus = DetermineEffectiveStatus(latestCheck);
+        StatusType legacyStatus = latestCheck.Status == UpDown.up ? StatusType.Up : StatusType.Down;
+        
+        // Override legacy status if we show as "up" due to fallback
+        if (effectiveStatus == "up" && latestCheck.Status == UpDown.down)
+        {
+            legacyStatus = StatusType.Up; // Show as UP in legacy field too
+        }
+
+        return (new CurrentStateDto
+        {
+            EffectiveStatus = effectiveStatus,
+            EffectiveRtt = CalculateEffectiveRtt(latestCheck),
+            Classification = DetermineClassification(latestCheck),
+            HostReachable = latestCheck.FallbackStatus == UpDown.up,
+            LastCheck = UnixTimestamp.FromUnixSeconds(latestCheck.Ts)
+        }, legacyStatus);
+    }
+
+    // 🔹 NEW: Determine effective status with fallback logic
+    private string DetermineEffectiveStatus(CheckResultRaw check)
+    {
+        // If primary failed but fallback succeeded → show as UP (service issue, host reachable)
+        if (check.Status == UpDown.down && check.FallbackStatus == UpDown.up)
+        {
+            return "up";  // Host is reachable, it's a service issue
+        }
+        
+        // Otherwise use primary status
+        return check.Status.ToString().ToLower();
+    }
+
+    // 🔹 NEW: Smart classification logic
+    private int DetermineClassification(CheckResultRaw check)
+    {
+        // Use database classification if available
+        if (check.Classification.HasValue)
+        {
+            return (int)check.Classification.Value;
+        }
+
+        // Fallback to simple classification logic
+        if (check.Status == UpDown.up)
+        {
+            return (int)OutageClassification.None; // Healthy
+        }
+        
+        if (check.Status == UpDown.down && check.FallbackStatus == UpDown.up)
+        {
+            return (int)OutageClassification.Service; // Service down, host up
+        }
+        
+        if (check.Status == UpDown.down && check.FallbackStatus == UpDown.down)
+        {
+            return (int)OutageClassification.Network; // Both down = network issue
+        }
+
+        return (int)OutageClassification.Unknown;
+    }
+
+    // 🔹 NEW: Calculate effective RTT (priority-based)
+    private double? CalculateEffectiveRtt(CheckResultRaw check)
+    {
+        // Priority 1: Primary probe RTT (if successful)
+        if (check.Status == UpDown.up && check.RttMs.HasValue)
+        {
+            return check.RttMs.Value;
+        }
+        
+        // Priority 2: Fallback RTT (if primary failed but fallback succeeded)
+        if (check.Status == UpDown.down && 
+            check.FallbackStatus == UpDown.up && 
+            check.FallbackRttMs.HasValue)
+        {
+            return check.FallbackRttMs.Value;
+        }
+        
+        // Priority 3: Both failed or no RTT available
+        return null;
+    }
+
+    // 🔹 KEEP: Your existing flapping logic (enhanced)
+    private async Task<bool> IsFlappingAsync(Guid endpointId)
+    {
+        // Enhanced: Use your existing 5-minute window with fallback consideration
+        long cutoffTime = UnixTimestamp.Subtract(UnixTimestamp.Now(), TimeSpan.FromMinutes(5));
+        var checks = await _context.CheckResultsRaw
+            .Where(c => c.EndpointId == endpointId && c.Ts >= cutoffTime)
+            .AsNoTracking()
+            .Select(c => new { c.Ts, c.Status, c.FallbackStatus })
+            .OrderBy(c => c.Ts)
+            .ToListAsync();
+
+        if (checks.Count < 4)
+        {
+            return false;
+        }
+
+        // 🔹 ENHANCED: Consider effective status for flapping (not just primary)
+        var effectiveStatuses = checks.Select(c => {
+            // Apply same logic: if primary down but fallback up = effective up
+            if (c.Status == UpDown.down && c.FallbackStatus == UpDown.up)
+                return UpDown.up;
+            return c.Status;
+        }).ToList();
+
+        int stateChanges = 0;
+        for (int i = 1; i < effectiveStatuses.Count; i++)
+        {
+            if (effectiveStatuses[i] != effectiveStatuses[i - 1])
+            {
+                stateChanges++;
+            }
+        }
+
+        return stateChanges > 3;
+    }
+
     /// <summary>
     /// Gets all groups with caching for better performance.
     /// </summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     public async Task<List<Data.Group>> GetGroupsCachedAsync()
     {
         const string cacheKey = "all_groups";
@@ -147,12 +328,12 @@ public sealed class StatusService : IStatusService
             return sparklineData;
         }
 
-        // Get last 20 checks for each endpoint - optimized with time filter in query
+        // Get last 20 checks for each endpoint - optimized with time filter
         long cutoffTime = UnixTimestamp.Subtract(UnixTimestamp.Now(), TimeSpan.FromHours(2));
         var recentChecks = await _context.CheckResultsRaw
             .Where(c => endpointIds.Contains(c.EndpointId) && c.Ts >= cutoffTime)
             .AsNoTracking()
-            .Select(c => new { c.EndpointId, c.Ts, c.Status })
+            .Select(c => new { c.EndpointId, c.Ts, c.Status, c.FallbackStatus })
             .ToListAsync();
 
         recentChecks = recentChecks
@@ -167,10 +348,16 @@ public sealed class StatusService : IStatusService
             var points = group
                 .Take(20) // Maximum 20 points for sparkline
                 .OrderBy(c => c.Ts) // Order chronologically for display
-                .Select(c => new SparklinePoint
-                {
-                    Ts = UnixTimestamp.FromUnixSeconds(c.Ts),
-                    S = c.Status == UpDown.up ? "u" : "d"
+                .Select(c => {
+                    // 🔹 ENHANCED: Sparkline shows effective status
+                    var effectiveStatus = (c.Status == UpDown.down && c.FallbackStatus == UpDown.up) 
+                        ? UpDown.up : c.Status;
+
+                    return new SparklinePoint
+                    {
+                        Ts = UnixTimestamp.FromUnixSeconds(c.Ts),
+                        S = effectiveStatus == UpDown.up ? "u" : "d"
+                    };
                 })
                 .ToList();
 
@@ -178,63 +365,6 @@ public sealed class StatusService : IStatusService
         }
 
         return sparklineData;
-    }
-
-    private StatusType DetermineStatus(Data.Endpoint endpoint, Dictionary<Guid, CheckResultRaw?> latestChecks)
-    {
-        // Check if we have recent check data
-        if (!latestChecks.TryGetValue(endpoint.Id, out CheckResultRaw? latestCheck) || latestCheck == null)
-        {
-            return StatusType.Down; // No data means down
-        }
-
-        // Check if the latest check is recent enough (within 2x interval)
-        var expectedInterval = TimeSpan.FromSeconds(endpoint.IntervalSeconds * 2);
-        if (UnixTimestamp.Now() - latestCheck.Ts > (long)expectedInterval.TotalSeconds)
-        {
-            return StatusType.Down; // Stale data means down
-        }
-
-        // Check for flapping (multiple state changes in short period)
-        // This is simplified - in production you'd want more sophisticated flap detection
-        if (IsFlapping(endpoint.Id).Result)
-        {
-            return StatusType.Flapping;
-        }
-
-        return latestCheck.Status == UpDown.up ? StatusType.Up : StatusType.Down;
-    }
-
-    private async Task<bool> IsFlapping(Guid endpointId)
-    {
-        // Simple flap detection: check if there were > 3 state changes in last 5 minutes
-        long cutoffTime = UnixTimestamp.Subtract(UnixTimestamp.Now(), TimeSpan.FromMinutes(5));
-        var checks = await _context.CheckResultsRaw
-            .Where(c => c.EndpointId == endpointId && c.Ts >= cutoffTime)
-            .AsNoTracking()
-            .Select(c => new { c.Ts, c.Status })
-            .ToListAsync();
-
-        var recentChecks = checks
-            .OrderBy(c => c.Ts)
-            .Select(c => c.Status)
-            .ToList();
-
-        if (recentChecks.Count < 4)
-        {
-            return false;
-        }
-
-        int stateChanges = 0;
-        for (int i = 1; i < recentChecks.Count; i++)
-        {
-            if (recentChecks[i] != recentChecks[i - 1])
-            {
-                stateChanges++;
-            }
-        }
-
-        return stateChanges > 3;
     }
 
     private EndpointDto MapToEndpointDto(Data.Endpoint endpoint)
