@@ -87,7 +87,6 @@ export function EndpointFilters({
             items={groups.map(g => ({ label: g.name, value: g.id }))}
             selectedValue={selectedGroup ? selectedGroup : ''}
             onChange={handleGroupChange}
-            isLoading={false}
           />
         </Box>
         {/* Search Input */}

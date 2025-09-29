@@ -173,6 +173,9 @@ public class Program
             builder.Services.AddSingleton<INotificationService>(provider => provider.GetRequiredService<NotificationBackgroundService>());
             builder.Services.AddHostedService<NotificationBackgroundService>(provider => provider.GetRequiredService<NotificationBackgroundService>());
 
+            // Add group service
+            builder.Services.AddScoped<IGroupService, GroupService>();
+
             // Add CORS
             builder.Services.AddCors(options =>
             {
