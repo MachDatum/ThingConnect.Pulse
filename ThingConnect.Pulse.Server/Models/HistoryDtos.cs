@@ -6,6 +6,11 @@ public sealed class RawCheckDto
     public string Status { get; set; } = default!;
     public double? RttMs { get; set; }
     public string? Error { get; set; }
+    public bool? FallbackAttempted { get; set; }
+    public string? FallbackStatus { get; set; }
+    public double? FallbackRttMs { get; set; }
+    public string? FallbackError { get; set; }
+    public OutageClassification? Classification { get; set; }
 }
 
 public sealed class RollupBucketDto
@@ -30,6 +35,7 @@ public sealed class OutageDto
     public DateTimeOffset? EndedTs { get; set; }
     public int? DurationS { get; set; }
     public string? LastError { get; set; }
+    public OutageClassification? Classification { get; set; }
 }
 
 public sealed class HistoryResponseDto
@@ -39,5 +45,4 @@ public sealed class HistoryResponseDto
     public List<RollupBucketDto> Rollup15m { get; set; } = new();
     public List<DailyBucketDto> RollupDaily { get; set; } = new();
     public List<OutageDto> Outages { get; set; } = new();
-    public OutageClassificationDto? Classification { get; set; }
 }

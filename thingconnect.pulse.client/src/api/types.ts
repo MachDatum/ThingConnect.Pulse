@@ -82,11 +82,27 @@ export interface StateChange {
   error?: string;
 }
 
+export type OutageClassification =
+  | -1 // None
+  | 0 // Unknown
+  | 1 // Network
+  | 2 // Service
+  | 3 // Intermittent
+  | 4 // Performance
+  | 5 // PartialService
+  | 6 // DnsResolution
+  | 7 // Congestion
+  | 8; // Maintenance
 export interface RawCheck {
   ts: string;
   status: 'up' | 'down';
   rttMs?: number | null;
   error?: string | null;
+  fallbackAttempted?: boolean;
+  fallbackSuccess?: boolean;
+  fallbackRttMs?: number | null;
+  classification?: OutageClassification | null;
+  lastSeenViaIcmp?: string | null; // ISO timestamp when last reachable via ICMP
 }
 
 export interface Outage {
@@ -94,6 +110,7 @@ export interface Outage {
   endedTs?: string | null;
   durationS?: number | null;
   lastError?: string | null;
+  classification: OutageClassification;
 }
 
 export interface EndpointDetail {
