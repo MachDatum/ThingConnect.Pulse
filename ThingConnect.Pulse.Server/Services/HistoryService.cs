@@ -187,7 +187,8 @@ public sealed class HistoryService : IHistoryService
                 Id = endpoint.Group.Id,
                 Name = endpoint.Group.Name,
                 ParentId = endpoint.Group.ParentId,
-                Color = endpoint.Group.Color
+                Color = endpoint.Group.Color,
+                SortOrder = endpoint.Group.SortOrder
             },
             Type = endpoint.Type.ToString().ToLower(),
             Host = endpoint.Host,
