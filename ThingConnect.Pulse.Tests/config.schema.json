@@ -11,14 +11,29 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "interval_seconds": { "type": ["integer", "string"], "minimum": 1, "default": 10 },
-        "timeout_ms": { "type": ["integer", "string"], "minimum": 100, "default": 1500 },
-        "retries": { "type": ["integer", "string"], "minimum": 0, "default": 1 },
+        "interval_seconds": {
+          "type": ["integer", "string"],
+          "minimum": 1,
+          "default": 10
+        },
+        "timeout_ms": {
+          "type": ["integer", "string"],
+          "minimum": 100,
+          "default": 1500
+        },
+        "retries": {
+          "type": ["integer", "string"],
+          "minimum": 0,
+          "default": 1
+        },
         "http": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "user_agent": { "type": "string", "default": "ThingConnectPulse/1.0" },
+            "user_agent": {
+              "type": "string",
+              "default": "ThingConnectPulse/1.0"
+            },
             "expect_text": { "type": "string", "default": "" }
           },
           "default": {}
@@ -39,7 +54,10 @@
           },
           "name": { "type": "string", "minLength": 1 },
           "parent_id": { "type": ["string", "null"] },
-          "color": { "type": "string", "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$" },
+          "color": {
+            "type": "string",
+            "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+          },
           "sort_order": { "type": ["integer", "string"] }
         },
         "additionalProperties": false
@@ -62,14 +80,17 @@
     },
     "ipv6": {
       "type": "string",
-      "pattern": "^[0-9A-Fa-f:]+$"
+      "pattern": "^[0-9A-Fa-f:]+(%[0-9A-Za-z]+)?$",
+      "description": "IPv6 address, optionally with zone index (e.g., fe80::1%3)"
     },
     "cidr": {
       "type": "string",
-      "pattern": "^(?:(?:(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)\\/(?:[0-9]|[12][0-9]|3[0-2]))|(?:(?:[0-9A-Fa-f:]+)\\/(?:[0-9]|[1-9]\\d|1[01]\\d|12[0-8]))$"
+      "minLength": 1,
+      "pattern": "^(?:(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)/(?:[0-9]|[12][0-9]|3[0-2])|[0-9A-Fa-f:]+(?:%[0-9A-Za-z]+)?/(?:[0-9]|[1-9]\\d|1[01]\\d|12[0-8]))$"
     },
     "wildcard": {
       "type": "string",
+      "minLength": 1,
       "description": "IPv4 wildcard like 10.10.1.* (expands 1..254 by default)",
       "pattern": "^(?:(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)\\.){3}\\*$"
     },
@@ -81,16 +102,39 @@
         "type": { "$ref": "#/definitions/probeType" },
         "group": { "type": "string" },
         "name": { "type": ["string", "null"] },
-        "host": { "type": ["string", "null"] },
+        "host": {
+          "type": ["string", "null"],
+          "anyOf": [
+            { "$ref": "#/definitions/hostname" },
+            { "$ref": "#/definitions/ipv4" },
+            { "$ref": "#/definitions/ipv6" }
+          ]
+        },
         "cidr": { "type": ["string", "null"] },
         "wildcard": { "type": ["string", "null"] },
-        "port": { "type": ["integer", "string", "null"], "minimum": 1, "maximum": 65535 },
+        "port": {
+          "type": ["integer", "string", "null"],
+          "minimum": 1,
+          "maximum": 65535
+        },
         "http_path": { "type": ["string", "null"] },
         "http_match": { "type": ["string", "null"] },
-        "interval_seconds": { "type": ["integer", "string", "null"], "minimum": 1 },
-        "timeout_ms": { "type": ["integer", "string", "null"], "minimum": 100 },
-        "retries": { "type": ["integer", "string", "null"], "minimum": 0 },
-        "expected_rtt_ms": { "type": ["integer", "string", "null"], "minimum": 1 },
+        "interval_seconds": {
+          "type": ["integer", "string", "null"],
+          "minimum": 1
+        },
+        "timeout_ms": {
+          "type": ["integer", "string", "null"],
+          "minimum": 100
+        },
+        "retries": {
+          "type": ["integer", "string", "null"],
+          "minimum": 0
+        },
+        "expected_rtt_ms": {
+          "type": ["integer", "string", "null"],
+          "minimum": 1
+        },
         "enabled": { "type": ["boolean", "null"] },
         "notes": { "type": ["string", "null"] }
       },
@@ -110,12 +154,54 @@
   "examples": [
     {
       "version": 1,
-      "defaults": { "interval_seconds": 10, "timeout_ms": 1500, "retries": 1, "http": { "user_agent": "ThingConnectPulse/1.0", "expect_text": "" } },
-      "groups": [ { "id": "new-press", "name": "Press Shop" }, { "id": "new-lab", "name": "Quality Lab" } ],
+      "defaults": {
+        "interval_seconds": 10,
+        "timeout_ms": 1500,
+        "retries": 1,
+        "http": { "user_agent": "ThingConnectPulse/1.0", "expect_text": "" }
+      },
+      "groups": [
+        { "id": "new-press", "name": "Press Shop" },
+        { "id": "new-lab", "name": "Quality Lab" }
+      ],
       "targets": [
-        { "type": "icmp", "host": "10.10.1.21", "name": "PLC-Press-01", "group": "press", "interval_seconds": 5 },
-        { "type": "tcp", "wildcard": "10.10.1.*", "port": 5900, "name": "HMI-VNC", "group": "press" },
-        { "type": "http", "cidr": "10.10.2.0/28", "http_path": "/health", "http_match": "OK", "name": "QMS-HTTP", "group": "lab" }
+        {
+          "type": "icmp",
+          "host": "10.10.1.21",
+          "name": "PLC-Press-01",
+          "group": "press",
+          "interval_seconds": 5
+        },
+        {
+          "type": "tcp",
+          "wildcard": "10.10.1.*",
+          "port": 5900,
+          "name": "HMI-VNC",
+          "group": "press"
+        },
+        {
+          "type": "http",
+          "cidr": "10.10.2.0/28",
+          "http_path": "/health",
+          "http_match": "OK",
+          "name": "QMS-HTTP",
+          "group": "lab"
+        },
+        {
+          "type": "icmp",
+          "host": "fd7a:115c:a1e0::3801:160a",
+          "name": "Tailscale-Node-01",
+          "group": "network",
+          "interval_seconds": 5
+        },
+        {
+          "type": "http",
+          "cidr": "2001:db8:abcd:1234::/64",
+          "http_path": "/health",
+          "http_match": "OK",
+          "name": "IPv6-HTTP-Test",
+          "group": "lab"
+        }
       ]
     }
   ]

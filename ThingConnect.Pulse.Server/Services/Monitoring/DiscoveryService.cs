@@ -6,13 +6,16 @@ using ThingConnect.Pulse.Server.Data;
 namespace ThingConnect.Pulse.Server.Services.Monitoring;
 
 /// <summary>
-/// Implementation of discovery service for expanding network targets.
+/// Implementation of discovery service for expanding network targets, now supporting IPv6.
 /// </summary>
 public sealed class DiscoveryService : IDiscoveryService
 {
     private readonly ILogger<DiscoveryService> _logger;
 
-    private static readonly Regex CidrRegex = new(@"^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/(\d{1,2})$",
+    // Regex for CIDR parsing
+    private static readonly Regex Ipv6CidrRegex = new Regex(@"^([0-9a-fA-F:]+)(?:/([0-9]{1,3}))?$",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    private static readonly Regex Ipv4CidrRegex = new Regex(@"^(\d{1,3}(?:\.\d{1,3}){3})(?:/([0-9]{1,2}))?$",
         RegexOptions.Compiled);
     private static readonly Regex WildcardRegex = new(@"^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.\*$",
         RegexOptions.Compiled);
@@ -24,45 +27,56 @@ public sealed class DiscoveryService : IDiscoveryService
 
     public IEnumerable<string> ExpandCidr(string cidr)
     {
-        Match match = CidrRegex.Match(cidr);
-        if (!match.Success)
+        // IPv4 CIDR
+        Match matchV4 = Ipv4CidrRegex.Match(cidr);
+        if (matchV4.Success)
         {
-            _logger.LogWarning("Invalid CIDR format: {Cidr}", cidr);
+            string baseIp = matchV4.Groups[1].Value;
+            int prefixLength = int.Parse(matchV4.Groups[2].Value);
+
+            if (prefixLength < 0 || prefixLength > 32)
+            {
+                _logger.LogWarning("Invalid CIDR prefix length: {PrefixLength}", prefixLength);
+                yield break;
+            }
+
+            if (!IPAddress.TryParse(baseIp, out IPAddress? ipAddress))
+            {
+                _logger.LogWarning("Invalid IP address in CIDR: {BaseIp}", baseIp);
+                yield break;
+            }
+
+            byte[] addressBytes = ipAddress.GetAddressBytes();
+            uint addressInt = BitConverter.ToUInt32(addressBytes.Reverse().ToArray(), 0);
+            int hostBits = 32 - prefixLength;
+            uint hostCount = (uint)(1 << hostBits);
+            uint networkAddress = addressInt & (0xFFFFFFFF << hostBits);
+
+            // Skip network and broadcast addresses for practical use
+            uint startAddress = networkAddress + 1;
+            uint endAddress = networkAddress + hostCount - 1;
+
+            for (uint address = startAddress; address < endAddress && address > networkAddress; address++)
+            {
+                byte[] bytes = BitConverter.GetBytes(address).Reverse().ToArray();
+                yield return new IPAddress(bytes).ToString();
+            }
+
             yield break;
         }
 
-        string baseIp = match.Groups[1].Value;
-        int prefixLength = int.Parse(match.Groups[2].Value);
-
-        if (prefixLength < 0 || prefixLength > 32)
+        // IPv6 CIDR using helper expander
+        Match matchV6 = Ipv6CidrRegex.Match(cidr);
+        if (matchV6.Success)
         {
-            _logger.LogWarning("Invalid CIDR prefix length: {PrefixLength}", prefixLength);
+            foreach (var ip in Ipv6CidrExpander.Expand(cidr))
+            {
+                yield return ip;
+            }
             yield break;
         }
 
-        if (!IPAddress.TryParse(baseIp, out IPAddress? ipAddress))
-        {
-            _logger.LogWarning("Invalid IP address in CIDR: {BaseIp}", baseIp);
-            yield break;
-        }
-
-        byte[] addressBytes = ipAddress.GetAddressBytes();
-        uint addressInt = BitConverter.ToUInt32(addressBytes.Reverse().ToArray(), 0);
-
-        int hostBits = 32 - prefixLength;
-        uint hostCount = (uint)(1 << hostBits);
-        uint networkAddress = addressInt & (0xFFFFFFFF << hostBits);
-
-        // Skip network and broadcast addresses for practical use
-        uint startAddress = networkAddress + 1;
-        uint endAddress = networkAddress + hostCount - 1;
-
-        for (uint address = startAddress; address < endAddress && address > networkAddress; address++)
-        {
-            byte[] bytes = BitConverter.GetBytes(address).Reverse().ToArray();
-            var ip = new IPAddress(bytes);
-            yield return ip.ToString();
-        }
+        _logger.LogWarning("Invalid CIDR format: {Cidr}", cidr);
     }
 
     public IEnumerable<string> ExpandWildcard(string wildcard, int startRange = 1, int endRange = 254)
@@ -96,8 +110,12 @@ public sealed class DiscoveryService : IDiscoveryService
         {
             IPAddress[] addresses = await Dns.GetHostAddressesAsync(hostname);
             return addresses
-                .Where(addr => addr.AddressFamily == AddressFamily.InterNetwork) // IPv4 only for now
-                .Select(addr => addr.ToString())
+                .Select(addr =>
+                {
+                    if (addr.AddressFamily == AddressFamily.InterNetworkV6 && addr.ScopeId != 0)
+                        return $"{addr}%{addr.ScopeId}";
+                    return addr.ToString();
+                })
                 .ToList();
         }
         catch (Exception ex)
@@ -207,5 +225,59 @@ public sealed class DiscoveryService : IDiscoveryService
         };
 
         return endpoint;
+    }
+
+    private sealed class NetworkRange
+    {
+        public string BaseAddress { get; }
+        public int PrefixLength { get; }
+
+        public NetworkRange(string baseAddress, int prefixLength)
+        {
+            BaseAddress = baseAddress;
+            PrefixLength = prefixLength;
+        }
+    }
+
+    private sealed class Ipv6CidrExpander
+    {
+        public static IEnumerable<string> Expand(string cidr)
+        {
+            var match = Ipv6CidrRegex.Match(cidr);
+            if (!match.Success) throw new ArgumentException($"Invalid IPv6 CIDR: {cidr}");
+
+            string baseAddress = match.Groups[1].Value;
+            int prefixLength = match.Groups[2].Success ? int.Parse(match.Groups[2].Value) : 64;
+
+            // Handle zone/index if present (e.g., fe80::1%eth0)
+            string? zone = null;
+            int percentIndex = baseAddress.IndexOf('%');
+            if (percentIndex >= 0)
+            {
+                zone = baseAddress.Substring(percentIndex + 1);
+                baseAddress = baseAddress.Substring(0, percentIndex);
+            }
+
+            if (!IPAddress.TryParse(baseAddress, out IPAddress? ipAddress) || ipAddress.AddressFamily != AddressFamily.InterNetworkV6)
+                throw new ArgumentException($"Invalid IPv6 address: {baseAddress}");
+
+            byte[] bytes = ipAddress.GetAddressBytes();
+
+            string FormatAddress(byte[] addrBytes)
+                => zone != null ? $"{new IPAddress(addrBytes)}%{zone}" : new IPAddress(addrBytes).ToString();
+
+            if (prefixLength < 120 || prefixLength > 128)
+                throw new ArgumentException($"IPv6 prefix /{prefixLength} not supported for practical expansion. Use /120–/128.");
+
+            int hostCount = 1 << (128 - prefixLength);
+            if (hostCount > 256) hostCount = 256;
+
+            for (int i = 0; i < hostCount; i++)
+            {
+                byte[] copy = (byte[])bytes.Clone();
+                copy[15] += (byte)i;
+                yield return FormatAddress(copy);
+            }
+        }
     }
 }
