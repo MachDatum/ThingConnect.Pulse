@@ -63,7 +63,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
                     state,
                     UnixTimestamp.ToUnixSeconds(result.Timestamp),
                     result.Error,
-                    (OutageClassification?)result.Classification,
+                    result.Classification,
                     cancellationToken);
                 stateChanged = true;
                 _logger.LogWarning("Endpoint {EndpointId} transitioned to DOWN after {FailStreak} consecutive failures",
@@ -542,7 +542,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
             FallbackStatus = result.FallbackStatus,
             FallbackRttMs = result.FallbackRttMs,
             FallbackError = result.FallbackError,
-            Classification = (OutageClassification?)result.Classification
+            Classification = result.Classification
         };
 
         context.CheckResultsRaw.Add(rawResult);

@@ -1,3 +1,5 @@
+using ThingConnect.Pulse.Server.Data;
+
 namespace ThingConnect.Pulse.Server.Models;
 
 public sealed class RawCheckDto
@@ -10,7 +12,7 @@ public sealed class RawCheckDto
     public string? FallbackStatus { get; set; }
     public double? FallbackRttMs { get; set; }
     public string? FallbackError { get; set; }
-    public OutageClassificationDto? Classification { get; set; }
+    public OutageClassification? Classification { get; set; }
 }
 
 public sealed class RollupBucketDto
@@ -35,7 +37,7 @@ public sealed class OutageDto
     public DateTimeOffset? EndedTs { get; set; }
     public int? DurationS { get; set; }
     public string? LastError { get; set; }
-    public OutageClassificationDto? Classification { get; set; }
+    public OutageClassification? Classification { get; set; }
 }
 
 public sealed class HistoryResponseDto

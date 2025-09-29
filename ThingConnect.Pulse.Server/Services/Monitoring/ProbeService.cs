@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Threading;
 using ThingConnect.Pulse.Server.Data;
 using ThingConnect.Pulse.Server.Models;
 
@@ -25,16 +26,15 @@ public sealed class ProbeService : IProbeService
     {
         DateTimeOffset timestamp = DateTimeOffset.UtcNow;
         CheckResult primaryResult;
+        CheckResult? fallbackResult = null;
 
         try
         {
             primaryResult = endpoint.Type switch
             {
                 ProbeType.icmp => await PingAsync(endpoint.Id, endpoint.Host, endpoint.TimeoutMs, cancellationToken),
-                ProbeType.tcp => await TcpConnectAsync(endpoint.Id, endpoint.Host,
-                    endpoint.Port ?? 80, endpoint.TimeoutMs, cancellationToken),
-                ProbeType.http => await HttpCheckAsync(endpoint.Id, endpoint.Host,
-                    endpoint.Port ?? (endpoint.Host.StartsWith("https://") ? 443 : 80),
+                ProbeType.tcp => await TcpConnectAsync(endpoint.Id, endpoint.Host, endpoint.Port ?? 80, endpoint.TimeoutMs, cancellationToken),
+                ProbeType.http => await HttpCheckAsync(endpoint.Id, endpoint.Host, endpoint.Port ?? (endpoint.Host.StartsWith("https://") ? 443 : 80),
                     endpoint.HttpPath, endpoint.HttpMatch, endpoint.TimeoutMs, cancellationToken),
                 _ => CheckResult.Failure(endpoint.Id, timestamp, $"Unknown probe type: {endpoint.Type}")
             };
@@ -45,27 +45,30 @@ public sealed class ProbeService : IProbeService
             primaryResult = CheckResult.Failure(endpoint.Id, timestamp, ex.Message);
         }
 
-        CheckResult? fallbackResult = null;
-
-        // Trigger ICMP fallback only if primary failed and endpoint is not ICMP itself
+        // TCP/HTTP fallback to ICMP if primary failed
         if (primaryResult.Status == UpDown.down && endpoint.Type != ProbeType.icmp)
         {
-            // Use half of the primary timeout, minimum 100ms
-            int fallbackTimeout = Math.Max(endpoint.TimeoutMs / 2, 100);
-            fallbackResult = await PingAsync(endpoint.Id, endpoint.Host, fallbackTimeout, cancellationToken);
+            try
+            {
+                int fallbackTimeout = Math.Max(endpoint.TimeoutMs / 2, 100);
+                fallbackResult = await PingAsync(endpoint.Id, endpoint.Host, endpoint.TimeoutMs, cancellationToken);
 
-            primaryResult.FallbackAttempted = true;
-            primaryResult.FallbackStatus = fallbackResult.Status;
-            primaryResult.FallbackRttMs = fallbackResult.RttMs;
-            primaryResult.FallbackError = fallbackResult.Error;
+                // Apply fallback only if it actually ran
+                primaryResult.ApplyFallback(fallbackResult);
+            }
+            catch (Exception ex)
+            {
+                fallbackResult = CheckResult.Failure(endpoint.Id, DateTimeOffset.UtcNow, $"Fallback ping failed: {ex.Message}");
+                primaryResult.ApplyFallback(fallbackResult);
+            }
         }
 
-        // Centralized classifier
+        // Centralized classification
         primaryResult.Classification = OutageClassifier.ClassifyOutage(
             primaryResult,
             fallbackResult,
             endpoint,
-            Enumerable.Empty<CheckResult>() // later you can feed history here
+            Enumerable.Empty<CheckResult>() // feed history later if available
         );
 
         return primaryResult;

@@ -9,16 +9,16 @@ namespace ThingConnect.Pulse.Server.Services.Monitoring;
 /// </summary>
 public static class OutageClassifier
 {
-    public static OutageClassificationDto ClassifyOutage(
+    public static OutageClassification ClassifyOutage(
         CheckResult primaryResult,
-        CheckResult? fallbackResult,
+        CheckResult fallbackResult,
         Data.Endpoint endpoint,
         IEnumerable<CheckResult> recentHistory)
     {
         // 1. ICMP probes → always Network on failure
         if (endpoint.Type == ProbeType.icmp && primaryResult.Status == UpDown.down)
         {
-            return OutageClassificationDto.Network;
+            return OutageClassification.Network;
         }
 
         // 2. Successful probes → check performance
@@ -26,40 +26,40 @@ public static class OutageClassifier
         {
             if (IsPerformanceDegraded(primaryResult, endpoint))
             {
-                return OutageClassificationDto.Performance;
+                return OutageClassification.Performance;
             }
 
-            return OutageClassificationDto.None; // explicitly healthy
+            return OutageClassification.None; // explicitly healthy
         }
 
         // 3. Failed TCP/HTTP probes → use fallback
         if (fallbackResult != null)
         {
             var baseClassification = fallbackResult.Status == UpDown.up
-                ? OutageClassificationDto.Service
-                : OutageClassificationDto.Network;
+                ? OutageClassification.Service
+                : OutageClassification.Network;
 
             // 4. Advanced patterns
             if (IsIntermittent(recentHistory))
             {
-                return OutageClassificationDto.Intermittent;
+                return OutageClassification.Intermittent;
             }
 
             if (IsPartialService(primaryResult, fallbackResult, endpoint))
             {
-                return OutageClassificationDto.PartialService;
+                return OutageClassification.PartialService;
             }
 
             if (IsDnsIssue(endpoint, fallbackResult))
             {
-                return OutageClassificationDto.DnsResolution;
+                return OutageClassification.DnsResolution;
             }
 
             return baseClassification;
         }
 
         // 5. Fallback missing or failed → default
-        return OutageClassificationDto.Unknown;
+        return OutageClassification.Unknown;
     }
 
     private static bool IsPerformanceDegraded(CheckResult result, Data.Endpoint endpoint)

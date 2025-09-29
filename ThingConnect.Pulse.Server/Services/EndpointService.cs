@@ -44,7 +44,12 @@ public sealed class EndpointService : IEndpointService
                 Ts = ConvertToDateTimeOffset(c.Ts),
                 Status = c.Status.ToString().ToLower(),
                 RttMs = c.RttMs,
-                Error = c.Error
+                Error = c.Error,
+                FallbackAttempted = c.FallbackAttempted,
+                FallbackStatus = c.FallbackStatus?.ToString().ToLower(),
+                FallbackRttMs = c.FallbackRttMs,
+                FallbackError = c.FallbackError,
+                Classification = c.Classification
             })
             .Where(r => r.Ts >= windowStart)
             .OrderByDescending(r => r.Ts)
