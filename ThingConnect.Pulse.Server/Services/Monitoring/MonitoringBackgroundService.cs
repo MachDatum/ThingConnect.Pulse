@@ -25,7 +25,7 @@ public sealed class MonitoringBackgroundService : BackgroundService
         _logger = logger;
 
         // Read concurrency limit from configuration
-        _maxConcurrentProbes = configuration.GetValue<int>("Monitoring:MaxConcurrentProbes", 100);
+        _maxConcurrentProbes = configuration.GetValue<int>("Monitoring:MaxConcurrentProbes", 20);
         _concurrencySemaphore = new SemaphoreSlim(_maxConcurrentProbes, _maxConcurrentProbes);
 
         _logger.LogInformation("Monitoring service initialized with max concurrent probes: {MaxConcurrentProbes}",
