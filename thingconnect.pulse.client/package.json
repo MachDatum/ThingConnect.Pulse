@@ -12,7 +12,7 @@
     "prepare": "cd .. && husky ./thingconnect.pulse.client/.husky"
   },
   "dependencies": {
-    "@chakra-ui/react": "^3.24.2",
+    "@chakra-ui/react": "^3.27.0",
     "@emotion/react": "^11.14.0",
     "@hookform/resolvers": "^5.2.1",
     "@monaco-editor/react": "^4.7.0",
@@ -41,7 +41,7 @@
     "zod": "^4.1.9"
   },
   "devDependencies": {
-    "@chakra-ui/cli": "^3.24.0",
+    "@chakra-ui/cli": "^3.27.0",
     "@eslint/js": "^9.33.0",
     "@tanstack/eslint-plugin-query": "^5.83.1",
     "@tanstack/react-query-devtools": "^5.85.5",
