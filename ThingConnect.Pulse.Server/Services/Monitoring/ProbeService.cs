@@ -25,12 +25,11 @@ public sealed class ProbeService : IProbeService
     public async Task<CheckResult> ProbeAsync(Data.Endpoint endpoint, CancellationToken cancellationToken = default)
     {
         DateTimeOffset timestamp = DateTimeOffset.UtcNow;
-        CheckResult primaryResult;
-        CheckResult? fallbackResult = null;
+        CheckResult probeResult;
 
         try
         {
-            primaryResult = endpoint.Type switch
+            probeResult = endpoint.Type switch
             {
                 ProbeType.icmp => await PingAsync(endpoint.Id, endpoint.Host, endpoint.TimeoutMs, cancellationToken),
                 ProbeType.tcp => await TcpConnectAsync(endpoint.Id, endpoint.Host, endpoint.Port ?? 80, endpoint.TimeoutMs, cancellationToken),
@@ -42,36 +41,32 @@ public sealed class ProbeService : IProbeService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Primary probe failed for endpoint {EndpointId} ({Host})", endpoint.Id, endpoint.Host);
-            primaryResult = CheckResult.Failure(endpoint.Id, timestamp, ex.Message);
+            probeResult = CheckResult.Failure(endpoint.Id, timestamp, ex.Message);
         }
 
         // TCP/HTTP fallback to ICMP if primary failed
-        if (primaryResult.Status == UpDown.down && endpoint.Type != ProbeType.icmp)
+        if (probeResult.Status == UpDown.down && endpoint.Type != ProbeType.icmp)
         {
             try
             {
-                int fallbackTimeout = Math.Max(endpoint.TimeoutMs / 2, 100);
-                fallbackResult = await PingAsync(endpoint.Id, endpoint.Host, endpoint.TimeoutMs, cancellationToken);
+                int fallbackTimeout = Math.Max(endpoint.TimeoutMs / 2, 1000);
+                CheckResult fallbackResult = await PingAsync(endpoint.Id, endpoint.Host, fallbackTimeout, cancellationToken);
 
-                // Apply fallback only if it actually ran
-                primaryResult.ApplyFallback(fallbackResult);
+                // ApplyFallback automatically sets classification
+                probeResult.ApplyFallback(fallbackResult);
             }
             catch (Exception ex)
             {
-                fallbackResult = CheckResult.Failure(endpoint.Id, DateTimeOffset.UtcNow, $"Fallback ping failed: {ex.Message}");
-                primaryResult.ApplyFallback(fallbackResult);
+                _logger.LogWarning(ex, "Fallback ICMP probe failed for endpoint {EndpointId} ({Host})", endpoint.Id, endpoint.Host);
+                CheckResult fallbackResult = CheckResult.Failure(endpoint.Id, DateTimeOffset.UtcNow, $"Fallback ping failed: {ex.Message}");
+                probeResult.ApplyFallback(fallbackResult);
             }
         }
 
-        // Centralized classification
-        primaryResult.Classification = StatusClassifier.ClassifyStatus(
-            primaryResult,
-            fallbackResult,
-            endpoint,
-            Enumerable.Empty<CheckResult>() // feed history later if available
-        );
+        _logger.LogDebug("Probe completed for {EndpointId}: Status={Status}, Classification={Classification}, EffectiveStatus={EffectiveStatus}", 
+            endpoint.Id, probeResult.Status, probeResult.Classification, probeResult.GetEffectiveStatus());
 
-        return primaryResult;
+        return probeResult;
     }
 
     public async Task<CheckResult> PingAsync(Guid endpointId, string host, int timeoutMs, CancellationToken cancellationToken = default)

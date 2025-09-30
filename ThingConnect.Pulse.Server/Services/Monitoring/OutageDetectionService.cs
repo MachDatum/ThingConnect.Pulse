@@ -37,21 +37,21 @@ public sealed class OutageDetectionService : IOutageDetectionService
 
         try
         {
-            // Update streak counters based on result
-            if (result.Status == UpDown.up)
+            var effectiveStatus = result.GetEffectiveStatus();
+            if (effectiveStatus == UpDown.up)
             {
                 state.RecordSuccess();
                 _logger.LogDebug(
-                    "RecordSuccess called for endpoint {EndpointId}. SuccessStreak={SuccessStreak}, FailStreak={FailStreak}",
-                    result.EndpointId, state.SuccessStreak, state.FailStreak
+                    "RecordSuccess called for endpoint {EndpointId}. EffectiveStatus={EffectiveStatus}, SuccessStreak={SuccessStreak}, FailStreak={FailStreak}",
+                    result.EndpointId, effectiveStatus, state.SuccessStreak, state.FailStreak
                 );
             }
             else
             {
                 state.RecordFailure();
                 _logger.LogDebug(
-                    "RecordFailure called for endpoint {EndpointId}. SuccessStreak={SuccessStreak}, FailStreak={FailStreak}, Error={Error}",
-                    result.EndpointId, state.SuccessStreak, state.FailStreak, result.Error
+                    "RecordFailure called for endpoint {EndpointId}. EffectiveStatus={EffectiveStatus}, SuccessStreak={SuccessStreak}, FailStreak={FailStreak}, Error={Error}",
+                    result.EndpointId, effectiveStatus, state.SuccessStreak, state.FailStreak, result.Error
                 );
             }
 
@@ -66,7 +66,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
                     result.Classification,
                     cancellationToken);
                 stateChanged = true;
-                _logger.LogWarning("Endpoint {EndpointId} transitioned to DOWN after {FailStreak} consecutive failures",
+                _logger.LogWarning("Endpoint {EndpointId} transitioned to DOWN after {FailStreak} consecutive effective failures",
                     result.EndpointId, state.FailStreak);
             }
 
@@ -75,7 +75,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
             {
                 await TransitionToUpAsync(result.EndpointId, state, UnixTimestamp.ToUnixSeconds(result.Timestamp), cancellationToken);
                 stateChanged = true;
-                _logger.LogInformation("Endpoint {EndpointId} transitioned to UP after {SuccessStreak} consecutive successes",
+                _logger.LogInformation("Endpoint {EndpointId} transitioned to UP after {SuccessStreak} consecutive effective successes",
                     result.EndpointId, state.SuccessStreak);
             }
 

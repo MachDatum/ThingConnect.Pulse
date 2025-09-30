@@ -242,13 +242,13 @@ public sealed class EndpointService : IEndpointService
             Ts = ConvertToDateTimeOffset(c.Ts),
             Classification = (int)(c.Classification ?? Classification.Unknown),
             Primary = new ProbeResultDto 
-            { 
+            {
                 Status = c.Status.ToString().ToLower(),
                 RttMs = c.RttMs,
                 Error = c.Error
             },
             Fallback = new FallbackResultDto 
-            { 
+            {
                 Attempted = c.FallbackAttempted ?? false,
                 Status = c.FallbackStatus?.ToString().ToLower(),
                 RttMs = c.FallbackRttMs,

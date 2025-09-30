@@ -1,3 +1,4 @@
+using ThingConnect.Pulse.Server.Data;
 using ThingConnect.Pulse.Server.Models;
 
 public sealed class EndpointDetailDto
@@ -11,7 +12,7 @@ public sealed class EndpointDetailDto
 public sealed class CheckResultStructuredDto
 {
     public DateTimeOffset Ts { get; set; }
-    public int Classification { get; set; }
+    public Classification Classification { get; set; }
     public ProbeResultDto Primary { get; set; } = default!;
     public FallbackResultDto Fallback { get; set; } = default!;
 }

@@ -7,29 +7,10 @@ namespace ThingConnect.Pulse.Server.Models;
 /// </summary>
 public sealed class CheckResult
 {
-    /// <summary>
-    /// Gets or sets the endpoint that was checked.
-    /// </summary>
     public Guid EndpointId { get; set; }
-
-    /// <summary>
-    /// Gets or sets timestamp when the check was performed.
-    /// </summary>
     public DateTimeOffset Timestamp { get; set; }
-
-    /// <summary>
-    /// Gets or sets result status: UP or DOWN.
-    /// </summary>
     public UpDown Status { get; set; }
-
-    /// <summary>
-    /// Gets or sets round-trip time in milliseconds. Null if not applicable or failed.
-    /// </summary>
     public double? RttMs { get; set; }
-
-    /// <summary>
-    /// Gets or sets error message if the check failed. Null if successful.
-    /// </summary>
     public string? Error { get; set; }
 
     // 🔹 Fallback probe info
@@ -37,10 +18,6 @@ public sealed class CheckResult
     public UpDown? FallbackStatus { get; set; }
     public double? FallbackRttMs { get; set; }
     public string? FallbackError { get; set; }
-
-    /// <summary>
-    /// Gets or sets the outage classification determined after primary and fallback probes.
-    /// </summary>
     public Classification? Classification { get; set; }
 
     /// <summary>
@@ -59,7 +36,7 @@ public sealed class CheckResult
             FallbackStatus = null,
             FallbackRttMs = null,
             FallbackError = null,
-            Classification = null
+            Classification = Data.Classification.None
         };
     }
 
@@ -79,7 +56,7 @@ public sealed class CheckResult
             FallbackStatus = null,
             FallbackRttMs = null,
             FallbackError = null,
-            Classification = null
+            Classification = Data.Classification.Unknown // 🔹 FIXED: Set to unknown
         };
     }
 
@@ -94,5 +71,65 @@ public sealed class CheckResult
         FallbackStatus = fallback.Status;
         FallbackRttMs = fallback.RttMs;
         FallbackError = fallback.Error;
+        Classification = DetermineClassification();
+    }
+
+    /// <summary>
+    /// 🔹 NEW: Helper to calculate effective status
+    /// </summary>
+    public UpDown GetEffectiveStatus()
+    {
+        // Primary DOWN + Fallback UP = Effective UP (service issue)
+        if (Status == UpDown.down && FallbackAttempted && FallbackStatus == UpDown.up)
+        {
+            return UpDown.up;
+        }
+
+        return Status;
+    }
+
+    /// <summary>
+    /// 🔹 NEW: Helper to get effective RTT
+    /// </summary>
+    public double? GetEffectiveRtt()
+    {
+        // Priority 1: Primary RTT if successful
+        if (Status == UpDown.up && RttMs.HasValue)
+        {
+            return RttMs;
+        }
+
+        // Priority 2: Fallback RTT if primary failed but fallback succeeded
+        if (Status == UpDown.down && FallbackAttempted && FallbackStatus == UpDown.up && FallbackRttMs.HasValue)
+        {
+            return FallbackRttMs;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// 🔹 NEW: Auto-classification based on probe results
+    /// </summary>
+    private Classification DetermineClassification()
+    {
+        if (Status == UpDown.up)
+        {
+            return Data.Classification.None; // Healthy
+        }
+
+        if (FallbackAttempted)
+        {
+            if (FallbackStatus == UpDown.up)
+            {
+                return Data.Classification.Service; // Service down, host up
+            }
+            else
+            {
+                return Data.Classification.Network; // Both down
+            }
+        }
+
+        return Data.Classification.Unknown; // No fallback info
     }
 }

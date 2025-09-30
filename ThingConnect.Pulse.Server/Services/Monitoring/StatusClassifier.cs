@@ -5,7 +5,8 @@ using ThingConnect.Pulse.Server.Models;
 namespace ThingConnect.Pulse.Server.Services.Monitoring;
 
 /// <summary>
-/// Provides classification logic for probe results (primary + fallback + history).
+// Complex logic with history, performance, DNS, etc.
+// Save for Phase 2
 /// </summary>
 public static class StatusClassifier
 {

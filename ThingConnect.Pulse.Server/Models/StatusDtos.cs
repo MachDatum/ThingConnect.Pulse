@@ -3,8 +3,9 @@ namespace ThingConnect.Pulse.Server.Models;
 public sealed class LiveStatusItemDto
 {
     public EndpointDto Endpoint { get; set; } = default!;
-    public string Status { get; set; } = default!; // need to remove
-    public double? RttMs { get; set; } // need to remove
+    // 🔹 LEGACY: Keep for backward compatibility (remove later)
+    public string Status { get; set; } = default!;
+    public double? RttMs { get; set; }
     public CurrentStateDto CurrentState { get; set; } = default!;
     public DateTimeOffset LastChangeTs { get; set; }
     public List<SparklinePoint> Sparkline { get; set; } = new();
