@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using ThingConnect.Pulse.Server.Data;
 
 namespace ThingConnect.Pulse.Server.Models;
@@ -75,7 +78,7 @@ public sealed class CheckResult
     }
 
     /// <summary>
-    /// 🔹 NEW: Helper to calculate effective status
+    /// 🔹 Helper to calculate effective status
     /// </summary>
     public UpDown GetEffectiveStatus()
     {
@@ -84,12 +87,11 @@ public sealed class CheckResult
         {
             return UpDown.up;
         }
-
         return Status;
     }
 
     /// <summary>
-    /// 🔹 NEW: Helper to get effective RTT
+    /// 🔹 Helper to get effective RTT
     /// </summary>
     public double? GetEffectiveRtt()
     {
@@ -98,38 +100,76 @@ public sealed class CheckResult
         {
             return RttMs;
         }
-
         // Priority 2: Fallback RTT if primary failed but fallback succeeded
         if (Status == UpDown.down && FallbackAttempted && FallbackStatus == UpDown.up && FallbackRttMs.HasValue)
         {
             return FallbackRttMs;
         }
-
         return null;
     }
 
     /// <summary>
-    /// 🔹 NEW: Auto-classification based on probe results
+    /// 🔹 Auto-classification based on probe results
     /// </summary>
-    private Classification DetermineClassification()
+    public Classification DetermineClassification()
     {
         if (Status == UpDown.up)
         {
             return Data.Classification.None; // Healthy
         }
-
         if (FallbackAttempted)
         {
             if (FallbackStatus == UpDown.up)
             {
                 return Data.Classification.Service; // Service down, host up
             }
-            else
-            {
-                return Data.Classification.Network; // Both down
-            }
+            return Data.Classification.Network; // Both down
         }
-
         return Data.Classification.Unknown; // No fallback info
+    }
+
+    /// <summary>
+    /// 🔹 Common flapping detection utility (uses recent check list)
+    /// </summary>
+    public static bool IsFlapping(List<CheckResult> recent)
+    {
+        if (recent.Count < 4) return false;
+        var effectiveStatuses = recent
+            .OrderBy(c => c.Timestamp)
+            .Select(c => c.GetEffectiveStatus().ToString())
+            .ToList();
+        int stateChanges = 0;
+        for (int i = 1; i < effectiveStatuses.Count; i++)
+            if (effectiveStatuses[i] != effectiveStatuses[i - 1])
+                stateChanges++;
+        return stateChanges > 3;
+    }
+
+    /// <summary>
+    /// 🔹 Map endpoint entity to EndpointDto (call anywhere you need)
+    /// </summary>
+    public static EndpointDto MapToEndpointDto(Data.Endpoint endpoint)
+    {
+        return new EndpointDto
+        {
+            Id = endpoint.Id,
+            Name = endpoint.Name,
+            Group = new GroupDto
+            {
+                Id = endpoint.Group.Id,
+                Name = endpoint.Group.Name,
+                ParentId = endpoint.Group.ParentId,
+                Color = endpoint.Group.Color
+            },
+            Type = endpoint.Type.ToString().ToLower(),
+            Host = endpoint.Host,
+            Port = endpoint.Port,
+            HttpPath = endpoint.HttpPath,
+            HttpMatch = endpoint.HttpMatch,
+            IntervalSeconds = endpoint.IntervalSeconds,
+            TimeoutMs = endpoint.TimeoutMs,
+            Retries = endpoint.Retries,
+            Enabled = endpoint.Enabled
+        };
     }
 }
