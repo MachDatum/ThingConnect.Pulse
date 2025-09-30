@@ -64,7 +64,7 @@ public sealed class ProbeService : IProbeService
         }
 
         // Centralized classification
-        primaryResult.Classification = OutageClassifier.ClassifyOutage(
+        primaryResult.Classification = StatusClassifier.ClassifyStatus(
             primaryResult,
             fallbackResult,
             endpoint,

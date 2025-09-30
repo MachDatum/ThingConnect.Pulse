@@ -41,7 +41,7 @@ public sealed class CheckResult
     /// <summary>
     /// Gets or sets the outage classification determined after primary and fallback probes.
     /// </summary>
-    public OutageClassification? Classification { get; set; }
+    public Classification? Classification { get; set; }
 
     /// <summary>
     /// Creates a successful check result.

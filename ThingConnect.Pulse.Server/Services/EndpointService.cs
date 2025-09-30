@@ -44,7 +44,7 @@ public sealed class EndpointService : IEndpointService
              .Select(c => new CheckResultStructuredDto
              {
                  Ts = ConvertToDateTimeOffset(c.Ts),
-                 Classification = (int)(c.Classification ?? OutageClassification.Unknown),
+                 Classification = (int)(c.Classification ?? Classification.Unknown),
                  Primary = new ProbeResultDto
                  {
                      Type = endpoint.Type.ToString().ToLower(),
@@ -110,7 +110,7 @@ public sealed class EndpointService : IEndpointService
     // 🔹 NEW: Enhanced current state builder with flapping detection
     private async Task<CurrentStateDto> BuildCurrentStateAsync(
         List<CheckResultStructuredDto> recent, 
-        Guid endpointId, 
+        Guid endpointId,
         int intervalSeconds)
     {
         var lastCheck = recent.FirstOrDefault();
@@ -122,7 +122,7 @@ public sealed class EndpointService : IEndpointService
             {
                 EffectiveStatus = "down",
                 EffectiveRtt = null,
-                Classification = (int)OutageClassification.Unknown,
+                Classification = (int)Classification.Unknown,
                 HostReachable = false,
                 LastCheck = DateTimeOffset.UtcNow
             };
@@ -138,7 +138,7 @@ public sealed class EndpointService : IEndpointService
             {
                 EffectiveStatus = "down",
                 EffectiveRtt = null,
-                Classification = (int)OutageClassification.Unknown,
+                Classification = (int)Classification.Unknown,
                 HostReachable = false,
                 LastCheck = lastCheck.Ts
             };
@@ -155,7 +155,7 @@ public sealed class EndpointService : IEndpointService
             {
                 EffectiveStatus = "flapping",
                 EffectiveRtt = effectiveRtt,
-                Classification = (int)OutageClassification.Intermittent,
+                Classification = (int)Classification.Intermittent,
                 HostReachable = lastCheck.Primary.Status == "up" || 
                                (lastCheck.Fallback.Attempted && lastCheck.Fallback.Status == "up"),
                 LastCheck = lastCheck.Ts
@@ -240,7 +240,7 @@ public sealed class EndpointService : IEndpointService
         return checks.Select(c => new CheckResultStructuredDto
         {
             Ts = ConvertToDateTimeOffset(c.Ts),
-            Classification = (int)(c.Classification ?? OutageClassification.Unknown),
+            Classification = (int)(c.Classification ?? Classification.Unknown),
             Primary = new ProbeResultDto 
             { 
                 Status = c.Status.ToString().ToLower(),

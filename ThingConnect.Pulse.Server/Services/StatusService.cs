@@ -130,7 +130,7 @@ public sealed class StatusService : IStatusService
             {
                 EffectiveStatus = "down",
                 EffectiveRtt = null,
-                Classification = (int)OutageClassification.Unknown,
+                Classification = (int)Classification.Unknown,
                 HostReachable = false,
                 LastCheck = DateTimeOffset.UtcNow
             }, StatusType.Down);
@@ -146,7 +146,7 @@ public sealed class StatusService : IStatusService
             {
                 EffectiveStatus = "down",
                 EffectiveRtt = null,
-                Classification = (int)OutageClassification.Unknown,
+                Classification = (int)Classification.Unknown,
                 HostReachable = false,
                 LastCheck = UnixTimestamp.FromUnixSeconds(latestCheck.Ts)
             }, StatusType.Down);
@@ -161,7 +161,7 @@ public sealed class StatusService : IStatusService
             {
                 EffectiveStatus = "flapping",
                 EffectiveRtt = CalculateEffectiveRtt(latestCheck),
-                Classification = (int)OutageClassification.Intermittent,
+                Classification = (int)Classification.Intermittent,
                 HostReachable = latestCheck.FallbackStatus == UpDown.up,
                 LastCheck = UnixTimestamp.FromUnixSeconds(latestCheck.Ts)
             }, StatusType.Flapping);
@@ -212,20 +212,20 @@ public sealed class StatusService : IStatusService
         // Fallback to simple classification logic
         if (check.Status == UpDown.up)
         {
-            return (int)OutageClassification.None; // Healthy
+            return (int)Classification.None; // Healthy
         }
         
         if (check.Status == UpDown.down && check.FallbackStatus == UpDown.up)
         {
-            return (int)OutageClassification.Service; // Service down, host up
+            return (int)Classification.Service; // Service down, host up
         }
         
         if (check.Status == UpDown.down && check.FallbackStatus == UpDown.down)
         {
-            return (int)OutageClassification.Network; // Both down = network issue
+            return (int)Classification.Network; // Both down = network issue
         }
 
-        return (int)OutageClassification.Unknown;
+        return (int)Classification.Unknown;
     }
 
     // 🔹 NEW: Calculate effective RTT (priority-based)

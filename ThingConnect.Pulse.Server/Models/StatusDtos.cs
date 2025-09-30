@@ -57,7 +57,7 @@ public sealed class CurrentStateDto
 {
     public string EffectiveStatus { get; set; } = default!; // "up" or "down"
     public double? EffectiveRtt { get; set; } // Priority-based RTT
-    public int Classification { get; set; } // OutageClassification enum value
+    public int Classification { get; set; } // Classification enum value
     public bool HostReachable { get; set; } // Quick connectivity check
     public DateTimeOffset LastCheck { get; set; }
 }

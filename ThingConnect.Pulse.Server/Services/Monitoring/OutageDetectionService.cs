@@ -354,7 +354,7 @@ public sealed class OutageDetectionService : IOutageDetectionService
         }
     }
 
-    private async Task TransitionToDownAsync(Guid endpointId, MonitorState state, long timestamp, string? error, OutageClassification? classification, CancellationToken cancellationToken)
+    private async Task TransitionToDownAsync(Guid endpointId, MonitorState state, long timestamp, string? error, Classification? classification, CancellationToken cancellationToken)
     {
         using IServiceScope scope = _serviceProvider.CreateScope();
         PulseDbContext context = scope.ServiceProvider.GetRequiredService<PulseDbContext>();

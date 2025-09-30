@@ -82,7 +82,7 @@ export interface StateChange {
   error?: string;
 }
 
-export type OutageClassification =
+export type Classification =
   | -1 // None
   | 0 // Unknown
   | 1 // Network
@@ -101,7 +101,7 @@ export interface RawCheck {
   fallbackAttempted?: boolean;
   fallbackSuccess?: boolean;
   fallbackRttMs?: number | null;
-  classification?: OutageClassification | null;
+  classification?: Classification | null;
   lastSeenViaIcmp?: string | null; // ISO timestamp when last reachable via ICMP
 }
 
@@ -110,7 +110,7 @@ export interface Outage {
   endedTs?: string | null;
   durationS?: number | null;
   lastError?: string | null;
-  classification: OutageClassification;
+  classification: Classification;
 }
 
 export interface EndpointDetail {

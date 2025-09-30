@@ -8,7 +8,7 @@ public enum UpDown { up, down }
 /// <summary>
 /// Outage classification for failed probe analysis.
 /// </summary>
-public enum OutageClassification
+public enum Classification
 {
     None = -1, // Explicitly healthy, no outage detected
     Unknown = 0, // Not enough information to classify
@@ -74,7 +74,7 @@ public sealed class CheckResultRaw
     public UpDown? FallbackStatus { get; set; }
     public double? FallbackRttMs { get; set; }
     public string? FallbackError { get; set; }
-    public OutageClassification? Classification { get; set; }
+    public Classification? Classification { get; set; }
 }
 
 public sealed class Outage
@@ -86,7 +86,7 @@ public sealed class Outage
     public long? EndedTs { get; set; }
     public int? DurationSeconds { get; set; }
     public string? LastError { get; set; }
-    public OutageClassification? Classification { get; set; }
+    public Classification? Classification { get; set; }
 
     /// <summary>
     /// Gets or sets timestamp when monitoring was lost during this outage (service downtime).
