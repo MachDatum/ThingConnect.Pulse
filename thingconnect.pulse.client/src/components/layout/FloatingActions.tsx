@@ -7,11 +7,11 @@ import { NotificationBellSimple } from '@/components/notifications/NotificationB
 
 // Route-to-help URL mapping
 const ROUTE_HELP_URLS: Record<string, string> = {
-  '/': 'https://docs.thingconnect.io/pulse/user-guide/dashboard',
-  '/configuration': 'https://docs.thingconnect.io/pulse/user-guide/configuration',
-  '/history': 'https://docs.thingconnect.io/pulse/user-guide/viewing-history',
-  '/settings': 'https://docs.thingconnect.io/pulse/user-guide/settings',
-  '/about': 'https://docs.thingconnect.io/pulse/about',
+  '/': 'https://docs.thingconnect.io/pulse/live-board-and-history',
+  '/configuration': 'https://docs.thingconnect.io/pulse/yaml-configuration',
+  '/history': 'https://docs.thingconnect.io/pulse/live-board-and-history#historical-data-analysis',
+  // '/settings': 'https://docs.thingconnect.io/pulse/user-guide/settings',
+  // '/about': 'https://docs.thingconnect.io/pulse/about',
 };
 
 export function FloatingActions() {

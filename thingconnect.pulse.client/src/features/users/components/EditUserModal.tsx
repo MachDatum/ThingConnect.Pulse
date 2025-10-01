@@ -14,7 +14,6 @@ import {
 } from '@chakra-ui/react';
 import { useState, useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { LoadingButton } from '@/components/ui/LoadingButton';
 import { Field } from '@/components/ui/field';
 import type { UserInfo, UpdateUserRequest } from '@/api/types';
 
@@ -121,18 +120,18 @@ export function EditUserModal({
   if (!user) return null;
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && handleClose()}>
+    <Dialog.Root open={isOpen} onOpenChange={e => !e.open && handleClose()}>
       <Dialog.Backdrop />
       <Dialog.Positioner>
-        <DialogContent maxW="md">
+        <DialogContent maxW='md'>
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleSubmit(onSubmit)}>
-            <VStack gap={4} py={4}>
+            <VStack gap={4} pb={4} px={6} align='stretch'>
               {submitError && (
-                <Alert.Root status="error" variant="subtle">
+                <Alert.Root status='error' variant='subtle'>
                   <Alert.Indicator />
                   <Alert.Title>{submitError}</Alert.Title>
                 </Alert.Root>
@@ -140,7 +139,7 @@ export function EditUserModal({
 
               {/* Username */}
               <Field
-                label="Username"
+                label='Username'
                 errorText={errors.username?.message}
                 invalid={!!errors.username}
               >
@@ -151,19 +150,15 @@ export function EditUserModal({
                       message: 'Username must be 256 characters or less',
                     },
                   })}
-                  placeholder="Enter username"
+                  placeholder='Enter username'
                   disabled={isSubmitting || loading}
                 />
               </Field>
 
               {/* Email */}
-              <Field
-                label="Email"
-                errorText={errors.email?.message}
-                invalid={!!errors.email}
-              >
+              <Field label='Email' errorText={errors.email?.message} invalid={!!errors.email}>
                 <Input
-                  type="email"
+                  type='email'
                   {...register('email', {
                     pattern: {
                       value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
@@ -174,24 +169,24 @@ export function EditUserModal({
                       message: 'Email must be 256 characters or less',
                     },
                   })}
-                  placeholder="Enter email address"
+                  placeholder='Enter email address'
                   disabled={isSubmitting || loading}
                 />
               </Field>
 
               {/* Active Status */}
-              <Field label="Account Status">
-                <HStack justify="space-between" w="full">
-                  <VStack align="start" gap={1}>
-                    <Text fontSize="sm" color="gray.600" _dark={{ color: "gray.400" }}>
+              <Field label='Account Status'>
+                <HStack justify='space-between' w='full'>
+                  <VStack align='start' gap={1}>
+                    <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
                       {isActive ? 'User can log in' : 'User cannot log in'}
                     </Text>
                   </VStack>
                   <Switch.Root
                     checked={isActive}
-                    onCheckedChange={(details) => setValue('isActive', details.checked)}
-                    colorPalette="green"
-                    size="lg"
+                    onCheckedChange={details => setValue('isActive', details.checked)}
+                    colorPalette='green'
+                    size='lg'
                     disabled={isSubmitting || loading}
                   >
                     <Switch.Control>
@@ -203,34 +198,31 @@ export function EditUserModal({
 
               {/* Role Info (Read-only) */}
               <Field
-                label="Role"
-                helperText="Use the role change action in the user list to modify roles"
+                label='Role'
+                helperText='Use the role change action in the user list to modify roles'
               >
-                <Input
-                  value={user.role}
-                  disabled
-                  bg="gray.50"
-                  _dark={{ bg: "gray.700" }}
-                />
+                <Input value={user.role} disabled bg='gray.50' _dark={{ bg: 'gray.700' }} />
               </Field>
             </VStack>
 
             <DialogFooter>
               <Button
-                variant="outline"
+                variant='outline'
                 onClick={handleClose}
                 disabled={isSubmitting || loading}
+                size={'md'}
               >
                 Cancel
               </Button>
-              <LoadingButton
-                type="submit"
-                colorPalette="blue"
+              <Button
+                type='submit'
+                colorPalette='blue'
                 loading={isSubmitting || loading}
-                loadingText="Updating..."
+                loadingText='Updating...'
+                size={'md'}
               >
                 Update User
-              </LoadingButton>
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

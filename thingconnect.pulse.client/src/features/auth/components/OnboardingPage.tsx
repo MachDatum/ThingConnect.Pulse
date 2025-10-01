@@ -136,10 +136,10 @@ export default function OnboardingPage() {
   const renderStep1 = () => (
     <VStack gap={6}>
       <Box textAlign='center'>
-        <Heading size='lg' mb={2} color='gray.800' fontWeight='bold'>
+        <Heading size='lg' mb={2} color='fg' fontWeight='bold'>
           Administrator Account
         </Heading>
-        <Text color='gray.600' fontSize='lg' fontWeight='medium'>
+        <Text color='fg.muted' fontSize='lg' fontWeight='medium'>
           Create your administrator account to get started
         </Text>
       </Box>
@@ -163,12 +163,12 @@ export default function OnboardingPage() {
       </Stack>
 
       {/* Telemetry Consent Section */}
-      <VStack gap={4} w="full" align="start" p={4} bg="gray.50" rounded="md">
+      <VStack gap={4} w="full" align="start" p={4} bg="bg.subtle" rounded="md">
         <Box>
-          <Text fontSize="md" fontWeight="medium" color="gray.800" mb={1}>
+          <Text fontSize="md" fontWeight="medium" color="fg" mb={1}>
             Help improve ThingConnect Pulse? (Optional)
           </Text>
-          <Text fontSize="sm" color="gray.600">
+          <Text fontSize="sm" color="fg.muted">
             Enable anonymous diagnostics to help us fix crashes faster and improve features.
           </Text>
         </Box>
@@ -176,10 +176,10 @@ export default function OnboardingPage() {
         <Stack gap={3} w="full">
           <Flex justify="space-between" align="center">
             <VStack align="start" gap={0} flex="1">
-              <Text fontSize="sm" fontWeight="medium" color="gray.800">
+              <Text fontSize="sm" fontWeight="medium" color="fg">
                 Send sanitized error diagnostics
               </Text>
-              <Text fontSize="xs" color="gray.600">
+              <Text fontSize="xs" color="fg.muted">
                 Exception types, stack traces (no sensitive data)
               </Text>
             </VStack>
@@ -194,10 +194,10 @@ export default function OnboardingPage() {
 
           <Flex justify="space-between" align="center">
             <VStack align="start" gap={0} flex="1">
-              <Text fontSize="sm" fontWeight="medium" color="gray.800">
+              <Text fontSize="sm" fontWeight="medium" color="fg">
                 Send anonymous usage analytics
               </Text>
-              <Text fontSize="xs" color="gray.600">
+              <Text fontSize="xs" color="fg.muted">
                 Feature usage counts (no personal information)
               </Text>
             </VStack>
@@ -226,10 +226,10 @@ export default function OnboardingPage() {
   const renderStep2 = () => (
     <VStack gap={6}>
       <Box textAlign='center'>
-        <Heading size='lg' mb={2} color='gray.800' fontWeight='bold'>
+        <Heading size='lg' mb={2} color='fg' fontWeight='bold'>
           Secure Your Account
         </Heading>
-        <Text color='gray.600' fontSize='lg' fontWeight='medium'>
+        <Text color='fg.muted' fontSize='lg' fontWeight='medium'>
           Choose a strong password for your administrator account
         </Text>
       </Box>
@@ -291,10 +291,10 @@ export default function OnboardingPage() {
         {/* Progress Bar */}
         <Box w='full'>
           <Flex justify='space-between' align='center' mb={2}>
-            <Text fontSize='sm' color='gray.600' fontWeight='medium'>
+            <Text fontSize='sm' color='fg.muted' fontWeight='medium'>
               Step {currentStep} of 2
             </Text>
-            <Text fontSize='sm' color='gray.600' fontWeight='medium'>
+            <Text fontSize='sm' color='fg.muted' fontWeight='medium'>
               {Math.round((currentStep / 2) * 100)}%
             </Text>
           </Flex>

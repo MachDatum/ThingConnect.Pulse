@@ -13,12 +13,8 @@ import {
 import { ChevronLeft, ChevronRight, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import { UserActions } from './UserActions';
-import type {
-  UserInfo,
-  PagedResult,
-  ChangeRoleRequest,
-  ResetPasswordRequest
-} from '@/api/types';
+import type { UserInfo, PagedResult, ChangeRoleRequest, ResetPasswordRequest } from '@/api/types';
+import { Status } from '@/components/ui/status';
 
 interface UserListProps {
   users: PagedResult<UserInfo> | null;
@@ -61,13 +57,9 @@ export function UserList({
     }
   };
 
-  const getStatusBadgeColor = (isActive: boolean) => {
-    return isActive ? 'green' : 'red';
-  };
-
   if (error) {
     return (
-      <Alert.Root status="error" variant="subtle">
+      <Alert.Root status='error' variant='subtle'>
         <Alert.Indicator />
         <Alert.Title>Failed to load users</Alert.Title>
         <Alert.Description>{error}</Alert.Description>
@@ -79,7 +71,7 @@ export function UserList({
     return (
       <VStack gap={4}>
         {[...Array(5)].map((_, i) => (
-          <Skeleton key={i} height="60px" w="full" />
+          <Skeleton key={i} height='60px' w='full' />
         ))}
       </VStack>
     );
@@ -87,24 +79,18 @@ export function UserList({
 
   if (!users || users.items.length === 0) {
     return (
-      <VStack gap={4} py={12} textAlign="center">
-        <Box
-          p={4}
-          borderRadius="full"
-          bg="gray.50"
-          _dark={{ bg: "gray.700" }}
-        >
-          <Icon as={Users} boxSize={8} color="gray.400" />
+      <VStack gap={4} py={12} textAlign='center'>
+        <Box p={4} borderRadius='full' bg='gray.50' _dark={{ bg: 'gray.700' }}>
+          <Icon as={Users} boxSize={8} color='gray.400' />
         </Box>
         <VStack gap={2}>
-          <Text fontSize="lg" fontWeight="medium" color="gray.700" _dark={{ color: "gray.300" }}>
+          <Text fontSize='lg' fontWeight='medium' color='gray.700' _dark={{ color: 'gray.300' }}>
             No users found
           </Text>
-          <Text color="gray.500" _dark={{ color: "gray.400" }}>
+          <Text color='gray.500' _dark={{ color: 'gray.400' }}>
             {users?.totalCount === 0
-              ? "There are no users in the system yet."
-              : "Try adjusting your search filters."
-            }
+              ? 'There are no users in the system yet.'
+              : 'Try adjusting your search filters.'}
           </Text>
         </VStack>
       </VStack>
@@ -114,8 +100,8 @@ export function UserList({
   return (
     <VStack gap={6}>
       {/* Table */}
-      <Box w="full" overflowX="auto">
-        <Table.Root size="sm">
+      <Box w='full' overflowX='auto'>
+        <Table.Root size='sm'>
           <Table.Header>
             <Table.Row>
               <Table.ColumnHeader>User</Table.ColumnHeader>
@@ -123,52 +109,44 @@ export function UserList({
               <Table.ColumnHeader>Status</Table.ColumnHeader>
               <Table.ColumnHeader>Created</Table.ColumnHeader>
               <Table.ColumnHeader>Last Login</Table.ColumnHeader>
-              <Table.ColumnHeader width="50px">Actions</Table.ColumnHeader>
+              <Table.ColumnHeader width='50px'>Actions</Table.ColumnHeader>
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {users!.items.map((user) => (
+            {users!.items.map(user => (
               <Table.Row key={user.id}>
                 <Table.Cell>
-                  <VStack align="start" gap={1}>
+                  <VStack align='start' gap={1}>
                     <HStack gap={2}>
-                      <Text fontWeight="medium">{user.username}</Text>
+                      <Text fontWeight='medium'>{user.username}</Text>
                       {user.id === currentUserId && (
-                        <Badge colorPalette="blue" variant="subtle" size="sm">
+                        <Badge colorPalette='blue' variant='subtle' size='sm'>
                           You
                         </Badge>
                       )}
                     </HStack>
-                    <Text fontSize="sm" color="gray.600" _dark={{ color: "gray.400" }}>
+                    <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
                       {user.email}
                     </Text>
                   </VStack>
                 </Table.Cell>
                 <Table.Cell>
-                  <Badge
-                    colorPalette={getRoleBadgeColor(user.role)}
-                    variant="subtle"
-                    size="sm"
-                  >
+                  <Badge colorPalette={getRoleBadgeColor(user.role)} variant='subtle' size='sm'>
                     {user.role}
                   </Badge>
                 </Table.Cell>
                 <Table.Cell>
-                  <Badge
-                    colorPalette={getStatusBadgeColor(user.isActive)}
-                    variant="subtle"
-                    size="sm"
-                  >
+                  <Status value={user.isActive ? 'success' : 'error'}>
                     {user.isActive ? 'Active' : 'Inactive'}
-                  </Badge>
+                  </Status>
                 </Table.Cell>
                 <Table.Cell>
-                  <Text fontSize="sm" color="gray.600" _dark={{ color: "gray.400" }}>
+                  <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
                     {formatDate(user.createdAt)}
                   </Text>
                 </Table.Cell>
                 <Table.Cell>
-                  <Text fontSize="sm" color="gray.600" _dark={{ color: "gray.400" }}>
+                  <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
                     {formatDate(user.lastLoginAt)}
                   </Text>
                 </Table.Cell>
@@ -192,17 +170,16 @@ export function UserList({
 
       {/* Pagination */}
       {users.totalPages > 1 && (
-        <HStack justify="space-between" w="full">
-          <Text fontSize="sm" color="gray.600" _dark={{ color: "gray.400" }}>
-            Showing {((users.page - 1) * users.pageSize) + 1} to{' '}
-            {Math.min(users.page * users.pageSize, users.totalCount)} of{' '}
-            {users.totalCount} users
+        <HStack justify='space-between' w='full'>
+          <Text fontSize='sm' color='gray.600' _dark={{ color: 'gray.400' }}>
+            Showing {(users.page - 1) * users.pageSize + 1} to{' '}
+            {Math.min(users.page * users.pageSize, users.totalCount)} of {users.totalCount} users
           </Text>
 
           <HStack gap={2}>
             <Button
-              variant="outline"
-              size="sm"
+              variant='outline'
+              size='sm'
               onClick={() => onPageChange(users.page - 1)}
               disabled={users.page <= 1 || loading}
             >
@@ -221,12 +198,12 @@ export function UserList({
                 return (
                   <Button
                     key={pageNum}
-                    variant={pageNum === users.page ? "solid" : "outline"}
-                    colorPalette={pageNum === users.page ? "blue" : "gray"}
-                    size="sm"
+                    variant={pageNum === users.page ? 'solid' : 'outline'}
+                    colorPalette={pageNum === users.page ? 'blue' : 'gray'}
+                    size='sm'
                     onClick={() => onPageChange(pageNum)}
                     disabled={loading}
-                    minW="40px"
+                    minW='40px'
                   >
                     {pageNum}
                   </Button>
@@ -235,8 +212,8 @@ export function UserList({
             </HStack>
 
             <Button
-              variant="outline"
-              size="sm"
+              variant='outline'
+              size='sm'
               onClick={() => onPageChange(users.page + 1)}
               disabled={users.page >= users.totalPages || loading}
             >

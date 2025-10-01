@@ -1,7 +1,7 @@
-import { Box, Button, Flex, HStack, Icon, Input, Text, Menu } from '@chakra-ui/react';
+import { Box, Flex, HStack, Icon, Input } from '@chakra-ui/react';
 import { X } from 'lucide-react';
 import type { LiveStatusParams } from '@/api/types';
-import { MdSearch, MdExpandMore } from 'react-icons/md';
+import { MdSearch } from 'react-icons/md';
 import { ComboboxSelect } from '../common/ComboboxSelect';
 
 interface EndpointFiltersProps {
@@ -31,12 +31,13 @@ export function EndpointFilters({
   selectedGroup,
   onSelectedGroupChange,
 }: EndpointFiltersProps) {
-  const handleGroupChange = (value: string) => {
-    const newGroup = value || undefined;
-    onSelectedGroupChange?.(newGroup);
+  const handleGroupChange = (value: string | string[]) => {
+    const newGroup = Array.isArray(value) ? value[0] : value;
+    const finalGroup = newGroup || undefined;
+    onSelectedGroupChange?.(finalGroup);
     onFiltersChange({
       ...filters,
-      group: newGroup,
+      group: finalGroup,
     });
   };
 
@@ -128,90 +129,25 @@ export function EndpointFilters({
           </Flex>
         </Box>
         {/* Group By Dropdown */}
-        <Box>
-          <Menu.Root>
-            <Menu.Trigger asChild>
-              <Button variant='outline'>
-                <Text fontSize='sm'>
-                  {groupByOptions.length > 0
-                    ? groupByOptions
-                        .map(opt => (opt === 'status' ? 'Status' : opt === 'group' ? 'Group' : opt))
-                        .join(' + ')
-                    : 'Group By'}
-                </Text>
-                <MdExpandMore />
-              </Button>
-            </Menu.Trigger>
-            <Menu.Positioner px={4}>
-              <Menu.Content minWidth='200px'>
-                <Flex
-                  justify='flex-end'
-                  px={2}
-                  py={1}
-                  borderBottom='1px solid'
-                  borderColor='gray.200'
-                  _dark={{ borderColor: 'gray.600' }}
-                >
-                  <HStack gap={2}>
-                    <Button
-                      size='xs'
-                      variant='ghost'
-                      onClick={() => {
-                        ['status', 'group'].forEach(
-                          opt => onToggleGroupBy && onToggleGroupBy(opt, true)
-                        );
-                      }}
-                      textDecoration={'underline'}
-                    >
-                      Select All
-                    </Button>
-                    <Button
-                      size='xs'
-                      variant='ghost'
-                      onClick={() => {
-                        ['status', 'group'].forEach(
-                          opt => onToggleGroupBy && onToggleGroupBy(opt, false)
-                        );
-                      }}
-                      textDecoration={'underline'}
-                    >
-                      Clear
-                    </Button>
-                  </HStack>
-                </Flex>
-                <Menu.ItemGroup>
-                  <Menu.CheckboxItem
-                    cursor={'pointer'}
-                    value='status'
-                    checked={groupByOptions.includes('status')}
-                    onCheckedChange={() => {
-                      onToggleGroupBy &&
-                        onToggleGroupBy('status', !groupByOptions.includes('status'));
-                    }}
-                  >
-                    <Flex w='full' justify='flex-start' align='center' gap={3}>
-                      <Text as='span'>Group by Status</Text>
-                      <Menu.ItemIndicator />
-                    </Flex>
-                  </Menu.CheckboxItem>
-                  <Menu.CheckboxItem
-                    cursor={'pointer'}
-                    value='group'
-                    checked={groupByOptions.includes('group')}
-                    onCheckedChange={() => {
-                      onToggleGroupBy &&
-                        onToggleGroupBy('group', !groupByOptions.includes('group'));
-                    }}
-                  >
-                    <Flex w='full' justify='flex-start' align='center' gap={3}>
-                      <Text as='span'>Group by Group</Text>
-                      <Menu.ItemIndicator />
-                    </Flex>
-                  </Menu.CheckboxItem>
-                </Menu.ItemGroup>
-              </Menu.Content>
-            </Menu.Positioner>
-          </Menu.Root>
+        <Box w='xs'>
+          <ComboboxSelect
+            items={[
+              { label: 'Status', value: 'status' },
+              { label: 'Group', value: 'group' },
+            ]}
+            selectedValue={groupByOptions}
+            onChange={(values: string | string[]) => {
+              const selected = Array.isArray(values) ? values : values ? [values] : [];
+
+              ['status', 'group'].forEach(opt => {
+                const isSelected = selected.includes(opt);
+                onToggleGroupBy?.(opt, isSelected);
+              });
+            }}
+            placeholder='Group By'
+            defaultToFirst={false}
+            isMulti={true}
+          />
         </Box>
       </HStack>
     </Box>

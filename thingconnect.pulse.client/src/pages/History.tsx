@@ -117,7 +117,10 @@ export default function History() {
             </Text>
             <EndpointSelect
               selectedValue={selectedEndpoint}
-              onChange={setSelectedEndpoint}
+              onChange={(value: string | string[]) => {
+                const endpoint = Array.isArray(value) ? value[0] : value;
+                setSelectedEndpoint(endpoint);
+              }}
               setName={setSelectedEndpointName}
               defaultToFirst={true}
               w={'xs'}
