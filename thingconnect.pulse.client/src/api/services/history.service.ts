@@ -73,14 +73,19 @@ export class HistoryService {
 
     // Determine which data to export based on bucket
     if (bucket === 'raw' && data.raw.length > 0) {
-      lines.push('Timestamp,Status,Response Time (ms),Error');
+      lines.push(
+        'Timestamp,Primary Status,Primary RTT (ms),Primary Error,Fallback Status,Fallback RTT (ms),Fallback Error'
+      );
       data.raw.forEach(check => {
         lines.push(
           [
             check.ts,
-            check.status,
-            check.rttMs || '',
-            check.error ? `"${check.error.replace(/"/g, '""')}"` : '',
+            check.primary.status,
+            check.primary.rttMs || '',
+            check.primary.error ? `"${check.primary.error.replace(/"/g, '""')}"` : '',
+            check.fallback.status,
+            check.fallback.rttMs || '',
+            check.fallback.error ? `"${check.fallback.error.replace(/"/g, '""')}"` : '',
           ].join(',')
         );
       });

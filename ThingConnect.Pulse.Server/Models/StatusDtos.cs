@@ -3,8 +3,7 @@ namespace ThingConnect.Pulse.Server.Models;
 public sealed class LiveStatusItemDto
 {
     public EndpointDto Endpoint { get; set; } = default!;
-    public string Status { get; set; } = default!;
-    public double? RttMs { get; set; }
+    public CurrentStateDto CurrentState { get; set; } = default!;
     public DateTimeOffset LastChangeTs { get; set; }
     public List<SparklinePoint> Sparkline { get; set; } = new();
 }
@@ -50,4 +49,13 @@ public sealed class PagedLiveDto
 {
     public PageMetaDto Meta { get; set; } = default!;
     public List<LiveStatusItemDto> Items { get; set; } = new();
+}
+
+public sealed class CurrentStateDto
+{
+    public string Type { get; set; } = default!;
+    public string Target { get; set; } = default!;
+    public string Status { get; set; } = default!; // "up" or "down"
+    public double? RttMs { get; set; } // Priority-based RTT
+    public int Classification { get; set; } // Classification enum value
 }

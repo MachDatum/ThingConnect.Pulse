@@ -3,11 +3,21 @@ import type { LiveStatusItem } from '@/api/types';
 import { StatusTable } from './StatusTable';
 
 type Props = {
-  groupedEndpoints: Record<'up' | 'down' | 'flapping', Record<string, LiveStatusItem[]>>;
+  groupedEndpoints: Record<
+    'up' | 'down' | 'flapping' | 'service',
+    Record<string, LiveStatusItem[]>
+  >;
   isLoading: boolean;
 };
 
 export function StatusGroupAccordion({ groupedEndpoints, isLoading }: Props) {
+  const statusColorMap: Record<'up' | 'down' | 'flapping' | 'service', string> = {
+    up: 'green',
+    down: 'red',
+    flapping: 'yellow',
+    service: 'orange',
+  } as const;
+
   return (
     <Accordion.Root multiple variant='plain'>
       {Object.entries(groupedEndpoints).map(([status, groupItems]) => {
@@ -15,11 +25,6 @@ export function StatusGroupAccordion({ groupedEndpoints, isLoading }: Props) {
           (sum, group) => sum + (group?.length || 0),
           0
         );
-        const statusColorMap: Record<'up' | 'down' | 'flapping', string> = {
-          up: 'green',
-          down: 'red',
-          flapping: 'yellow',
-        } as const;
 
         // Narrow the type for TypeScript
         const typedGroupItems = groupItems || {};
@@ -27,12 +32,12 @@ export function StatusGroupAccordion({ groupedEndpoints, isLoading }: Props) {
         return (
           <Accordion.Item key={status} value={status} my={2}>
             <Accordion.ItemTrigger
-              bg={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.100`}
+              bg={`${statusColorMap[status as keyof typeof statusColorMap]}.100`}
               _dark={{
-                bg: `${statusColorMap[status as 'up' | 'down' | 'flapping']}.900`,
-                borderColor: `${statusColorMap[status as 'up' | 'down' | 'flapping']}.800`,
+                bg: `${statusColorMap[status as keyof typeof statusColorMap]}.900`,
+                borderColor: `${statusColorMap[status as keyof typeof statusColorMap]}.800`,
               }}
-              borderColor={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.200`}
+              borderColor={`${statusColorMap[status as keyof typeof statusColorMap]}.200`}
               borderWidth={1}
             >
               <HStack w='full' justify='space-between'>
@@ -40,15 +45,15 @@ export function StatusGroupAccordion({ groupedEndpoints, isLoading }: Props) {
                   <Accordion.ItemIndicator
                     fontSize={'md'}
                     fontWeight={'bolder'}
-                    color={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.600`}
+                    color={`${statusColorMap[status as keyof typeof statusColorMap]}.600`}
                   />
                   <Flex
                     as='span'
-                    bg={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.200`}
-                    color={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.600`}
+                    bg={`${statusColorMap[status as keyof typeof statusColorMap]}.200`}
+                    color={`${statusColorMap[status as keyof typeof statusColorMap]}.600`}
                     _dark={{
-                      bg: `${statusColorMap[status as 'up' | 'down' | 'flapping']}.700`,
-                      color: `${statusColorMap[status as 'up' | 'down' | 'flapping']}.200`,
+                      bg: `${statusColorMap[status as keyof typeof statusColorMap]}.700`,
+                      color: `${statusColorMap[status as keyof typeof statusColorMap]}.200`,
                     }}
                     textTransform='uppercase'
                     borderRadius='30px'
@@ -64,7 +69,7 @@ export function StatusGroupAccordion({ groupedEndpoints, isLoading }: Props) {
                   <Text
                     fontSize='sm'
                     fontWeight='semibold'
-                    color={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.600`}
+                    color={`${statusColorMap[status as keyof typeof statusColorMap]}.600`}
                   >
                     {totalEndpoints ? `${totalEndpoints} Endpoints` : 'No Endpoints'}
                   </Text>

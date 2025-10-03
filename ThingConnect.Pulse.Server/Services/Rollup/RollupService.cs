@@ -26,48 +26,33 @@ public sealed class RollupService : IRollupService
 
         try
         {
-            // Get last watermark
             DateTimeOffset? lastWatermark = await _settingsService.GetLastRollup15mTimestampAsync();
-            long fromTs = lastWatermark.HasValue ? UnixTimestamp.ToUnixSeconds(lastWatermark.Value) : UnixTimestamp.Subtract(UnixTimestamp.Now(), TimeSpan.FromDays(7)); // Default: 7 days back
+            long fromTs = lastWatermark.HasValue 
+                ? UnixTimestamp.ToUnixSeconds(lastWatermark.Value) 
+                : UnixTimestamp.Subtract(UnixTimestamp.Now(), TimeSpan.FromDays(7));
             long toTs = UnixTimestamp.Now();
 
-            _logger.LogDebug("Processing 15m rollups from {FromTs} to {ToTs}", UnixTimestamp.FromUnixSeconds(fromTs), UnixTimestamp.FromUnixSeconds(toTs));
-
-            // Get all raw checks in the time window
-            // SQLite has issues with DateTimeOffset comparisons in LINQ, so fetch all and filter in memory
             List<CheckResultRaw> allChecks = await _context.CheckResultsRaw.ToListAsync(cancellationToken);
             var rawChecks = allChecks
                 .Where(c => c.Ts > fromTs && c.Ts <= toTs)
                 .OrderBy(c => c.EndpointId)
                 .ThenBy(c => c.Ts)
+                .Select(c => new WrappedCheck(c))
                 .ToList();
 
-            if (!rawChecks.Any())
-            {
-                _logger.LogDebug("No raw checks found for rollup processing");
-                return;
-            }
+            if (!rawChecks.Any()) return;
 
-            _logger.LogInformation("Processing {Count} raw checks", rawChecks.Count);
-
-            // Group by endpoint and calculate rollups
-            IEnumerable<IGrouping<Guid, CheckResultRaw>> endpointGroups = rawChecks.GroupBy(c => c.EndpointId);
+            var endpointGroups = rawChecks.GroupBy(c => c.EndpointId);
             List<Data.Rollup15m> rollupsToUpsert = new();
 
-            foreach (IGrouping<Guid, CheckResultRaw> endpointGroup in endpointGroups)
+            foreach (var endpointGroup in endpointGroups)
             {
                 var checks = endpointGroup.OrderBy(c => c.Ts).ToList();
-                List<Rollup15m> endpointRollups = CalculateRollups15m(endpointGroup.Key, checks);
-                rollupsToUpsert.AddRange(endpointRollups);
+                rollupsToUpsert.AddRange(CalculateRollups15m(endpointGroup.Key, checks));
             }
 
-            // Upsert rollups in batches
             await UpsertRollups15mAsync(rollupsToUpsert, cancellationToken);
-
-            // Update watermark
             await _settingsService.SetLastRollup15mTimestampAsync(UnixTimestamp.FromUnixSeconds(toTs));
-
-            _logger.LogInformation("Completed 15m rollup processing. Generated {Count} rollup records", rollupsToUpsert.Count);
         }
         catch (Exception ex)
         {
@@ -82,57 +67,36 @@ public sealed class RollupService : IRollupService
 
         try
         {
-            // Get last watermark
             DateOnly? lastWatermark = await _settingsService.GetLastRollupDailyDateAsync();
             DateOnly fromDate = lastWatermark?.AddDays(1) ?? DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-7));
-            var toDate = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+            DateOnly toDate = DateOnly.FromDateTime(DateTime.UtcNow.Date);
 
-            if (fromDate >= toDate)
-            {
-                _logger.LogDebug("No new days to process for daily rollup");
-                return;
-            }
+            if (fromDate >= toDate) return;
 
-            _logger.LogDebug("Processing daily rollups from {FromDate} to {ToDate}", fromDate, toDate);
-
-            // Get all raw checks in the date range
             long fromTs = UnixTimestamp.ToUnixDate(fromDate);
             long toTs = UnixTimestamp.ToUnixDate(toDate);
 
-            // SQLite has issues with DateTimeOffset comparisons in LINQ, so fetch all and filter in memory
             List<CheckResultRaw> allChecks = await _context.CheckResultsRaw.ToListAsync(cancellationToken);
             var rawChecks = allChecks
                 .Where(c => c.Ts >= fromTs && c.Ts < toTs)
                 .OrderBy(c => c.EndpointId)
                 .ThenBy(c => c.Ts)
+                .Select(c => new WrappedCheck(c))
                 .ToList();
 
-            if (!rawChecks.Any())
-            {
-                _logger.LogDebug("No raw checks found for daily rollup processing");
-                return;
-            }
+            if (!rawChecks.Any()) return;
 
-            _logger.LogInformation("Processing {Count} raw checks for daily rollup", rawChecks.Count);
-
-            // Group by endpoint and calculate rollups
-            IEnumerable<IGrouping<Guid, CheckResultRaw>> endpointGroups = rawChecks.GroupBy(c => c.EndpointId);
+            var endpointGroups = rawChecks.GroupBy(c => c.EndpointId);
             List<Data.RollupDaily> rollupsToUpsert = new();
 
-            foreach (IGrouping<Guid, CheckResultRaw> endpointGroup in endpointGroups)
+            foreach (var endpointGroup in endpointGroups)
             {
                 var checks = endpointGroup.OrderBy(c => c.Ts).ToList();
-                List<RollupDaily> endpointRollups = CalculateRollupsDaily(endpointGroup.Key, checks, fromDate, toDate);
-                rollupsToUpsert.AddRange(endpointRollups);
+                rollupsToUpsert.AddRange(CalculateRollupsDaily(endpointGroup.Key, checks, fromDate, toDate));
             }
 
-            // Upsert rollups in batches
             await UpsertRollupsDailyAsync(rollupsToUpsert, cancellationToken);
-
-            // Update watermark
             await _settingsService.SetLastRollupDailyDateAsync(toDate.AddDays(-1));
-
-            _logger.LogInformation("Completed daily rollup processing. Generated {Count} rollup records", rollupsToUpsert.Count);
         }
         catch (Exception ex)
         {
@@ -141,44 +105,35 @@ public sealed class RollupService : IRollupService
         }
     }
 
-    private List<Data.Rollup15m> CalculateRollups15m(Guid endpointId, List<CheckResultRaw> checks)
+    // --- Private rollup calculation helpers ---
+    private List<Data.Rollup15m> CalculateRollups15m(Guid endpointId, List<WrappedCheck> checks)
     {
         var rollups = new List<Data.Rollup15m>();
 
-        // Group by 15-minute bucket
         var bucketGroups = checks
-            .Select(c => new
-            {
-                Check = c,
-                Bucket = GetBucketTimestamp15m(c.Ts)
-            })
-            .GroupBy(x => x.Bucket);
+            .GroupBy(c => GetBucketTimestamp15m(c.Ts));
 
         foreach (var bucketGroup in bucketGroups)
         {
-            var bucketChecks = bucketGroup.Select(x => x.Check).OrderBy(c => c.Ts).ToList();
+            var bucketChecks = bucketGroup.OrderBy(c => c.Ts).ToList();
+            if (!bucketChecks.Any()) continue;
 
-            if (!bucketChecks.Any())
-            {
-                continue;
-            }
-
-            // Calculate metrics
             int totalChecks = bucketChecks.Count;
-            int upChecks = bucketChecks.Count(c => c.Status == UpDown.up);
+            int upChecks = bucketChecks.Count(c => c.GetEffectiveStatus() == UpDown.up);
             double upPct = totalChecks > 0 ? (double)upChecks / totalChecks * 100.0 : 0.0;
 
             var rttValues = bucketChecks
-                .Where(c => c.RttMs.HasValue && c.RttMs > 0)
-                .Select(c => c.RttMs!.Value)
+                .Select(c => c.GetEffectiveRtt())
+                .Where(rtt => rtt.HasValue && rtt > 0)
+                .Select(rtt => rtt!.Value)
                 .ToList();
             double? avgRttMs = rttValues.Any() ? rttValues.Average() : null;
 
-            // Count down events (up→down transitions)
             int downEvents = 0;
             for (int i = 1; i < bucketChecks.Count; i++)
             {
-                if (bucketChecks[i - 1].Status == UpDown.up && bucketChecks[i].Status == UpDown.down)
+                if (bucketChecks[i - 1].GetEffectiveStatus() == UpDown.up &&
+                    bucketChecks[i].GetEffectiveStatus() == UpDown.down)
                 {
                     downEvents++;
                 }
@@ -187,7 +142,7 @@ public sealed class RollupService : IRollupService
             rollups.Add(new Data.Rollup15m
             {
                 EndpointId = endpointId,
-                BucketTs = bucketGroup.Key,
+                BucketTs = GetBucketTimestamp15m(bucketChecks.First().Ts),
                 UpPct = upPct,
                 AvgRttMs = avgRttMs,
                 DownEvents = downEvents
@@ -197,45 +152,35 @@ public sealed class RollupService : IRollupService
         return rollups;
     }
 
-    private List<Data.RollupDaily> CalculateRollupsDaily(Guid endpointId, List<CheckResultRaw> checks, DateOnly fromDate, DateOnly toDate)
+    private List<Data.RollupDaily> CalculateRollupsDaily(Guid endpointId, List<WrappedCheck> checks, DateOnly fromDate, DateOnly toDate)
     {
         var rollups = new List<Data.RollupDaily>();
 
-        // Group by date
         var dateGroups = checks
-            .Select(c => new
-            {
-                Check = c,
-                Date = DateOnly.FromDateTime(UnixTimestamp.FromUnixSeconds(c.Ts).Date)
-            })
-            .Where(x => x.Date >= fromDate && x.Date < toDate)
-            .GroupBy(x => x.Date);
+            .GroupBy(c => DateOnly.FromDateTime(UnixTimestamp.FromUnixSeconds(c.Ts).Date))
+            .Where(g => g.Key >= fromDate && g.Key < toDate);
 
         foreach (var dateGroup in dateGroups)
         {
-            var dayChecks = dateGroup.Select(x => x.Check).OrderBy(c => c.Ts).ToList();
+            var dayChecks = dateGroup.OrderBy(c => c.Ts).ToList();
+            if (!dayChecks.Any()) continue;
 
-            if (!dayChecks.Any())
-            {
-                continue;
-            }
-
-            // Calculate metrics
             int totalChecks = dayChecks.Count;
-            int upChecks = dayChecks.Count(c => c.Status == UpDown.up);
+            int upChecks = dayChecks.Count(c => c.GetEffectiveStatus() == UpDown.up);
             double upPct = totalChecks > 0 ? (double)upChecks / totalChecks * 100.0 : 0.0;
 
             var rttValues = dayChecks
-                .Where(c => c.RttMs.HasValue && c.RttMs > 0)
-                .Select(c => c.RttMs!.Value)
+                .Select(c => c.GetEffectiveRtt())
+                .Where(rtt => rtt.HasValue && rtt > 0)
+                .Select(rtt => rtt!.Value)
                 .ToList();
             double? avgRttMs = rttValues.Any() ? rttValues.Average() : null;
 
-            // Count down events (up→down transitions)
             int downEvents = 0;
             for (int i = 1; i < dayChecks.Count; i++)
             {
-                if (dayChecks[i - 1].Status == UpDown.up && dayChecks[i].Status == UpDown.down)
+                if (dayChecks[i - 1].GetEffectiveStatus() == UpDown.up &&
+                    dayChecks[i].GetEffectiveStatus() == UpDown.down)
                 {
                     downEvents++;
                 }
@@ -256,74 +201,89 @@ public sealed class RollupService : IRollupService
 
     private static long GetBucketTimestamp15m(long unixTs)
     {
-        // Round down to nearest 15-minute boundary
         DateTimeOffset ts = UnixTimestamp.FromUnixSeconds(unixTs);
-        int minute = ts.Minute;
-        int bucketMinute = (minute / 15) * 15;
-
-        var bucketTime = new DateTimeOffset(ts.Year, ts.Month, ts.Day, ts.Hour, bucketMinute, 0, ts.Offset);
-        return UnixTimestamp.ToUnixSeconds(bucketTime);
+        int bucketMinute = (ts.Minute / 15) * 15;
+        return UnixTimestamp.ToUnixSeconds(new DateTimeOffset(ts.Year, ts.Month, ts.Day, ts.Hour, bucketMinute, 0, ts.Offset));
     }
 
     private async Task UpsertRollups15mAsync(List<Data.Rollup15m> rollups, CancellationToken cancellationToken)
     {
-        if (!rollups.Any())
-        {
-            return;
-        }
+        if (!rollups.Any()) return;
 
-        // SQLite doesn't support MERGE/UPSERT in EF Core, so we'll do it manually
-        foreach (Data.Rollup15m rollup in rollups)
+        foreach (var rollup in rollups)
         {
-            Rollup15m? existing = await _context.Rollups15m
+            var existing = await _context.Rollups15m
                 .FirstOrDefaultAsync(r => r.EndpointId == rollup.EndpointId && r.BucketTs == rollup.BucketTs, cancellationToken);
 
             if (existing != null)
             {
-                // Update existing
                 existing.UpPct = rollup.UpPct;
                 existing.AvgRttMs = rollup.AvgRttMs;
                 existing.DownEvents = rollup.DownEvents;
             }
             else
             {
-                // Add new
                 _context.Rollups15m.Add(rollup);
             }
         }
 
         await _context.SaveChangesAsync(cancellationToken);
-        _logger.LogDebug("Upserted {Count} 15m rollup records", rollups.Count);
     }
 
     private async Task UpsertRollupsDailyAsync(List<Data.RollupDaily> rollups, CancellationToken cancellationToken)
     {
-        if (!rollups.Any())
-        {
-            return;
-        }
+        if (!rollups.Any()) return;
 
-        // SQLite doesn't support MERGE/UPSERT in EF Core, so we'll do it manually
-        foreach (Data.RollupDaily rollup in rollups)
+        foreach (var rollup in rollups)
         {
-            RollupDaily? existing = await _context.RollupsDaily
+            var existing = await _context.RollupsDaily
                 .FirstOrDefaultAsync(r => r.EndpointId == rollup.EndpointId && r.BucketDate == rollup.BucketDate, cancellationToken);
 
             if (existing != null)
             {
-                // Update existing
                 existing.UpPct = rollup.UpPct;
                 existing.AvgRttMs = rollup.AvgRttMs;
                 existing.DownEvents = rollup.DownEvents;
             }
             else
             {
-                // Add new
                 _context.RollupsDaily.Add(rollup);
             }
         }
 
         await _context.SaveChangesAsync(cancellationToken);
-        _logger.LogDebug("Upserted {Count} daily rollup records", rollups.Count);
+    }
+
+    // --- Private wrapper class for effective status & RTT ---
+    private class WrappedCheck
+    {
+        private readonly CheckResultRaw _check;
+
+        public WrappedCheck(CheckResultRaw check)
+        {
+            _check = check;
+            Ts = check.Ts;
+            EndpointId = check.EndpointId;
+        }
+
+        public long Ts { get; }
+        public Guid EndpointId { get; }
+
+        public UpDown GetEffectiveStatus()
+        {
+            if (_check.Status == UpDown.down && _check.FallbackAttempted == true && _check.FallbackStatus == UpDown.up)
+            {
+                return UpDown.up;
+            }
+            return _check.Status;
+        }
+
+        public double? GetEffectiveRtt()
+        {
+            if (_check.Status == UpDown.up && _check.RttMs.HasValue) return _check.RttMs;
+            if (_check.Status == UpDown.down && _check.FallbackAttempted == true && _check.FallbackStatus == UpDown.up && _check.FallbackRttMs.HasValue)
+                return _check.FallbackRttMs;
+            return null;
+        }
     }
 }

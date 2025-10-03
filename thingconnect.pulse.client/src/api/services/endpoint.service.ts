@@ -17,18 +17,10 @@ export class EndpointService {
       if (!endpointItem) {
         throw new Error(`Endpoint ${id} not found`);
       }
-
       // Convert live status to endpoint detail format
       return {
         endpoint: endpointItem.endpoint,
-        recent: [
-          {
-            ts: endpointItem.lastChangeTs,
-            status: endpointItem.status === 'flapping' ? 'down' : endpointItem.status,
-            rttMs: endpointItem.rttMs,
-            error: null,
-          },
-        ],
+        recent: [],
         outages: [],
       };
     }

@@ -173,7 +173,7 @@ export default function History() {
         </HStack>
       </PageSection>
       {/* History Data */}
-      <PageSection title='Performance Summary' testId='availability-stats'>
+      <PageSection title='Performance Summary' testId='availability-stats' collapsible={true}>
         <AvailabilityStats data={historyData} bucket={bucket} isLoading={isHistoryDataLoading} />
       </PageSection>
       <Tabs.Root
