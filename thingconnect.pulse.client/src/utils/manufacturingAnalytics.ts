@@ -41,7 +41,7 @@ export function calculateManufacturingKPIs(
   historicalData?: any[]
 ): ManufacturingKPIs {
   const totalEndpoints = statusItems.length;
-  const upEndpoints = statusItems.filter(item => item.status === 'up').length;
+  const upEndpoints = statusItems.filter(item => item.currentState.status === 'up').length;
   // Count down and flapping endpoints for potential future use
   // const downEndpoints = statusItems.filter(item => item.status === 'down').length;
   // const flappingEndpoints = statusItems.filter(item => item.status === 'flapping').length;
@@ -59,11 +59,12 @@ export function calculateManufacturingKPIs(
   ).size;
 
   // Identify critical endpoints (assumed to be those with custom names or specific groups)
-  const criticalEndpoints = statusItems.filter(item => 
-    item.endpoint.group?.name?.toLowerCase().includes('critical') ||
-    item.endpoint.name?.toLowerCase().includes('critical') ||
-    item.endpoint.host.includes('prod') ||
-    item.endpoint.host.includes('main')
+  const criticalEndpoints = statusItems.filter(
+    item =>
+      item.endpoint.group?.name?.toLowerCase().includes('critical') ||
+      item.endpoint.name?.toLowerCase().includes('critical') ||
+      item.endpoint.host.includes('prod') ||
+      item.endpoint.host.includes('main')
   ).length;
 
   return {
@@ -74,7 +75,7 @@ export function calculateManufacturingKPIs(
     networkSegments,
     criticalEndpoints,
     availabilityScore: totalEndpoints > 0 ? (upEndpoints / totalEndpoints) * 100 : 0,
-    alertResponseTime: calculateAverageAlertResponseTime(historicalData)
+    alertResponseTime: calculateAverageAlertResponseTime(historicalData),
   };
 }
 
@@ -83,7 +84,7 @@ export function calculateManufacturingKPIs(
  */
 export function analyzeConfigurationComplexity(configData: any): ConfigurationComplexity {
   const config = typeof configData === 'string' ? parseYAMLSafely(configData) : configData;
-  
+
   if (!config || typeof config !== 'object') {
     return {
       totalRules: 0,
@@ -91,7 +92,7 @@ export function analyzeConfigurationComplexity(configData: any): ConfigurationCo
       customIntervals: 0,
       advancedFeatures: [],
       configSizeKb: 0,
-      validationErrors: 0
+      validationErrors: 0,
     };
   }
 
@@ -99,13 +100,13 @@ export function analyzeConfigurationComplexity(configData: any): ConfigurationCo
   const probeTypes = new Set<string>();
   const customIntervals = new Set<number>();
   const advancedFeatures: string[] = [];
-  
+
   endpoints.forEach((endpoint: any) => {
     if (endpoint.type) probeTypes.add(endpoint.type);
     if (endpoint.interval && endpoint.interval !== 30) {
       customIntervals.add(endpoint.interval);
     }
-    
+
     // Detect advanced features
     if (endpoint.authentication) advancedFeatures.push('authentication');
     if (endpoint.headers) advancedFeatures.push('custom_headers');
@@ -114,9 +115,10 @@ export function analyzeConfigurationComplexity(configData: any): ConfigurationCo
     if (endpoint.ssl_verify === false) advancedFeatures.push('ssl_bypass');
   });
 
-  const configSize = typeof configData === 'string' ? 
-    new Blob([configData]).size / 1024 : 
-    JSON.stringify(config).length / 1024;
+  const configSize =
+    typeof configData === 'string'
+      ? new Blob([configData]).size / 1024
+      : JSON.stringify(config).length / 1024;
 
   return {
     totalRules: endpoints.length,
@@ -124,7 +126,7 @@ export function analyzeConfigurationComplexity(configData: any): ConfigurationCo
     customIntervals: customIntervals.size,
     advancedFeatures: [...new Set(advancedFeatures)],
     configSizeKb: Math.round(configSize * 100) / 100,
-    validationErrors: 0 // Would be populated by validation logic
+    validationErrors: 0, // Would be populated by validation logic
   };
 }
 
@@ -135,16 +137,15 @@ export function trackUserEfficiency(): UserEfficiencyMetrics {
   const sessionStart = sessionStorage.getItem('session_start_time');
   const tasksCompleted = parseInt(sessionStorage.getItem('tasks_completed') || '0', 10);
   const helpUsage = parseInt(sessionStorage.getItem('help_usage_count') || '0', 10);
-  
-  const sessionDuration = sessionStart ? 
-    (Date.now() - parseInt(sessionStart, 10)) / 1000 : 0;
+
+  const sessionDuration = sessionStart ? (Date.now() - parseInt(sessionStart, 10)) / 1000 : 0;
 
   return {
     tasksCompleted,
     avgTaskDuration: tasksCompleted > 0 ? sessionDuration / tasksCompleted : 0,
     navigationDepth: getNavigationDepth(),
     helpUsage,
-    keyboardShortcuts: 0 // Would track keyboard usage
+    keyboardShortcuts: 0, // Would track keyboard usage
   };
 }
 
@@ -154,7 +155,9 @@ export function trackUserEfficiency(): UserEfficiencyMetrics {
 function calculateMTTD(statusItems: LiveStatusItem[], _historicalData?: any[]): number {
   // This would analyze historical data to determine detection times
   // For now, return a reasonable estimate based on probe intervals
-  const avgInterval = statusItems.reduce((sum, item) => sum + (item.endpoint.intervalSeconds || 30), 0) / statusItems.length;
+  const avgInterval =
+    statusItems.reduce((sum, item) => sum + (item.endpoint.intervalSeconds || 30), 0) /
+    statusItems.length;
   return avgInterval || 30;
 }
 
@@ -170,9 +173,12 @@ function calculateMTTR(_statusItems: LiveStatusItem[], _historicalData?: any[]):
 /**
  * Calculate false positive rate
  */
-function calculateFalsePositiveRate(statusItems: LiveStatusItem[], _historicalData?: any[]): number {
+function calculateFalsePositiveRate(
+  statusItems: LiveStatusItem[],
+  _historicalData?: any[]
+): number {
   // This would analyze flapping endpoints and quick state changes
-  const flappingCount = statusItems.filter(item => item.status === 'flapping').length;
+  const flappingCount = statusItems.filter(item => item.currentState.status === 'flapping').length;
   return statusItems.length > 0 ? (flappingCount / statusItems.length) * 100 : 0;
 }
 
