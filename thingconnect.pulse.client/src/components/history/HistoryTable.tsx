@@ -41,9 +41,8 @@ export function HistoryTable({ data, bucket, pageSize = 20, isLoading }: History
           .map(check => ({
             timestamp: check.ts,
             displayTime: new Date(check.ts).toLocaleString(),
-            status: check.status,
-            responseTime: check.rttMs,
-            error: check.error,
+            primary: check.primary,
+            fallback: check.fallback,
             type: 'raw' as const,
           }))
           .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
@@ -88,7 +87,7 @@ export function HistoryTable({ data, bucket, pageSize = 20, isLoading }: History
     return tableData.slice(startIndex, startIndex + pageSize);
   }, [tableData, currentPage, pageSize]);
 
-  const getStatusBadge = (status?: string) => {
+  const getStatusBadge = (status?: string | null) => {
     if (!status) return null;
     const config = {
       up: { color: 'green', icon: CheckCircle },
@@ -150,9 +149,12 @@ export function HistoryTable({ data, bucket, pageSize = 20, isLoading }: History
               <Table.ColumnHeader>Timestamp</Table.ColumnHeader>
               {bucket === 'raw' ? (
                 <>
-                  <Table.ColumnHeader>Status</Table.ColumnHeader>
-                  <Table.ColumnHeader>Response Time</Table.ColumnHeader>
-                  <Table.ColumnHeader>Error</Table.ColumnHeader>
+                  <Table.ColumnHeader>Primary Status</Table.ColumnHeader>
+                  <Table.ColumnHeader>Primary RTT</Table.ColumnHeader>
+                  <Table.ColumnHeader>Primary Error</Table.ColumnHeader>
+                  <Table.ColumnHeader>Fallback Status</Table.ColumnHeader>
+                  <Table.ColumnHeader>Fallback RTT</Table.ColumnHeader>
+                  <Table.ColumnHeader>Fallback Error</Table.ColumnHeader>
                 </>
               ) : (
                 <>
@@ -168,7 +170,7 @@ export function HistoryTable({ data, bucket, pageSize = 20, isLoading }: History
             {isLoading
               ? Array.from({ length: 8 }).map((_, i) => (
                   <Table.Row key={`skeleton-${i}`}>
-                    {Array.from({ length: bucket === 'raw' ? 4 : 4 }).map((_, j) => (
+                    {Array.from({ length: bucket === 'raw' ? 7 : 4 }).map((_, j) => (
                       <Table.Cell key={j}>
                         <Skeleton height='16px' w='80%' />
                       </Table.Cell>
@@ -185,23 +187,43 @@ export function HistoryTable({ data, bucket, pageSize = 20, isLoading }: History
 
                     {row.type === 'raw' ? (
                       <>
-                        <Table.Cell>{getStatusBadge(row.status)}</Table.Cell>
+                        <Table.Cell>{getStatusBadge(row.primary?.status)}</Table.Cell>
                         <Table.Cell>
                           <Text fontSize='sm' fontFamily='mono'>
-                            {formatResponseTime(row.responseTime)}
+                            {formatResponseTime(row.primary?.rttMs)}
                           </Text>
                         </Table.Cell>
-                        <Table.Cell>
-                          <Tooltip content={row.error || '-'}>
+                        <Table.Cell maxW={'200px'}>
+                          <Tooltip content={row.primary?.error || '-'}>
                             <Text
                               fontSize='sm'
-                              color={row.error ? 'red.600' : 'gray.500'}
-                              _dark={{ color: row.error ? 'red.400' : 'gray.400' }}
+                              color={row.primary?.error ? 'red.600' : 'gray.500'}
+                              _dark={{ color: row.primary?.error ? 'red.400' : 'gray.400' }}
                               overflow='hidden'
                               textOverflow='ellipsis'
                               whiteSpace='nowrap'
                             >
-                              {row.error || '-'}
+                              {row.primary?.error || '-'}
+                            </Text>
+                          </Tooltip>
+                        </Table.Cell>
+                        <Table.Cell>{getStatusBadge(row.fallback?.status)}</Table.Cell>
+                        <Table.Cell>
+                          <Text fontSize='sm' fontFamily='mono'>
+                            {formatResponseTime(row.fallback?.rttMs)}
+                          </Text>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Tooltip content={row.fallback?.error || '-'}>
+                            <Text
+                              fontSize='sm'
+                              color={row.fallback?.error ? 'red.600' : 'gray.500'}
+                              _dark={{ color: row.fallback?.error ? 'red.400' : 'gray.400' }}
+                              overflow='hidden'
+                              textOverflow='ellipsis'
+                              whiteSpace='nowrap'
+                            >
+                              {row.fallback?.error || '-'}
                             </Text>
                           </Tooltip>
                         </Table.Cell>

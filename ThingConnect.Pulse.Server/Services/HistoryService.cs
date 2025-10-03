@@ -132,7 +132,7 @@ public sealed class HistoryService : IHistoryService
                 {
                     Type = c.FallbackAttempted && c.FallbackStatus != null ? "icmp" : endpoint.Type.ToString().ToLower(),
                     Target = endpoint.Host,
-                    Status = c.DetermineStatusType(new List<CheckResult>(), TimeSpan.FromSeconds(endpoint.IntervalSeconds * 2)).ToString().ToLower(),
+                    Status = c.GetEffectiveStatus().ToString().ToLower(),
                     RttMs = c.GetEffectiveRtt(),
                     Classification = (int)c.DetermineClassification(),
                 }

@@ -35,9 +35,12 @@ export function AvailabilityStats({
     switch (bucket) {
       case 'raw': {
         totalPoints = data.raw.length;
-        upPoints = data.raw.filter(check => check.status === 'up').length;
-        const validRttChecks = data.raw.filter(check => check.rttMs != null);
-        totalResponseTime = validRttChecks.reduce((sum, check) => sum + (check.rttMs || 0), 0);
+        upPoints = data.raw.filter(check => check.currentState.status === 'up').length;
+        const validRttChecks = data.raw.filter(check => check.currentState.rttMs != null);
+        totalResponseTime = validRttChecks.reduce(
+          (sum, check) => sum + (check.currentState.rttMs || 0),
+          0
+        );
         responseTimeCount = validRttChecks.length;
         break;
       }

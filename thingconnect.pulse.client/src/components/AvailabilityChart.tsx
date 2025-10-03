@@ -24,7 +24,7 @@ export function AvailabilityChart({ data, bucket, isLoading }: AvailabilityChart
             hour: '2-digit',
             minute: '2-digit',
           }),
-          uptime: check.status === 'up' ? 100 : 0,
+          uptime: check.currentState.status === 'up' ? 100 : 0,
         }));
       case '15m':
         return data.rollup15m.map(bucket => ({
