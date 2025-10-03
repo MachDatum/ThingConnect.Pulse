@@ -38,6 +38,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { RecentChecksTable } from '@/components/RecentChecksTable';
 import { OutagesList } from '@/components/OutageList';
+import { PageSection } from '@/components/layout/PageSection';
 
 function getStatusColor(status: string) {
   switch (status.toLowerCase()) {
@@ -111,7 +112,7 @@ export default function EndpointDetail() {
 
   const backButton = (
     <RouterLink to='/'>
-      <Button variant='ghost' size='sm' h='32px' mt={-4} mr={7}>
+      <Button variant='ghost' size='sm' h='32px' mt={-4} mr={16}>
         <ArrowLeft size={16} />
         Back to Dashboard
       </Button>
@@ -346,8 +347,7 @@ export default function EndpointDetail() {
       </Card.Root>
 
       {/* Statistics */}
-      <VStack w='full' align='self-start'>
-        <Heading size='md'>Recent Performance</Heading>
+      <PageSection title={'Recent Performance'} collapsible={true}>
         <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} gap={2} w='full'>
           {stats.map(stat => (
             <Stat.Root key={stat.key} borderWidth='1px' p='3' rounded='md' h='full'>
@@ -374,29 +374,30 @@ export default function EndpointDetail() {
             </Stat.Root>
           ))}
         </SimpleGrid>
-      </VStack>
+      </PageSection>
+
       {/* Recent Checks and Outages */}
       <SimpleGrid columns={{ base: 1, md: 1, lg: 2 }} gap={2} w='full' h='full' overflow='auto'>
         {/* Recent Checks */}
-        <Card.Root flex={1} display='flex' flexDirection='column' overflow='hidden' size={'sm'}>
+        <Card.Root flex={1} overflow='hidden' size={'sm'}>
           <Card.Header px={3} pt={3}>
             <Text fontWeight='medium' fontSize='sm'>
               Recent Checks
             </Text>
           </Card.Header>
-          <Card.Body flex={1} display='flex' flexDirection='column' minH={0} p={3}>
+          <Card.Body flex={1} minH={0} p={3}>
             <RecentChecksTable checks={recent} pageSize={10} />
           </Card.Body>
         </Card.Root>
 
         {/* Recent Outages */}
-        <Card.Root h='full' display='flex' flex={1} flexDirection='column'>
+        <Card.Root flex={1} overflow='hidden' size={'sm'}>
           <Card.Header p={3} pb={0}>
             <Text fontWeight='medium' fontSize='sm'>
               Recent Outages
             </Text>
           </Card.Header>
-          <Card.Body flex={1} display='flex' flexDirection='column' minH={0} p={3}>
+          <Card.Body flex={1} minH={0} p={3} overflow={'auto'}>
             <OutagesList outages={outages} isLoading={isLoading} />
           </Card.Body>
         </Card.Root>
