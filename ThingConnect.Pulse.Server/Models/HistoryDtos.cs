@@ -2,18 +2,6 @@ using ThingConnect.Pulse.Server.Data;
 
 namespace ThingConnect.Pulse.Server.Models;
 
-public sealed class RawCheckDto
-{
-    public DateTimeOffset Ts { get; set; }
-    public string Status { get; set; } = default!;
-    public double? RttMs { get; set; }
-    public string? Error { get; set; }
-    public bool? FallbackAttempted { get; set; }
-    public string? FallbackStatus { get; set; }
-    public double? FallbackRttMs { get; set; }
-    public string? FallbackError { get; set; }
-    public Classification? Classification { get; set; }
-}
 
 public sealed class RollupBucketDto
 {

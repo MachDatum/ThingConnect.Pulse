@@ -6,7 +6,7 @@ public sealed class LiveStatusItemDto
     // 🔹 LEGACY: Keep for backward compatibility (remove later)
     public string Status { get; set; } = default!;
     public double? RttMs { get; set; }
-    public CurrentStateDto CurrentState { get; set; } = default!;
+    public EffectiveStateDto CurrentState { get; set; } = default!;
     public DateTimeOffset LastChangeTs { get; set; }
     public List<SparklinePoint> Sparkline { get; set; } = new();
 }
@@ -54,7 +54,7 @@ public sealed class PagedLiveDto
     public List<LiveStatusItemDto> Items { get; set; } = new();
 }
 
-public sealed class CurrentStateDto
+public sealed class EffectiveStateDto
 {
     public string EffectiveStatus { get; set; } = default!; // "up" or "down"
     public double? EffectiveRtt { get; set; } // Priority-based RTT

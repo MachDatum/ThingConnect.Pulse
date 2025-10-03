@@ -63,9 +63,6 @@ public sealed class ProbeService : IProbeService
             }
         }
 
-        _logger.LogDebug("Probe completed for {EndpointId}: Status={Status}, Classification={Classification}, EffectiveStatus={EffectiveStatus}", 
-            endpoint.Id, probeResult.Status, probeResult.Classification, probeResult.GetEffectiveStatus());
-
         return probeResult;
     }
 

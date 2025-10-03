@@ -4,17 +4,17 @@ using ThingConnect.Pulse.Server.Models;
 public sealed class EndpointDetailDto
 {
     public required EndpointDto Endpoint { get; set; }
-    public CurrentStateDto CurrentState { get; set; } = default!;
-    public List<CheckResultStructuredDto> Recent { get; set; } = [];
+    public List<RawCheckDto> Recent { get; set; } = [];
     public List<OutageDto> Outages { get; set; } = [];
 }
 
-public sealed class CheckResultStructuredDto
+public sealed class RawCheckDto
 {
     public DateTimeOffset Ts { get; set; }
     public Classification Classification { get; set; }
     public ProbeResultDto Primary { get; set; } = default!;
     public FallbackResultDto Fallback { get; set; } = default!;
+    public EffectiveStateDto CurrentState { get; set; } = default!;
 }
 
 public sealed class ProbeResultDto

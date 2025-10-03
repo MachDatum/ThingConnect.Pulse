@@ -1,9 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using ThingConnect.Pulse.Server.Data;
 
 namespace ThingConnect.Pulse.Server.Models;
+
+public enum StatusType
+{
+    Up,
+    Down,
+    Service,
+    Flapping
+}
 
 /// <summary>
 /// Result of a single probe check (ICMP, TCP, or HTTP).
@@ -128,20 +133,52 @@ public sealed class CheckResult
         return Data.Classification.Unknown; // No fallback info
     }
 
-    /// <summary>
-    /// 🔹 Common flapping detection utility (uses recent check list)
-    /// </summary>
+    // 🔹 StatusType logic (Up / Down / Service / Flapping)
+    public StatusType DetermineStatusType(List<CheckResult> recentChecks, TimeSpan interval)
+    {
+        if (recentChecks == null || recentChecks.Count == 0)
+        {
+            return StatusType.Down;
+        }
+
+        // Flapping overrides all
+        if (IsFlapping(recentChecks))
+        {
+            return StatusType.Flapping;
+        }
+
+        // Effective UP
+        if (GetEffectiveStatus() == UpDown.up)
+        {
+            if (Status == UpDown.down && FallbackAttempted && FallbackStatus == UpDown.up)
+            {
+                return StatusType.Service;
+            }
+            return StatusType.Up;
+        }
+
+        return StatusType.Down;
+    }
+
+    // 🔹 Flapping detection (>= 4 samples, >3 changes in 5 min window)
     public static bool IsFlapping(List<CheckResult> recent)
     {
-        if (recent.Count < 4) return false;
+        if (recent == null || recent.Count < 4) return false;
+
         var effectiveStatuses = recent
             .OrderBy(c => c.Timestamp)
-            .Select(c => c.GetEffectiveStatus().ToString())
+            .Select(c => c.GetEffectiveStatus())
             .ToList();
+
         int stateChanges = 0;
         for (int i = 1; i < effectiveStatuses.Count; i++)
+        {
             if (effectiveStatuses[i] != effectiveStatuses[i - 1])
+            {
                 stateChanges++;
+            }
+        }
+
         return stateChanges > 3;
     }
 

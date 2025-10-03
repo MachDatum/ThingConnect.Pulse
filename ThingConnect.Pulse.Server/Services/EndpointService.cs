@@ -38,16 +38,56 @@ public sealed class EndpointService : IEndpointService
             .Take(RecentFetchLimit)
             .ToListAsync();
 
-        var recent = rawChecks
+        // Map to CheckResult objects for easier processing
+        var checks = rawChecks
+            .Select(c => new CheckResult
+            {
+                EndpointId = c.EndpointId,
+                Timestamp = ConvertToDateTimeOffset(c.Ts),
+                Status = c.Status,
+                RttMs = c.RttMs,
+                Error = c.Error,
+                FallbackAttempted = (bool)c.FallbackAttempted,
+                FallbackStatus = c.FallbackStatus,
+                FallbackRttMs = c.FallbackRttMs,
+                FallbackError = c.FallbackError,
+                Classification = c.Classification
+            }).ToList();
+
+        // --- Map RawCheckDto including EffectiveState ---
+        var recent = checks
+            .Where(c => c.Timestamp >= windowStart)
+            .OrderByDescending(c => c.Timestamp)
             .Select(c => new RawCheckDto
             {
-                Ts = ConvertToDateTimeOffset(c.Ts),
-                Status = c.Status.ToString().ToLower(),
-                RttMs = c.RttMs,
-                Error = c.Error
+                Ts = c.Timestamp,
+                Classification = c.DetermineClassification(),
+                Primary = new ProbeResultDto
+                {
+                    Type = endpoint.Type.ToString().ToLower(),
+                    Target = endpoint.Host,
+                    Status = c.Status.ToString().ToLower(),
+                    RttMs = c.RttMs,
+                    Error = c.Error
+                },
+                Fallback = new FallbackResultDto
+                {
+                    Attempted = c.FallbackAttempted,
+                    Type = "icmp",
+                    Target = endpoint.Host,
+                    Status = c.FallbackStatus?.ToString().ToLower(),
+                    RttMs = c.FallbackRttMs,
+                    Error = c.FallbackError
+                },
+                CurrentState = new EffectiveStateDto
+                {
+                    EffectiveStatus = c.GetEffectiveStatus().ToString().ToLower(),
+                    EffectiveRtt = c.GetEffectiveRtt(),
+                    Classification = (int)c.DetermineClassification(),
+                    HostReachable = c.FallbackAttempted && c.FallbackStatus == UpDown.up,
+                    LastCheck = c.Timestamp
+                }
             })
-            .Where(r => r.Ts >= windowStart)
-            .OrderByDescending(r => r.Ts)
             .ToList();
 
         // --- Fetch outages within window ---
@@ -73,38 +113,13 @@ public sealed class EndpointService : IEndpointService
             .ToList();
 
         // --- Map endpoint DTO ---
-        var endpointDto = MapToEndpointDto(endpoint);
+        var endpointDto = CheckResult.MapToEndpointDto(endpoint);
 
         return new EndpointDetailDto
         {
             Endpoint = endpointDto,
             Recent = recent,
             Outages = outages
-        };
-    }
-
-    private EndpointDto MapToEndpointDto(Data.Endpoint endpoint)
-    {
-        return new EndpointDto
-        {
-            Id = endpoint.Id,
-            Name = endpoint.Name,
-            Group = new GroupDto
-            {
-                Id = endpoint.Group.Id,
-                Name = endpoint.Group.Name,
-                ParentId = endpoint.Group.ParentId,
-                Color = endpoint.Group.Color
-            },
-            Type = endpoint.Type.ToString().ToLower(),
-            Host = endpoint.Host,
-            Port = endpoint.Port,
-            HttpPath = endpoint.HttpPath,
-            HttpMatch = endpoint.HttpMatch,
-            IntervalSeconds = endpoint.IntervalSeconds,
-            TimeoutMs = endpoint.TimeoutMs,
-            Retries = endpoint.Retries,
-            Enabled = endpoint.Enabled
         };
     }
 
