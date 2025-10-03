@@ -51,34 +51,84 @@ export function RecentChecksTable({ checks, pageSize = 10 }: RecentChecksTablePr
         <Table.Root size='sm' stickyHeader>
           <Table.Header>
             <Table.Row bg='gray.100' _dark={{ bg: 'gray.800' }}>
-              <Table.ColumnHeader w='30%'>Time</Table.ColumnHeader>
-              <Table.ColumnHeader w='15%'>Status</Table.ColumnHeader>
-              <Table.ColumnHeader w='10%'>RTT</Table.ColumnHeader>
-              <Table.ColumnHeader w='35%'>Error</Table.ColumnHeader>
+              <Table.ColumnHeader w='150px'>Time</Table.ColumnHeader>
+              <Table.ColumnHeader w='120px'>Primary Status</Table.ColumnHeader>
+              <Table.ColumnHeader w='120px'>Primary RTT (ms)</Table.ColumnHeader>
+              <Table.ColumnHeader w='120px'>Primary Error</Table.ColumnHeader>
+              <Table.ColumnHeader w='120px'>Fallback Status</Table.ColumnHeader>
+              <Table.ColumnHeader w='120px'>Fallback RTT (ms)</Table.ColumnHeader>
+              <Table.ColumnHeader w='120px'>Fallback Error</Table.ColumnHeader>
             </Table.Row>
           </Table.Header>
+
           <Table.Body>
-            {pagedChecks.map((check, index) => (
-              <Table.Row key={`${check.ts}-${index}`}>
+            {pagedChecks.map((check, idx) => (
+              <Table.Row key={`${check.ts}-${idx}`}>
                 <Table.Cell w='30%'>
                   <Text flex='1' fontSize='sm'>
                     {formatDistanceToNow(new Date(check.ts), { addSuffix: true })}
                   </Text>
                 </Table.Cell>
                 <Table.Cell w='15%'>
-                  <Badge colorPalette={check.status === 'up' ? 'green' : 'red'} size='sm'>
-                    {check.status.toUpperCase()}
+                  <Badge colorPalette={check.primary.status === 'up' ? 'green' : 'red'} size='sm'>
+                    {check.primary.status.toUpperCase()}
                   </Badge>
                 </Table.Cell>
                 <Table.Cell w='10%'>
-                  <Text fontSize='sm'>{check.rttMs ? `${check.rttMs}ms` : '-'}</Text>
+                  <Text fontSize='sm'>
+                    {check.primary.rttMs ? `${check.primary.rttMs}ms` : '-'}
+                  </Text>
                 </Table.Cell>
-                <Table.Cell w='35%'>
-                  <Tooltip content={check.error || '-'}>
-                    <Text flex='1' fontSize='sm' color='gray.500' lineClamp={1}>
-                      {check.error || '-'}
+                <Table.Cell w='15%'>
+                  <Tooltip content={check.primary.error || '-'}>
+                    <Text
+                      flex='1'
+                      fontSize='sm'
+                      color={check.primary.error ? 'red.500' : 'gray.500'}
+                      lineClamp={1}
+                    >
+                      {check.primary.error || '-'}
                     </Text>
                   </Tooltip>
+                </Table.Cell>
+                <Table.Cell w='15%'>
+                  {check.fallback.attempted ? (
+                    <Badge
+                      colorPalette={check.fallback.status === 'up' ? 'green' : 'red'}
+                      size='sm'
+                    >
+                      {check.fallback.status?.toUpperCase() ?? '-'}
+                    </Badge>
+                  ) : (
+                    <Text fontSize='sm' color='gray.400'>
+                      Not attempted
+                    </Text>
+                  )}
+                </Table.Cell>
+                <Table.Cell w='10%'>
+                  <Text fontSize='sm'>
+                    {check.fallback.attempted && check.fallback.rttMs != null
+                      ? `${check.fallback.rttMs}ms`
+                      : '-'}
+                  </Text>
+                </Table.Cell>
+                <Table.Cell w='15%'>
+                  {check.fallback.attempted ? (
+                    <Tooltip content={check.fallback.error || '-'}>
+                      <Text
+                        flex='1'
+                        fontSize='sm'
+                        color={check.fallback.error ? 'red.500' : 'gray.500'}
+                        lineClamp={1}
+                      >
+                        {check.fallback.error || '-'}
+                      </Text>
+                    </Tooltip>
+                  ) : (
+                    <Text fontSize='sm' color='gray.400'>
+                      Not attempted
+                    </Text>
+                  )}
                 </Table.Cell>
               </Table.Row>
             ))}

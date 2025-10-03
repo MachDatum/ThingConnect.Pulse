@@ -62,6 +62,8 @@ function getStatusIcon(status: string) {
       return ArrowDown;
     case 'flapping':
       return AlertTriangle;
+    case 'service':
+      return Activity;
     default:
       return Circle;
   }
@@ -171,11 +173,13 @@ export default function EndpointDetail() {
   const { endpoint, recent, outages } = endpointDetail;
 
   // Calculate uptime percentage from recent checks
-  const upChecks = recent.filter(check => check..status === 'up').length;
+  const upChecks = recent.filter(check => check.currentState.status === 'up').length;
   const uptimePercentage = recent.length > 0 ? Math.round((upChecks / recent.length) * 100) : 0;
 
   // Calculate average RTT
-  const rttValues = recent.filter(check => check.rttMs != null).map(check => check.rttMs!);
+  const rttValues = recent
+    .filter(check => check.currentState.rttMs != null)
+    .map(check => check.currentState.rttMs!);
   const avgRtt =
     rttValues.length > 0
       ? Math.round(rttValues.reduce((sum, rtt) => sum + rtt, 0) / rttValues.length)
@@ -183,7 +187,8 @@ export default function EndpointDetail() {
 
   // Get current status from most recent check
   const latestCheck = recent.length > 0 ? recent[0] : null;
-  const currentStatus = latestCheck?.status || 'unknown';
+  const currentStatus = latestCheck?.currentState.status || 'unknown';
+  console.log(latestCheck?.currentState.rttMs);
 
   const stats = [
     {
@@ -219,7 +224,7 @@ export default function EndpointDetail() {
       value: latestCheck
         ? formatDistanceToNow(new Date(latestCheck.ts), { addSuffix: true })
         : 'N/A',
-      help: latestCheck ? (latestCheck.rttMs ? `${latestCheck.rttMs}ms` : 'Failed') : '',
+      help: latestCheck ? `${latestCheck?.currentState.rttMs} ms` : '',
       icon: CircleCheckBig,
       color: 'purple',
       bg: 'purple',

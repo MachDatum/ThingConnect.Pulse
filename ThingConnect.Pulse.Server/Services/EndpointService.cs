@@ -81,11 +81,9 @@ public sealed class EndpointService : IEndpointService
                 },
                 CurrentState = new CurrentStateDto
                 {
-                    Type = c.FallbackAttempted && c.FallbackStatus != null 
-                        ? "icmp"
-                        : endpoint.Type.ToString().ToLower(),
+                    Type = c.FallbackAttempted && c.FallbackStatus != null ? "icmp" : endpoint.Type.ToString().ToLower(),
                     Target = endpoint.Host,
-                    Status = c.GetEffectiveStatus().ToString().ToLower(),
+                    Status = c.DetermineStatusType(new List<CheckResult>(), TimeSpan.FromSeconds(endpoint.IntervalSeconds * 2)).ToString().ToLower(),
                     RttMs = c.GetEffectiveRtt(),
                     Classification = (int)c.DetermineClassification(),
                 }
