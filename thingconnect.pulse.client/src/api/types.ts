@@ -113,7 +113,7 @@ export interface FallbackResult {
 export interface CurrentState {
   type: 'icmp' | 'tcp' | 'http';
   target: string;
-  status: 'up' | 'down' | 'flapping' | 'serivce';
+  status: 'up' | 'down' | 'flapping' | 'service';
   rttMs?: number | null;
   classification?: Classification | null;
 }

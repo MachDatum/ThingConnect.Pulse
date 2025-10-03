@@ -46,6 +46,8 @@ function getStatusColor(status: string) {
     case 'down':
       return 'red';
     case 'flapping':
+      return 'yellow';
+    case 'service':
       return 'orange';
     default:
       return 'gray';
@@ -169,7 +171,7 @@ export default function EndpointDetail() {
   const { endpoint, recent, outages } = endpointDetail;
 
   // Calculate uptime percentage from recent checks
-  const upChecks = recent.filter(check => check.status === 'up').length;
+  const upChecks = recent.filter(check => check..status === 'up').length;
   const uptimePercentage = recent.length > 0 ? Math.round((upChecks / recent.length) * 100) : 0;
 
   // Calculate average RTT

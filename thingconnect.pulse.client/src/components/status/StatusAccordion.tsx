@@ -3,11 +3,18 @@ import type { LiveStatusItem } from '@/api/types';
 import { StatusTable } from './StatusTable';
 
 type Props = {
-  groupedEndpoints: Record<'up' | 'down' | 'flapping', LiveStatusItem[]>;
+  groupedEndpoints: Record<'up' | 'down' | 'flapping' | 'service', LiveStatusItem[]>;
   isLoading: boolean;
 };
 
 export function StatusAccordion({ groupedEndpoints, isLoading }: Props) {
+  const statusColorMap: Record<'up' | 'down' | 'flapping' | 'service', string> = {
+    up: 'green',
+    down: 'red',
+    flapping: 'yellow',
+    service: 'orange',
+  } as const;
+
   return (
     <Accordion.Root multiple variant='plain'>
       {Object.entries(groupedEndpoints).map(([status, items]) => {
@@ -16,21 +23,15 @@ export function StatusAccordion({ groupedEndpoints, isLoading }: Props) {
           ? typedItems
           : Object.values(typedItems).flat();
 
-        const statusColorMap: Record<'up' | 'down' | 'flapping', string> = {
-          up: 'green',
-          down: 'red',
-          flapping: 'yellow',
-        } as const;
-
         return (
           <Accordion.Item key={status} value={status} my={2}>
             <Accordion.ItemTrigger
-              bg={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.100`}
+              bg={`${statusColorMap[status as keyof typeof statusColorMap]}.100`}
               _dark={{
-                bg: `${statusColorMap[status as 'up' | 'down' | 'flapping']}.900`,
-                borderColor: `${statusColorMap[status as 'up' | 'down' | 'flapping']}.800`,
+                bg: `${statusColorMap[status as keyof typeof statusColorMap]}.900`,
+                borderColor: `${statusColorMap[status as keyof typeof statusColorMap]}.800`,
               }}
-              borderColor={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.200`}
+              borderColor={`${statusColorMap[status as keyof typeof statusColorMap]}.200`}
               borderWidth={1}
             >
               <HStack w='full' justify='space-between'>
@@ -38,11 +39,11 @@ export function StatusAccordion({ groupedEndpoints, isLoading }: Props) {
                   <Accordion.ItemIndicator
                     fontSize={'md'}
                     fontWeight={'bolder'}
-                    color={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.600`}
+                    color={`${statusColorMap[status as keyof typeof statusColorMap]}.600`}
                   />
                   <Flex
                     as='span'
-                    bg={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.200`}
+                    bg={`${statusColorMap[status as keyof typeof statusColorMap]}.200`}
                     textTransform='uppercase'
                     borderRadius='30px'
                     px={4}
@@ -51,10 +52,10 @@ export function StatusAccordion({ groupedEndpoints, isLoading }: Props) {
                     alignItems='center'
                     justifyContent='center'
                     display='inline-flex'
-                    color={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.600`}
+                    color={`${statusColorMap[status as keyof typeof statusColorMap]}.600`}
                     _dark={{
-                      bg: `${statusColorMap[status as 'up' | 'down' | 'flapping']}.700`,
-                      color: `${statusColorMap[status as 'up' | 'down' | 'flapping']}.200`,
+                      bg: `${statusColorMap[status as keyof typeof statusColorMap]}.700`,
+                      color: `${statusColorMap[status as keyof typeof statusColorMap]}.200`,
                     }}
                   >
                     {status}
@@ -62,11 +63,11 @@ export function StatusAccordion({ groupedEndpoints, isLoading }: Props) {
                   <Text
                     fontSize='sm'
                     fontWeight='semibold'
-                    color={`${statusColorMap[status as 'up' | 'down' | 'flapping']}.600`}
+                    color={`${statusColorMap[status as keyof typeof statusColorMap]}.600`}
                   >
                     {itemsArray?.length
-                      ? itemsArray?.length > 1
-                        ? `${itemsArray?.length} Endpoints`
+                      ? itemsArray.length > 1
+                        ? `${itemsArray.length} Endpoints`
                         : '1 Endpoint'
                       : 'No Endpoints'}
                   </Text>

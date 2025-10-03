@@ -19,6 +19,8 @@ export function StatusCard({ item }: StatusCardProps) {
         return 'red';
       case 'flapping':
         return 'yellow';
+      case 'service':
+        return 'yellow';
       default:
         return 'gray';
     }
@@ -77,15 +79,15 @@ export function StatusCard({ item }: StatusCardProps) {
             </VStack>
 
             <Badge
-              colorPalette={getStatusColor(item.status)}
+              colorPalette={getStatusColor(item.currentState.status)}
               variant='subtle'
               textTransform='uppercase'
               fontSize='xs'
-              data-testid={`card-status-badge-${item.status}`}
+              data-testid={`card-status-badge-${item.currentState.status}`}
               minHeight='20px'
               px={2}
             >
-              {item.status}
+              {item.currentState.status}
             </Badge>
           </HStack>
 
@@ -105,10 +107,10 @@ export function StatusCard({ item }: StatusCardProps) {
             <Text
               fontFamily='mono'
               fontSize='xs'
-              color={item.rttMs ? 'inherit' : 'gray.400'}
+              color={item.currentState.rttMs ? 'inherit' : 'gray.400'}
               data-testid='card-endpoint-rtt'
             >
-              {formatRTT(item.rttMs)}
+              {formatRTT(item.currentState.rttMs)}
             </Text>
           </HStack>
 

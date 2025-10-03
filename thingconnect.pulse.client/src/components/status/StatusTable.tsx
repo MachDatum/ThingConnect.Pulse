@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import type { LiveStatusItem } from '@/api/types';
 import TrendBlocks from './TrendBlocks';
+import { Tooltip } from '../ui/tooltip';
 
 interface StatusTableProps {
   items: LiveStatusItem[] | null | undefined;
@@ -22,6 +23,8 @@ export function StatusTable({ items, isLoading }: StatusTableProps) {
       case 'down':
         return 'red';
       case 'flapping':
+        return 'orange';
+      case 'service':
         return 'yellow';
       default:
         return 'gray';
@@ -116,16 +119,35 @@ export function StatusTable({ items, isLoading }: StatusTableProps) {
                   onClick={() => handleRowClick(item.endpoint.id)}
                 >
                   <Table.Cell width='10%'>
-                    <Badge
-                      variant='subtle'
-                      px={2}
-                      py={1}
-                      borderRadius='md'
-                      fontSize='10px'
-                      colorPalette={getStatusColor(item.status)}
-                    >
-                      {item.status.toUpperCase()}
-                    </Badge>
+                    {item.currentState.status === 'service' ? (
+                      <Tooltip
+                        content={`Http or Tcp is DOWN, but the host is reachable (ICMP succeeded).`}
+                        showArrow
+                      >
+                        <Badge
+                          variant='subtle'
+                          px={2}
+                          py={1}
+                          borderRadius='md'
+                          fontSize='10px'
+                          colorPalette={getStatusColor(item.currentState.status)}
+                          cursor='help'
+                        >
+                          {item.currentState.status.toUpperCase()}
+                        </Badge>
+                      </Tooltip>
+                    ) : (
+                      <Badge
+                        variant='subtle'
+                        px={2}
+                        py={1}
+                        borderRadius='md'
+                        fontSize='10px'
+                        colorPalette={getStatusColor(item.currentState.status)}
+                      >
+                        {item.currentState.status.toUpperCase()}
+                      </Badge>
+                    )}
                   </Table.Cell>
                   <Table.Cell width='20%'>
                     <Text fontWeight='medium'>{item.endpoint.name}</Text>
@@ -145,10 +167,10 @@ export function StatusTable({ items, isLoading }: StatusTableProps) {
                     <Text
                       fontFamily='monospace'
                       fontSize='sm'
-                      color={item.rttMs ? 'inherit' : 'gray.500'}
-                      _dark={{ color: item.rttMs ? 'inherit' : 'gray.400' }}
+                      color={item.currentState.rttMs ? 'inherit' : 'gray.500'}
+                      _dark={{ color: item.currentState.rttMs ? 'inherit' : 'gray.400' }}
                     >
-                      {formatRTT(item.rttMs)}
+                      {formatRTT(item.currentState.rttMs)}
                     </Text>
                   </Table.Cell>
                   <Table.Cell width='15%'>

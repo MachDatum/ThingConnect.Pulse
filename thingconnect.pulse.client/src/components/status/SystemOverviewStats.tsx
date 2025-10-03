@@ -19,6 +19,7 @@ type SystemOverviewStatsProps = {
     up: number;
     down: number;
     flapping: number;
+    service: number;
   };
 };
 
@@ -68,10 +69,21 @@ export function SystemOverviewStats({ statusCounts }: SystemOverviewStatsProps) 
       darkColor: 'yellow.200',
       darkBg: 'yellow.800',
     },
+    {
+      icon: Activity,
+      title: 'SERVICE',
+      subtitle: 'TCP/HTTP down, ICMP reachable',
+      value: statusCounts.service,
+      textColor: 'purple.500',
+      color: 'purple.600',
+      bg: 'purple.100',
+      darkColor: 'purple.200',
+      darkBg: 'purple.800',
+    },
   ];
 
   return (
-    <Grid templateColumns={{ base: '1fr', md: 'repeat(2,1fr)', lg: 'repeat(4,1fr)' }} gap='6'>
+    <Grid templateColumns={{ base: '1fr', md: 'repeat(2,1fr)', lg: 'repeat(5,1fr)' }} gap='6'>
       {stats.map(stat => (
         <Box key={stat.title} p='4' borderRadius='xl' borderWidth={1} _dark={{ bg: 'gray.800' }}>
           <VStack align='flex-start'>

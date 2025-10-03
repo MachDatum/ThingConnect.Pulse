@@ -53,10 +53,10 @@ export default function Dashboard() {
       const statusCounts = data.items.reduce(
         (acc, item) => {
           acc.total++;
-          acc[item.status]++;
+          acc[item.currentState.status]++;
           return acc;
         },
-        { total: 0, up: 0, down: 0, flapping: 0 }
+        { total: 0, up: 0, down: 0, flapping: 0, service: 0 }
       );
 
       analytics.trackSystemMetrics({
@@ -99,17 +99,26 @@ export default function Dashboard() {
 
     if (isGroupByStatus && isGroupByGroup) {
       // Status → Group → Endpoints
-      const statusBuckets: Record<'up' | 'down' | 'flapping', Record<string, LiveStatusItem[]>> = {
+      const statusBuckets: Record<
+        'up' | 'down' | 'flapping' | 'service',
+        Record<string, LiveStatusItem[]>
+      > = {
         up: {},
         down: {},
         flapping: {},
+        service: {},
       };
 
       // Get unique groups from all endpoints
       const uniqueGroups = new Set(filteredItems.map(item => item.endpoint.group.name));
 
       // Prepare status buckets with all groups, even if empty
-      const defaultStatuses: Array<'up' | 'down' | 'flapping'> = ['up', 'down', 'flapping'];
+      const defaultStatuses: Array<'up' | 'down' | 'flapping' | 'service'> = [
+        'up',
+        'down',
+        'flapping',
+        'service',
+      ];
       defaultStatuses.forEach(status => {
         statusBuckets[status] = {};
         uniqueGroups.forEach(group => {
@@ -119,7 +128,7 @@ export default function Dashboard() {
 
       // Populate the status buckets
       filteredItems.forEach(item => {
-        const status = item.status;
+        const status = item.currentState.status;
         const group = item.endpoint.group.name;
 
         statusBuckets[status][group].push(item);
@@ -145,18 +154,24 @@ export default function Dashboard() {
       finalResult = groupBuckets;
     } else if (isGroupByStatus) {
       // Status → Endpoints
-      const statusBuckets: Record<'up' | 'down' | 'flapping', LiveStatusItem[]> = {
+      const statusBuckets: Record<'up' | 'down' | 'flapping' | 'service', LiveStatusItem[]> = {
         up: [],
         down: [],
         flapping: [],
+        service: [],
       };
 
       filteredItems.forEach(item => {
-        statusBuckets[item.status].push(item);
+        statusBuckets[item.currentState.status].push(item);
       });
 
       // Always include all statuses, even if empty
-      const defaultStatuses: Array<'up' | 'down' | 'flapping'> = ['up', 'down', 'flapping'];
+      const defaultStatuses: Array<'up' | 'down' | 'flapping' | 'service'> = [
+        'up',
+        'down',
+        'flapping',
+        'service',
+      ];
       defaultStatuses.forEach(status => {
         finalResult[status] = statusBuckets[status];
       });
@@ -183,15 +198,15 @@ export default function Dashboard() {
 
   // Count status totals
   const statusCounts = useMemo(() => {
-    if (!data?.items) return { total: 0, up: 0, down: 0, flapping: 0 };
+    if (!data?.items) return { total: 0, up: 0, down: 0, flapping: 0, service: 0 };
 
     const counts = data.items.reduce(
       (acc, item) => {
         acc.total++;
-        acc[item.status]++;
+        acc[item.currentState.status]++;
         return acc;
       },
-      { total: 0, up: 0, down: 0, flapping: 0 }
+      { total: 0, up: 0, down: 0, flapping: 0, service: 0 }
     );
 
     return counts;
