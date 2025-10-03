@@ -51,14 +51,14 @@ public sealed class HistoryService : IHistoryService
 
         var response = new HistoryResponseDto
         {
-            Endpoint = MapToEndpointDto(endpoint)
+            Endpoint = CheckResult.MapToEndpointDto(endpoint)
         };
 
         // Fetch data based on bucket type
         switch (bucket.ToLower())
         {
             case "raw":
-                response.Raw = await GetRawDataAsync(endpointId, from, to);
+                response.Raw = await GetRawDataAsync(endpoint, from, to);
                 break;
 
             case "15m":
@@ -73,32 +73,69 @@ public sealed class HistoryService : IHistoryService
                 throw new ArgumentException($"Invalid bucket type: {bucket}. Valid values: raw, 15m, daily");
         }
 
-        // Always include outages for the time range
+        // Always include outages
         response.Outages = await GetOutagesAsync(endpointId, from, to);
 
         return response;
     }
 
-    private async Task<List<RawCheckDto>> GetRawDataAsync(Guid endpointId, DateTimeOffset from, DateTimeOffset to)
+    private async Task<List<RawCheckDto>> GetRawDataAsync(Data.Endpoint endpoint, DateTimeOffset from, DateTimeOffset to)
     {
         long fromUnix = UnixTimestamp.ToUnixSeconds(from);
         long toUnix = UnixTimestamp.ToUnixSeconds(to);
 
-        // SQLite limitation: fetch all data and filter in memory
         var rawData = await _context.CheckResultsRaw
-            .Where(c => c.EndpointId == endpointId)
-            .Select(c => new { c.Ts, c.Status, c.RttMs, c.Error })
+            .Where(c => c.EndpointId == endpoint.Id && c.Ts >= fromUnix && c.Ts <= toUnix)
+            .OrderBy(c => c.Ts)
             .ToListAsync();
 
-        return rawData
-            .Where(c => c.Ts >= fromUnix && c.Ts <= toUnix)
-            .OrderBy(c => c.Ts)
+        // Convert DB rows -> CheckResult -> RawCheckDto
+        var checks = rawData
+            .Select(c => new CheckResult
+            {
+                EndpointId = c.EndpointId,
+                Timestamp = UnixTimestamp.FromUnixSeconds(c.Ts),
+                Status = c.Status,
+                RttMs = c.RttMs,
+                Error = c.Error,
+                FallbackAttempted = (bool)c.FallbackAttempted,
+                FallbackStatus = c.FallbackStatus,
+                FallbackRttMs = c.FallbackRttMs,
+                FallbackError = c.FallbackError,
+                Classification = c.Classification
+            })
+            .ToList();
+
+        return checks
             .Select(c => new RawCheckDto
             {
-                Ts = UnixTimestamp.FromUnixSeconds(c.Ts),
-                Status = c.Status == UpDown.up ? "up" : "down",
-                RttMs = c.RttMs,
-                Error = c.Error
+                Ts = c.Timestamp,
+                Classification = c.DetermineClassification(),
+                Primary = new ProbeResultDto
+                {
+                    Type = endpoint.Type.ToString().ToLower(),
+                    Target = endpoint.Host,
+                    Status = c.Status.ToString().ToLower(),
+                    RttMs = c.RttMs,
+                    Error = c.Error
+                },
+                Fallback = new FallbackResultDto
+                {
+                    Attempted = c.FallbackAttempted,
+                    Type = "icmp",
+                    Target = endpoint.Host,
+                    Status = c.FallbackStatus?.ToString().ToLower(),
+                    RttMs = c.FallbackRttMs,
+                    Error = c.FallbackError
+                },
+                CurrentState = new EffectiveStateDto
+                {
+                    EffectiveStatus = c.GetEffectiveStatus().ToString().ToLower(),
+                    EffectiveRtt = c.GetEffectiveRtt(),
+                    Classification = (int)c.DetermineClassification(),
+                    HostReachable = c.FallbackAttempted && c.FallbackStatus == UpDown.up,
+                    LastCheck = c.Timestamp
+                }
             })
             .ToList();
     }
@@ -174,30 +211,5 @@ public sealed class HistoryService : IHistoryService
                 LastError = o.LastError
             })
             .ToList();
-    }
-
-    private EndpointDto MapToEndpointDto(Data.Endpoint endpoint)
-    {
-        return new EndpointDto
-        {
-            Id = endpoint.Id,
-            Name = endpoint.Name,
-            Group = new GroupDto
-            {
-                Id = endpoint.Group.Id,
-                Name = endpoint.Group.Name,
-                ParentId = endpoint.Group.ParentId,
-                Color = endpoint.Group.Color
-            },
-            Type = endpoint.Type.ToString().ToLower(),
-            Host = endpoint.Host,
-            Port = endpoint.Port,
-            HttpPath = endpoint.HttpPath,
-            HttpMatch = endpoint.HttpMatch,
-            IntervalSeconds = endpoint.IntervalSeconds,
-            TimeoutMs = endpoint.TimeoutMs,
-            Retries = endpoint.Retries,
-            Enabled = endpoint.Enabled
-        };
     }
 }

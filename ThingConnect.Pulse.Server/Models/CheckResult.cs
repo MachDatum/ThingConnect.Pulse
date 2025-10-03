@@ -122,14 +122,17 @@ public sealed class CheckResult
         {
             return Data.Classification.None; // Healthy
         }
+
         if (FallbackAttempted)
         {
             if (FallbackStatus == UpDown.up)
             {
                 return Data.Classification.Service; // Service down, host up
             }
+
             return Data.Classification.Network; // Both down
         }
+
         return Data.Classification.Unknown; // No fallback info
     }
 
@@ -154,6 +157,7 @@ public sealed class CheckResult
             {
                 return StatusType.Service;
             }
+
             return StatusType.Up;
         }
 
@@ -163,7 +167,10 @@ public sealed class CheckResult
     // 🔹 Flapping detection (>= 4 samples, >3 changes in 5 min window)
     public static bool IsFlapping(List<CheckResult> recent)
     {
-        if (recent == null || recent.Count < 4) return false;
+        if (recent == null || recent.Count < 4)
+        {
+            return false;
+        }
 
         var effectiveStatuses = recent
             .OrderBy(c => c.Timestamp)
