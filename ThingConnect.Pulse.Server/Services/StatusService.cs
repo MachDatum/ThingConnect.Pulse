@@ -1,3 +1,4 @@
+using System.Net.NetworkInformation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using ThingConnect.Pulse.Server.Data;
@@ -70,7 +71,12 @@ public sealed class StatusService : IStatusService
             {
                 EndpointId = c.EndpointId,
                 Timestamp = UnixTimestamp.FromUnixSeconds(c.Ts),
-                Status = c.Status
+                Status = c.Status,
+                RttMs = c.RttMs,
+                FallbackAttempted = c.FallbackStatus.HasValue,
+                FallbackStatus = c.FallbackStatus,
+                FallbackRttMs = c.FallbackRttMs,
+                Classification = c.Classification,
             })
             .ToListAsync();
 
@@ -100,7 +106,7 @@ public sealed class StatusService : IStatusService
                 {
                     Type = recent.Any() && recent.Last().FallbackAttempted ? "icmp" : endpoint.Type.ToString().ToLower(),
                     Target = endpoint.Host,
-                    Status = recent.Any() ? recent.Last().GetEffectiveStatus().ToString().ToLower() : "down",
+                    Status = status.ToString().ToLower(),
                     RttMs = recent.Any() ? recent.Last().GetEffectiveRtt() : null,
                     Classification = recent.Any() ? (int)recent.Last().DetermineClassification() : 0
                 },
@@ -169,6 +175,7 @@ public sealed class StatusService : IStatusService
                 Status = c.Status,
                 FallbackAttempted = c.FallbackStatus.HasValue,
                 FallbackStatus = c.FallbackStatus,
+                Classification = c.Classification,
             })
             .ToListAsync();
 

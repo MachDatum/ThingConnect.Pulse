@@ -54,6 +54,11 @@ public sealed class EndpointService : IEndpointService
                 Classification = c.Classification
             }).ToList();
 
+        var recentForEndpoint = checks
+            .Where(x => x.Timestamp >= windowStart)
+            .OrderBy(x => x.Timestamp)
+            .ToList();
+
         // --- Map RawCheckDto including EffectiveState ---
         var recent = checks
             .Where(c => c.Timestamp >= windowStart)
@@ -83,7 +88,7 @@ public sealed class EndpointService : IEndpointService
                 {
                     Type = c.FallbackAttempted && c.FallbackStatus != null ? "icmp" : endpoint.Type.ToString().ToLower(),
                     Target = endpoint.Host,
-                    Status = c.DetermineStatusType(new List<CheckResult>(), TimeSpan.FromSeconds(endpoint.IntervalSeconds * 2)).ToString().ToLower(),
+                    Status = c.DetermineStatusType(recentForEndpoint, TimeSpan.FromSeconds(endpoint.IntervalSeconds * 2)).ToString().ToLower(),
                     RttMs = c.GetEffectiveRtt(),
                     Classification = (int)c.DetermineClassification(),
                 }
