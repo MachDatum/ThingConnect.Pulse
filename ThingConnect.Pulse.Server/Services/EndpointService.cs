@@ -62,7 +62,7 @@ public sealed class EndpointService : IEndpointService
             {
                 Ts = c.Timestamp,
                 Classification = c.DetermineClassification(),
-                Primary = new ProbeResultDto
+                Primary = new PrimaryResultDto
                 {
                     Type = endpoint.Type.ToString().ToLower(),
                     Target = endpoint.Host,
@@ -79,13 +79,15 @@ public sealed class EndpointService : IEndpointService
                     RttMs = c.FallbackRttMs,
                     Error = c.FallbackError
                 },
-                CurrentState = new EffectiveStateDto
+                CurrentState = new CurrentStateDto
                 {
-                    EffectiveStatus = c.GetEffectiveStatus().ToString().ToLower(),
-                    EffectiveRtt = c.GetEffectiveRtt(),
+                    Type = c.FallbackAttempted && c.FallbackStatus != null 
+                        ? "icmp"
+                        : endpoint.Type.ToString().ToLower(),
+                    Target = endpoint.Host,
+                    Status = c.GetEffectiveStatus().ToString().ToLower(),
+                    RttMs = c.GetEffectiveRtt(),
                     Classification = (int)c.DetermineClassification(),
-                    HostReachable = c.FallbackAttempted && c.FallbackStatus == UpDown.up,
-                    LastCheck = c.Timestamp
                 }
             })
             .ToList();

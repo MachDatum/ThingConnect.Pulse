@@ -12,12 +12,12 @@ public sealed class RawCheckDto
 {
     public DateTimeOffset Ts { get; set; }
     public Classification Classification { get; set; }
-    public ProbeResultDto Primary { get; set; } = default!;
+    public PrimaryResultDto Primary { get; set; } = default!;
     public FallbackResultDto Fallback { get; set; } = default!;
-    public EffectiveStateDto CurrentState { get; set; } = default!;
+    public CurrentStateDto CurrentState { get; set; } = default!;
 }
 
-public sealed class ProbeResultDto
+public sealed class PrimaryResultDto
 {
     public string Type { get; set; } = default!;
     public string Target { get; set; } = default!;

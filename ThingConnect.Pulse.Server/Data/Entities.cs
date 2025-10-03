@@ -6,7 +6,7 @@ public enum ProbeType { icmp, tcp, http }
 public enum UpDown { up, down }
 
 /// <summary>
-/// Outage classification for failed probe analysis.
+/// Status classification for failed probe analysis.
 /// </summary>
 public enum Classification
 {

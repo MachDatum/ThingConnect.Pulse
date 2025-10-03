@@ -3,10 +3,7 @@ namespace ThingConnect.Pulse.Server.Models;
 public sealed class LiveStatusItemDto
 {
     public EndpointDto Endpoint { get; set; } = default!;
-    // 🔹 LEGACY: Keep for backward compatibility (remove later)
-    public string Status { get; set; } = default!;
-    public double? RttMs { get; set; }
-    public EffectiveStateDto CurrentState { get; set; } = default!;
+    public CurrentStateDto CurrentState { get; set; } = default!;
     public DateTimeOffset LastChangeTs { get; set; }
     public List<SparklinePoint> Sparkline { get; set; } = new();
 }
@@ -54,11 +51,11 @@ public sealed class PagedLiveDto
     public List<LiveStatusItemDto> Items { get; set; } = new();
 }
 
-public sealed class EffectiveStateDto
+public sealed class CurrentStateDto
 {
-    public string EffectiveStatus { get; set; } = default!; // "up" or "down"
-    public double? EffectiveRtt { get; set; } // Priority-based RTT
+    public string Type { get; set; } = default!;
+    public string Target { get; set; } = default!;
+    public string Status { get; set; } = default!; // "up" or "down"
+    public double? RttMs { get; set; } // Priority-based RTT
     public int Classification { get; set; } // Classification enum value
-    public bool HostReachable { get; set; } // Quick connectivity check
-    public DateTimeOffset LastCheck { get; set; }
 }

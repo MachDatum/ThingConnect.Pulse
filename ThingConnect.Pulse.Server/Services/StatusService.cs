@@ -85,9 +85,9 @@ public sealed class StatusService : IStatusService
                 ? recent.Last().DetermineStatusType(recent, TimeSpan.FromSeconds(endpoint.IntervalSeconds * 2))
                 : StatusType.Down;
 
-                List<SparklinePoint> sparkline = sparklineData.ContainsKey(endpoint.Id)
-                ? sparklineData[endpoint.Id]
-                : new List<SparklinePoint>();
+            List<SparklinePoint> sparkline = sparklineData.ContainsKey(endpoint.Id)
+            ? sparklineData[endpoint.Id]
+            : new List<SparklinePoint>();
 
             _logger.LogInformation(
                 "Endpoint {EndpointName}: Status = {Status}, LastRttMs = {RttMs}, LastChangeTs = {LastChangeTs}",
@@ -96,9 +96,17 @@ public sealed class StatusService : IStatusService
             items.Add(new LiveStatusItemDto
             {
                 Endpoint = CheckResult.MapToEndpointDto(endpoint),
-                Status = status.ToString().ToLower(),
-                RttMs = endpoint.LastRttMs,
-                LastChangeTs = endpoint.LastChangeTs.HasValue ? UnixTimestamp.FromUnixSeconds(endpoint.LastChangeTs.Value) : DateTimeOffset.Now,
+                CurrentState = new CurrentStateDto
+                {
+                    Type = recent.Any() && recent.Last().FallbackAttempted ? "icmp" : endpoint.Type.ToString().ToLower(),
+                    Target = endpoint.Host,
+                    Status = recent.Any() ? recent.Last().GetEffectiveStatus().ToString().ToLower() : "down",
+                    RttMs = recent.Any() ? recent.Last().GetEffectiveRtt() : null,
+                    Classification = recent.Any() ? (int)recent.Last().DetermineClassification() : 0
+                },
+                LastChangeTs = endpoint.LastChangeTs.HasValue
+          ? UnixTimestamp.FromUnixSeconds(endpoint.LastChangeTs.Value)
+          : DateTimeOffset.Now,
                 Sparkline = sparkline
             });
         }

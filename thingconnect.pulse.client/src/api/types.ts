@@ -30,8 +30,7 @@ export interface SparklinePoint {
 
 export interface LiveStatusItem {
   endpoint: Endpoint;
-  status: 'up' | 'down' | 'flapping';
-  rttMs?: number | null;
+  currentState: CurrentState;
   lastChangeTs: string;
   sparkline: SparklinePoint[];
 }
@@ -93,16 +92,38 @@ export type Classification =
   | 6 // DnsResolution
   | 7 // Congestion
   | 8; // Maintenance
-export interface RawCheck {
-  ts: string;
+
+export interface PrimaryResult {
+  type: string;        // "icmp" | "tcp" | "http"
+  target: string;      // hostname or IP
   status: 'up' | 'down';
   rttMs?: number | null;
   error?: string | null;
-  fallbackAttempted?: boolean;
-  fallbackSuccess?: boolean;
-  fallbackRttMs?: number | null;
+}
+
+export interface FallbackResult {
+  attempted: boolean;
+  type?: 'icmp'| null;
+  target?: string | null;
+  status?: 'up' | 'down' | null;
+  rttMs?: number | null;
+  error?: string | null;
+}
+
+export interface CurrentState {
+  type: 'icmp' | 'tcp' | 'http';
+  target: string;
+  status: 'up' | 'down' | 'flapping' | 'serivce';
+  rttMs?: number | null;
   classification?: Classification | null;
-  lastSeenViaIcmp?: string | null; // ISO timestamp when last reachable via ICMP
+}
+
+export interface RawCheck {
+  ts: string;                 
+  classification: Classification;
+  primary: PrimaryResult;
+  fallback: FallbackResult;
+  currentState: CurrentState;
 }
 
 export interface Outage {
