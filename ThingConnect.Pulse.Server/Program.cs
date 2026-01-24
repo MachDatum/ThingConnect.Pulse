@@ -86,7 +86,7 @@ public class Program
                 options.Cookie.HttpOnly = true;
                 options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
                     ? CookieSecurePolicy.SameAsRequest
-                    : CookieSecurePolicy.Always;
+                    : CookieSecurePolicy.None;
                 options.Cookie.SameSite = SameSiteMode.Lax;
                 options.Cookie.Name = "ThingConnect.Pulse.Auth";
                 options.Events.OnRedirectToLogin = context =>

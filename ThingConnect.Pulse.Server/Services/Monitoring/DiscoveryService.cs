@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
@@ -47,7 +48,7 @@ public sealed class DiscoveryService : IDiscoveryService
         }
 
         byte[] addressBytes = ipAddress.GetAddressBytes();
-        uint addressInt = BitConverter.ToUInt32(addressBytes.Reverse().ToArray(), 0);
+        uint addressInt = BitConverter.ToUInt32(addressBytes, 0);
 
         int hostBits = 32 - prefixLength;
         uint hostCount = (uint)(1 << hostBits);
@@ -59,7 +60,8 @@ public sealed class DiscoveryService : IDiscoveryService
 
         for (uint address = startAddress; address < endAddress && address > networkAddress; address++)
         {
-            byte[] bytes = BitConverter.GetBytes(address).Reverse().ToArray();
+            byte[] bytes = BitConverter.GetBytes(address);
+            System.Array.Reverse(bytes);
             var ip = new IPAddress(bytes);
             yield return ip.ToString();
         }
