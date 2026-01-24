@@ -38,7 +38,7 @@ const target = env.ASPNETCORE_HTTPS_PORT
   ? `https://localhost:${env.ASPNETCORE_HTTPS_PORT}`
   : env.ASPNETCORE_URLS
     ? env.ASPNETCORE_URLS.split(';')[0]
-    : 'http://localhost:8080';
+    : 'http://localhost:8090';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -48,11 +48,27 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  // build: {
+  //   target: 'ES2020',
+  //   minify: 'esbuild',
+  //   sourcemap: true,
+  //   cssCodeSplit: true,
+  //   rollupOptions: {
+  //     output: {
+  //       // Consistent naming for production builds
+  //       entryFileNames: 'assets/[name]-[hash].js',
+  //       chunkFileNames: 'assets/[name]-[hash].js',
+  //       assetFileNames: 'assets/[name]-[hash][extname]',
+  //     },
+  //   },
+  // },
   server: {
+    host: '0.0.0.0',
     proxy: {
       '^/api': {
         target,
         secure: false,
+        changeOrigin: true,
       },
     },
     port: parseInt(env.DEV_SERVER_PORT || '55605'),
