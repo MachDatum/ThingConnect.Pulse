@@ -16,6 +16,7 @@ public sealed class MonitoringBackgroundService : BackgroundService
     private readonly ConcurrentDictionary<Guid, Timer> _endpointTimers = new();
     private readonly ConcurrentDictionary<Guid, bool> _probeExecuting = new();
     private readonly ConcurrentDictionary<Guid, Data.Endpoint> _endpointCache = new();
+    private readonly ConcurrentDictionary<Guid, int> _endpointIntervals = new();
     private readonly int _maxConcurrentProbes;
 
     public MonitoringBackgroundService(IServiceProvider serviceProvider,
