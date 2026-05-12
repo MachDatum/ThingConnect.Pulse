@@ -33,14 +33,13 @@ public sealed class RollupService : IRollupService
 
             _logger.LogDebug("Processing 15m rollups from {FromTs} to {ToTs}", UnixTimestamp.FromUnixSeconds(fromTs), UnixTimestamp.FromUnixSeconds(toTs));
 
-            // Get all raw checks in the time window
-            // SQLite has issues with DateTimeOffset comparisons in LINQ, so fetch all and filter in memory
-            List<CheckResultRaw> allChecks = await _context.CheckResultsRaw.ToListAsync(cancellationToken);
-            var rawChecks = allChecks
+            // Get raw checks in the time window — Ts is a long (unix seconds), safe to filter in SQL
+            List<CheckResultRaw> rawChecks = await _context.CheckResultsRaw
                 .Where(c => c.Ts > fromTs && c.Ts <= toTs)
+                .AsNoTracking()
                 .OrderBy(c => c.EndpointId)
                 .ThenBy(c => c.Ts)
-                .ToList();
+                .ToListAsync(cancellationToken);
 
             if (!rawChecks.Any())
             {
@@ -95,17 +94,16 @@ public sealed class RollupService : IRollupService
 
             _logger.LogDebug("Processing daily rollups from {FromDate} to {ToDate}", fromDate, toDate);
 
-            // Get all raw checks in the date range
+            // Get raw checks in the date range — Ts is a long (unix seconds), safe to filter in SQL
             long fromTs = UnixTimestamp.ToUnixDate(fromDate);
             long toTs = UnixTimestamp.ToUnixDate(toDate);
 
-            // SQLite has issues with DateTimeOffset comparisons in LINQ, so fetch all and filter in memory
-            List<CheckResultRaw> allChecks = await _context.CheckResultsRaw.ToListAsync(cancellationToken);
-            var rawChecks = allChecks
+            List<CheckResultRaw> rawChecks = await _context.CheckResultsRaw
                 .Where(c => c.Ts >= fromTs && c.Ts < toTs)
+                .AsNoTracking()
                 .OrderBy(c => c.EndpointId)
                 .ThenBy(c => c.Ts)
-                .ToList();
+                .ToListAsync(cancellationToken);
 
             if (!rawChecks.Any())
             {

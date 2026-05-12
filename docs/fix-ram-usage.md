@@ -85,7 +85,7 @@ Apply to all four methods — same pattern, just add the timestamp condition int
 | 1 | Thundering herd (timer restart) | High | ✅ Fixed |
 | 2 | MaxConcurrentProbes = 200 | Medium | ✅ Fixed |
 | 3 | EF Core debug logging | Medium | ✅ Fixed |
-| 4 | RollupService full table scan | **Critical** | ❌ Pending |
-| 5 | HistoryService full scan per request | High | ❌ Pending |
+| 4 | RollupService full table scan | **Critical** | ✅ Fixed |
+| 5 | HistoryService full scan per request | High | ✅ Fixed |
 
-Issues 4 and 5 are the remaining work. Issue 4 in particular is likely the dominant long-term cause — a periodic full table load every 5 minutes will grow worse as data accumulates.
+All five issues resolved.
