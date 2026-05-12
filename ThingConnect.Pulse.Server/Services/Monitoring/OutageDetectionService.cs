@@ -14,12 +14,14 @@ public sealed class OutageDetectionService : IOutageDetectionService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<OutageDetectionService> _logger;
+    private readonly ICheckResultWriteQueue _writeQueue;
     private readonly ConcurrentDictionary<Guid, MonitorState> _states = new();
 
-    public OutageDetectionService(IServiceProvider serviceProvider, ILogger<OutageDetectionService> logger)
+    public OutageDetectionService(IServiceProvider serviceProvider, ILogger<OutageDetectionService> logger, ICheckResultWriteQueue writeQueue)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
+        _writeQueue = writeQueue;
     }
 
     public async Task<bool> ProcessCheckResultAsync(CheckResult result, CancellationToken cancellationToken = default)
@@ -69,8 +71,8 @@ public sealed class OutageDetectionService : IOutageDetectionService
                     result.EndpointId, state.SuccessStreak);
             }
 
-            // Save the raw check result to database (independent of transitions)
-            await SaveCheckResultAsync(result, cancellationToken);
+            // Enqueue raw check result — written by the background write queue (non-blocking)
+            SaveCheckResult(result);
 
             return stateChanged;
         }
@@ -515,11 +517,8 @@ public sealed class OutageDetectionService : IOutageDetectionService
         return (endpointStatus, openOutageId, false);
     }
 
-    private async Task SaveCheckResultAsync(CheckResult result, CancellationToken cancellationToken)
+    private void SaveCheckResult(CheckResult result)
     {
-        using IServiceScope scope = _serviceProvider.CreateScope();
-        PulseDbContext context = scope.ServiceProvider.GetRequiredService<PulseDbContext>();
-
         CheckResultRaw rawResult = new CheckResultRaw
         {
             EndpointId = result.EndpointId,
@@ -529,21 +528,10 @@ public sealed class OutageDetectionService : IOutageDetectionService
             Error = result.Error
         };
 
-        context.CheckResultsRaw.Add(rawResult);
+        Guid? endpointIdForRtt = result.Status == UpDown.up && result.RttMs.HasValue
+            ? result.EndpointId
+            : null;
 
-        // Update LastRttMs for successful probes
-        if (result.Status == UpDown.up && result.RttMs.HasValue)
-        {
-            Data.Endpoint? endpoint = await context.Endpoints.FindAsync([result.EndpointId], cancellationToken);
-            if (endpoint != null)
-            {
-                endpoint.LastRttMs = result.RttMs.Value;
-                _logger.LogInformation(
-                    "Updated LastRttMs for endpoint {EndpointId} to {RttMs}ms",
-                    result.EndpointId, result.RttMs.Value);
-            }
-        }
-
-        await context.SaveChangesAsync(cancellationToken);
+        _writeQueue.Enqueue(new WriteQueueItem(rawResult, endpointIdForRtt, result.RttMs));
     }
 }

@@ -50,46 +50,35 @@ public sealed class StatusService : IStatusService
                 e.Host.ToLower().Contains(searchLower));
         }
 
-        // Get total count for pagination
-        int totalCount = await query.CountAsync();
-
-        // Apply pagination
         List<Data.Endpoint> endpoints = await query
-        .OrderBy(e => e.GroupId)
-        .ThenBy(e => e.Name)
-        .ToListAsync();
+            .OrderBy(e => e.GroupId)
+            .ThenBy(e => e.Name)
+            .ToListAsync();
 
-        // Get live status for each endpoint
         var items = new List<LiveStatusItemDto>();
         var endpointIds = endpoints.Select(e => e.Id).ToList();
 
-        // Get latest checks for all endpoints - optimized query using window functions in SQLite
-        var latestChecks = await _context.CheckResultsRaw
-            .Where(c => endpointIds.Contains(c.EndpointId))
-            .AsNoTracking()
-            .GroupBy(c => c.EndpointId)
-            .Select(g => new
-            {
-                EndpointId = g.Key,
-                LatestCheck = g.OrderByDescending(c => c.Ts).FirstOrDefault()
-            })
-            .ToListAsync();
-
-        var latestCheckDict = latestChecks.ToDictionary(x => x.EndpointId, x => x.LatestCheck);
-
-        // Get sparkline data (last 20 checks per endpoint for mini chart)
+        // Sparkline query (2h window) — last point also serves as latest check timestamp
         Dictionary<Guid, List<SparklinePoint>> sparklineData = await GetSparklineDataAsync(endpointIds);
+
+        // Single 5min query for flap detection
+        HashSet<Guid> flappingIds = await GetFlappingEndpointIdsAsync(endpointIds);
 
         foreach (Data.Endpoint? endpoint in endpoints)
         {
-            StatusType status = DetermineStatus(endpoint, latestCheckDict);
-            List<SparklinePoint> sparkline = sparklineData.ContainsKey(endpoint.Id)
-                ? sparklineData[endpoint.Id]
-                : new List<SparklinePoint>();
+            List<SparklinePoint> sparkline = sparklineData.GetValueOrDefault(endpoint.Id, new List<SparklinePoint>());
 
-            _logger.LogInformation(
-                "Endpoint {EndpointName}: Status = {Status}, LastRttMs = {RttMs}, LastChangeTs = {LastChangeTs}",
-                endpoint.Name, status, endpoint.LastRttMs, endpoint.LastChangeTs);
+            // Most recent sparkline point gives us the last check time — no extra check_result_raw query needed
+            long? latestCheckTs = sparkline.Count > 0
+                ? UnixTimestamp.ToUnixSeconds(sparkline.Last().Ts)
+                : null;
+
+            // endpoint.LastStatus/LastRttMs/LastChangeTs are maintained by OutageDetectionService
+            StatusType status = DetermineStatus(endpoint, latestCheckTs, flappingIds);
+
+            _logger.LogDebug(
+                "Endpoint {EndpointName}: Status={Status}, RttMs={RttMs}",
+                endpoint.Name, status, endpoint.LastRttMs);
 
             items.Add(new LiveStatusItemDto
             {
@@ -180,61 +169,54 @@ public sealed class StatusService : IStatusService
         return sparklineData;
     }
 
-    private StatusType DetermineStatus(Data.Endpoint endpoint, Dictionary<Guid, CheckResultRaw?> latestChecks)
+    private StatusType DetermineStatus(Data.Endpoint endpoint, long? latestCheckTs, HashSet<Guid> flappingIds)
     {
-        // Check if we have recent check data
-        if (!latestChecks.TryGetValue(endpoint.Id, out CheckResultRaw? latestCheck) || latestCheck == null)
+        if (latestCheckTs == null)
         {
-            return StatusType.Down; // No data means down
+            return StatusType.Down;
         }
 
-        // Check if the latest check is recent enough (within 2x interval)
-        var expectedInterval = TimeSpan.FromSeconds(endpoint.IntervalSeconds * 2);
-        if (UnixTimestamp.Now() - latestCheck.Ts > (long)expectedInterval.TotalSeconds)
+        if (UnixTimestamp.Now() - latestCheckTs.Value > endpoint.IntervalSeconds * 2)
         {
-            return StatusType.Down; // Stale data means down
+            return StatusType.Down;
         }
 
-        // Check for flapping (multiple state changes in short period)
-        // This is simplified - in production you'd want more sophisticated flap detection
-        if (IsFlapping(endpoint.Id).Result)
+        if (flappingIds.Contains(endpoint.Id))
         {
             return StatusType.Flapping;
         }
 
-        return latestCheck.Status == UpDown.up ? StatusType.Up : StatusType.Down;
+        return endpoint.LastStatus == UpDown.up ? StatusType.Up : StatusType.Down;
     }
 
-    private async Task<bool> IsFlapping(Guid endpointId)
+    // Single query for all endpoints instead of one query per endpoint with .Result (which causes thread pool starvation)
+    private async Task<HashSet<Guid>> GetFlappingEndpointIdsAsync(List<Guid> endpointIds)
     {
-        // Simple flap detection: check if there were > 3 state changes in last 5 minutes
         long cutoffTime = UnixTimestamp.Subtract(UnixTimestamp.Now(), TimeSpan.FromMinutes(5));
-        var checks = await _context.CheckResultsRaw
-            .Where(c => c.EndpointId == endpointId && c.Ts >= cutoffTime)
+
+        var recentChecks = await _context.CheckResultsRaw
+            .Where(c => endpointIds.Contains(c.EndpointId) && c.Ts >= cutoffTime)
             .AsNoTracking()
-            .Select(c => new { c.Ts, c.Status })
+            .Select(c => new { c.EndpointId, c.Ts, c.Status })
             .ToListAsync();
 
-        var recentChecks = checks
-            .OrderBy(c => c.Ts)
-            .Select(c => c.Status)
-            .ToList();
+        var flapping = new HashSet<Guid>();
 
-        if (recentChecks.Count < 4)
+        foreach (var group in recentChecks.GroupBy(c => c.EndpointId))
         {
-            return false;
-        }
+            var statuses = group.OrderBy(c => c.Ts).Select(c => c.Status).ToList();
+            if (statuses.Count < 4) continue;
 
-        int stateChanges = 0;
-        for (int i = 1; i < recentChecks.Count; i++)
-        {
-            if (recentChecks[i] != recentChecks[i - 1])
+            int changes = 0;
+            for (int i = 1; i < statuses.Count; i++)
             {
-                stateChanges++;
+                if (statuses[i] != statuses[i - 1]) changes++;
             }
+
+            if (changes > 3) flapping.Add(group.Key);
         }
 
-        return stateChanges > 3;
+        return flapping;
     }
 
     private EndpointDto MapToEndpointDto(Data.Endpoint endpoint)
