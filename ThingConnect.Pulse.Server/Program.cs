@@ -168,6 +168,7 @@ public class Program
 
             // Add prune services
             builder.Services.AddScoped<IPruneService, PruneService>();
+            builder.Services.AddHostedService<PruneBackgroundService>();
 
             // Add log cleanup service
             builder.Services.AddHostedService<LogCleanupBackgroundService>();
