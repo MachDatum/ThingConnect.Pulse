@@ -15,7 +15,7 @@ public sealed class MonitoringBackgroundService : BackgroundService
     private readonly SemaphoreSlim _concurrencySemaphore;
     private readonly ConcurrentDictionary<Guid, Timer> _endpointTimers = new();
     private readonly ConcurrentDictionary<Guid, bool> _probeExecuting = new();
-    private readonly ConcurrentDictionary<Guid, int> _endpointIntervals = new();
+    private readonly ConcurrentDictionary<Guid, Data.Endpoint> _endpointCache = new();
     private readonly int _maxConcurrentProbes;
 
     public MonitoringBackgroundService(IServiceProvider serviceProvider,
@@ -136,6 +136,12 @@ public sealed class MonitoringBackgroundService : BackgroundService
             .Where(e => e.Enabled)
             .ToListAsync(cancellationToken);
 
+        // Refresh in-memory cache so probes don't need to re-read endpoint data from DB
+        foreach (Data.Endpoint endpoint in endpoints)
+        {
+            _endpointCache[endpoint.Id] = endpoint;
+        }
+
         var currentEndpointIds = endpoints.Select(e => e.Id).ToHashSet();
         var existingEndpointIds = _endpointTimers.Keys.ToHashSet();
 
@@ -147,7 +153,7 @@ public sealed class MonitoringBackgroundService : BackgroundService
             {
                 await StopTimerGracefullyAsync(timer, endpointId);
                 _probeExecuting.TryRemove(endpointId, out _);
-                _endpointIntervals.TryRemove(endpointId, out _);
+                _endpointCache.TryRemove(endpointId, out _);
                 _logger.LogInformation("Stopped monitoring endpoint: {EndpointId}", endpointId);
             }
         }
@@ -211,17 +217,15 @@ public sealed class MonitoringBackgroundService : BackgroundService
 
         try
         {
+            // Use cached endpoint data — RefreshEndpointsAsync keeps this up to date every 15s
+            if (!_endpointCache.TryGetValue(endpointId, out Data.Endpoint? endpoint) || !endpoint.Enabled)
+            {
+                return;
+            }
+
             using IServiceScope scope = _serviceProvider.CreateScope();
-            PulseDbContext context = scope.ServiceProvider.GetRequiredService<PulseDbContext>();
             IProbeService probeService = scope.ServiceProvider.GetRequiredService<IProbeService>();
             IOutageDetectionService outageService = scope.ServiceProvider.GetRequiredService<IOutageDetectionService>();
-
-            // Get endpoint details
-            Data.Endpoint? endpoint = await context.Endpoints.FindAsync(endpointId);
-            if (endpoint == null || !endpoint.Enabled)
-            {
-                return; // Endpoint was deleted or disabled
-            }
 
             // Perform the probe
             Models.CheckResult result = await probeService.ProbeAsync(endpoint);

@@ -80,9 +80,12 @@ public sealed class StatusService : IStatusService
         // Get sparkline data (last 20 checks per endpoint for mini chart)
         Dictionary<Guid, List<SparklinePoint>> sparklineData = await GetSparklineDataAsync(endpointIds);
 
+        // Compute flap status for all endpoints in a single query (avoids N async-over-sync calls)
+        HashSet<Guid> flappingIds = await GetFlappingEndpointIdsAsync(endpointIds);
+
         foreach (Data.Endpoint? endpoint in endpoints)
         {
-            StatusType status = DetermineStatus(endpoint, latestCheckDict);
+            StatusType status = DetermineStatus(endpoint, latestCheckDict, flappingIds);
             List<SparklinePoint> sparkline = sparklineData.ContainsKey(endpoint.Id)
                 ? sparklineData[endpoint.Id]
                 : new List<SparklinePoint>();
@@ -180,24 +183,20 @@ public sealed class StatusService : IStatusService
         return sparklineData;
     }
 
-    private StatusType DetermineStatus(Data.Endpoint endpoint, Dictionary<Guid, CheckResultRaw?> latestChecks)
+    private StatusType DetermineStatus(Data.Endpoint endpoint, Dictionary<Guid, CheckResultRaw?> latestChecks, HashSet<Guid> flappingIds)
     {
-        // Check if we have recent check data
         if (!latestChecks.TryGetValue(endpoint.Id, out CheckResultRaw? latestCheck) || latestCheck == null)
         {
-            return StatusType.Down; // No data means down
+            return StatusType.Down;
         }
 
-        // Check if the latest check is recent enough (within 2x interval)
         var expectedInterval = TimeSpan.FromSeconds(endpoint.IntervalSeconds * 2);
         if (UnixTimestamp.Now() - latestCheck.Ts > (long)expectedInterval.TotalSeconds)
         {
-            return StatusType.Down; // Stale data means down
+            return StatusType.Down;
         }
 
-        // Check for flapping (multiple state changes in short period)
-        // This is simplified - in production you'd want more sophisticated flap detection
-        if (IsFlapping(endpoint.Id).Result)
+        if (flappingIds.Contains(endpoint.Id))
         {
             return StatusType.Flapping;
         }
@@ -205,36 +204,34 @@ public sealed class StatusService : IStatusService
         return latestCheck.Status == UpDown.up ? StatusType.Up : StatusType.Down;
     }
 
-    private async Task<bool> IsFlapping(Guid endpointId)
+    // Single query for all endpoints instead of one query per endpoint with .Result (which causes thread pool starvation)
+    private async Task<HashSet<Guid>> GetFlappingEndpointIdsAsync(List<Guid> endpointIds)
     {
-        // Simple flap detection: check if there were > 3 state changes in last 5 minutes
         long cutoffTime = UnixTimestamp.Subtract(UnixTimestamp.Now(), TimeSpan.FromMinutes(5));
-        var checks = await _context.CheckResultsRaw
-            .Where(c => c.EndpointId == endpointId && c.Ts >= cutoffTime)
+
+        var recentChecks = await _context.CheckResultsRaw
+            .Where(c => endpointIds.Contains(c.EndpointId) && c.Ts >= cutoffTime)
             .AsNoTracking()
-            .Select(c => new { c.Ts, c.Status })
+            .Select(c => new { c.EndpointId, c.Ts, c.Status })
             .ToListAsync();
 
-        var recentChecks = checks
-            .OrderBy(c => c.Ts)
-            .Select(c => c.Status)
-            .ToList();
+        var flapping = new HashSet<Guid>();
 
-        if (recentChecks.Count < 4)
+        foreach (var group in recentChecks.GroupBy(c => c.EndpointId))
         {
-            return false;
-        }
+            var statuses = group.OrderBy(c => c.Ts).Select(c => c.Status).ToList();
+            if (statuses.Count < 4) continue;
 
-        int stateChanges = 0;
-        for (int i = 1; i < recentChecks.Count; i++)
-        {
-            if (recentChecks[i] != recentChecks[i - 1])
+            int changes = 0;
+            for (int i = 1; i < statuses.Count; i++)
             {
-                stateChanges++;
+                if (statuses[i] != statuses[i - 1]) changes++;
             }
+
+            if (changes > 3) flapping.Add(group.Key);
         }
 
-        return stateChanges > 3;
+        return flapping;
     }
 
     private EndpointDto MapToEndpointDto(Data.Endpoint endpoint)

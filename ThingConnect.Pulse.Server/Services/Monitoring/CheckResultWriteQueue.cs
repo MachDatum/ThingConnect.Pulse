@@ -1,4 +1,5 @@
 using System.Threading.Channels;
+using Microsoft.EntityFrameworkCore;
 using ThingConnect.Pulse.Server.Data;
 
 namespace ThingConnect.Pulse.Server.Services.Monitoring;
@@ -99,9 +100,11 @@ public sealed class CheckResultWriteQueue : BackgroundService, ICheckResultWrite
         using IServiceScope scope = _serviceProvider.CreateScope();
         PulseDbContext context = scope.ServiceProvider.GetRequiredService<PulseDbContext>();
 
+        // Bulk insert all check results in one round-trip
         context.CheckResultsRaw.AddRange(batch.Select(i => i.RawResult));
+        await context.SaveChangesAsync(ct);
 
-        // Update LastRttMs — one FindAsync per distinct endpoint, keep most recent value
+        // Update LastRttMs with direct UPDATE statements — no entity load needed
         var rttUpdates = batch
             .Where(i => i.EndpointIdForRttUpdate.HasValue && i.RttMs.HasValue)
             .GroupBy(i => i.EndpointIdForRttUpdate!.Value)
@@ -109,14 +112,10 @@ public sealed class CheckResultWriteQueue : BackgroundService, ICheckResultWrite
 
         foreach ((Guid endpointId, double rttMs) in rttUpdates)
         {
-            Data.Endpoint? endpoint = await context.Endpoints.FindAsync([endpointId], ct);
-            if (endpoint != null)
-            {
-                endpoint.LastRttMs = rttMs;
-            }
+            await context.Endpoints
+                .Where(e => e.Id == endpointId)
+                .ExecuteUpdateAsync(s => s.SetProperty(e => e.LastRttMs, rttMs), ct);
         }
-
-        await context.SaveChangesAsync(ct);
 
         _logger.LogDebug("Flushed batch of {Count} check results", batch.Count);
     }
