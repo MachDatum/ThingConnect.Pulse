@@ -48,7 +48,8 @@ public class Program
 
             // Add services to the container.
             builder.Services.AddDbContext<PulseDbContext>(options =>
-                options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"))
+                       .AddInterceptors(new SqliteWalInterceptor()));
 
             // Configure Identity and Authentication
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -86,7 +87,7 @@ public class Program
                 options.Cookie.HttpOnly = true;
                 options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
                     ? CookieSecurePolicy.SameAsRequest
-                    : CookieSecurePolicy.Always;
+                    : CookieSecurePolicy.None;
                 options.Cookie.SameSite = SameSiteMode.Lax;
                 options.Cookie.Name = "ThingConnect.Pulse.Auth";
                 options.Events.OnRedirectToLogin = context =>
@@ -150,6 +151,9 @@ public class Program
             builder.Services.AddSingleton<ISettingsService, SettingsService>();
 
             // Add monitoring services
+            builder.Services.AddSingleton<CheckResultWriteQueue>();
+            builder.Services.AddSingleton<ICheckResultWriteQueue>(p => p.GetRequiredService<CheckResultWriteQueue>());
+            builder.Services.AddHostedService<CheckResultWriteQueue>(p => p.GetRequiredService<CheckResultWriteQueue>());
             builder.Services.AddScoped<IProbeService, ProbeService>();
             builder.Services.AddSingleton<IOutageDetectionService, OutageDetectionService>();
             builder.Services.AddSingleton<IDiscoveryService, DiscoveryService>();
@@ -164,6 +168,7 @@ public class Program
 
             // Add prune services
             builder.Services.AddScoped<IPruneService, PruneService>();
+            builder.Services.AddHostedService<PruneBackgroundService>();
 
             // Add log cleanup service
             builder.Services.AddHostedService<LogCleanupBackgroundService>();

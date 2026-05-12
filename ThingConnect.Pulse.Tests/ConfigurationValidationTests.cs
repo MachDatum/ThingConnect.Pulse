@@ -151,7 +151,8 @@ public class ConfigurationValidationTests
             }
 
             byte[] addressBytes = ipAddress.GetAddressBytes();
-            uint addressInt = BitConverter.ToUInt32(addressBytes.Reverse().ToArray(), 0);
+            Array.Reverse(addressBytes);
+            uint addressInt = BitConverter.ToUInt32(addressBytes, 0);
 
             int hostBits = 32 - prefixLength;
             uint hostCount = (uint)(1 << hostBits);
@@ -163,7 +164,8 @@ public class ConfigurationValidationTests
 
             for (uint address = startAddress; address < endAddress && address > networkAddress; address++)
             {
-                byte[] bytes = BitConverter.GetBytes(address).Reverse().ToArray();
+                byte[] bytes = BitConverter.GetBytes(address);
+                Array.Reverse(bytes);
                 var ip = new System.Net.IPAddress(bytes);
                 result.Add(ip.ToString());
             }
