@@ -48,7 +48,8 @@ public class Program
 
             // Add services to the container.
             builder.Services.AddDbContext<PulseDbContext>(options =>
-                options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"))
+                       .AddInterceptors(new SqliteWalInterceptor()));
 
             // Configure Identity and Authentication
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
