@@ -151,6 +151,9 @@ public class Program
             builder.Services.AddSingleton<ISettingsService, SettingsService>();
 
             // Add monitoring services
+            builder.Services.AddSingleton<CheckResultWriteQueue>();
+            builder.Services.AddSingleton<ICheckResultWriteQueue>(p => p.GetRequiredService<CheckResultWriteQueue>());
+            builder.Services.AddHostedService<CheckResultWriteQueue>(p => p.GetRequiredService<CheckResultWriteQueue>());
             builder.Services.AddScoped<IProbeService, ProbeService>();
             builder.Services.AddSingleton<IOutageDetectionService, OutageDetectionService>();
             builder.Services.AddSingleton<IDiscoveryService, DiscoveryService>();
