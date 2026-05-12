@@ -50,49 +50,35 @@ public sealed class StatusService : IStatusService
                 e.Host.ToLower().Contains(searchLower));
         }
 
-        // Get total count for pagination
-        int totalCount = await query.CountAsync();
-
-        // Apply pagination
         List<Data.Endpoint> endpoints = await query
-        .OrderBy(e => e.GroupId)
-        .ThenBy(e => e.Name)
-        .ToListAsync();
+            .OrderBy(e => e.GroupId)
+            .ThenBy(e => e.Name)
+            .ToListAsync();
 
-        // Get live status for each endpoint
         var items = new List<LiveStatusItemDto>();
         var endpointIds = endpoints.Select(e => e.Id).ToList();
 
-        // Get latest checks for all endpoints - optimized query using window functions in SQLite
-        var latestChecks = await _context.CheckResultsRaw
-            .Where(c => endpointIds.Contains(c.EndpointId))
-            .AsNoTracking()
-            .GroupBy(c => c.EndpointId)
-            .Select(g => new
-            {
-                EndpointId = g.Key,
-                LatestCheck = g.OrderByDescending(c => c.Ts).FirstOrDefault()
-            })
-            .ToListAsync();
-
-        var latestCheckDict = latestChecks.ToDictionary(x => x.EndpointId, x => x.LatestCheck);
-
-        // Get sparkline data (last 20 checks per endpoint for mini chart)
+        // Sparkline query (2h window) — last point also serves as latest check timestamp
         Dictionary<Guid, List<SparklinePoint>> sparklineData = await GetSparklineDataAsync(endpointIds);
 
-        // Compute flap status for all endpoints in a single query (avoids N async-over-sync calls)
+        // Single 5min query for flap detection
         HashSet<Guid> flappingIds = await GetFlappingEndpointIdsAsync(endpointIds);
 
         foreach (Data.Endpoint? endpoint in endpoints)
         {
-            StatusType status = DetermineStatus(endpoint, latestCheckDict, flappingIds);
-            List<SparklinePoint> sparkline = sparklineData.ContainsKey(endpoint.Id)
-                ? sparklineData[endpoint.Id]
-                : new List<SparklinePoint>();
+            List<SparklinePoint> sparkline = sparklineData.GetValueOrDefault(endpoint.Id, new List<SparklinePoint>());
 
-            _logger.LogInformation(
-                "Endpoint {EndpointName}: Status = {Status}, LastRttMs = {RttMs}, LastChangeTs = {LastChangeTs}",
-                endpoint.Name, status, endpoint.LastRttMs, endpoint.LastChangeTs);
+            // Most recent sparkline point gives us the last check time — no extra check_result_raw query needed
+            long? latestCheckTs = sparkline.Count > 0
+                ? UnixTimestamp.ToUnixSeconds(sparkline.Last().Ts)
+                : null;
+
+            // endpoint.LastStatus/LastRttMs/LastChangeTs are maintained by OutageDetectionService
+            StatusType status = DetermineStatus(endpoint, latestCheckTs, flappingIds);
+
+            _logger.LogDebug(
+                "Endpoint {EndpointName}: Status={Status}, RttMs={RttMs}",
+                endpoint.Name, status, endpoint.LastRttMs);
 
             items.Add(new LiveStatusItemDto
             {
@@ -183,15 +169,14 @@ public sealed class StatusService : IStatusService
         return sparklineData;
     }
 
-    private StatusType DetermineStatus(Data.Endpoint endpoint, Dictionary<Guid, CheckResultRaw?> latestChecks, HashSet<Guid> flappingIds)
+    private StatusType DetermineStatus(Data.Endpoint endpoint, long? latestCheckTs, HashSet<Guid> flappingIds)
     {
-        if (!latestChecks.TryGetValue(endpoint.Id, out CheckResultRaw? latestCheck) || latestCheck == null)
+        if (latestCheckTs == null)
         {
             return StatusType.Down;
         }
 
-        var expectedInterval = TimeSpan.FromSeconds(endpoint.IntervalSeconds * 2);
-        if (UnixTimestamp.Now() - latestCheck.Ts > (long)expectedInterval.TotalSeconds)
+        if (UnixTimestamp.Now() - latestCheckTs.Value > endpoint.IntervalSeconds * 2)
         {
             return StatusType.Down;
         }
@@ -201,7 +186,7 @@ public sealed class StatusService : IStatusService
             return StatusType.Flapping;
         }
 
-        return latestCheck.Status == UpDown.up ? StatusType.Up : StatusType.Down;
+        return endpoint.LastStatus == UpDown.up ? StatusType.Up : StatusType.Down;
     }
 
     // Single query for all endpoints instead of one query per endpoint with .Result (which causes thread pool starvation)
