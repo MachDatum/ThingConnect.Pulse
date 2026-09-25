@@ -6,3 +6,4 @@ export { Wrench } from './Wrench';
 export { Dashboard } from './Dashboard';
 export { Help } from './Help';
 export { Users } from './Users';
+export { Report } from './Report';

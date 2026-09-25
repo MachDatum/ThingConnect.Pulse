@@ -8,6 +8,7 @@ import { ProtectedRoute } from '@/features/auth/components/ProtectedRoute';
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const EndpointDetail = lazy(() => import('@/pages/EndpointDetail'));
 const History = lazy(() => import('@/pages/History'));
+const Reports = lazy(() => import('@/pages/Reports'));
 const Configuration = lazy(() => import('@/pages/Configuration'));
 const Settings = lazy(() => import('@/pages/Settings'));
 const About = lazy(() => import('@/pages/About'));
@@ -80,6 +81,14 @@ export const router = createBrowserRouter([
         element: (
           <LazyWrapper>
             <History />
+          </LazyWrapper>
+        ),
+      },
+      {
+        path: 'reports',
+        element: (
+          <LazyWrapper>
+            <Reports />
           </LazyWrapper>
         ),
       },

@@ -2,7 +2,7 @@ import { Box, VStack, Text, Icon, Image, HStack, Button } from '@chakra-ui/react
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
 import thingConnectIcon from '@/assets/thingconnect-pulse-logo.svg';
-import { Clock, Wrench, Settings, Info, Dashboard, Help, Users } from '@/icons';
+import { Clock, Wrench, Settings, Info, Dashboard, Help, Users, Report } from '@/icons';
 import { useAuth } from '@/features/auth/context/AuthContext';
 interface NavigationProps {
   onItemClick?: () => void;
@@ -11,6 +11,7 @@ interface NavigationProps {
 const navigationItems = [
   { label: 'Dashboard', path: '/', icon: Dashboard },
   { label: 'History', path: '/history', icon: Clock },
+  { label: 'Reports', path: '/reports', icon: Report },
   { label: 'Configuration', path: '/configuration', icon: Wrench, adminOnly: true },
   { label: 'User Management', path: '/users', icon: Users, adminOnly: true },
   { label: 'Settings', path: '/settings', icon: Settings, adminOnly: true },

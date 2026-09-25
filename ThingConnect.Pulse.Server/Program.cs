@@ -6,6 +6,7 @@ using ThingConnect.Pulse.Server.Infrastructure;
 using ThingConnect.Pulse.Server.Services;
 using ThingConnect.Pulse.Server.Services.Monitoring;
 using ThingConnect.Pulse.Server.Services.Prune;
+using ThingConnect.Pulse.Server.Services.Reports;
 using ThingConnect.Pulse.Server.Services.Rollup;
 
 namespace ThingConnect.Pulse.Server;
@@ -160,6 +161,7 @@ public class Program
             builder.Services.AddScoped<IStatusService, StatusService>();
             builder.Services.AddScoped<IHistoryService, HistoryService>();
             builder.Services.AddScoped<IEndpointService, EndpointService>();
+            builder.Services.AddScoped<IReportDataService, ReportDataService>();
             builder.Services.AddHostedService<MonitoringBackgroundService>();
 
             // Add rollup services
