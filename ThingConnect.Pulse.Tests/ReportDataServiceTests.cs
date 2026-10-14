@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
 using ThingConnect.Pulse.Server.Data;
-using ThingConnect.Pulse.Server.Helpers;
 using ThingConnect.Pulse.Server.Models;
 using ThingConnect.Pulse.Server.Services.Reports;
 
@@ -11,15 +10,21 @@ namespace ThingConnect.Pulse.Tests;
 [TestFixture]
 public class ReportDataServiceTests
 {
-    private static readonly DateTimeOffset From = new(2026, 9, 1, 0, 0, 0, TimeSpan.Zero);
-    private static readonly DateTimeOffset To = new(2026, 9, 3, 0, 0, 0, TimeSpan.Zero);
+    // Fixed +05:30 zone (no DST) so period boundaries are deterministic on any machine.
+    private static readonly TimeZoneInfo Ist = TimeZoneInfo.CreateCustomTimeZone("IST", TimeSpan.FromMinutes(330), "IST", "IST");
+
+    private static readonly DateOnly Sep1 = new(2026, 9, 1);
+    private static readonly DateOnly Sep2 = new(2026, 9, 2);
+
+    // Well after the test ranges, so coverage is not clipped unless a test sets Now explicitly.
+    private static readonly DateTimeOffset Later = new(2026, 12, 1, 0, 0, 0, TimeSpan.Zero);
 
     private PulseDbContext _context = default!;
     private ReportDataService _service = default!;
 
-    private Guid _epUpId;
-    private Guid _epDegradedId;
-    private Guid _epDownId;
+    private Guid _plcId;
+    private Guid _hmiId;
+    private Guid _switchId;
 
     [SetUp]
     public void SetUp()
@@ -31,176 +36,231 @@ public class ReportDataServiceTests
         _context = new PulseDbContext(options);
         _service = new ReportDataService(_context, NullLogger<ReportDataService>.Instance);
 
-        SeedData();
-    }
+        var line1 = new Group { Id = "line-1", Name = "Line 1", SortOrder = 1 };
+        var network = new Group { Id = "network", Name = "Network", SortOrder = 2 };
+        _context.Groups.AddRange(line1, network);
 
-    [TearDown]
-    public void TearDown()
-    {
-        _context.Dispose();
-    }
+        _plcId = Guid.NewGuid();
+        _hmiId = Guid.NewGuid();
+        _switchId = Guid.NewGuid();
 
-    private void SeedData()
-    {
-        var groupLine1 = new Group { Id = "line-1", Name = "Line 1" };
-        var groupLine2 = new Group { Id = "line-2", Name = "Line 2" };
-        _context.Groups.AddRange(groupLine1, groupLine2);
-
-        _epUpId = Guid.NewGuid();
-        _epDegradedId = Guid.NewGuid();
-        _epDownId = Guid.NewGuid();
-
-        var epUp = new Endpoint
-        {
-            Id = _epUpId,
-            Name = "EP-UP",
-            GroupId = groupLine1.Id,
-            Type = ProbeType.icmp,
-            Host = "10.0.0.1",
-            IntervalSeconds = 30,
-            TimeoutMs = 2000,
-            Retries = 2,
-            Enabled = true,
-            ExpectedRttMs = 20,
-            LastStatus = UpDown.up
-        };
-
-        var epDegraded = new Endpoint
-        {
-            Id = _epDegradedId,
-            Name = "EP-DEGRADED",
-            GroupId = groupLine1.Id,
-            Type = ProbeType.icmp,
-            Host = "10.0.0.2",
-            IntervalSeconds = 30,
-            TimeoutMs = 2000,
-            Retries = 2,
-            Enabled = true,
-            ExpectedRttMs = 10,
-            LastStatus = UpDown.up
-        };
-
-        var epDown = new Endpoint
-        {
-            Id = _epDownId,
-            Name = "EP-DOWN",
-            GroupId = groupLine2.Id,
-            Type = ProbeType.tcp,
-            Port = 502,
-            Host = "10.0.0.3",
-            IntervalSeconds = 30,
-            TimeoutMs = 2000,
-            Retries = 2,
-            Enabled = true,
-            LastStatus = UpDown.down
-        };
-
-        _context.Endpoints.AddRange(epUp, epDegraded, epDown);
-
-        long day1 = UnixTimestamp.ToUnixDate(DateOnly.FromDateTime(From.Date));
-        long day2 = UnixTimestamp.ToUnixDate(DateOnly.FromDateTime(From.Date.AddDays(1)));
-
-        _context.RollupsDaily.AddRange(
-            new RollupDaily { EndpointId = _epUpId, BucketDate = day1, UpPct = 100, AvgRttMs = 8, DownEvents = 0 },
-            new RollupDaily { EndpointId = _epUpId, BucketDate = day2, UpPct = 99, AvgRttMs = 9, DownEvents = 1 },
-            new RollupDaily { EndpointId = _epDegradedId, BucketDate = day1, UpPct = 100, AvgRttMs = 48, DownEvents = 0 },
-            new RollupDaily { EndpointId = _epDegradedId, BucketDate = day2, UpPct = 97.4, AvgRttMs = 50, DownEvents = 2 },
-            new RollupDaily { EndpointId = _epDownId, BucketDate = day1, UpPct = 80, AvgRttMs = null, DownEvents = 3 },
-            new RollupDaily { EndpointId = _epDownId, BucketDate = day2, UpPct = 60, AvgRttMs = null, DownEvents = 2 });
-
-        long fromUnix = UnixTimestamp.ToUnixSeconds(From);
-        long toUnix = UnixTimestamp.ToUnixSeconds(To);
-
-        // Fully contained outage: 8 minutes (480s) on day 1.
-        _context.Outages.Add(new Outage
-        {
-            EndpointId = _epDownId,
-            StartedTs = day1 + (8 * 3600),
-            EndedTs = day1 + (8 * 3600) + 480
-        });
-
-        // Ongoing outage starting 100s before the report window ends — clipped to `to`, not `now`.
-        _context.Outages.Add(new Outage
-        {
-            EndpointId = _epDegradedId,
-            StartedTs = toUnix - 100,
-            EndedTs = null
-        });
+        _context.Endpoints.AddRange(
+            NewEndpoint(_plcId, "PLC-01", line1.Id, "10.0.1.10", UpDown.up),
+            NewEndpoint(_hmiId, "HMI-01", line1.Id, "10.0.1.20", UpDown.down),
+            NewEndpoint(_switchId, "Core Switch", network.Id, "10.0.0.1", UpDown.up),
+            new Endpoint
+            {
+                Id = Guid.NewGuid(), Name = "Disabled", GroupId = network.Id, Type = ProbeType.icmp, Host = "10.0.0.99",
+                IntervalSeconds = 30, TimeoutMs = 2000, Retries = 1, Enabled = false
+            });
 
         _context.SaveChanges();
     }
 
+    [TearDown]
+    public void TearDown() => _context.Dispose();
+
+    // ── Period building ───────────────────────────────────────────────────────────────────────
+
     [Test]
-    public async Task GetMachineAvailabilityAsync_ClassifiesUpDegradedDown()
+    public void BuildPeriods_DailyUsesLocalMidnights()
     {
-        List<MachineAvailabilityRowDto> rows = await _service.GetMachineAvailabilityAsync(From, To, null);
+        List<ReportPeriod> periods = ReportDataService.BuildPeriods(Sep1, Sep2, ReportInterval.Day, Ist);
 
-        MachineAvailabilityRowDto up = rows.Single(r => r.EndpointId == _epUpId);
-        MachineAvailabilityRowDto degraded = rows.Single(r => r.EndpointId == _epDegradedId);
-        MachineAvailabilityRowDto down = rows.Single(r => r.EndpointId == _epDownId);
-
-        Assert.That(up.Status, Is.EqualTo("up"));
-        Assert.That(up.UptimePct, Is.EqualTo(99.5).Within(0.01));
-        Assert.That(up.PacketLossPct, Is.EqualTo(0.5).Within(0.01));
-
-        Assert.That(degraded.Status, Is.EqualTo("degraded"), "up but period AvgRttMs (49) breaches ExpectedRttMs (10)");
-        Assert.That(degraded.AvgRttMs, Is.EqualTo(49).Within(0.01));
-
-        Assert.That(down.Status, Is.EqualTo("down"), "LastStatus=down always reports down regardless of RTT/uptime");
-        Assert.That(down.AvgRttMs, Is.Null, "no RTT samples in the period");
+        Assert.That(periods, Has.Count.EqualTo(2));
+        Assert.That(periods[0].Label, Is.EqualTo("01 Sep 2026"));
+        Assert.That(periods[0].StartUtc, Is.EqualTo(new DateTimeOffset(2026, 8, 31, 18, 30, 0, TimeSpan.Zero)));
+        Assert.That(periods[1].EndUtc, Is.EqualTo(new DateTimeOffset(2026, 9, 2, 18, 30, 0, TimeSpan.Zero)));
     }
 
     [Test]
-    public async Task GetMachineAvailabilityAsync_ClipsOutageDurationToReportWindow()
+    public void BuildPeriods_WeeklyStartsMondayAndClipsToRange()
     {
-        List<MachineAvailabilityRowDto> rows = await _service.GetMachineAvailabilityAsync(From, To, null);
+        // Wed 2 Sep .. Tue 15 Sep 2026
+        List<ReportPeriod> periods = ReportDataService.BuildPeriods(new DateOnly(2026, 9, 2), new DateOnly(2026, 9, 15), ReportInterval.Week, Ist);
 
-        MachineAvailabilityRowDto down = rows.Single(r => r.EndpointId == _epDownId);
-        MachineAvailabilityRowDto degraded = rows.Single(r => r.EndpointId == _epDegradedId);
-
-        Assert.That(down.DowntimeSeconds, Is.EqualTo(480), "fully-contained 8-minute outage");
-        Assert.That(degraded.DowntimeSeconds, Is.EqualTo(100), "ongoing outage clipped to the 'to' bound, not 'now'");
+        Assert.That(periods.Select(p => p.LocalStart.Date), Is.EqualTo(new[]
+        {
+            new DateTime(2026, 9, 2), new DateTime(2026, 9, 7), new DateTime(2026, 9, 14)
+        }));
+        Assert.That(periods[0].Label, Is.EqualTo("02 Sep – 06 Sep 2026"));
+        Assert.That(periods[2].Label, Is.EqualTo("14 Sep – 15 Sep 2026"));
     }
 
     [Test]
-    public async Task GetMachineAvailabilityAsync_FiltersByGroup()
+    public void BuildPeriods_MonthlyLabelsFullAndPartialMonths()
     {
-        List<MachineAvailabilityRowDto> rows = await _service.GetMachineAvailabilityAsync(From, To, new List<string> { "line-2" });
+        List<ReportPeriod> periods = ReportDataService.BuildPeriods(new DateOnly(2026, 8, 15), new DateOnly(2026, 10, 31), ReportInterval.Month, Ist);
 
-        Assert.That(rows, Has.Count.EqualTo(1));
-        Assert.That(rows[0].EndpointId, Is.EqualTo(_epDownId));
+        Assert.That(periods.Select(p => p.Label), Is.EqualTo(new[] { "15 Aug – 31 Aug 2026", "Sep 2026", "Oct 2026" }));
     }
 
     [Test]
-    public async Task GetExecutiveSummaryAsync_AggregatesOrgWideTotals()
+    public void BuildPeriods_HourlyCoversEachLocalHour()
     {
-        ExecutiveSummaryDto summary = await _service.GetExecutiveSummaryAsync(From, To, null);
+        List<ReportPeriod> periods = ReportDataService.BuildPeriods(Sep1, Sep1, ReportInterval.Hour, Ist);
 
-        Assert.That(summary.EndpointsMonitored, Is.EqualTo(3));
-        Assert.That(summary.EndpointsWithOutage, Is.EqualTo(2), "EP-DOWN and EP-DEGRADED both have downtime > 0");
-        Assert.That(summary.TotalDownEvents, Is.EqualTo(1 + 2 + 5));
-        Assert.That(summary.TotalDowntimeHours, Is.EqualTo((480 + 100) / 3600.0).Within(0.01));
-        Assert.That(summary.OverallUptimePct, Is.EqualTo((99.5 + 98.7 + 70) / 3.0).Within(0.01));
+        Assert.That(periods, Has.Count.EqualTo(24));
+        Assert.That(periods[0].LocalStart, Is.EqualTo(new DateTime(2026, 9, 1, 0, 0, 0)));
+        Assert.That(periods[23].LocalStart.Hour, Is.EqualTo(23));
+    }
+
+    // ── Metrics ───────────────────────────────────────────────────────────────────────────────
+
+    [Test]
+    public async Task Daily_AttributesBucketsToLocalDayNotUtcDay()
+    {
+        // 2026-09-01 19:00 UTC is 2 Sep 00:30 IST — it must land on 2 Sep, not on the UTC date (1 Sep).
+        AddRollup(_plcId, new DateTimeOffset(2026, 9, 1, 19, 0, 0, TimeSpan.Zero), 0);
+        await _context.SaveChangesAsync();
+
+        AvailabilityReport report = await RunAsync(Sep1, Sep2, ReportInterval.Day);
+        ReportEndpointRow plc = Endpoint(report, "PLC-01");
+
+        Assert.That(plc.PerPeriod[0].HasData, Is.False);
+        Assert.That(plc.PerPeriod[1].UptimePct, Is.EqualTo(0));
     }
 
     [Test]
-    public async Task GetExecutiveSummaryAsync_ByGroupPicksWorstEndpointPerGroup()
+    public async Task UptimeAndDowntimeAreWeightedByMonitoredTime()
     {
-        ExecutiveSummaryDto summary = await _service.GetExecutiveSummaryAsync(From, To, null);
+        DateTimeOffset start = LocalMidnightUtc(Sep1);
+        AddRollup(_plcId, start, 100);
+        AddRollup(_plcId, start.AddMinutes(15), 100);
+        AddRollup(_plcId, start.AddMinutes(30), 50, rtt: 10);
+        AddRollup(_plcId, start.AddMinutes(45), 0, rtt: 30);
+        await _context.SaveChangesAsync();
 
-        GroupSummaryRowDto line1 = summary.ByGroup.Single(g => g.GroupName == "Line 1");
-        GroupSummaryRowDto line2 = summary.ByGroup.Single(g => g.GroupName == "Line 2");
+        AvailabilityReport report = await RunAsync(Sep1, Sep1, ReportInterval.Day);
+        AvailabilityMetrics day = Endpoint(report, "PLC-01").PerPeriod[0];
 
-        Assert.That(line1.WorstEndpointName, Is.EqualTo("EP-DEGRADED"), "lower uptime (98.7) than EP-UP (99.5)");
-        Assert.That(line1.DownEvents, Is.EqualTo(1 + 2));
-
-        Assert.That(line2.WorstEndpointName, Is.EqualTo("EP-DOWN"));
-        Assert.That(line2.AvgRttMs, Is.Null, "no RTT samples for this endpoint in the period");
+        Assert.That(day.UptimePct, Is.EqualTo(62.5).Within(1e-9));
+        Assert.That(day.DowntimeMinutes, Is.EqualTo(22.5).Within(1e-9));
+        Assert.That(day.AvgRttMs, Is.EqualTo(20).Within(1e-9));
+        Assert.That(day.CoveragePct, Is.EqualTo(100.0 * 4 / 96).Within(1e-9));
     }
 
     [Test]
-    public void GetMachineAvailabilityAsync_ThrowsWhenFromIsNotBeforeTo()
+    public async Task CoverageStopsAtNowForAPeriodInProgress()
     {
-        Assert.ThrowsAsync<ArgumentException>(async () => await _service.GetMachineAvailabilityAsync(To, From, null));
+        DateTimeOffset start = LocalMidnightUtc(Sep1);
+        for (int i = 0; i < 8; i++)
+        {
+            AddRollup(_plcId, start.AddMinutes(15 * i), 100);
+        }
+
+        await _context.SaveChangesAsync();
+
+        // "Now" is 4 hours into the day: 16 buckets expected, 8 present.
+        AvailabilityReport report = await RunAsync(Sep1, Sep1, ReportInterval.Day, now: start.AddHours(4));
+
+        Assert.That(Endpoint(report, "PLC-01").PerPeriod[0].CoveragePct, Is.EqualTo(50).Within(1e-9));
     }
+
+    [Test]
+    public async Task OutagesDriveDownEventsMttrAndLongestOutage()
+    {
+        DateTimeOffset day1 = LocalMidnightUtc(Sep1);
+        DateTimeOffset day2 = LocalMidnightUtc(Sep2);
+
+        // Started before the range: not counted as an event, but its in-range part (2h) counts for "longest".
+        AddOutage(_hmiId, day1.AddHours(-1), day1.AddHours(2));
+
+        // Two resolved outages on day 1 (10 min, 30 min) and one ongoing outage on day 2.
+        AddOutage(_hmiId, day1.AddHours(5), day1.AddHours(5).AddMinutes(10));
+        AddOutage(_hmiId, day1.AddHours(9), day1.AddHours(9).AddMinutes(30));
+        AddOutage(_hmiId, day2.AddHours(23), null);
+        await _context.SaveChangesAsync();
+
+        AvailabilityReport report = await RunAsync(Sep1, Sep2, ReportInterval.Day);
+        ReportEndpointRow hmi = Endpoint(report, "HMI-01");
+
+        Assert.That(hmi.PerPeriod[0].DownEvents, Is.EqualTo(2));
+        Assert.That(hmi.PerPeriod[1].DownEvents, Is.EqualTo(1));
+        Assert.That(hmi.Total.DownEvents, Is.EqualTo(3));
+        Assert.That(hmi.Total.MttrSeconds, Is.EqualTo(20 * 60).Within(1e-9));
+        Assert.That(hmi.Total.LongestOutageSeconds, Is.EqualTo(2 * 3600).Within(1e-9));
+    }
+
+    [Test]
+    public async Task GroupAndOverallTotalsCombineEndpointsByTime()
+    {
+        DateTimeOffset start = LocalMidnightUtc(Sep1);
+        AddRollup(_plcId, start, 100);
+        AddRollup(_hmiId, start, 0);
+        AddRollup(_hmiId, start.AddMinutes(15), 0);
+        AddRollup(_switchId, start, 100);
+        await _context.SaveChangesAsync();
+
+        AvailabilityReport report = await RunAsync(Sep1, Sep1, ReportInterval.Day);
+
+        // Line 1: 15 min up out of 45 min monitored; overall: 30 of 60.
+        Assert.That(report.Groups.Select(g => g.GroupName), Is.EqualTo(new[] { "Line 1", "Network" }));
+        Assert.That(report.Groups[0].Totals.Total.UptimePct, Is.EqualTo(100.0 / 3).Within(1e-9));
+        Assert.That(report.Overall.Total.UptimePct, Is.EqualTo(50).Within(1e-9));
+        Assert.That(report.Overall.PerPeriod[0].UptimePct, Is.EqualTo(50).Within(1e-9));
+    }
+
+    [Test]
+    public async Task ExcludesDisabledEndpointsAndHonoursGroupFilter()
+    {
+        AvailabilityReport all = await RunAsync(Sep1, Sep1, ReportInterval.Day);
+        AvailabilityReport network = await RunAsync(Sep1, Sep1, ReportInterval.Day, groupIds: new List<string> { "network" });
+
+        Assert.That(all.Groups.SelectMany(g => g.Endpoints).Select(e => e.Name), Does.Not.Contain("Disabled"));
+        Assert.That(all.Groups.SelectMany(g => g.Endpoints).Count(), Is.EqualTo(3));
+        Assert.That(network.Groups.SelectMany(g => g.Endpoints).Select(e => e.Name), Is.EqualTo(new[] { "Core Switch" }));
+    }
+
+    [Test]
+    public void RejectsInvalidRanges()
+    {
+        Assert.ThrowsAsync<ArgumentException>(() => RunAsync(Sep2, Sep1, ReportInterval.Day));
+        Assert.ThrowsAsync<ArgumentException>(() => RunAsync(Sep1, Sep1.AddDays(ReportDataService.MaxHourlyDays), ReportInterval.Hour));
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────────────────────
+
+    private Task<AvailabilityReport> RunAsync(DateOnly from, DateOnly to, ReportInterval interval, DateTimeOffset? now = null, List<string>? groupIds = null)
+        => _service.GetAvailabilityReportAsync(new AvailabilityReportRequest
+        {
+            FromDate = from,
+            ToDate = to,
+            Interval = interval,
+            GroupIds = groupIds,
+            TimeZone = Ist,
+            Now = now ?? Later
+        });
+
+    private static ReportEndpointRow Endpoint(AvailabilityReport report, string name)
+        => report.Groups.SelectMany(g => g.Endpoints).Single(e => e.Name == name);
+
+    private static DateTimeOffset LocalMidnightUtc(DateOnly date)
+        => new(TimeZoneInfo.ConvertTimeToUtc(date.ToDateTime(TimeOnly.MinValue), Ist), TimeSpan.Zero);
+
+    private void AddRollup(Guid endpointId, DateTimeOffset bucket, double upPct, double? rtt = null)
+        => _context.Rollups15m.Add(new Rollup15m { EndpointId = endpointId, BucketTs = bucket.ToUnixTimeSeconds(), UpPct = upPct, AvgRttMs = rtt });
+
+    private void AddOutage(Guid endpointId, DateTimeOffset started, DateTimeOffset? ended)
+        => _context.Outages.Add(new Outage
+        {
+            EndpointId = endpointId,
+            StartedTs = started.ToUnixTimeSeconds(),
+            EndedTs = ended?.ToUnixTimeSeconds(),
+            DurationSeconds = ended.HasValue ? (int)(ended.Value - started).TotalSeconds : null
+        });
+
+    private static Endpoint NewEndpoint(Guid id, string name, string groupId, string host, UpDown status) => new()
+    {
+        Id = id,
+        Name = name,
+        GroupId = groupId,
+        Type = ProbeType.icmp,
+        Host = host,
+        IntervalSeconds = 30,
+        TimeoutMs = 2000,
+        Retries = 1,
+        Enabled = true,
+        LastStatus = status
+    };
 }

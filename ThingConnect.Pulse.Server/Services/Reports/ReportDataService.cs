@@ -1,12 +1,27 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using ThingConnect.Pulse.Server.Data;
-using ThingConnect.Pulse.Server.Helpers;
 using ThingConnect.Pulse.Server.Models;
 
 namespace ThingConnect.Pulse.Server.Services.Reports;
 
+/// <summary>
+/// Builds the availability report: per endpoint and per local day/week/month/year (or hour), from the
+/// 15-minute rollups (uptime, downtime, RTT, coverage) and the outage table (down events, MTTR, MTBF,
+/// longest outage).
+/// </summary>
+/// <remarks>
+/// Periods are cut on local-time boundaries in <see cref="AvailabilityReportRequest.TimeZone"/>. 15-minute
+/// buckets never straddle a local period boundary because every real-world UTC offset is a multiple of
+/// 15 minutes, so each bucket is attributed to exactly one period.
+/// </remarks>
 public sealed class ReportDataService : IReportDataService
 {
+    public const int BucketSeconds = 15 * 60;
+    public const int MaxHourlyDays = 31;
+    public const int MaxDailyDays = 366;
+    public const int MaxRangeDays = 5 * 366;
+
     private readonly PulseDbContext _context;
     private readonly ILogger<ReportDataService> _logger;
 
@@ -16,99 +31,224 @@ public sealed class ReportDataService : IReportDataService
         _logger = logger;
     }
 
-    public async Task<List<MachineAvailabilityRowDto>> GetMachineAvailabilityAsync(DateTimeOffset from, DateTimeOffset to, List<string>? groupIds)
+    /// <summary>
+    /// Cuts [FromDate 00:00, ToDate+1 00:00) local time into periods. Weeks start on Monday; the first and
+    /// last week/month/year are clipped to the requested range.
+    /// </summary>
+    public static List<ReportPeriod> BuildPeriods(DateOnly fromDate, DateOnly toDate, ReportInterval interval, TimeZoneInfo timeZone)
     {
-        ValidateRange(from, to);
+        DateTime rangeStart = fromDate.ToDateTime(TimeOnly.MinValue);
+        DateTime rangeEnd = toDate.AddDays(1).ToDateTime(TimeOnly.MinValue);
+        var periods = new List<ReportPeriod>();
 
-        List<Data.Endpoint> endpoints = await GetEndpointsAsync(groupIds);
-        List<Guid> endpointIds = endpoints.Select(e => e.Id).ToList();
-
-        Dictionary<Guid, EndpointAggregate> aggregates = await ComputeAggregatesAsync(endpointIds, from, to);
-        Dictionary<Guid, long> lastCheckByEndpoint = await GetLastCheckTimestampsAsync(endpointIds);
-
-        var rows = new List<MachineAvailabilityRowDto>();
-        foreach (Data.Endpoint endpoint in endpoints)
+        DateTime cursor = rangeStart;
+        while (cursor < rangeEnd)
         {
-            EndpointAggregate agg = aggregates.GetValueOrDefault(endpoint.Id, EndpointAggregate.Empty);
-
-            rows.Add(new MachineAvailabilityRowDto
+            DateTime next = interval switch
             {
-                EndpointId = endpoint.Id,
-                MachineName = endpoint.Name,
-                Host = endpoint.Host,
-                GroupName = endpoint.Group.Name,
-                Status = DetermineReportStatus(endpoint, agg.AvgRttMs),
-                UptimePct = Math.Round(agg.UptimePct, 2),
-                AvgRttMs = agg.AvgRttMs,
-                PacketLossPct = Math.Round(100.0 - agg.UptimePct, 2),
-                LastCheckTs = lastCheckByEndpoint.TryGetValue(endpoint.Id, out long ts) ? UnixTimestamp.FromUnixSeconds(ts) : null,
-                DowntimeSeconds = agg.DowntimeSeconds
-            });
+                ReportInterval.Hour => cursor.AddHours(1),
+                ReportInterval.Day => cursor.AddDays(1),
+                ReportInterval.Week => cursor.AddDays(7 - (((int)cursor.DayOfWeek + 6) % 7)),
+                ReportInterval.Month => new DateTime(cursor.Year, cursor.Month, 1).AddMonths(1),
+                ReportInterval.Year => new DateTime(cursor.Year + 1, 1, 1),
+                _ => throw new ArgumentOutOfRangeException(nameof(interval))
+            };
+
+            if (next > rangeEnd)
+            {
+                next = rangeEnd;
+            }
+
+            // Skip local hours that don't exist (DST spring-forward); they have no UTC instant.
+            if (!(interval == ReportInterval.Hour && timeZone.IsInvalidTime(cursor)))
+            {
+                periods.Add(new ReportPeriod
+                {
+                    Label = FormatLabel(cursor, next, interval),
+                    LocalStart = cursor,
+                    StartUtc = ToUtc(cursor, timeZone),
+                    EndUtc = ToUtc(next, timeZone)
+                });
+            }
+
+            cursor = next;
         }
 
-        return rows;
+        return periods;
     }
 
-    public async Task<ExecutiveSummaryDto> GetExecutiveSummaryAsync(DateTimeOffset from, DateTimeOffset to, List<string>? groupIds)
+    public async Task<AvailabilityReport> GetAvailabilityReportAsync(AvailabilityReportRequest request, CancellationToken cancellationToken = default)
     {
-        ValidateRange(from, to);
+        ValidateRequest(request);
 
-        List<Data.Endpoint> endpoints = await GetEndpointsAsync(groupIds);
+        List<ReportPeriod> periods = BuildPeriods(request.FromDate, request.ToDate, request.Interval, request.TimeZone);
+        long rangeStartTs = periods[0].StartUtc.ToUnixTimeSeconds();
+        long rangeEndTs = periods[^1].EndUtc.ToUnixTimeSeconds();
+        long nowTs = request.Now.ToUnixTimeSeconds();
+        long[] periodStarts = periods.Select(p => p.StartUtc.ToUnixTimeSeconds()).ToArray();
+
+        List<Data.Endpoint> endpoints = await GetEndpointsAsync(request.GroupIds, cancellationToken);
         List<Guid> endpointIds = endpoints.Select(e => e.Id).ToList();
 
-        Dictionary<Guid, EndpointAggregate> aggregates = await ComputeAggregatesAsync(endpointIds, from, to);
+        var perPeriod = endpointIds.ToDictionary(id => id, _ => NewPeriodArray(periods, nowTs));
+        var totals = endpointIds.ToDictionary(id => id, _ => new AvailabilityMetrics());
 
-        var perEndpoint = endpoints
-            .Select(e => (Endpoint: e, Agg: aggregates.GetValueOrDefault(e.Id, EndpointAggregate.Empty)))
-            .ToList();
-
-        var summary = new ExecutiveSummaryDto
+        if (endpointIds.Count > 0)
         {
-            PeriodFrom = from,
-            PeriodTo = to,
-            EndpointsMonitored = perEndpoint.Count,
-            EndpointsWithOutage = perEndpoint.Count(p => p.Agg.DowntimeSeconds > 0),
-            TotalDownEvents = perEndpoint.Sum(p => p.Agg.DownEvents),
-            TotalDowntimeHours = Math.Round(perEndpoint.Sum(p => p.Agg.DowntimeSeconds) / 3600.0, 2),
-            OverallUptimePct = perEndpoint.Count > 0 ? Math.Round(perEndpoint.Average(p => p.Agg.UptimePct), 2) : 0,
+            await AccumulateRollupsAsync(rangeStartTs, rangeEndTs, periodStarts, perPeriod, cancellationToken);
+            await AccumulateOutagesAsync(endpointIds, rangeStartTs, rangeEndTs, nowTs, periodStarts, perPeriod, totals, cancellationToken);
+        }
+
+        var overall = new ReportMetricsRow { PerPeriod = NewPeriodArray(periods, 0).ToList() };
+        var groups = new List<ReportGroupSection>();
+
+        foreach (IGrouping<string, Data.Endpoint> group in endpoints.GroupBy(e => e.Group.Name))
+        {
+            var groupTotals = new ReportMetricsRow { PerPeriod = NewPeriodArray(periods, 0).ToList() };
+            var rows = new List<ReportEndpointRow>();
+
+            foreach (Data.Endpoint endpoint in group)
+            {
+                AvailabilityMetrics[] periodMetrics = perPeriod[endpoint.Id];
+                AvailabilityMetrics total = totals[endpoint.Id];
+                foreach (AvailabilityMetrics m in periodMetrics)
+                {
+                    total.MonitoredSeconds += m.MonitoredSeconds;
+                    total.UpSeconds += m.UpSeconds;
+                    total.ExpectedSeconds += m.ExpectedSeconds;
+                    total.RttSum += m.RttSum;
+                    total.RttSamples += m.RttSamples;
+                }
+
+                var row = new ReportEndpointRow
+                {
+                    EndpointId = endpoint.Id,
+                    Name = endpoint.Name,
+                    Host = endpoint.Host,
+                    GroupName = group.Key,
+                    CurrentStatus = endpoint.LastStatus switch
+                    {
+                        UpDown.up => "UP",
+                        UpDown.down => "DOWN",
+                        _ => "—"
+                    },
+                    PerPeriod = periodMetrics.ToList(),
+                    Total = total
+                };
+
+                AddRow(groupTotals, row);
+                rows.Add(row);
+            }
+
+            AddRow(overall, groupTotals);
+            groups.Add(new ReportGroupSection { GroupName = group.Key, Totals = groupTotals, Endpoints = rows });
+        }
+
+        _logger.LogInformation(
+            "Availability report built: {Interval} {From}..{To}, {Endpoints} endpoints, {Periods} periods",
+            request.Interval, request.FromDate, request.ToDate, endpointIds.Count, periods.Count);
+
+        return new AvailabilityReport
+        {
+            FromDate = request.FromDate,
+            ToDate = request.ToDate,
+            Interval = request.Interval,
+            TimeZoneName = request.TimeZone.DisplayName,
+            GeneratedAt = request.Now,
+            Periods = periods,
+            Groups = groups,
+            Overall = overall
+        };
+    }
+
+    private static string FormatLabel(DateTime start, DateTime end, ReportInterval interval)
+    {
+        DateTime last = end.AddDays(-1);
+        return interval switch
+        {
+            ReportInterval.Hour => start.ToString("dd MMM yyyy HH:00", CultureInfo.InvariantCulture),
+            ReportInterval.Day => start.ToString("dd MMM yyyy", CultureInfo.InvariantCulture),
+            ReportInterval.Week => start.Year != last.Year
+                ? string.Create(CultureInfo.InvariantCulture, $"{start:dd MMM yyyy} – {last:dd MMM yyyy}")
+                : string.Create(CultureInfo.InvariantCulture, $"{start:dd MMM} – {last:dd MMM yyyy}"),
+            ReportInterval.Month => start.Day == 1 && end == start.AddMonths(1)
+                ? start.ToString("MMM yyyy", CultureInfo.InvariantCulture)
+                : string.Create(CultureInfo.InvariantCulture, $"{start:dd MMM} – {last:dd MMM yyyy}"),
+            ReportInterval.Year => start.Month == 1 && start.Day == 1 && end == start.AddYears(1)
+                ? start.ToString("yyyy", CultureInfo.InvariantCulture)
+                : string.Create(CultureInfo.InvariantCulture, $"{start:dd MMM yyyy} – {last:dd MMM yyyy}"),
+            _ => start.ToString("dd MMM yyyy", CultureInfo.InvariantCulture)
+        };
+    }
+
+    private static DateTimeOffset ToUtc(DateTime local, TimeZoneInfo timeZone)
+    {
+        DateTime unspecified = DateTime.SpecifyKind(local, DateTimeKind.Unspecified);
+        if (timeZone.IsInvalidTime(unspecified))
+        {
+            unspecified = unspecified.AddHours(1);
+        }
+
+        return new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(unspecified, timeZone), TimeSpan.Zero);
+    }
+
+    private static void ValidateRequest(AvailabilityReportRequest request)
+    {
+        if (request.FromDate > request.ToDate)
+        {
+            throw new ArgumentException("From date must not be after to date");
+        }
+
+        int days = request.ToDate.DayNumber - request.FromDate.DayNumber + 1;
+        (int max, string label) = request.Interval switch
+        {
+            ReportInterval.Hour => (MaxHourlyDays, "hourly"),
+            ReportInterval.Day => (MaxDailyDays, "daily"),
+            _ => (MaxRangeDays, "weekly/monthly/yearly")
         };
 
-        summary.ByGroup = perEndpoint
-            .GroupBy(p => p.Endpoint.Group.Name)
-            .Select(g =>
-            {
-                var withRtt = g.Where(p => p.Agg.AvgRttMs.HasValue).ToList();
-                (Data.Endpoint Endpoint, EndpointAggregate Agg) worst = g.OrderBy(p => p.Agg.UptimePct).First();
-
-                return new GroupSummaryRowDto
-                {
-                    GroupName = g.Key,
-                    UptimePct = Math.Round(g.Average(p => p.Agg.UptimePct), 2),
-                    AvgRttMs = withRtt.Count > 0 ? Math.Round(withRtt.Average(p => p.Agg.AvgRttMs!.Value), 2) : null,
-                    DownEvents = g.Sum(p => p.Agg.DownEvents),
-                    WorstEndpointName = worst.Endpoint.Name
-                };
-            })
-            .OrderBy(g => g.GroupName)
-            .ToList();
-
-        return summary;
+        if (days > max)
+        {
+            throw new ArgumentException($"Date range too large for a {label} report: {days} days (maximum {max}).");
+        }
     }
 
-    private static void ValidateRange(DateTimeOffset from, DateTimeOffset to)
+    private static AvailabilityMetrics[] NewPeriodArray(List<ReportPeriod> periods, long nowTs)
     {
-        if (from >= to)
+        var result = new AvailabilityMetrics[periods.Count];
+        for (int i = 0; i < periods.Count; i++)
         {
-            throw new ArgumentException("From date must be earlier than to date");
+            double expected = 0;
+            if (nowTs > 0)
+            {
+                long start = periods[i].StartUtc.ToUnixTimeSeconds();
+                long end = Math.Min(periods[i].EndUtc.ToUnixTimeSeconds(), nowTs);
+                expected = Math.Max(0, end - start);
+            }
+
+            result[i] = new AvailabilityMetrics { ExpectedSeconds = expected };
         }
 
-        if (to - from > TimeSpan.FromDays(366))
-        {
-            throw new ArgumentException("Date range too large for this report. Maximum: 366 days");
-        }
+        return result;
     }
 
-    private async Task<List<Data.Endpoint>> GetEndpointsAsync(List<string>? groupIds)
+    private static void AddRow(ReportMetricsRow target, ReportMetricsRow source)
+    {
+        for (int i = 0; i < source.PerPeriod.Count; i++)
+        {
+            target.PerPeriod[i].Add(source.PerPeriod[i]);
+        }
+
+        target.Total.Add(source.Total);
+    }
+
+    private static int FindPeriod(long[] periodStarts, long ts)
+    {
+        int index = Array.BinarySearch(periodStarts, ts);
+        return index >= 0 ? index : ~index - 1;
+    }
+
+    private async Task<List<Data.Endpoint>> GetEndpointsAsync(List<string>? groupIds, CancellationToken cancellationToken)
     {
         IQueryable<Data.Endpoint> query = _context.Endpoints
             .Include(e => e.Group)
@@ -120,119 +260,100 @@ public sealed class ReportDataService : IReportDataService
             query = query.Where(e => groupIds.Contains(e.GroupId));
         }
 
-        return await query
-            .OrderBy(e => e.Group.Name)
+        List<Data.Endpoint> endpoints = await query.ToListAsync(cancellationToken);
+
+        return endpoints
+            .OrderBy(e => e.Group.SortOrder ?? int.MaxValue)
+            .ThenBy(e => e.Group.Name)
             .ThenBy(e => e.Name)
-            .ToListAsync();
+            .ToList();
     }
 
     /// <summary>
-    /// Computes per-endpoint uptime/RTT/down-events/downtime for the period, from <see cref="RollupDaily"/>
-    /// and <see cref="Outage"/> — batched by endpoint id list, no per-endpoint round trips.
+    /// Streams the range's 15-minute rollups (up to ~2.7M rows for a year of 78 endpoints) straight into the
+    /// per-period accumulators, so memory stays flat regardless of range size.
     /// </summary>
-    private async Task<Dictionary<Guid, EndpointAggregate>> ComputeAggregatesAsync(List<Guid> endpointIds, DateTimeOffset from, DateTimeOffset to)
+    /// <remarks>
+    /// Filters by time only and drops other endpoints in memory: an <c>EndpointId IN (...)</c> filter makes
+    /// SQLite seek the primary key once per endpoint, which measured ~5x slower on a year of real data
+    /// than a single range scan of <c>IX_rollup_15m_BucketTs</c>.
+    /// </remarks>
+    private async Task AccumulateRollupsAsync(
+        long rangeStartTs,
+        long rangeEndTs,
+        long[] periodStarts,
+        Dictionary<Guid, AvailabilityMetrics[]> perPeriod,
+        CancellationToken cancellationToken)
     {
-        var result = new Dictionary<Guid, EndpointAggregate>();
-        if (endpointIds.Count == 0)
-        {
-            return result;
-        }
-
-        long fromDateUnix = UnixTimestamp.ToUnixDate(DateOnly.FromDateTime(from.Date));
-        long toDateUnix = UnixTimestamp.ToUnixDate(DateOnly.FromDateTime(to.Date));
-
-        var dailyRows = await _context.RollupsDaily
-            .Where(r => endpointIds.Contains(r.EndpointId) && r.BucketDate >= fromDateUnix && r.BucketDate <= toDateUnix)
+        var rollups = _context.Rollups15m
             .AsNoTracking()
-            .Select(r => new { r.EndpointId, r.UpPct, r.AvgRttMs, r.DownEvents })
-            .ToListAsync();
+            .Where(r => r.BucketTs >= rangeStartTs && r.BucketTs < rangeEndTs)
+            .Select(r => new { r.EndpointId, r.BucketTs, r.UpPct, r.AvgRttMs })
+            .AsAsyncEnumerable();
 
-        long fromUnix = UnixTimestamp.ToUnixSeconds(from);
-        long toUnix = UnixTimestamp.ToUnixSeconds(to);
-        long nowUnix = UnixTimestamp.Now();
-
-        var outages = await _context.Outages
-            .Where(o => endpointIds.Contains(o.EndpointId) && o.StartedTs <= toUnix && (o.EndedTs == null || o.EndedTs >= fromUnix))
-            .AsNoTracking()
-            .Select(o => new { o.EndpointId, o.StartedTs, o.EndedTs })
-            .ToListAsync();
-
-        ILookup<Guid, (double UpPct, double? AvgRttMs, int DownEvents)> dailyByEndpoint = dailyRows
-            .ToLookup(r => r.EndpointId, r => (r.UpPct, r.AvgRttMs, r.DownEvents));
-
-        ILookup<Guid, (long StartedTs, long? EndedTs)> outagesByEndpoint = outages
-            .ToLookup(o => o.EndpointId, o => (o.StartedTs, o.EndedTs));
-
-        foreach (Guid endpointId in endpointIds)
+        await foreach (var r in rollups.WithCancellation(cancellationToken))
         {
-            var daily = dailyByEndpoint[endpointId].ToList();
-            double uptimePct = daily.Count > 0 ? daily.Average(d => d.UpPct) : 0;
-            var rttSamples = daily.Where(d => d.AvgRttMs.HasValue).Select(d => d.AvgRttMs!.Value).ToList();
-            double? avgRtt = rttSamples.Count > 0 ? rttSamples.Average() : null;
-            int downEvents = daily.Sum(d => d.DownEvents);
-
-            long downtimeSeconds = 0;
-            foreach ((long startedTs, long? endedTs) in outagesByEndpoint[endpointId])
+            int index = FindPeriod(periodStarts, r.BucketTs);
+            if (index < 0 || !perPeriod.TryGetValue(r.EndpointId, out AvailabilityMetrics[]? periods))
             {
-                long start = Math.Max(startedTs, fromUnix);
-                long end = Math.Min(endedTs ?? nowUnix, toUnix);
-                if (end > start)
-                {
-                    downtimeSeconds += end - start;
-                }
+                continue;
             }
 
-            result[endpointId] = new EndpointAggregate(uptimePct, avgRtt, downEvents, downtimeSeconds);
+            AvailabilityMetrics m = periods[index];
+            m.MonitoredSeconds += BucketSeconds;
+            m.UpSeconds += BucketSeconds * Math.Clamp(r.UpPct, 0, 100) / 100.0;
+            if (r.AvgRttMs.HasValue)
+            {
+                m.RttSum += r.AvgRttMs.Value;
+                m.RttSamples++;
+            }
         }
-
-        return result;
     }
 
     /// <summary>
-    /// Bounded 2-hour lookback for "last check" — mirrors <c>StatusService.GetSparklineDataAsync</c> so this
-    /// stays a single indexed batch query instead of an unbounded scan across the full retention window.
+    /// Down events per period = outages that started in it. Whole-range totals also get MTTR inputs
+    /// (outages started in range that have ended) and the longest outage (overlap with the range, so an
+    /// outage that started before the range or is still ongoing counts only its in-range part).
     /// </summary>
-    private async Task<Dictionary<Guid, long>> GetLastCheckTimestampsAsync(List<Guid> endpointIds)
+    private async Task AccumulateOutagesAsync(
+        List<Guid> endpointIds,
+        long rangeStartTs,
+        long rangeEndTs,
+        long nowTs,
+        long[] periodStarts,
+        Dictionary<Guid, AvailabilityMetrics[]> perPeriod,
+        Dictionary<Guid, AvailabilityMetrics> totals,
+        CancellationToken cancellationToken)
     {
-        if (endpointIds.Count == 0)
-        {
-            return new Dictionary<Guid, long>();
-        }
-
-        long cutoffTime = UnixTimestamp.Subtract(UnixTimestamp.Now(), TimeSpan.FromHours(2));
-
-        var recentChecks = await _context.CheckResultsRaw
-            .Where(c => endpointIds.Contains(c.EndpointId) && c.Ts >= cutoffTime)
+        var outages = await _context.Outages
             .AsNoTracking()
-            .Select(c => new { c.EndpointId, c.Ts })
-            .ToListAsync();
+            .Where(o => endpointIds.Contains(o.EndpointId) && o.StartedTs < rangeEndTs && (o.EndedTs == null || o.EndedTs > rangeStartTs))
+            .Select(o => new { o.EndpointId, o.StartedTs, o.EndedTs })
+            .ToListAsync(cancellationToken);
 
-        return recentChecks
-            .GroupBy(c => c.EndpointId)
-            .ToDictionary(g => g.Key, g => g.Max(c => c.Ts));
-    }
+        long clipEnd = Math.Min(rangeEndTs, nowTs);
 
-    /// <summary>
-    /// Current point-in-time status: down if the last known live status is down/unknown, degraded if up but
-    /// the period's average RTT breaches the endpoint's expected threshold, otherwise up.
-    /// </summary>
-    private static string DetermineReportStatus(Data.Endpoint endpoint, double? periodAvgRttMs)
-    {
-        if (endpoint.LastStatus != UpDown.up)
+        foreach (var o in outages)
         {
-            return "down";
+            AvailabilityMetrics total = totals[o.EndpointId];
+
+            long overlap = Math.Min(o.EndedTs ?? nowTs, clipEnd) - Math.Max(o.StartedTs, rangeStartTs);
+            total.LongestOutageSeconds = Math.Max(total.LongestOutageSeconds, Math.Max(0, overlap));
+
+            if (o.StartedTs < rangeStartTs)
+            {
+                continue;
+            }
+
+            total.Outages++;
+            total.DownEvents++;
+            perPeriod[o.EndpointId][FindPeriod(periodStarts, o.StartedTs)].DownEvents++;
+
+            if (o.EndedTs.HasValue)
+            {
+                total.ResolvedOutages++;
+                total.ResolvedOutageSeconds += o.EndedTs.Value - o.StartedTs;
+            }
         }
-
-        if (endpoint.ExpectedRttMs.HasValue && periodAvgRttMs.HasValue && periodAvgRttMs.Value > endpoint.ExpectedRttMs.Value)
-        {
-            return "degraded";
-        }
-
-        return "up";
-    }
-
-    private readonly record struct EndpointAggregate(double UptimePct, double? AvgRttMs, int DownEvents, long DowntimeSeconds)
-    {
-        public static readonly EndpointAggregate Empty = new(0, null, 0, 0);
     }
 }

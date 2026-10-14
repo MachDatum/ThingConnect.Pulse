@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ThingConnect.Pulse.Server.Models;
@@ -22,111 +23,128 @@ public sealed class ReportsController : ControllerBase
     }
 
     /// <summary>
-    /// Downloads the Machine Availability Detail report: one row per machine with uptime, response time,
-    /// packet-loss proxy, last check time and downtime for the selected period.
+    /// Downloads the availability report as an Excel workbook: a Summary sheet plus either a column block per
+    /// local day/week/month/year with a Total block, or (interval=hour) one date × hour-of-day sheet per endpoint.
     /// </summary>
-    [HttpGet("machine-availability")]
-    public async Task<IActionResult> GetMachineAvailabilityAsync(
+    /// <param name="from">First local calendar date, inclusive (yyyy-MM-dd; a full ISO timestamp is accepted and its date used).</param>
+    /// <param name="to">Last local calendar date, inclusive.</param>
+    /// <param name="interval">hour, day, week, month or year.</param>
+    /// <param name="groupIds">Optional group filter.</param>
+    /// <param name="cancellationToken">Request cancellation.</param>
+    [HttpGet("availability")]
+    public async Task<IActionResult> GetAvailabilityReportAsync(
         [FromQuery] string from,
         [FromQuery] string to,
+        [FromQuery] string interval = "day",
         [FromQuery] List<string>? groupIds = null,
-        [FromQuery] string format = "xlsx")
+        CancellationToken cancellationToken = default)
     {
-        (DateTimeOffset? fromDate, DateTimeOffset? toDate, IActionResult? rangeError) = ParseRange(from, to);
-        if (rangeError != null)
+        if (!TryParseDate(from, out DateOnly fromDate))
         {
-            return rangeError;
+            return BadRequest(new { message = "Invalid or missing 'from' date. Use yyyy-MM-dd." });
         }
 
-        if (!string.Equals(format, "xlsx", StringComparison.OrdinalIgnoreCase))
+        if (!TryParseDate(to, out DateOnly toDate))
         {
-            return BadRequest(new { message = $"Unsupported format '{format}'. Only 'xlsx' is available today." });
+            return BadRequest(new { message = "Invalid or missing 'to' date. Use yyyy-MM-dd." });
+        }
+
+        if (!Enum.TryParse(interval, ignoreCase: true, out ReportInterval reportInterval) || !Enum.IsDefined(reportInterval))
+        {
+            return BadRequest(new { message = "Invalid 'interval'. Use hour, day, week, month or year." });
         }
 
         try
         {
-            List<MachineAvailabilityRowDto> rows = await _reportDataService.GetMachineAvailabilityAsync(fromDate!.Value, toDate!.Value, groupIds);
-            byte[] bytes = XlsxReportWriter.BuildMachineAvailabilityWorkbook(rows);
+            var request = new AvailabilityReportRequest
+            {
+                FromDate = fromDate,
+                ToDate = toDate,
+                Interval = reportInterval,
+                GroupIds = groupIds,
+                TimeZone = TimeZoneInfo.Local,
+                Now = DateTimeOffset.UtcNow
+            };
 
-            string filename = $"machine-availability-{fromDate.Value:yyyyMMdd}-{toDate.Value:yyyyMMdd}.xlsx";
+            AvailabilityReport report = await _reportDataService.GetAvailabilityReportAsync(request, cancellationToken);
+            byte[] bytes = XlsxReportWriter.BuildAvailabilityWorkbook(report);
+
+            string filename = $"Availability_Report_{fromDate:dd-MMM-yyyy}_to_{toDate:dd-MMM-yyyy}_{XlsxReportWriter.IntervalLabel(reportInterval)}.xlsx";
             return File(bytes, XlsxContentType, filename);
         }
         catch (ArgumentException ex)
         {
-            _logger.LogWarning(ex, "Invalid parameters for machine availability report");
+            _logger.LogWarning(ex, "Invalid parameters for availability report");
             return BadRequest(new { message = ex.Message });
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return StatusCode(499);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error generating machine availability report");
+            _logger.LogError(ex, "Error generating availability report");
             return StatusCode(500, new { message = "Internal server error while generating the report" });
         }
     }
 
     /// <summary>
-    /// Downloads the Executive Health Summary report: org-wide totals plus a per-group breakdown for the
-    /// selected period.
+    /// Headline availability figures for the selected range and groups (the workbook's Summary numbers), for
+    /// the Reports page preview. Independent of the interval, so it is always computed as a single period.
     /// </summary>
-    [HttpGet("executive-summary")]
-    public async Task<IActionResult> GetExecutiveSummaryAsync(
+    [HttpGet("availability/summary")]
+    public async Task<ActionResult<AvailabilitySummaryDto>> GetAvailabilitySummaryAsync(
         [FromQuery] string from,
         [FromQuery] string to,
         [FromQuery] List<string>? groupIds = null,
-        [FromQuery] string format = "xlsx")
+        CancellationToken cancellationToken = default)
     {
-        (DateTimeOffset? fromDate, DateTimeOffset? toDate, IActionResult? rangeError) = ParseRange(from, to);
-        if (rangeError != null)
+        if (!TryParseDate(from, out DateOnly fromDate) || !TryParseDate(to, out DateOnly toDate))
         {
-            return rangeError;
-        }
-
-        if (!string.Equals(format, "xlsx", StringComparison.OrdinalIgnoreCase))
-        {
-            return BadRequest(new { message = $"Unsupported format '{format}'. Only 'xlsx' is available today." });
+            return BadRequest(new { message = "Invalid or missing 'from'/'to' date. Use yyyy-MM-dd." });
         }
 
         try
         {
-            ExecutiveSummaryDto summary = await _reportDataService.GetExecutiveSummaryAsync(fromDate!.Value, toDate!.Value, groupIds);
-            byte[] bytes = XlsxReportWriter.BuildExecutiveSummaryWorkbook(summary);
+            AvailabilityReport report = await _reportDataService.GetAvailabilityReportAsync(
+                new AvailabilityReportRequest
+                {
+                    FromDate = fromDate,
+                    ToDate = toDate,
+                    Interval = ReportInterval.Year,
+                    GroupIds = groupIds,
+                    TimeZone = TimeZoneInfo.Local,
+                    Now = DateTimeOffset.UtcNow
+                },
+                cancellationToken);
 
-            string filename = $"executive-summary-{fromDate.Value:yyyyMMdd}-{toDate.Value:yyyyMMdd}.xlsx";
-            return File(bytes, XlsxContentType, filename);
+            return Ok(AvailabilitySummaryDto.From(report));
         }
         catch (ArgumentException ex)
         {
-            _logger.LogWarning(ex, "Invalid parameters for executive summary report");
             return BadRequest(new { message = ex.Message });
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return StatusCode(499);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error generating executive summary report");
-            return StatusCode(500, new { message = "Internal server error while generating the report" });
+            _logger.LogError(ex, "Error computing availability summary");
+            return StatusCode(500, new { message = "Internal server error while computing the summary" });
         }
     }
 
-    private (DateTimeOffset? From, DateTimeOffset? To, IActionResult? Error) ParseRange(string from, string to)
+    private static bool TryParseDate(string? value, out DateOnly date)
     {
-        if (string.IsNullOrEmpty(from))
+        date = default;
+        if (string.IsNullOrWhiteSpace(value))
         {
-            return (null, null, BadRequest(new { message = "Required parameter 'from' is missing." }));
+            return false;
         }
 
-        if (string.IsNullOrEmpty(to))
-        {
-            return (null, null, BadRequest(new { message = "Required parameter 'to' is missing." }));
-        }
-
-        if (!DateTimeOffset.TryParse(from, out DateTimeOffset fromDate))
-        {
-            return (null, null, BadRequest(new { message = "Invalid 'from' date format. Use ISO 8601 format." }));
-        }
-
-        if (!DateTimeOffset.TryParse(to, out DateTimeOffset toDate))
-        {
-            return (null, null, BadRequest(new { message = "Invalid 'to' date format. Use ISO 8601 format." }));
-        }
-
-        return (fromDate, toDate, null);
+        // Only the calendar date matters; ignore any time/offset so the browser's zone can't shift the day.
+        string datePart = value.Length >= 10 ? value[..10] : value;
+        return DateOnly.TryParseExact(datePart, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out date);
     }
 }
