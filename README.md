@@ -38,7 +38,7 @@ cd ..
 # Run backend server
 cd ThingConnect.Pulse.Server
 dotnet run
-# Backend API: http://localhost:8080
+# Backend API: http://localhost:8090
 
 # Run frontend (in separate terminal)
 cd thingconnect.pulse.client

@@ -18,13 +18,18 @@ export const NotificationBannerSimple: React.FC<NotificationBannerProps> = ({
   showCloseButton = true,
 }) => {
   const markReadMutation = useMarkNotificationRead();
-  const markShownMutation = useMarkNotificationShown();
+  const { mutate: markShown } = useMarkNotificationShown();
+  const markedShownIdRef = React.useRef<string | null>(null);
 
+  // Depend on the stable `mutate` (not the mutation object, which changes on every
+  // state transition) and mark each notification only once, so the mark-shown →
+  // invalidate → refetch cycle can't loop before the refetched isShown arrives.
   React.useEffect(() => {
-    if (!notification.isShown) {
-      markShownMutation.mutate(notification.id);
+    if (!notification.isShown && markedShownIdRef.current !== notification.id) {
+      markedShownIdRef.current = notification.id;
+      markShown(notification.id);
     }
-  }, [notification.id, notification.isShown, markShownMutation]);
+  }, [notification.id, notification.isShown, markShown]);
 
   const handleDismiss = () => {
     if (!notification.isRead) {

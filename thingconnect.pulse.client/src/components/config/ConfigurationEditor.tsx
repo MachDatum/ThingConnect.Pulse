@@ -11,8 +11,9 @@ import {
   useBreakpointValue,
 } from '@chakra-ui/react';
 import { useColorMode } from '@/components/ui/color-mode';
-import Editor from '@monaco-editor/react';
+import Editor, { type Monaco } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
+import './monacoSetup';
 import { Alert } from '@/components/ui/alert';
 import { FileText, Upload, Check, Download, Code2 } from 'lucide-react';
 import { configurationService } from '@/api/services/configuration.service';
@@ -36,7 +37,7 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
-  const monacoRef = useRef<any>(null);
+  const monacoRef = useRef<Monaco | null>(null);
   const { ref: containerRef } = useResizeObserver<HTMLDivElement>();
   const defaultCollapsible = useBreakpointValue({ base: false, lg: true });
   const [isCollabsable, setIsCollabsable] = useState(!!defaultCollapsible);
@@ -102,8 +103,9 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
   };
 
   // Function to set validation markers in Monaco editor
-  const setValidationMarkers = (errors: any[]) => {
-    if (!editorRef.current || !monacoRef.current) return;
+  const setValidationMarkers = (errors: (ValidationError | string)[]) => {
+    const monaco = monacoRef.current;
+    if (!editorRef.current || !monaco) return;
 
     const model = editorRef.current.getModel();
     if (!model) return;
@@ -135,7 +137,7 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
       }
 
       return {
-        severity: monacoRef.current.MarkerSeverity.Error,
+        severity: monaco.MarkerSeverity.Error,
         message: message,
         startLineNumber: position.line,
         startColumn: position.column,
@@ -144,7 +146,7 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
       };
     });
 
-    monacoRef.current.editor.setModelMarkers(model, 'yaml-validation', markers);
+    monaco.editor.setModelMarkers(model, 'yaml-validation', markers);
   };
 
   // Function to clear validation markers
@@ -173,7 +175,7 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
         setApplyResult(null);
         setError(null);
       };
-      reader.readAsText(file!);
+      reader.readAsText(file);
     } else {
       setError('Please select a valid YAML file (.yaml or .yml)');
     }
@@ -257,7 +259,7 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
       }
     };
 
-    loadCurrentConfig();
+    void loadCurrentConfig();
   }, []);
 
   useEffect(() => {
@@ -274,7 +276,7 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
         </HStack>
 
         <HStack gap={2} alignItems={'center'} justifyContent={'flex-end'}>
-          <Button variant='outline' size='xs' onClick={handleLoadCurrent} loading={isLoading}>
+          <Button variant='outline' size='xs' onClick={() => void handleLoadCurrent()} loading={isLoading}>
             <Download size={16} />
             Load Current Config
           </Button>
@@ -384,7 +386,7 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
         <HStack gap={2}>
           <Button
             variant='outline'
-            onClick={handleValidate}
+            onClick={() => void handleValidate()}
             loading={isLoading}
             disabled={!yamlContent.trim()}
             size='xs'
@@ -394,7 +396,7 @@ export function ConfigurationEditor({ onConfigurationApplied }: ConfigurationEdi
           </Button>
           <Button
             colorPalette='blue'
-            onClick={handleApply}
+            onClick={() => void handleApply()}
             loading={isLoading}
             disabled={!yamlContent.trim() || validationResult?.isValid === false}
             size='xs'

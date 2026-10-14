@@ -14,7 +14,7 @@ export function FormField({ label, error, children, type = 'text', ...props }: F
     return (
       <Box w='full'>
         {label && (
-          <Text mb={2} color='gray.700' fontWeight='medium' fontSize='sm'>
+          <Text mb={2} color='fg.muted' fontWeight='medium' fontSize='sm'>
             {label}
           </Text>
         )}
@@ -31,16 +31,16 @@ export function FormField({ label, error, children, type = 'text', ...props }: F
   return (
     <Box w='full'>
       {label && (
-        <Text mb={2} color='gray.700' fontWeight='medium' fontSize='sm'>
+        <Text mb={2} color='fg.muted' fontWeight='medium' fontSize='sm'>
           {label}
         </Text>
       )}
       <Input
         type={type}
         size='md'
-        borderColor='gray.400'
-        color='gray.800'
-        _placeholder={{ color: 'gray.500', fontWeight: 'medium' }}
+        borderColor='border.emphasized'
+        color='fg'
+        _placeholder={{ color: 'fg.subtle', fontWeight: 'medium' }}
         _focus={{ borderColor: '#076bb3', boxShadow: '0 0 0 1px #076bb3' }}
         {...props}
       />

@@ -6,7 +6,7 @@ This guide covers setting up the ThingConnect Pulse frontend React application f
 
 - **Node.js 18+** (LTS recommended)
 - **npm** (comes with Node.js)
-- **Backend server** running on `http://localhost:8080`
+- **Backend server** running on `http://localhost:8090`
 
 ## Quick Start
 
@@ -29,7 +29,7 @@ The `.env` file should contain:
 
 ```env
 # Backend API Configuration  
-VITE_API_BASE_URL=http://localhost:8080
+VITE_API_BASE_URL=http://localhost:8090
 VITE_API_TIMEOUT=30000
 
 # Development Settings
@@ -130,7 +130,7 @@ npm run type-check
 
 If you see CORS errors in the browser console:
 
-1. Ensure the backend is running on `http://localhost:8080`
+1. Ensure the backend is running on `http://localhost:8090`
 2. Verify CORS is configured in `Program.cs`
 3. Check the frontend origin is included in the CORS policy
 4. Restart both frontend and backend servers

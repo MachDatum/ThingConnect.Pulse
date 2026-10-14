@@ -59,7 +59,7 @@ dotnet run
 
 # Expected output:
 # info: Microsoft.Hosting.Lifetime[14]
-#       Now listening on: http://localhost:8080
+#       Now listening on: http://localhost:8090
 # info: Microsoft.Hosting.Lifetime[0]
 #       Application started. Press Ctrl+C to shut down.
 ```
@@ -67,9 +67,9 @@ dotnet run
 ### 4. Verify Running
 
 Open browser to:
-- **API**: http://localhost:8080/swagger - Swagger UI
-- **Health Check**: http://localhost:8080/health (if implemented)
-- **Static Files**: http://localhost:8080 - Frontend proxy
+- **API**: http://localhost:8090/swagger - Swagger UI
+- **Health Check**: http://localhost:8090/health (if implemented)
+- **Static Files**: http://localhost:8090 - Frontend proxy
 
 ## Detailed Setup
 
@@ -85,7 +85,7 @@ The backend uses these configuration files:
 #### `appsettings.Development.json` (Development)
 - Development-specific overrides
 - Enhanced logging (including EF Core SQL)
-- HTTP-only Kestrel endpoint on port 8080
+- HTTP-only Kestrel endpoint on port 8090
 - Development database path
 
 ### Database Setup
@@ -179,12 +179,12 @@ Instead of editing `appsettings.json`, you can use environment variables:
 # PowerShell
 $env:ConnectionStrings__DefaultConnection = "Data Source=C:\ProgramData\ThingConnect.Pulse\pulse.db"
 $env:Pulse__ConfigPath = "C:\ProgramData\ThingConnect.Pulse\config.yaml"
-$env:ASPNETCORE_URLS = "http://localhost:8080"
+$env:ASPNETCORE_URLS = "http://localhost:8090"
 
 # Command Prompt
 set ConnectionStrings__DefaultConnection=Data Source=C:\ProgramData\ThingConnect.Pulse\pulse.db
 set Pulse__ConfigPath=C:\ProgramData\ThingConnect.Pulse\config.yaml
-set ASPNETCORE_URLS=http://localhost:8080
+set ASPNETCORE_URLS=http://localhost:8090
 ```
 
 ## Troubleshooting
@@ -193,13 +193,13 @@ set ASPNETCORE_URLS=http://localhost:8080
 
 #### 1. Port Already in Use
 ```
-Error: Unable to start Kestrel. Address already in use: http://localhost:8080
+Error: Unable to start Kestrel. Address already in use: http://localhost:8090
 ```
 
 **Solution:**
 ```bash
 # Find process using port
-netstat -ano | findstr :8080
+netstat -ano | findstr :8090
 
 # Kill process (replace PID)
 taskkill /PID <process-id> /F
@@ -329,7 +329,7 @@ dotnet add package Serilog.Sinks.Console
 
 After successful backend setup:
 
-1. **Verify API**: Check Swagger UI at http://localhost:8080/swagger
+1. **Verify API**: Check Swagger UI at http://localhost:8090/swagger
 2. **Check Logs**: Monitor console output for any warnings
 3. **Frontend Setup**: Follow `/ops/dev.md` for full-stack development
 4. **Database**: Implement EF Core models (Issue #10)
@@ -343,7 +343,7 @@ After successful backend setup:
 
 ## Security Notes
 
-- **Development only**: HTTP on localhost:8080
+- **Development only**: HTTP on localhost:8090
 - **No authentication**: v1 has no auth (localhost + LAN only)
 - **Database**: SQLite file-based, no network exposure
 - **Firewall**: May need ICMP/ping permissions for monitoring
