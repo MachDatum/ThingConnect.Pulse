@@ -80,9 +80,12 @@ var
   ResultCode: Integer;
 begin
   Log('Stopping service: {#ServiceName}');
-  Result := Exec('sc.exe', 'stop "{#ServiceName}"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  // net stop blocks until the service reports STOPPED (sc stop only sends the request),
+  // so the exe and the SQLite database are released before files are replaced.
+  Result := Exec(ExpandConstant('{sys}\net.exe'), 'stop "{#ServiceName}"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Log('net stop exit code: ' + IntToStr(ResultCode));
   if Result then
-    Sleep(2000); // Wait for service to stop
+    Sleep(3000); // Give the process time to exit after reporting STOPPED
 end;
 
 function RemoveService(): Boolean;
