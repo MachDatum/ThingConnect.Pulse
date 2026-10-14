@@ -46,7 +46,7 @@ VITE_ENABLE_REALTIME=false
 npm run dev
 ```
 
-The frontend will be available at `https://localhost:55610` (or similar port).
+The frontend will be available at `https://localhost:5173` (set `DEV_SERVER_PORT` to override).
 
 ## Backend Integration
 
@@ -144,7 +144,7 @@ If you see CORS errors in the browser console:
 
 ### Port Conflicts
 
-If port 55610 is busy, Vite will automatically find the next available port. Check the terminal output for the actual URL.
+If port 5173 is busy, Vite will automatically find the next available port. Check the terminal output for the actual URL.
 
 ### Build Issues
 

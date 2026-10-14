@@ -43,7 +43,7 @@ dotnet run
 # Run frontend (in separate terminal)
 cd thingconnect.pulse.client
 npm run dev
-# Frontend: https://localhost:55610 (or similar port)
+# Frontend: https://localhost:5173 (set DEV_SERVER_PORT to override)
 ```
 
 ## Project Structure

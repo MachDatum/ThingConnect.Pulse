@@ -140,7 +140,7 @@ dotnet run
 
 # The application will be available at:
 # Backend API: https://localhost:7297
-# Frontend: https://localhost:55605 (proxied through backend)
+# Frontend: https://localhost:5173 (proxies /api to the backend on 8090)
 ```
 
 ### Production Mode

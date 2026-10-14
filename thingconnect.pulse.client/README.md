@@ -20,7 +20,7 @@ npm install
 
 # Development server
 npm run dev
-# Opens on https://localhost:55608 (or next available port)
+# Opens on https://localhost:5173 (set DEV_SERVER_PORT to override)
 
 # Production build
 npm run build
